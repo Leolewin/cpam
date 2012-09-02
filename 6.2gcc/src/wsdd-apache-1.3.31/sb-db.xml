@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="wsdd-apache" version="1.3.31" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+    <install-name>${SB_PROG_NAME}1331</install-name>
+    <sources>
+    <source  path="src/wsdd-apache-1.3.31.tgz" systype="*-solaris*"/>
+    </sources>
+
+    <dependencies>
+    <depend user="webadm"/>
+    <depend group="il02w-web"/>
+      <depend program="apache" >v==1.3.31</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+:
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ;;
+*-hpux11*)
+  CC=cc OPTIM=" " CFLAGS="-z -Ae +DAportable"
+  CC_LD_RT="-Wl,+s,+b," LIBS="-lnsl" ;;
+*-hpux*)
+  CC=cc OPTIM=" " CFLAGS="-z -Ae +DAportable"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429"
+  OPTIM="-O2 -OPT:Olimit=0" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf5*)
+  CC=cc OPTIM="-O2" CFLAGS="-std1" CC_LD_RT="-Wl,-rpath,"
+  LIBS="-lpthread" ;;
+*-osf*)
+  CC=cc OPTIM="-O2" CFLAGS="-std1" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O2 -mcpu=v8"
+  OPTIM="-O2"
+  CC_LD_RT="-R" LIBS="-lnsl" ;;
+*-solaris2.[67]*)
+  CC=cc CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+-mr -Qn -xtarget=generic" OPTIM="-xO2"
+  CC_LD_RT="-R" LIBS="-lnsl" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xtarget=generic" OPTIM="-xO2"
+  CC_LD_RT="-R" LIBS="-lnsl" ;;
+esac
+:
+]]>
+    </configure>
+<build>
+:
+</build>
+
+    <install>
+<![CDATA[
+ginstall -m 755 -o root -g root -d ${SB_INSTALL_PREFIX}
+ginstall -m 755 -o root -g root postinstall-sol  ${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+:
+]]>
+    </uninstall>
+
+    <notes>
+    </notes>
+  </program>
+</programs>

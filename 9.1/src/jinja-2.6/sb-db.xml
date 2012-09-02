@@ -1,0 +1,293 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="jinja" version="2.6" revision="3">
+    <build-name>Jinja2-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="1c49a8825c993bfdcf55bb36897d28a2"
+        checksum-type="md5" size="389741"
+        path="src/Jinja2-2.6.tar.gz"/>
+      <source checksum="8874ef8a164934d23ce286ca0508a2b5"
+        checksum-type="md5" size="671611"
+        path="src/Jinja2-docs-2.6.tar.gz"
+        destdir="Jinja2-2.6"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py install -O1 \
+--skip-build --root / --install-lib=${_install_prefix} \
+--prefix=${_binman_prefix-${SB_INSTALL_PREFIX}}
+
+rm -f ${_install_prefix}/jinja2/_debugsupport.c
+
+# install documentation (requires sphinx but cannot make it a
+# dependency as sphinx requires jinja. so, generate manually
+# with "(cd docs; gmake html; rm -rf _build/html/_sources
+# _build/html/.buildinfo" and install here.)
+if [ "${_binman_prefix+set}" != set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  (cd docs/_build
+   ${SB_PATH_FIND} html | cpio -pdmu ${_docdir})
+  ${SB_PATH_FIND} ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+  ${SB_PATH_FIND} ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+    </install>
+
+    <module name="default">
+      <validate>
+        <depend program="jinja" module="2.6.7">v==2.6</depend>
+        <depend program="jinja" module="2.7.2">v==2.6</depend>
+      </validate>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="setuptools" var="SETUPTOOLS" module="2.7.2"
+          type="build">v==0.6</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX}/lib/${_pysubdir}"
+# Don't install binaries and man pages for non-default python
+_binman_prefix="${SB_BUILD_PREFIX}/_inst"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py install -O1 \
+--skip-build --root / --install-lib=${_install_prefix} \
+--prefix=${_binman_prefix-${SB_INSTALL_PREFIX}}
+
+rm -f ${_install_prefix}/jinja2/_debugsupport.c
+
+# install documentation (requires sphinx but cannot make it a
+# dependency as sphinx requires jinja. so, generate manually
+# with "(cd docs; gmake html; rm -rf _build/html/_sources
+# _build/html/.buildinfo" and install here.)
+if [ "${_binman_prefix+set}" != set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  (cd docs/_build
+   ${SB_PATH_FIND} html | cpio -pdmu ${_docdir})
+  ${SB_PATH_FIND} ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+  ${SB_PATH_FIND} ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="setuptools" var="SETUPTOOLS" module="2.6.7"
+          type="build">v==0.6</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX}/lib/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py install -O1 \
+--skip-build --root / --install-lib=${_install_prefix} \
+--prefix=${_binman_prefix-${SB_INSTALL_PREFIX}}
+
+rm -f ${_install_prefix}/jinja2/_debugsupport.c
+
+# install documentation (requires sphinx but cannot make it a
+# dependency as sphinx requires jinja. so, generate manually
+# with "(cd docs; gmake html; rm -rf _build/html/_sources
+# _build/html/.buildinfo" and install here.)
+if [ "${_binman_prefix+set}" != set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  (cd docs/_build
+   ${SB_PATH_FIND} html | cpio -pdmu ${_docdir})
+  ${SB_PATH_FIND} ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+  ${SB_PATH_FIND} ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <licenses>
+      <license>
+        <para>Copyright (c) 2009 by the Jinja Team, see AUTHORS for
+more details.</para>
+        <para>Some rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>The names of the contributors may not be used to
+endorse or promote products derived from this software without
+specific prior written permission.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>The jinja Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 March 20" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix ownership of documentation files</para></item>
+      </change>
+
+      <change date="2012 March 12" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update python dependency from 2.6.6 to
+2.6.7</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

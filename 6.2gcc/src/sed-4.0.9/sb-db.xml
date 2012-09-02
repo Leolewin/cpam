@@ -1,0 +1,370 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="sed" version="4.0.9" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>g${SB_PROG_NAME}40</install-name>
+
+    <sources>
+      <source checksum="d8fb554bc6577aaedd39b94b3cb3df70"
+        checksum-type="md5" size="769849"
+        path="src/sed-4.0.9.tar.gz"/>
+      <patch checksum="6b1c96105179aa55bf7a995980e7841f"
+        checksum-type="md5" size="265541"
+        path="src/sed-4.0.9.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--program-prefix=g --disable-dependency-tracking \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} \
+--prefix=${SB_INSTALL_PREFIX}
+
+(cd doc
+rm *.info* || :)
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+
+# install texinfo source files
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/config.texi doc/sed.texi \
+doc/version.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="4.0.8" to="4.0.9">
+        <item><para>0 address behaves correctly in single-file (-i and
+-s) mode</para></item>
+        <item><para>documentation improvements</para></item>
+        <item><para>tested with many hosts and compilers</para></item>
+        <item><para>updated regex matcher from upstream, with many
+bugfixes and speedups</para></item>
+        <item><para>the `N' command's feature that is detailed in the
+BUGS file was disabled by the first change below in sed 4.0.8. The
+behavior has now been restored, and is only enabled if POSIXLY_CORRECT
+behavior is not requested.</para></item>
+      </change>
+
+      <change from="4.0.7" to="4.0.8">
+        <item><para>fix `sed n' printing the last line
+twice</para></item>
+        <item><para>fix incorrect error message for invalid character
+classes</para></item>
+        <item><para>fix segmentation violation with repeated empty
+subexpressions</para></item>
+        <item><para>fix incorrect parsing of ^ after escaped
+(</para></item>
+        <item><para>more comprehensive test suite (and with many
+expected failures...)</para></item>
+        <item><para>fix for -i option under Cygwin</para></item>
+      </change>
+
+      <change from="4.0.6" to="4.0.5">
+        <item><para>VPATH builds working on non-glibc
+machines</para></item>
+        <item><para>fixed bug in s///Np: was printing even if less
+than N matches were found</para></item>
+        <item><para>fixed infinite loop on s///N when LHS matched a
+null string and there were not enough matches in pattern
+space</para></item>
+        <item><para>behavior of s///N is consistent with s///g when
+the LHS can match a null string (and the infinite loop did not happen
+:-)</para></item>
+      </change>
+
+      <change from="4.0.5" to="4.0.6">
+        <item><para>added parameter to `v' for the version of sed that
+is expected</para></item>
+        <item><para>configure switch --without-included-regex to use
+the system regex matcher</para></item>
+      </change>
+
+      <change from="4.0.4" to="4.0.5">
+        <item><para>portability fixes</para></item>
+        <item><para>improvements to some error messages (e.g.
+y/abc/defg/ incorrectly said `excess characters after command' instead
+of `y arguments have different lengths')</para></item>
+        <item><para>`a', `i', `l', `L', `r' accept two addresses
+except in POSIXLY_CORRECT mode. Only `q' and `Q' do not accept two
+address in standard (GNU) mode.</para></item>
+      </change>
+
+      <change from="4.0.3" to="4.0.4">
+        <item><para>documentation fixes</para></item>
+        <item><para>update regex matcher</para></item>
+      </change>
+
+      <change from="4.0.2" to="4.0.3">
+        <item><para>fix packaging problem (two missing translation
+catalogs)</para></item>
+      </change>
+
+      <change from="4.0.1" to="4.0.2">
+        <item><para>more translations</para></item>
+        <item><para>fix build problems (vpath builds and bootstrap
+builds)</para></item>
+      </change>
+
+      <change from="4.0" to="4.0.1">
+        <item><para>Remove last vestiges of super-sed</para></item>
+        <item><para>man page automatically built</para></item>
+        <item><para>more translations provided</para></item>
+        <item><para>portability improvements</para></item>
+      </change>
+
+      <change from="3.96" to="4.0">
+        <item><para>Update regex matcher</para></item>
+      </change>
+
+      <change from="3.95" to="3.96">
+        <item><para>`y' command supports multibyte character
+sets</para></item>
+        <item><para>Update regex matcher</para></item>
+      </change>
+
+      <change from="3.02.80" to="3.95">
+        <item><para>`R' command reads a single line from a
+file</para></item>
+        <item><para>CR-LF pairs are always ignored under Windows, even
+if (under Cygwin) a disk is mounted as binary</para></item>
+        <item><para>More attention to errors on stdout</para></item>
+        <item><para>New `W' command to write first line of pattern
+space to a file</para></item>
+        <item><para>Can customize line wrap width on single `l'
+commands</para></item>
+        <item><para>`L' command formats and reflows paragraphs like
+`fmt' does</para></item>
+        <item><para>The test suite makefiles are better organized
+(this change is transparent however)</para></item>
+        <item><para>Compiles and bootstraps out-of-the-box under
+MinGW32 and Cygwin</para></item>
+        <item><para>Optimizes cases when pattern space is truncated at
+its start or at its end by `D' or by a substitution command with an
+empty RHS. For example scripts like this:</para>
+        <screen>
+seq 1 10000 | tr \\n \  | ./sed ':a; s/^[0-9][0-9]* //; ta'
+        </screen>
+        <para>whose behavior was quadratic with previous versions of
+sed, have now linear behavior</para></item>
+        <item><para>New command `e' to pipe the output of a command
+into the output of sed</para></item>
+        <item><para>New option `e' to pass the output of the `s'
+command through the Bourne shell and get the result into pattern
+space</para></item>
+        <item><para>Switched to obstacks in the parser -- less
+memory-related bugs (there were none AFAIK but you never know) and
+less memory usage</para></item>
+        <item><para>New option -i, to support in-place editing a la
+Perl. Usually one had to use ed or, for more complex tasks, resort to
+Perl; this is not necessary anymore.</para></item>
+        <item><para>Dumped buffering code. The performance loss is
+10%, but it caused bugs in systems with CRLF termination. The current
+solution is not definitive, though.</para></item>
+        <item><para>Bug fix: Made the behavior of s/A*/x/g (i.e. `s'
+command with a possibly empty LHS) more consistent:</para>
+        <screen>
+pattern               GNU sed 3.x       GNU sed 4.x
+ B                      xBx               xBx
+ BC                     xBxCx             xBxCx
+ BAC                    xBxxCx            xBxCx
+ BAAC                   xBxxCx            xBxCx
+        </screen></item>
+        <item><para>Bug fix: the // empty regular expressions now
+refers to the last regular expression that was matched, rather than to
+the last regular expression that was compiled. This richer behavior
+seems to be the correct one (albeit neither one is
+POSIXLY_CORRECT).</para></item>
+        <item><para>Check for invalid backreferences in the RHS of the
+`s' command (e.g. s/1234/\1/)</para></item>
+        <item><para>Support for \[lLuUE] in the RHS of the `s' command
+like in Perl</para></item>
+        <item><para>New regular expression matcher</para></item>
+        <item><para>Bug fix: if a file was redirected to be stdin, sed
+did not consume it. So:</para>
+        <screen>
+(sed d; sed G) &lt; TESTFILE
+        </screen>
+        <para>double-spaced TESTFILE, while the equivalent `useless
+use of cat'</para>
+        <screen>
+cat TESTFILE | (sed d; sed G)
+        </screen>
+        <para>printed nothing (which is the correct behavior). A test
+for this bug was added to the test suite.</para></item>
+        <item><para>The documentation is now much better, with a few
+examples provided, and a thorough description of regular expressions.
+The manual often refers to "GNU extensions", but if they are described
+here they are specific to this version.</para></item>
+        <item><para>Documented command-line option:</para>
+        <screen>
+-r, --regexp-extended
+  Use extended regexps -- e.g. (abc+) instead of \(abc\+\)
+        </screen></item>
+        <item><para>Added feature to the `w' command and to the `w'
+option of the `s' command: if the file name is /dev/stderr, it means
+the standard error (inspired by awk); and similarly for /dev/stdout.
+This is disabled if POSIXLY_CORRECT is set.</para></item>
+        <item><para>Added `m' and `M' modifiers to `s' command for
+multi-line matching (Perl-style); in addresses, only `M'
+works</para></item>
+        <item><para>Added `Q' command for `silent quit'; added ability
+to pass an exit code from a sed script to the caller</para></item>
+        <item><para>Added `T' command for `branch if
+failed'</para></item>
+        <item><para>Added `v' command, which is a do-nothing intended
+to fail on seds that do not support GNU sed 4.0's
+extensions</para></item>
+      </change>
+
+      <change from="3.02a" to="3.02.80">
+        <item><para>Bug fixes: the regncomp()/regnexec() interfaces
+proved to be inadequate to properly handle expressions such as
+"<command>s/\&lt;/#/g</command>". Re-abstracted the regex code in the
+sed/ tree, and now use the re_search_2() interface to the GNU regex
+routines. This change also fixed a bug where /./ did not match the NUL
+character. Had the glibc folk fix a bug in lib/regex.c where
+'<command>s/0*\([0-9][0-9]\)/X\1X/</command>' failed to match on input
+"002".</para></item>
+        <item><para>Added new command-line options:</para>
+        <screen>
+-u, --unbuffered
+  Do not attempt to read-ahead more than required; do not buffer stdout.
+-l N, --line-length=N
+  Specify the desired line-wrap length for the `l' command.
+  A length of "0" means "never wrap".
+        </screen></item>
+        <item><para>New internationalization translations added: fr ru
+de it el sk pt_BR sv (plus nl from 3.02a)</para></item>
+        <item><para>The s/// command now understands the following
+escapes (in both halves):</para>
+        <screen>
+\a      an "alert" (BEL)
+\f      a form-feed
+\n      a newline
+\r      a carriage-return
+\t      a horizontal tab
+\v      a vertical tab
+\oNNN   a character with the octal value NNN
+\dNNN   a character with the decimal value NNN
+\xNN    a character with the hexadecimal value NN
+        </screen>
+        <para>This behavior is disabled if POSIXLY_CORRECT is set, at
+least for the time being (until I can be convinced that this behavior
+does not violate the POSIX standard). (Incidentally, \b (backspace)
+was omitted because of the conflict with the existing "word boundary"
+meaning. \ooo octal format was omitted because of the conflict with
+backreference syntax.)</para></item>
+        <item><para>If POSIXLY_CORRECT is set, the empty RE // now is
+the null match instead of "repeat the last REmatch". As far as I can
+tell this behavior is mandated by POSIX, but it would break too many
+legacy sed scripts to blithely change GNU sed's default
+behavior.</para></item>
+      </change>
+
+      <change from="3.02" to="3.02a">
+        <item><para>Added internationalization support, and an initial
+(already out of date) set of Dutch message translations</para></item>
+        <item><para>Added support for scripts like:</para>
+        <screen>
+sed -e 1ifoo -e '$abar'
+        </screen>
+        <para>(note no need for \ &lt;newline&gt; after a, i, and c
+commands). Also, conditionally (on NO_INPUT_INDENT) added experimental
+support for skipping leading whitespace on each {a,i,c} input
+line.</para></item>
+        <item><para>Added addressing of the form:</para>
+        <screen>
+/foo/,+5 p (print from foo to 5th line following)
+/foo/,~5 p (print from foo to next line whose line number is a
+           multiple of 5)
+        </screen>
+        <para>The first address of these can be any of the previously
+existing addressing types; the +N and ~N forms are only allowed as the
+second address of a range.</para></item>
+        <item><para>Added support for pseudo-address "0" as the first
+address in an address-range, simplifying scripts which happen to match
+the end address on the first line of input. For example, a script
+which deletes all lines from the beginning of the file to the first
+line which contains "foo" is now simply "sed 0,/foo/d", whereas before
+one had to go through contortions to deal with the possibility that
+"foo" might appear on the first line of the input.</para></item>
+        <item><para>Made NUL characters in regexps work "correctly"
+--- i.e., a NUL in a RE matches a NUL; it does not prematurely
+terminate the RE. (This only works in -f scripts, as the POSIX.1
+exec*() interface only passes NUL-terminated strings, and so sed will
+only be able to see up to the first NUL in any -e
+scriptlet).</para></item>
+        <item><para>Wherever a `;' is accepted as a command
+terminator, also allow a `}' or a `#' to appear. (This allows for less
+cluttered-looking scripts).</para></item>
+        <item><para>Lots of internal changes that are only relevant to
+source junkies and development testing. Some of which might cause
+imperceptible performance improvements.</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 16" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix support for --disable-nls</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

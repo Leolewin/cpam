@@ -1,0 +1,475 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="php" version="4.3.9" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}439</install-name>
+
+    <sources>
+      <source checksum="b799bbb330da60324d972641baab693c"
+        checksum-type="md5" size="4001681"
+        path="src/php-4.3.9.tar.bz2"/>
+      <patch checksum="ea61ac0e7c7510b327e3f1bca941ca2e"
+        checksum-type="md5" size="655076"
+        path="src/php-4.3.9.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="append">v==3.3.2</depend>
+      <depend program="bison" var="BISON" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="bzip2" var="LIBBZ"
+        install-name="bzip2">v&gt;=1.0.2</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb42">v&gt;=4.2.52</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="flex" var="FLEX" install-name="flex"
+        add-path="prepend" type="build">v&gt;=2.5.4a</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="gd" var="LIBGD"
+        install-name="libgd20">v&gt;=2.0.15</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="mysql" var="MYSQL">v==4.0.20</depend>
+      <depend program="openldap" var="OPENLDAP">v==2.1.27</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="postgresql" var="PGSQL">v==7.4.3</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib13">v&gt;=1.3.1</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CPP="xlc -w -E" CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib"
+  CPPFLAGS="-w" CC_LD_RT="-Wl,-blibpath:"
+
+  # use -blibpath for runtime path
+  export php_cv_cc_blibpath=yes
+  export php_cv_cc_dashr=no
+  export php_cv_cc_plusb=no
+  export php_cv_cc_rpath=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+
+  # <arpa/nameser.h> has a comment in a comment which gives a
+  # warning from cpp and autoconf flags it as a failure
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+
+  # use -rpath for runtime path
+  export php_cv_cc_blibpath=no
+  export php_cv_cc_dashr=no
+  export php_cv_cc_plusb=no
+  export php_cv_cc_rpath=yes
+
+  # disable functions available only in newer 6.5.x releases
+  export ac_cv_func_gai_strerror=no
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_func_strlcat=no
+  export ac_cv_func_strlcpy=no
+
+  # disable IPv6 support
+  ARGS="--disable-ipv6" ;;
+x86_64*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib64" ;;
+*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+
+  # use -rpath for runtime path
+  export php_cv_cc_blibpath=no
+  export php_cv_cc_dashr=no
+  export php_cv_cc_plusb=no
+  export php_cv_cc_rpath=yes ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-w" LDFLAGS="-L/usr/openwin/lib" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-w" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake
+
+# apxs expects shared library to end with .so
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  # ld cannot grok multiple +b entries so we need to replace
+  # the earlier entry
+  rm -f libphp4.la libs/libphp4.so
+  gmake phptempdir=${SB_VAR_LIBOPENSSL_LIB}
+  [ -f ".libs/libphp4.sl" ] && cp .libs/libphp4.sl libs/libphp4.so
+  :
+  ;;
+esac
+]]>
+    </build>
+
+    <module name="default">
+      <validate>
+        <depend program="php" module="1.3.31">v==4.3.9</depend>
+        <depend program="php" module="2.0.49">v==4.3.9</depend>
+      </validate>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="1.3.31">
+      <dependencies replace="0">
+        <depend program="apache" var="APACHE">v==1.3.31</depend>
+        <depend program="mm" var="LIBMM"
+          install-name="libmm13">v&gt;=1.3.1</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+rm -f config.cache
+CC="${CC:-gcc}" CPP="${CPP+${CPP}}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${CC_LD_RT_LIBS+${CC_LD_RT}${CC_LD_RT_LIBS}} \
+${LDFLAGS+${LDFLAGS}}" \
+EXTENSION_DIR="${SB_INSTALL_PREFIX}/lib/extensions/${SB_MODULE_NAME}" \
+./configure --with-config-file-path=${_sysconfdir} \
+--with-pear="${SB_INSTALL_PREFIX}/lib" --with-mm=${SB_VAR_LIBMM} \
+--with-apxs=${SB_VAR_APACHE}/bin/apxs --enable-sysvsem \
+--enable-sysvshm --with-zlib=shared,${SB_VAR_ZLIB} \
+--with-bz2=shared,${SB_VAR_LIBBZ} --enable-shared \
+--enable-static --enable-trans-sid --enable-ftp \
+--with-db4=${SB_VAR_LIBDB} --with-xml=shared \
+--enable-track-vars --enable-safe-mode \
+--enable-sigchild --with-expat-dir=${SB_VAR_LIBEXPAT} \
+--with-gd=shared,${SB_VAR_LIBGD} --enable-gd-native-ttf \
+--with-jpeg-dir=${SB_VAR_JPEG} --with-png-dir=${SB_VAR_LIBPNG} \
+--with-tiff-dir=${SB_VAR_LIBTIFF} --with-freetype-dir=${SB_VAR_LIBTTF} \
+--with-xpm-dir=${SB_VAR_XPM} --with-t1lib=${SB_VAR_T1LIB} \
+${SB_VAR_LIBOPENSSL+--with-openssl=${SB_VAR_LIBOPENSSL}} \
+${SB_VAR_OPENLDAP+--with-ldap=shared,${SB_VAR_OPENLDAP}} \
+${SB_VAR_MYSQL+--with-mysql=shared,${SB_VAR_MYSQL}} \
+${SB_VAR_MYSQL+--with-mysql-sock="/var${SB_VAR_MYSQL}/run/mysql.sock"} \
+${SB_VAR_PGSQL+--with-pgsql=shared,${SB_VAR_PGSQL}} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}
+
+gmake install-sapi install-modules
+
+rmdir ${SB_INSTALL_PREFIX}/bin
+mv ${SB_INSTALL_PREFIX}/modules/libphp4.so \
+${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}/mod_php4.so
+${SB_PATH_CHMOD} 555 ${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}/mod_php4.so
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}
+rm -rf ${SB_INSTALL_PREFIX}/lib/extensions/${SB_MODULE_NAME}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.0.49">
+      <dependencies replace="0">
+        <depend program="apache" var="APACHE">v==2.0.49</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+rm -f config.cache
+CC="${CC:-gcc}" CPP="${CPP+${CPP}}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+EXTENSION_DIR="${SB_INSTALL_PREFIX}/lib/extensions/${SB_MODULE_NAME}" \
+./configure --with-config-file-path=${_sysconfdir} \
+--with-pear="${SB_INSTALL_PREFIX}/lib" \
+--with-apxs2=${SB_VAR_APACHE}/bin/apxs --enable-sysvsem \
+--enable-sysvshm --with-zlib=shared,${SB_VAR_ZLIB} \
+--with-bz2=shared,${SB_VAR_LIBBZ} --enable-shared \
+--enable-static --enable-trans-sid --enable-ftp \
+--with-db4=${SB_VAR_LIBDB} --with-xml=shared \
+--enable-track-vars --enable-safe-mode \
+--enable-sigchild --with-expat-dir=${SB_VAR_LIBEXPAT} \
+--with-gd=shared,${SB_VAR_LIBGD} --enable-gd-native-ttf \
+--with-jpeg-dir=${SB_VAR_JPEG} --with-png-dir=${SB_VAR_LIBPNG} \
+--with-tiff-dir=${SB_VAR_LIBTIFF} --with-freetype-dir=${SB_VAR_LIBTTF} \
+--with-xpm-dir=${SB_VAR_XPM} --with-t1lib=${SB_VAR_T1LIB} \
+${SB_VAR_LIBOPENSSL+--with-openssl=${SB_VAR_LIBOPENSSL}} \
+${SB_VAR_OPENLDAP+--with-ldap=shared,${SB_VAR_OPENLDAP}} \
+${SB_VAR_MYSQL+--with-mysql=shared,${SB_VAR_MYSQL}} \
+${SB_VAR_MYSQL+--with-mysql-sock="/var${SB_VAR_MYSQL}/run/mysql.sock"} \
+${SB_VAR_PGSQL+--with-pgsql=shared,${SB_VAR_PGSQL}} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/php.ini
+${SB_PATH_INSTALL} -m 644 -o root -g 0 php.ini-dist \
+${_sysconfdir}/php.ini.sample
+${SB_PATH_INSTALL} -m 644 -o root -g 0 php.ini-recommended \
+${_sysconfdir}/php.ini.recommended
+
+cat >${_sysconfdir}/php.ini <<_EOT_
+# Load bzip2 compression library
+#extension = "bz2.sl" (HP-UX)
+#extension = "bz2.so"
+
+# Load GD image library
+#extension = "gd.sl" (HP-UX)
+#extension = "gd.so"
+
+# Load OpenLDAP library
+#extension = "ldap.sl" (HP-UX)
+#extension = "ldap.so"
+
+# Load MySQL 4.0.20 database library
+#extension = "mysql.sl" (HP-UX)
+#extension = "mysql.so"
+
+# Load PostgreSQL 7.4.3 database library
+#extension = "pgsql.sl" (HP-UX)
+#extension = "pgsql.so"
+
+# Load zlib compression library
+#extension = "zlib.sl" (HP-UX)
+#extension = "zlib.so"
+_EOT_
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}
+
+mv ${SB_INSTALL_PREFIX}/modules/libphp4.so \
+${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}/mod_php4.so
+${SB_PATH_CHMOD} 555 ${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}/mod_php4.so
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/include
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="4.3.8" to="4.3.9">
+        <item><para>GPC input processing fixes</para></item>
+        <item><para>Implemented periodic PCRE compiled regexp cache
+cleanup, to avoid memory exhaustion</para></item>
+        <item><para>Fixed bug with raw_post_data not getting
+set</para></item>
+        <item><para>Fixed a file-descriptor leak with phpinfo() and
+other 'special' URLs</para></item>
+        <item><para>Rewritten UNIX and Windows install help
+files</para></item>
+        <item><para>Updated PCRE to provide better error handling in
+certain cases</para></item>
+        <item><para>NSAPI: added "bucket" parameter to list of
+non-php.ini-keys of php4_execute for doing performance stats without
+warnings in server-log</para></item>
+        <item><para>Fixed leap year checking with
+idate()</para></item>
+        <item><para>Fixed strip_tags() to correctly handle '\0'
+characters</para></item>
+        <item><para>Fixed funny forking effect in FastCGI when
+PHP_FCGI_CHILDREN was not set</para></item>
+        <item><para>Fixed bug #30050 (Possible crash inside
+php_shutdown_config())</para></item>
+        <item><para>Fixed bug #29882 (isset crashes on
+arrays)</para></item>
+        <item><para>Fixed bug #29753 (mcal_fetch_event() allows 2nd
+argument to be optional)</para></item>
+        <item><para>Fixed bug #29727 (Added missing CURL
+authentication directives)</para></item>
+        <item><para>Fixed bug #29719 (fgetcsv() has problem parsing
+strings ending with escaped enclosures)</para></item>
+        <item><para>Fixed bug #29607 (highlighting code with HEREDOC
+produces invalid output)</para></item>
+        <item><para>Fixed bug #29599 (domxml_error segfaults another
+apache module)</para></item>
+        <item><para>Fixed bug #29594 (Use PHP's own tmpfile()
+implementation)</para></item>
+        <item><para>Fixed bug #29581 (Typo inside php.ini comments for
+mysql.trace_mode)</para></item>
+        <item><para>Fixed bug #29493 (extract(array, EXTR_REFS)
+misbehaves with elements referred twice or more times)</para></item>
+        <item><para>Fixed bug #29443 (Sanity check for wbmp
+detection)</para></item>
+        <item><para>Fixed bug #29369 (Uploaded files with ' or " in
+their names get their names truncated at those
+characters)</para></item>
+        <item><para>Fixed bug #29349 (imagecreatefromstring() crashes
+with external GD library)</para></item>
+        <item><para>Fixed bug #29333 (output_buffering+trans_sess_id
+can corrupt output)</para></item>
+        <item><para>Fixed bug #29226 (ctype_* functions missing
+validation of numeric string representations)</para></item>
+        <item><para>Fixed bug #29209 (imap_fetchbody() doesn't check
+message index)</para></item>
+        <item><para>Fixed bug #29116 (Zend constant warning uses
+memory after free)</para></item>
+        <item><para>Fixed bug #29114 (Potential double free in
+php_stat)</para></item>
+        <item><para>Fixed bug #29075 (strnatcmp() incorrectly handles
+whitespace)</para></item>
+        <item><para>Fixed bug #29049 (array sorting via user
+function/method does not validate it)</para></item>
+        <item><para>Fixed bug #29038 (extract() with EXTR_PREFIX_SAME
+prefixes empty strings)</para></item>
+        <item><para>Fixed bug #29034 (wordwrap() returns a boolean
+when passed empty string)</para></item>
+        <item><para>Fixed bug #28974 (overflow in array_slice(),
+array_splice(), substr, substr_replace(), strspn(),
+strcspn())</para></item>
+        <item><para>Fixed bug #28897 (ibase: -1 returned as -0.000 for
+64-bit scaled int)</para></item>
+        <item><para>Fixed bug #28879 (Implicit/Explicit array creation
+inconsistency when using Resources, Arrays, or Objects as
+indices)</para></item>
+        <item><para>Fixed bug #28878 (Setting of inikey's in obj.conf
+fails)</para></item>
+        <item><para>Fixed bug #28868 (Internal wrapper registry not
+thread safe)</para></item>
+        <item><para>Fixed bug #28818 (Apache 2 sapis do not export
+st_dev)</para></item>
+        <item><para>Fixed bug #28800 (strings beginning with "inf"
+improperly converted)</para></item>
+        <item><para>Fixed bug #28723 (Fixed mbstring config.m4 to work
+on OSes where test command does not support -e
+parameter)</para></item>
+        <item><para>Fixed bug #28692 (\0 in Authenticate header passed
+via safe_mode)</para></item>
+        <item><para>Fixed bug #28670 (WWW-Authentication header
+mangling with PCRE in safe_mode adds extra spaces)</para></item>
+        <item><para>Fixed bug #28668 (glob() does not work with
+relative paths on Windows)</para></item>
+        <item><para>Fixed bug #28649 (Proper glob() return value on
+Linux when there are no matches)</para></item>
+        <item><para>Fixed bug #28633 (sprintf incorrectly adding
+padding to floats)</para></item>
+        <item><para>Fixed bug #28627 (When multiple MySQL links are
+used default link is leaked)</para></item>
+        <item><para>Fixed bug #28525 (gmp_powm() does not work with
+hexadecimal string modulo represented as a string)</para></item>
+        <item><para>Fixed bug #28512 (Allocate enough space to store
+MSSQL data)</para></item>
+        <item><para>Fixed bug #28466 (mbstring_convert_variables()
+array separation problem)</para></item>
+        <item><para>Fixed bug #28175 (Allow bundled GD to compile
+against freetype 2.1.2)</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>Support for Bzip2, GD, MySQL, OpenLDAP, and PostgreSQL
+are available as dynamically-loadable modules. Instructions follow on
+how to edit <command>/etc${SB_INSTALL_PREFIX}/php.ini</command> depending on the
+module.</para>
+
+        <para>Bzip2 compression library: (requires bzip2-1.0.2)</para>
+        <unorderedlist>
+          <item><para><command>extension = "bz2.so"</command>
+("bz2.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>GD image library: (requires gd-2.0.15)</para>
+        <unorderedlist>
+          <item><para><command>extension = "gd.so"</command> ("gd.sl"
+on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>OpenLDAP LDAP library: (requires openldap-2.1.27)</para>
+        <unorderedlist>
+          <item><para><command>extension = "ldap.so"</command>
+("ldap.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>MySQL database library: (requires mysql-4.0.20)</para>
+        <unorderedlist>
+          <item><para><command>extension = "mysql.so"</command>
+("mysql.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>PostgreSQL database library: (requires
+postgresql-7.4.3)</para>
+        <unorderedlist>
+          <item><para><command>extension = "pgsql.so"</command>
+("pgsql.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>Zlib compression library: (requires zlib-1.1.4)</para>
+        <unorderedlist>
+          <item><para><command>extension = "zlib.so"</command>
+("zlib.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>To load multiple extensions, specify the directive
+multiple times. The "<command>extension_dir</command>" directive does
+not need to be used as the loadable modules are installed in the
+default extension directory.</para>
+
+        <para>The Apache module, <command>mod_php4.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules/2.0.49</command>
+for the Apache 2.0.49 module and
+<command>${SB_INSTALL_PREFIX}/modules/1.3.31</command> for the Apache
+1.3.31 module. The Apache 2.0.49 module is automatically added to the
+default Apache configuration file,
+<command>/etc${SB_INSTALL_BASE}/apache2049/httpd.conf</command>, and all files
+with extension "<command>.php</command>" are interpreted as PHP
+scripts:</para>
+        <screen>
+LoadModule php4_module ${SB_INSTALL_PREFIX}/modules/2.0.49/mod_php4.so
+&lt;IfModule sapi_apache2.c&gt;
+AddType application/x-httpd-php .php
+&lt;/IfModule&gt;
+        </screen>
+
+        <para>To add the Apache 1.3.31 version of the module, edit
+<command>/etc${SB_INSTALL_BASE}/apache1331/httpd.conf</command> and add the
+following:</para>
+        <screen>
+LoadModule php4_module ${SB_INSTALL_PREFIX}/modules/1.3.31/mod_php4.so
+&lt;IfModule mod_php4.c&gt;
+AddType application/x-httpd-php .php
+&lt;/IfModule&gt;
+        </screen>
+      </note>
+    </notes>
+  </program>
+</programs>

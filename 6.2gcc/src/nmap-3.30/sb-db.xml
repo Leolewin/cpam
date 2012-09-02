@@ -1,0 +1,366 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="nmap" version="3.30" revision="2"
+  systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}33</install-name>
+
+    <sources>
+      <source checksum="639fc1c91f48319eca97401e74f9c90e"
+        checksum-type="md5" size="918954"
+        path="src/nmap-3.30.tar.bz2"/>
+      <patch checksum="3c1adad4e78ea93f19837f59eb9d38fd"
+        checksum-type="md5" size="93842"
+        path="src/nmap-3.30.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="flex" add-path="prepend">v==2.5.4a</depend>
+      <depend program="gtk+" var="GTK" install-name="gtk+12"
+        add-path="prepend">v&gt;=1.2.10</depend>
+      <depend program="libpcap" var="LIBPCAP"
+        install-name="libpcap08">v&gt;=0.8.3</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--disable-ipv6" ;;
+*-hpux10*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-LANG:libc_in_namespace_std=off -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.9)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2.8)
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2.5.1)
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${GCC_RT+LDFLAGS="${CC_LD_RT}${GCC_RT}"} \
+--with-libpcap=${LIBPCAP} --with-gtk-prefix=${GTK} \
+--datadir="${_datadir}" --with-localdirs=no \
+${ARGS+${ARGS}} --prefix=${INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <notes>
+      <change from="3.28" to="3.30">
+        <item><para>Implemented the largest-ever OS fingerprint
+update! Roughtly 300 fingerprints were added/modified. These massive
+changes span the gamut from AIX 5.1 to the ZyXEL Prestige broadband
+router line. Notable updates include OpenBSD 3.3, FreeBSD 5.1, Mac OS
+X 10.2.6, Windows 2003 server, and more WAPs and broadband routers
+than you can shake a stick at.</para></item>
+        <item><para>Went through every one of the fingerprints to
+normalize the descriptions a bit</para></item>
+        <item><para>Added a new classification system to
+nmap-os-fingerprints. In addition to the standard text description,
+each entry is now classified by vendor name (e.g. Sun), underlying OS
+(e.g. Solaris), OS generation (e.g. 7), and device type ("general
+purpose", router, switch, game console, etc). This can be useful if
+you want to (say) locate and eliminate the SCO systems on a network,
+or find the wireless access points (WAPs) by scanning from the wired
+side.</para></item>
+        <item><para>Classification system described above is now used
+to print out a "device type" line and OS categories for matches. The
+free-form English details are still printed as well. Nmap can
+sometimes provide classifications even where it used to provide
+nothing because of "too many matches". These have been added to XML
+output as well. They are not printed for the "grepable output", as I
+consider that format deprecated.</para></item>
+        <item><para>Nmap will now sometimes guess in the "no exact
+matches" case, even if you don't use the secret --osscan_guess or
+-fuzzy options</para></item>
+        <item><para>Applied another huge NmapFE patch to revamp the
+interface to use a tabbed format that allows for many more Nmap
+options to be used. It also cleans up some crufty parts of the code.
+Let me and Peter know what you think (and if you encounter any
+problems).</para></item>
+        <item><para>Updated version of the Russian man page
+translation</para></item>
+      </change>
+
+      <change from="3.27" to="3.28">
+        <item><para>Fixed (I hope) an issue that would cause Nmap to
+print "Serious time computation problem in adjust_timeout ..." and
+quit. The ultimate cause was demonstrated by this --packet_trace
+snippet:</para>
+        <screen>
+SENT (0.0500s) ICMP 0.0.0.0 &gt; 127.0.0.1 Echo request (type=8/code=0) ...
+  RCVD (0.0450s) ICMP 127.0.0.1 &gt; 127.0.0.1 Echo reply (type=0/code=0) ...
+        </screen>
+        <para>As you can see, the ping reply appears to come BEFORE
+the request was sent(!). This sort of thing happens on at least Linux
+and Windows. The send time is obtained from gettimeofday(timeval,
+NULL), while receive time libpcap packet header. If anyone knows why
+this occurs, or (even better) knows a good way to fix it, let me know.
+For now, I am allowing the response to come up to .05s "before" the
+request. That is gross.</para></item>
+        <item><para>Fixed (I hope) a problem that led to the error
+message "Assertion `tqi-&gt;sockets[probe_port_num][seq] == -1'
+failed"</para></item>
+        <item><para>Fixed a problem that would cause Nmap on Windows
+to send ICMP ping packets from 0.0.0.0 instead of the appropriate
+source IP</para></item>
+        <item><para>Applied some changes which fix some typos and also
+suggest safer /tmp/ behavior in the HACKING file and Lithuanian man
+page</para></item>
+        <item><para>Fixed a problem with small --max_parallism values
+when non-root ping scanning that would cause Nmap to say
+"sendconnecttcpquery: Could not scavenge a free socket!" and
+quit.</para></item>
+        <item><para>Applied (with a few modifications) a large NmapFE
+patch to add a bunch more scan/ping options and cleans up some
+redundant NmapFE code.</para></item>
+        <item><para>Included new Russian man page
+translation</para></item>
+        <item><para>Changed many single-quotes (') into double quotes
+(") in the man page due to a disagreement over whether to represent
+them as (') or (\') in nroff</para></item>
+        <item><para>Included --packet_trace support for Explicit
+Congestion Notification (rfc 2481/3168) flags</para></item>
+        <item><para>Included --packet_trace support for a few
+(unusual) ICMP types in case Nmap receives them</para></item>
+        <item><para>Fixed a problem with redirecting XML/Grep/Machine
+output to stdout on Windows (e.g. -oX - )</para></item>
+      </change>
+
+      <change from="3.25" to="3.26">
+        <item><para>Fixed a segmentation fault several people reported
+that was introduced in 3.25. This problem manifests itself
+intermittently in many normal situations involving large-network
+scanning.</para></item>
+      </change>
+
+      <change from="3.20" to="3.25">
+        <item><para>I added UDP-based "ping" scanning. The -PU option
+can take an optional portlist like the TCP "ping" options (-PS, -PA),
+but it sends a UDP packet to the targets and expects hosts that are up
+to reply with a port unreachable (or possibly a UDP response if the
+port is open). This one is likely to work best against closed ports,
+since many open ports don't respond to empty requests.</para></item>
+        <item><para>Fixed (I hope) problem where Nmap would abort,
+complaining that "Assertion `pt-&gt;down_this_block &gt; 0'
+failed"</para></item>
+        <item><para>Fixed an "assertion failure" which would cause
+Nmap to exit when you specify a --max_rtt_timeout below
+3000</para></item>
+        <item><para>Packet receive times are now obtained from libpcap
+rather than simply using the time the packets are passed to Nmap. This
+should improve performance slightly.</para></item>
+        <item><para>Fixed bug that caused Nmap to ignore certain RST
+responses when you do both -PS and -PA</para></item>
+        <item><para>Modified ping scan to work better when many
+instances of Nmap are executed concurrently</para></item>
+        <item><para>Fixed a divide by zero error caused when nonroot
+users (on UNIX) explicitly request ICMP pings (which require root
+privileges). Now it prints a warning and uses the normal nonroot TCP
+connect() ping.</para></item>
+        <item><para>Made Nmap more tolerant of corrupt nmap-services
+and nmap-protocols</para></item>
+        <item><para>Added some more port numbers</para></item>
+        <item><para>Added --packet_trace support to
+Windows</para></item>
+        <item><para>Removed superfluous "addport" line in the XML
+output</para></item>
+        <item><para>Merged wintcpip.cc into tcpip.cc to avoid the
+headache of maintaining many nearly-identical functions</para></item>
+        <item><para>Fixed an assertion failure crash related to
+combining port 0 scans and OS scan</para></item>
+        <item><para>Fixed some compilation problems on systems without
+IPv6 support</para></item>
+        <item><para>Applied patch from Jochen Erwied which fixes the
+format strings used for printing certain timestamps</para></item>
+        <item><para>Changed the wording of NmapFE Gnome entries to
+better-comply with Gnome's Human Interface Guidelines
+(HIG)</para></item>
+      </change>
+
+      <change from="3.00" to="3.20">
+        <item><para>The random IP input option (-iR) now takes an
+argument specifying how many IPs you want to scan (e.g. -iR 1000).
+Specify 0 for the old neverending scan behavior.</para></item>
+        <item><para>Fixed a tricky memory leak
+discovered</para></item>
+        <item><para>Fixed output truncation problem noted by Lionel
+CONS</para></item>
+        <item><para>Fixed a bug that would cause certain incoming ICMP
+error messages to be improperly ignored</para></item>
+        <item><para>Made numerous improvements to the timing behavior
+of "-T Aggressive" (same as -T4) scans. It is now recommended for
+regular use by impatient people with a fast connection. "-T Insane"
+mode has also been updated, but we only recommend that for, well,
+insane people.</para></item>
+        <item><para>Made substantial changes to the
+SYN/connect()/Window scanning algorithms for improved speeds,
+especially against heavily filtered hosts. If you notice any timing
+problems (misidentified ports, etc.), please send me the details
+(including full Nmap output and a description of what is
+wrong).</para></item>
+        <item><para>Changed Nmap such that ALL syn scan packets are
+sent from the port you specify with -g. Retransmissions used to
+utilize successively higher ports. This change has a downside in that
+some operating systems (such as Linux) often won't reply to the
+retransmissions because they reuse the same connection specifier quad
+(srcip:srcport:dstip:dstport). Overall I think this is a
+win.</para></item>
+        <item><para>Added timestamps to "Starting nmap" line and each
+host port scan in verbose (-v) mode</para></item>
+        <item><para>I added support for a brand new "port" that many
+of you may have never scanned before! UDP &amp; TCP "port 0" (and IP
+protocol 0) are now permitted if you specify 0 explicitly. An argument
+like "-p -40" would still scan ports 1-40. Unlike ports, protocol 0 IS
+now scanned by default. This now works for ping probes too (e.g., -PS,
+-PA).</para></item>
+        <item><para>Applied patch which adds --ttl option, which sets
+the outgoing IPv4 TTL field in packets sent via all raw scan types
+(including ping scans and OS detection). A TTL of 0 is
+supported.</para></item>
+        <item><para>Applied patch which extends the multi-ping-port
+functionality to nonroot and IPv6 connect() users</para></item>
+        <item><para>I added a new --datadir command line option which
+allows you to specify the highest priority directory for Nmap data
+files nmap-services, nmap-os-fingerprints, and nmap-rpc. Any files
+which aren't in the given dir, will be searched for in the $NMAPDIR
+environmental variable, ~/nmap/, a compiled in data directory (e.g.
+<command>${SB_INSTALL_PREFIX}/share</command>), and finally the current
+directory.</para></item>
+        <item><para>Included new Latvian man page translation by
+"miscelerious options"</para></item>
+        <item><para>Applied patch which prevends certain
+false-positive responses when Nmap raw TCP ping scans are being run in
+parallel</para></item>
+        <item><para>To emphasize the highly professional nature of
+Nmap, I changed all instances of "fucked up" in error message text
+into "b0rked"</para></item>
+        <item><para>I made the maximum number of allowed routes and
+interfaces allowed on the scanning machine dynamic rather than
+hardcoded #defines of 1024 and 128</para></item>
+        <item><para>Integrated the largest OS fingerprint DB updates
+ever! New or substantially modified fingerprints included the latest
+Windows 2K/XP changes, Cisco IOS 12.2-based routers and PIX 6.3
+firewalls, FreeBSD 5.0, AIX 5.1, OpenBSD 3.2, Tru64 5.1A, IBM OS/400
+V5R1M0, dozens of wireless APs, VOIP devices, firewalls, printers,
+print servers, cable modems, webcams, etc.</para></item>
+        <item><para>Applied patch which adds the port owner to the
+"addport" XML output lines which are printed (only in verbose mode, I
+think) as each open port is discovered</para></item>
+        <item><para>I killed the annoying whitespace that is normally
+appended after the service name. Now it is only there when an owner
+was found via -sI (in which case there is a fourth column and so
+"service" must be exactly 24 characters).</para></item>
+        <item><para>Reworked the "ping scan" algorithm (used for any
+scan except -P0 or -sL) to be more robust in the face of low-bandwidth
+and congested connections. This also improves reliability in the
+multi-port and multi-type ping cases described below.</para></item>
+        <item><para>"Ping types" are no longer exclusive -- you can
+now do combinations such as "-PS22,53,80 -PT113 -PN -PE" in order to
+increase your odds of passing through strict filters. The "PB" flag is
+now deprecated since you can achieve the same result via "PE" and "PT"
+options.</para></item>
+        <item><para>Applied patch (with modest changes) by Gabriel L.
+Somlo, which allows multiple TCP probe ports in raw (root) mode. See
+the previous item for an example.</para></item>
+        <item><para>Tweaked the version number (-V) output
+slightly</para></item>
+        <item><para>Applied patch to fix a libpcap alignment
+bug</para></item>
+        <item><para>Applied patch which improves the way ICMP port
+unreachables from intermediate hosts are handled during UDP
+scans</para></item>
+        <item><para>Added a warning that some hosts may be skipped
+and/or repeated when someone tries to --resume a --randomize_hosts
+scan</para></item>
+        <item><para>Fixed a minor memory leak</para></item>
+        <item><para>Applied patch which adds an add-port XML tag
+whenever a new port is found open when Nmap is running in verbose
+mode. The new tag looks like:</para>
+        <screen>
+[addport state="open" portid="22" protocol="tcp"/]
+        </screen>
+        <para>I also updated docs/nmap.dtd to recognize this new
+tag.</para></item>
+        <item><para>Added German translation of Nmap
+manpage</para></item>
+        <item><para>Includes a brand new French translation of the
+manpage</para></item>
+        <item><para>Applied some patches which update the random IP
+allocation pool and improve OpenBSD support</para></item>
+        <item><para>Fixed a compile problem on machines without
+PF_INET6</para></item>
+        <item><para>Added --min_parallelism option, which makes scans
+more aggressive and MUCH faster in certain situations -- especially
+against firewalled hosts. It is basically the opposite of
+--max_parallelism (-M). Note that reliability can be lost if you push
+it too far.</para></item>
+        <item><para>Added --packet_trace option, which tells Nmap to
+display all of the packets it sends and receives in a format similar
+to tcpdump. I mostly added this for debugging purposes, but ppl
+wishing to learn how Nmap works or for experts wanting to ensure Nmap
+is doing exactly what they epect.</para></item>
+        <item><para>Fixed a segmentation fault in Idlescan
+(-sI)</para></item>
+        <item><para>Made Idlescan timing more conservative when -P0 is
+specified to improve accuracy</para></item>
+        <item><para>Fixed an infinite-loop condition that could occur
+during certain dropped-packet scenarios in an Idle scan</para></item>
+        <item><para>Nmap now reports execution times to millisecond
+precision (rather than rouding to the nearest second)</para></item>
+        <item><para>Fixed an infinite loop caused by invalid port
+arguments</para></item>
+        <item><para>IPv6 is now supported for TCP scan (-sT),
+connect()-style ping scan (-sP), and list scan (-sL)! Just specify the
+-6 option and the IPv6 numbers or DNS names. Netmask notation is not
+currently supported -- I'm not sure how useful it is for IPv6, where
+even petty end users may be allocated trillions of addresses
+(/80).</para></item>
+        <item><para>Removed arbitrary max_parallelism (-M)
+limitations</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 April 22" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade libpcap dependency from 0.7.1 to
+0.8.3</para></item>
+      </change>
+
+      <change date="2003 November 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade GCC dependency to 3.3.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

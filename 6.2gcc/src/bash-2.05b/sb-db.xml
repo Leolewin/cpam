@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="bash" version="2.05b" revision="5">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="5238251b4926d778dfe162f6ce729733"
+        checksum-type="md5" size="1956216"
+        path="src/bash-2.05b.tar.gz"/>
+      <patch checksum="94e520fa0272b06fb03fc46042095b62"
+        checksum-type="md5" size="1132"
+        path="src/bash205b-001"/>
+      <patch checksum="2957bbe5f6db1830d649d1071baba63c"
+        checksum-type="md5" size="755"
+        path="src/bash205b-002"/>
+      <patch checksum="2828e78563927b806246e2b4806ee0f5"
+        checksum-type="md5" size="2356"
+        path="src/bash205b-003"/>
+      <patch checksum="6bf89831209ba6d208943d2ebaa7fe3a"
+        checksum-type="md5" size="1110"
+        path="src/bash205b-004"/>
+      <patch checksum="311b7f0e3dabec51767bfabe6afd4ded"
+        checksum-type="md5" size="2217"
+        path="src/bash205b-005"/>
+      <patch checksum="f8a86d0a66b51080f3fbc5cc34ef1a06"
+        checksum-type="md5" size="3155"
+        path="src/bash205b-006"/>
+      <patch checksum="37d2acecc9146883f9b331c03b274f21"
+        checksum-type="md5" size="1072"
+        path="src/bash205b-007"/>
+      <patch checksum="119ab288950de1f10d88cae3f30a1cbc"
+        checksum-type="md5" size="552418"
+        path="src/bash-2.05b.patch"/>
+      <source checksum="511b2d07f0f401f686e8edc551a8e47f"
+        checksum-type="md5" size="1733577"
+        path="src/bash-doc-2.05b.tar.gz"
+        noop="1" var="DOC"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--with-bash-malloc=no"
+
+  export ac_cv_c_long_double=no ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no ;;
+*-osf*)
+  CC=cc CFLAGS="-msym -O2 -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  ARGS="--with-bash-malloc=no" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" --enable-alias \
+--enable-array-variables --enable-bang-history \
+--enable-brace-expansion --enable-command-timing \
+--enable-cond-command --enable-directory-stack --enable-dparen-arithmetic \
+--enable-extended-glob --enable-help-builtin --enable-history \
+--enable-job-control --enable-process-substitution \
+--enable-prompt-string-decoding --enable-readline \
+--enable-restricted --enable-progcomp --disable-largefile \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install texinfo source files
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 doc/bashref.texi \
+lib/readline/doc/rluser.texinfo lib/readline/doc/hsuser.texinfo ${_docdir}
+
+# install additional documentation
+(cd ${_docdir}
+gzip -dc ${SRC_DOC} | tar xf -
+rm -f doc/*.0
+mv ${_docdir}/doc/* ${_docdir}
+rm -rf ${_docdir}/doc
+chown -hR 0:0 ${_docdir}
+chmod 644 ${_docdir}/*)
+]]>
+    </install>
+
+    <changelog>
+      <change date="2003 September 11" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Disable strtoimax() on IRIX because it is not
+available before 6.5.19m</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+
+      <change date="2003 March 12" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix SEGV in lib/readline/bind.c when 0/ins key on
+numeric keypad is pressed and numlock is off.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

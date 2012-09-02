@@ -1,0 +1,53 @@
+Index: config-bot.h
+===================================================================
+--- config-bot.h.orig	2008-07-15 09:55:46.051080132 +0000
++++ config-bot.h	2008-07-15 09:56:47.045314039 +0000
+@@ -133,6 +133,12 @@
+    support user defined character classes.  */
+ /* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.  */
+ #if defined (HAVE_WCTYPE_H) && defined (HAVE_WCHAR_H) && defined (HAVE_LOCALE_H)
++/* See the comments in /usr/include.dtk/stdio.h about the __VA_LIST__
++ * macro for why this is necessary. We *must* include stdio.h before
++ * wchar.h for the compile to succeed. */
++#  ifdef __DECC
++#    include <stdio.h>
++#  endif
+ #  include <wchar.h>
+ #  include <wctype.h>
+ #  if defined (HAVE_ISWCTYPE) && \
+Index: Makefile.in
+===================================================================
+--- Makefile.in.orig	2006-08-17 18:03:35.000000000 +0000
++++ Makefile.in	2008-11-04 21:31:32.041541867 +0000
+@@ -36,6 +36,7 @@
+ infodir = @infodir@
+ includedir = @includedir@
+ datadir = @datadir@
++datarootdir = @datarootdir@
+ localedir = $(datadir)/locale
+ 
+ mandir = @mandir@
+Index: builtins/Makefile.in
+===================================================================
+--- builtins/Makefile.in.orig	2006-03-07 19:42:33.000000000 +0000
++++ builtins/Makefile.in	2008-11-04 21:31:21.031469890 +0000
+@@ -41,6 +41,7 @@
+ topdir = @top_srcdir@
+ includedir = @includedir@
+ datadir = @datadir@
++datarootdir = @datarootdir@
+ localedir = $(datadir)/locale
+ 
+ # Support an alternate destination root directory for package building
+Index: lib/intl/Makefile.in
+===================================================================
+--- lib/intl/Makefile.in.orig	2004-11-16 22:18:56.000000000 +0000
++++ lib/intl/Makefile.in	2008-11-04 21:31:26.870050185 +0000
+@@ -32,6 +32,7 @@
+ libdir = @libdir@
+ includedir = @includedir@
+ datadir = @datadir@
++datarootdir = @datarootdir@
+ localedir = $(datadir)/locale
+ gettextsrcdir = $(datadir)/gettext/intl
+ aliaspath = $(localedir)

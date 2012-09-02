@@ -1,0 +1,172 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mgaim" version="1.0" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}10</install-name>
+
+    <sources>
+      <source path="src/mgaim-1.0.tgz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <module name="default">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+set -x 
+cd src
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--with-glib-prefix="/opt/TWWfsw/glib12/lib" \
+--with-glib-exec-prefix="/opt/TWWfsw/glib12" \
+--with-gnome="/opt/TWWfsw/libglib24/" \
+--with-gnome-includes="/opt/TWWfsw/libglib24/include" \
+--with-gnome-libs="/opt/TWWfsw/libglib24/lib" \
+--prefix=${SB_INSTALL_PREFIX}
+
+#
+#aty010-adm@ilad2219> ./configure --help
+#Usage: configure [options] [host]
+#Options: [defaults in brackets after descriptions]
+#Configuration:
+#  --cache-file=FILE       cache test results in FILE
+#  --help                  print this message
+#  --no-create             do not create output files
+#  --quiet, --silent       do not print `checking...' messages
+#  --version               print the version of autoconf that created configure
+#Directory and file names:
+#  --prefix=PREFIX         install architecture-independent files in PREFIX
+#                          [/usr/local]
+#  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+#                          [same as prefix]
+#  --bindir=DIR            user executables in DIR [EPREFIX/bin]
+#  --sbindir=DIR           system admin executables in DIR [EPREFIX/sbin]
+#  --libexecdir=DIR        program executables in DIR [EPREFIX/libexec]
+#  --datadir=DIR           read-only architecture-independent data in DIR
+#                          [PREFIX/share]
+#  --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
+#  --sharedstatedir=DIR    modifiable architecture-independent data in DIR
+#                          [PREFIX/com]
+#  --localstatedir=DIR     modifiable single-machine data in DIR [PREFIX/var]
+#  --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
+#  --includedir=DIR        C header files in DIR [PREFIX/include]
+#  --oldincludedir=DIR     C header files for non-gcc in DIR [/usr/include]
+#  --infodir=DIR           info documentation in DIR [PREFIX/info]
+#  --mandir=DIR            man documentation in DIR [PREFIX/man]
+#  --srcdir=DIR            find the sources in DIR [configure dir or ..]
+#  --program-prefix=PREFIX prepend PREFIX to installed program names
+#  --program-suffix=SUFFIX append SUFFIX to installed program names
+#  --program-transform-name=PROGRAM
+#                          run sed PROGRAM on installed program names
+#Host type:
+#  --build=BUILD           configure for building on BUILD [BUILD=HOST]
+#  --host=HOST             configure for HOST [guessed]
+#  --target=TARGET         configure for TARGET [TARGET=HOST]
+#Features and packages:
+#  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+#  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+#  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+#  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+#  --x-includes=DIR        X include files are in DIR
+#  --x-libraries=DIR       X library files are in DIR
+#--enable and --with options recognized:
+#  --enable-static[=PKGS]  build static libraries [default=no]
+#  --enable-shared[=PKGS]  build shared libraries [default=yes]
+#  --enable-fast-install[=PKGS]  optimize for fast installation [default=yes]
+#  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+#  --disable-libtool-lock  avoid locking (might break parallel builds)
+#  --with-pic              try to use only PIC/non-PIC objects [default=use both]
+#  --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
+#  --with-libiconv-prefix[=DIR]  search for libiconv in DIR/include and DIR/lib
+#  --without-libiconv-prefix     don't search for libiconv in includedir and libdir
+#  --disable-nls           do not use Native Language Support
+#  --with-included-gettext use the GNU gettext library included here
+#  --with-libintl-prefix[=DIR]  search for libintl in DIR/include and DIR/lib
+#  --without-libintl-prefix     don't search for libintl in includedir and libdir
+#
+#  --disable-multi         disable multiple connections
+#  --disable-prpls         don't build dynamic protocol plugins
+#  --with-static-prpls     link in certain protocols statically
+#  --disable-gnome         compile without Gnome bits
+#  --disable-pixbuf        compile without GdkPixbuf
+#  --enable-panel          compile as a GNOME applet
+#  --disable-esd           Turn off ESD (default=auto)
+#  --enable-nas            Enable NAS (Network Audio System) support
+#  --disable-artsc         Turn off ArtsC (default=auto)
+#  --disable-plugins       compile without plugin support
+#  --disable-perl          compile without perl scripting
+#  --enable-debug          compile with debugging support
+#  --disable-screensaver   compile without X screensaver extension
+#  --with-krb4=PREFIX      Compile Zephyr plugin with Kerberos 4 support
+#  --with-gnome-includes   Specify location of GNOME headers
+#  --with-gnome-libs       Specify location of GNOME libs
+#  --with-gnome            Specify prefix for GNOME files
+#  --with-gtk-prefix=PFX   Prefix where GTK is installed (optional)
+#  --with-gtk-exec-prefix=PFX Exec prefix where GTK is installed (optional)
+#  --disable-gtktest       Do not try to compile and run a test GTK program
+#  --with-glib-prefix=PFX   Prefix where GLIB is installed (optional)
+#  --with-glib-exec-prefix=PFX Exec prefix where GLIB is installed (optional)
+#  --disable-glibtest       Do not try to compile and run a test GLIB program
+#  --with-gtk-prefix=PFX   Prefix where GTK is installed (optional)
+#  --with-gtk-exec-prefix=PFX Exec prefix where GTK is installed (optional)
+#  --disable-gtktest       Do not try to compile and run a test GTK program
+#  --with-x                use the X Window System
+#  --with-esd-prefix=PFX   Prefix where ESD is installed (optional)
+#  --with-esd-exec-prefix=PFX Exec prefix where ESD is installed (optional)
+#  --disable-esdtest       Do not try to compile and run a test ESD program
+#  --disable-artsc-test      Do not compile and run a test ArtsC program.
+#aty010-adm@ilad2219>
+#
+]]>
+      </configure>
+    </module>
+
+    <changelog>
+      <change date="2004 September 7" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 August 13" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Build without -module</para></item>
+      </change>
+
+      <change date="2003 April 4" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Install AIX 64-bit libraries in lib/ppc64 instead
+of lib/power3</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

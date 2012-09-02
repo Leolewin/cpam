@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="dhcping" version="1.2" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="c4b22bbf3446c8567e371c40aa552d5d"
+        checksum-type="md5" size="75485"
+        path="src/dhcping-1.2.tar.gz"/>
+      <patch checksum="f5f7a78abf52b7e4a597ee96a3b3f55f"
+        checksum-type="md5" size="2610"
+        path="src/dhcping-1.2.tww.patch"/>
+      <patch checksum="9b645edfa65968885444c1613110f782"
+        checksum-type="md5" size="181917"
+        path="src/dhcping-1.2.auto.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <changelog>
+      <change date="2009 October 27" revision="6"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for HPUX 11.31</para></item>
+      </change>
+
+      <change date="2006 July 4" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 March 28" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 December 5" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 June 12" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

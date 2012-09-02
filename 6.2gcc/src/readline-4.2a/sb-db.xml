@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="readline" version="4.2a" revision="3">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <sources>
+      <source checksum="7c5b1d2909821d5c1a7fe8904f1bb714"
+        checksum-type="md5" size="919625"
+        path="src/readline-4.2a.tar.gz"/>
+      <patch checksum="dad2fb24d441c1c7ed91bbb83a59fcb6"
+        checksum-type="md5" size="1175500"
+        path="src/readline-4.2a.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <install-name>${NAME}42a</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--with-curses" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-sun-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --enable-static --enable-shared \
+${ARGS+${ARGS}} --prefix=${INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+
+# install texinfo source files
+ginstall -m 644 -o root -g 0 doc/hist.texinfo doc/rlman.texinfo \
+doc/manvers.texinfo doc/hsuser.texinfo doc/hstech.texinfo \
+doc/rluser.texinfo doc/rluserman.texinfo doc/rltech.texinfo ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <module name="tww-static">
+      <install-name>${NAME}42as</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-sun-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --disable-shared \
+--prefix=${INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+
+# install texinfo source files
+ginstall -m 644 -o root -g 0 doc/hist.texinfo doc/rlman.texinfo \
+doc/manvers.texinfo doc/hsuser.texinfo doc/hstech.texinfo \
+doc/rluser.texinfo doc/rluserman.texinfo doc/rltech.texinfo ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <changelog>
+      <change date="2004 September 1" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+        <item><para>Don't link with -module</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX 4)</para></item>
+      </change>
+
+      <change date="2003 March 6" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Embed the term library into the readline shared
+library</para></item>
+        <item><para>On HP-UX, link against curses library (libtermcap
+only available as a static library)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

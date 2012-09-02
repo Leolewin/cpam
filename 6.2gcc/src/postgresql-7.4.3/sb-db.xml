@@ -1,0 +1,1228 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="postgresql" version="7.4.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>pgsql743</install-name>
+
+    <sources>
+      <source checksum="204d8ab0c51d9691da2bd986ddbdc477"
+        checksum-type="md5" size="10149755"
+        path="src/postgresql-7.4.3.tar.bz2"/>
+      <patch checksum="ae1655040374147f1ad16c1ce2ef3d1f"
+        checksum-type="md5" size="529930"
+        path="src/postgresql-7.4.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="tcl" var="TCL"
+        install-name="tcl84">v&gt;=8.4.6</depend>
+      <depend program="tk" var="TK"
+        install-name="tk84">v&gt;=8.4.6</depend>
+      <depend program="flex" var="FLEX" install-name="flex"
+        add-path="prepend" type="build">v&gt;=2.5.4a</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-irix*">v&gt;=1.9.2</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="readline" var="READLINE">v==4.3</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ARGS="--with-pam" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," LDFLAGS="-L${SB_VAR_LIBICONV_LIB}" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ARGS="--with-pam" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -std -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ARGS="--with-pam" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ARGS="--with-pam" ;;
+esac
+
+./configure TAR="${SB_PATH_TAR}" CFLAGS="${CFLAGS:--O2}" \
+--with-includes="${SB_VAR_GETTEXT_INC} ${SB_VAR_READLINE_INC} \
+${SB_VAR_ZLIB_INC} ${SB_VAR_TCL_INC} ${SB_VAR_TK_INC}" \
+CPPFLAGS="-DOPENSSL_DISABLE_OLD_DES_SUPPORT" \
+--with-libraries="${SB_VAR_GETTEXT_LIB} ${SB_VAR_READLINE_LIB} \
+${SB_VAR_ZLIB_LIB} ${SB_VAR_TCL_LIB} ${SB_VAR_TK_LIB}" \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX}/lib\
+${SB_VAR_TCL+:${SB_VAR_TCL_LIB}}${TKSB_VAR_+:${SB_VAR_TK_LIB}}:\
+${SB_VAR_READLINE_LIB}:${SB_VAR_ZLIB_LIB}:${SB_VAR_LIBOPENSSL_LIB}:\
+${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+TCLSH=${SB_VAR_TCL}/bin/tclsh8.4 PERL=${SB_VAR_PERL}/bin/perl \
+--with-CC="${CC:-gcc}" --with-perl=no --with-python=no \
+--with-java=no ${SB_VAR_TCL+--with-tcl=yes} \
+${SB_VAR_TCL+--with-tclconfig=${SB_VAR_TCL_LIB}} \
+${SB_VAR_TCL+--with-tkconfig=${SB_VAR_TK_LIB}} \
+--with-openssl=${SB_VAR_LIBOPENSSL} --with-zlib --with-readline \
+--enable-nls --datadir="${_datadir}" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake docdir="${_docdir}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install install-all-headers docdir="${_docdir}"
+${SB_PATH_INSTALL} -m 644 -o root -g 0 INSTALL ${_docdir}
+
+# replace relative paths to shared libraries
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  (cd src/interfaces/ecpg/lib
+  rm libecpg.sl libecpg.sl.3
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/interfaces/libpgtcl
+  rm libpgtcl.sl libpgtcl.sl.2
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pg_controldata
+  rm pg_controldata
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pg_dump
+  rm pg_dump pg_dumpall pg_restore
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pg_encoding
+  rm pg_encoding
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pg_resetxlog
+  rm pg_resetxlog
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pgtclsh
+  rm pgtclsh pgtksh
+  gmake libpgtcl="-L${SB_INSTALL_PREFIX}/lib -lpgtcl" \
+  libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/psql
+  rm psql
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/scripts
+  rm createdb dropdb createlang droplang createuser dropuser \
+  clusterdb vacuumdb
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/interfaces/ecpg/ecpglib
+  rm libecpg.sl.4
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" \
+  libpgtypes="-L${SB_INSTALL_PREFIX}/lib -lpgtypes" && gmake install)
+  (cd src/interfaces/ecpg/compatlib
+  rm libecpg_compat.sl.1
+  gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" \
+  libecpg="-L${SB_INSTALL_PREFIX}/lib -lecpg" \
+  libpgtypes="-L${SB_INSTALL_PREFIX}/lib -lpgtypes" && gmake install)
+  ;;
+esac
+
+# copy contrib directory
+${SB_PATH_TAR} cf - contrib |\
+(cd ${SB_INSTALL_PREFIX}; ${SB_PATH_TAR} xvf -)
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/man ${_docdir} \
+${SB_INSTALL_PREFIX}/contrib
+${SB_PATH_CHMOD} -R g-w ${SB_INSTALL_PREFIX}/contrib
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_localstatedir+${_localstatedir}} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="7.4.2" to="7.4.3">
+        <item><para>Fix temporary memory leak when using non-hashed
+aggregates</para></item>
+        <item><para>ECPG fixes, including some for Informix
+compatibility</para></item>
+        <item><para>Fixes for compiling with thread-safety,
+particularly Solaris</para></item>
+        <item><para>Fix error in COPY IN termination when using the
+old network protocol</para></item>
+        <item><para>Several important fixes in pg_autovacuum,
+including fixes for large tables, unsigned oids, stability, temp
+tables, and debug mode</para></item>
+        <item><para>Fix problem with reading tar-format dumps on
+NetBSD and BSD/OS</para></item>
+        <item><para>Several JDBC fixes</para></item>
+        <item><para>Fix ALTER SEQUENCE RESTART where last_value equals
+the restart value</para></item>
+        <item><para>Repair failure to recalculate nested
+sub-selects</para></item>
+        <item><para>Fix problems with non-constant expressions in
+LIMIT/OFFSET</para></item>
+        <item><para>Support FULL JOIN with no join clause, such as X
+FULL JOIN Y ON TRUE</para></item>
+        <item><para>Fix another zero-column table bug</para></item>
+        <item><para>Improve handling of non-qualified identifiers in
+GROUP BY clauses in sub-selects Select-list aliases within the
+sub-select will now take precedence over names from outer query
+levels</para></item>
+        <item><para>Do not generate "NATURAL CROSS JOIN" when
+decompiling rules</para></item>
+        <item><para>Add checks for invalid field length in binary COPY
+This fixes a difficult-to-exploit security hole</para></item>
+        <item><para>Avoid locking conflict between ANALYZE and
+LISTEN/NOTIFY</para></item>
+        <item><para>Numerous translation updates (various
+contributors)</para></item>
+      </change>
+
+      <change from="7.4.1" to="7.4.2">
+        <item><para>Fix pg_statistics alignment bug that could crash
+optimizer</para></item>
+        <item><para>Allow non-super users to update
+pg_settings</para></item>
+        <item><para>Fix several optimizer bugs, most of which led to
+"variable not found in subplan target lists" errors</para></item>
+        <item><para>Avoid out-of-memory failure during startup of
+large multiple index scan</para></item>
+        <item><para>Fix multibyte problem that could lead to "out of
+memory" error during "COPY IN"</para></item>
+        <item><para>Fix problems with "SELECT INTO" / "CREATE TABLE
+AS" from tables without OIDs</para></item>
+        <item><para>Fix problems with "alter_table" regression test
+during parallel testing</para></item>
+        <item><para>Fix problems with hitting open file limit,
+especially on OS X</para></item>
+        <item><para>Partial fix for Turkish-locale issues initdb will
+succeed now in Turkish locale, but there are still some inconveniences
+associated with the i/I problem.</para></item>
+        <item><para>Make pg_dump set client encoding on
+restore</para></item>
+        <item><para>Other minor pg_dump fixes</para></item>
+        <item><para>Allow ecpg to again use C keywords as column
+names</para></item>
+        <item><para>Added ecpg WHENEVER NOT_FOUND to
+SELECT/INSERT/UPDATE/DELETE</para></item>
+        <item><para>Fix ecpg crash for queries calling set-returning
+functions</para></item>
+        <item><para>Various other ecpg fixes</para></item>
+        <item><para>Fixes for Borland compiler</para></item>
+        <item><para>Thread build improvements</para></item>
+        <item><para>Various other build fixes</para></item>
+        <item><para>Various JDBC fixes</para></item>
+      </change>
+
+      <change from="7.4" to="7.4.1">
+        <item><para>Fixed bug in "CREATE SCHEMA" parsing in
+ECPG</para></item>
+        <item><para>Fix compile error when "--enable-thread-safety"
+and "--with-perl" are used together</para></item>
+        <item><para>Fix for subqueries that used hash joins. Certain
+subqueries that used hash joins would crash because of improperly
+shared structures.</para></item>
+        <item><para>Fix free space map compaction bug. This fixes a
+bug where compaction of the free space map could lead to a database
+server shutdown.</para></item>
+        <item><para>Fix for Borland compiler build of
+libpq</para></item>
+        <item><para>Fix netmask() and hostmask() to return the
+maximum-length masklen</para></item>
+        <item><para>x these functions to return values consistent with
+pre-7.4 releases</para></item>
+        <item><para>Several "contrib/pg_autovacuum" fixes. Fixes
+include improper variable initialization, missing vacuum after
+"TRUNCATE", and duration computation overflow for long
+vacuums.</para></item>
+        <item><para>Allow compile of "contrib/cube" under
+Cygwin</para></item>
+        <item><para>Fix Solaris use of password file when no passwords
+are defined. Fix crash on Solaris caused by use of any type of
+password authentication when no passwords were defined.</para></item>
+        <item><para>JDBC fix for thread problems, other
+fixes</para></item>
+        <item><para>Fix for bytea index lookups</para></item>
+        <item><para>Fix information schema for bit data
+types</para></item>
+        <item><para>Force zero_damaged_pages to be on during recovery
+from WAL</para></item>
+        <item><para>Prevent some obscure cases of "variable not in
+subplan target lists"</para></item>
+        <item><para>Make PQescapeBytea and byteaout consistent with
+each other</para></item>
+        <item><para>Escape bytea output for bytes &gt; 0x7e. If
+different client encodings are used for bytea output and input, it is
+possible for bytea values to be corrupted by the differing encodings.
+This fix escapes all bytes that might be affected.</para></item>
+        <item><para>Added missing SPI_finish() calls to dblink's
+get_tuple_of_interest()</para></item>
+        <item><para>New Czech FAQ</para></item>
+        <item><para>Fix information schema view
+constraint_column_usage for foreign keys</para></item>
+        <item><para>ECPG fixes</para></item>
+        <item><para>Fix bug with multiple IN subqueries and joins in
+the subqueries</para></item>
+        <item><para>Alllow COUNT('x') to work</para></item>
+        <item><para>Install ECPG include files for Informix
+compatibility into separate directory. Some names of ECPG include
+files for Informix compatibility conflicted with operating system
+include files. By installing them in their own directory, name
+conflicts have been reduced.</para></item>
+        <item><para>Fix SSL memory leak. This release fixes a bug in
+7.4 where SSL didn't free all memory it allocated.</para></item>
+        <item><para>Prevent "pg_service.conf" from using service name
+as default dbname</para></item>
+        <item><para>Fix local ident authentication on
+FreeBSD</para></item>
+      </change>
+
+      <change from="7.3.6" to="7.4">
+        <items name="Overview of major changes">
+          <item><para>IN / NOT IN subqueries are now much more
+efficient: In previous releases, IN/NOT IN subqueries were joined to
+the upper query by sequentially scanning the subquery looking for a
+match. The 7.4 code uses the same sophisticated techniques used by
+ordinary joins and so is much faster. An IN will now usually be as
+fast as or faster than an equivalent EXISTS subquery; this reverses
+the conventional wisdom that applied to previous
+releases.</para></item>
+          <item><para>Improved GROUP BY processing by using hash
+buckets: In previous releases, rows to be grouped had to be sorted
+first. The 7.4 code can do GROUP BY without sorting, by accumulating
+results into a hash table with one entry per group. It will still use
+the sort technique, however, if the hash table is estimated to be too
+large to fit in sort_mem.</para></item>
+          <item><para>New multikey hash join capability: In previous
+releases, hash joins could only occur on single keys. This release
+allows multicolumn hash joins.</para></item>
+          <item><para>Queries using the explicit JOIN syntax are now
+better optimized: Prior releases evaluated queries using the explicit
+JOIN syntax only in the order implied by the syntax. 7.4 allows full
+optimization of these queries, meaning the optimizer considers all
+possible join orderings and chooses the most efficient. Outer joins,
+however, must still follow the declared ordering.</para></item>
+          <item><para>Faster and more powerful regular expression
+code: The entire regular expression module has been replaced with a
+new version by Henry Spencer, originally written for Tcl. The code
+greatly improves performance and supports several flavors of regular
+expressions.</para></item>
+          <item><para>Function-inlining for simple SQL functions:
+Simple SQL functions can now be inlined by including their SQL in the
+main query. This improves performance by eliminating per-call
+overhead. That means simple SQL functions now behave like
+macros.</para></item>
+          <item><para>Full support for IPv6 connections and IPv6
+address data types: Previous releases allowed only IPv4 connections,
+and the IP data types only supported IPv4 addresses. This release adds
+full IPv6 support in both of these areas.</para></item>
+          <item><para>Major improvements in SSL performance and
+reliability: Several people very familiar with the SSL API have
+overhauled our SSL code to improve SSL key negotiation and error
+recovery.</para></item>
+          <item><para>Make free space map efficiently reuse empty
+index pages, and other: free space management improvements In previous
+releases, B-tree index pages that were left empty because of deleted
+rows could only be reused by rows with index values similar to the
+rows originally indexed on that page. In 7.4, "VACUUM" records empty
+index pages and allows them to be reused for any future index
+rows.</para></item>
+          <item><para>SQL-standard information schema: The information
+schema provides a standardized and stable way to access information
+about the schema objects defined in a database.</para></item>
+          <item><para>Cursors conform more closely to the SQL
+standard: The commands "FETCH" and "MOVE" have been overhauled to
+conform more closely to the SQL standard.</para></item>
+          <item><para>Cursors can exist outside transactions: These
+cursors are also called holdable cursors.</para></item>
+          <item><para>New client-to-server protocol: The new protocol
+adds error codes, more status information, faster startup, better
+support for binary data transmission, parameter values separated from
+SQL commands, prepared statements available at the protocol level, and
+cleaner recovery from "COPY" failures. The older protocol is still
+supported by both server and clients.</para></item>
+          <item><para>libpq and ECPG applications are now fully
+thread-safe: While previous libpq releases already supported threads,
+this release improves thread safety by fixing some non-thread-safe
+code that was used during database connection startup. The "configure"
+option "--enable-thread-safety" must be used to enable this
+feature.</para></item>
+          <item><para>New version of full-text indexing: A new
+full-text indexing suite is available in
+"contrib/tsearch2".</para></item>
+          <item><para>New autovacuum tool: The new autovacuum tool in
+"contrib/autovacuum" monitors the database statistics tables for
+"INSERT"/"UPDATE"/"DELETE" activity and automatically vacuums tables
+when needed.</para></item>
+          <item><para>Array handling has been improved and moved into
+the server core: Many array limitations have been removed, and arrays
+behave more like fully-supported data types.</para></item>
+        </items>
+
+        <items name="Migration to v7.4">
+          <item><para>Observe the following incompatibilities:</para>
+          <unorderedlist>
+            <item><para>The server-side autocommit setting was removed
+and reimplemented in client applications and languages. Server-side
+autocommit was causing too many problems with languages and
+applications that wanted to control their own autocommit behavior, so
+autocommit was removed from the server and added to individual client
+APIs as appropriate.</para></item>
+            <item><para>Error message wording has changed
+substantially in this release. Significant effort was invested to make
+the messages more consistent and user-oriented. If your applications
+try to detect different error conditions by parsing the error message,
+you are strongly encouraged to use the new error code facility
+instead.</para></item>
+            <item><para>Inner joins using the explicit JOIN syntax may
+behave differently because they are now better
+optimized.</para></item>
+            <item><para>A number of server configuration parameters
+have been renamed for clarity, primarily those related to
+logging.</para></item>
+            <item><para>FETCH 0 or MOVE 0 now does nothing. In prior
+releases, FETCH 0 would fetch all remaining rows, and MOVE 0 would
+move to the end of the cursor.</para></item>
+            <item><para>"FETCH" and "MOVE" now return the actual
+number of rows fetched/moved, or zero if at the beginning/end of the
+cursor. Prior releases would return the row count passed to the
+command, not the number of rows actually fetched or
+moved.</para></item>
+            <item><para>"COPY" now can process files that use
+carriage-return or carriage-return/line-feed end-of-line sequences.
+Literal carriage-returns and line-feeds are no longer accepted in data
+values; use \r and \n instead.</para></item>
+            <item><para>Trailing spaces are now trimmed when
+converting from type char(n) to varchar(n) or text. This is what most
+people always expected to happen anyway.</para></item>
+            <item><para>The data type float(p) now measures "p" in
+binary digits, not decimal digits. The new behavior follows the SQL
+standard.</para></item>
+            <item><para>Ambiguous date values now must match the
+ordering specified by the datestyle setting. In prior releases, a date
+specification of 10/20/03 was interpreted as a date in October even if
+datestyle specified that the day should be first. 7.4 will throw an
+error if a date specification is invalid for the current setting of
+datestyle.</para></item>
+            <item><para>The functions oidrand, oidsrand, and
+userfntest have been removed. These functions were determined to be no
+longer useful.</para></item>
+            <item><para>String literals specifying time-varying
+date/time values, such as 'now' or 'today' will no longer work as
+expected in column default expressions; they now cause the time of the
+table creation to be the default, not the time of the insertion.
+Functions such as now(), current_timestamp, or current_date should be
+used instead. In previous releases, there was special code so that
+strings such as 'now' were interpreted at "INSERT" time and not at
+table creation time, but this work around didn't cover all cases.
+Release 7.4 now requires that defaults be defined properly using
+functions such as now() or current_timestamp. These will work in all
+situations.</para></item>
+            <item><para>The dollar sign ($) is no longer allowed in
+operator names. It can instead be a non-first character in
+identifiers. This was done to improve compatibility with other
+database systems, and to avoid syntax problems when parameter
+placeholders ($n) are written adjacent to operators.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Server Operation Changes">
+          <item><para>Allow IPv6 server connections</para></item>
+          <item><para>Fix SSL to handle errors cleanly. In prior
+releases, certain SSL API error reports were not handled correctly.
+This release fixes those problems.</para></item>
+          <item><para>SSL protocol security and performance
+improvements. SSL key renegotiation was happening too frequently,
+causing poor SSL performance. Also, initial key handling was
+improved.</para></item>
+          <item><para>Print lock information when a deadlock is
+detected. This allows easier debugging of deadlock
+situations.</para></item>
+          <item><para>Update "/tmp" socket modification times
+regularly to avoid their removal. This should help prevent "/tmp"
+directory cleaner administration scripts from removing server socket
+files.</para></item>
+          <item><para>Enable PAM for Mac OS X</para></item>
+          <item><para>Make B-tree indexes fully WAL-safe. In prior
+releases, under certain rare cases, a server crash could cause B-tree
+indexes to become corrupt. This release removes those last few rare
+cases.</para></item>
+          <item><para>Allow B-tree index compaction and empty page
+reuse</para></item>
+          <item><para>Fix inconsistent index lookups during split of
+first root page. In prior releases, when a single-page index split
+into two pages, there was a brief period when another database session
+could miss seeing an index entry. This release fixes that rare failure
+case.</para></item>
+          <item><para>Improve free space map allocation
+logic</para></item>
+          <item><para>Preserve free space information between server
+restarts. In prior releases, the free space map was not saved when the
+postmaster was stopped, so newly started servers had no free space
+information. This release saves the free space map, and reloads it
+when the server is restarted.</para></item>
+          <item><para>Add start time to pg_stat_activity</para></item>
+          <item><para>New code to detect corrupt disk pages; erase
+with zero_damaged_pages</para></item>
+          <item><para>New client/server protocol: faster, no username
+length limit, allow clean exit from "COPY"</para></item>
+          <item><para>Add transaction status, table ID, column ID to
+client/server protocol</para></item>
+          <item><para>Add binary I/O to client/server
+protocol</para></item>
+          <item><para>Remove autocommit server setting; move to client
+applications</para></item>
+          <item><para>New error message wording, error codes, and
+three levels of error detail</para></item>
+        </items>
+
+        <items name="Performance Improvements">
+          <item><para>Add hashing for GROUP BY
+aggregates</para></item>
+          <item><para>Make nested-loop joins be smarter about
+multicolumn indexes</para></item>
+          <item><para>Allow multikey hash joins</para></item>
+          <item><para>Improve constant folding</para></item>
+          <item><para>Add ability to inline simple SQL
+functions</para></item>
+          <item><para>Reduce memory usage for queries using complex
+functions. In prior releases, functions returning allocated memory
+would not free it until the query completed. This release allows the
+freeing of function-allocated memory when the function call completes,
+reducing the total memory used by functions.</para></item>
+          <item><para>Improve GEQO optimizer performance. This release
+fixes several inefficiencies in the way the GEQO optimizer manages
+potential query paths.</para></item>
+          <item><para>Allow IN/NOT IN to be handled via hash
+tables</para></item>
+          <item><para>Improve NOT IN (subquery)
+performance</para></item>
+          <item><para>Allow most IN subqueries to be processed as
+joins</para></item>
+          <item><para>Pattern matching operations can use indexes
+regardless of locale. There is no way for non-ASCII locales to use the
+standard indexes for LIKE comparisons. This release adds a way to
+create a special index for LIKE.</para></item>
+          <item><para>Allow the postmaster to preload libraries using
+preload_libraries. For shared libraries that require a long time to
+load, this option is available so the library can be preloaded in the
+postmaster and inherited by all database sessions.</para></item>
+          <item><para>Improve optimizer cost computations,
+particularly for subqueries</para></item>
+          <item><para>Avoid sort when subquery ORDER BY matches upper
+query</para></item>
+          <item><para>Deduce that WHERE a.x = b.y AND b.y = 42 also
+means a.x = 42</para></item>
+          <item><para>Allow hash/merge joins on complex
+joins</para></item>
+          <item><para>Allow hash joins for more data
+types</para></item>
+          <item><para>Allow join optimization of explicit inner joins,
+disable with join_collapse_limit</para></item>
+          <item><para>Add parameter from_collapse_limit to control
+conversion of subqueries to joins</para></item>
+          <item><para>Use faster and more powerful regular expression
+code from Tcl</para></item>
+          <item><para>Use bit-mapped relation sets in the
+optimizer</para></item>
+          <item><para>Improve connection startup time. The new
+client/server protocol requires fewer network packets to start a
+database session.</para></item>
+          <item><para>Improve trigger/constraint
+performance</para></item>
+          <item><para>Improve speed of col IN (const, const, const,
+...)</para></item>
+          <item><para>Fix hash indexes which were broken in rare
+cases</para></item>
+          <item><para>Improve hash index concurrency and speed. Prior
+releases suffered from poor hash index performance, particularly for
+high concurrency situations. This release fixes that, and the
+development group is interested in reports comparing B-tree and hash
+index performance.</para></item>
+          <item><para>Align shared buffers on 32-byte boundary for
+copy speed improvement. Certain CPU's perform faster data copies when
+addresses are 32-byte aligned.</para></item>
+          <item><para>Data type numeric reimplemented for better
+performance. numeric used to be stored in base 100. The new code uses
+base 10000, for significantly better performance.</para></item>
+        </items>
+
+        <items name="Server Configuration Changes">
+          <item><para>Rename server parameter server_min_messages to
+log_min_messages. This was done so most parameters that control the
+server logs begin with log_.</para></item>
+          <item><para>Rename show_*_stats to log_*_stats</para></item>
+          <item><para>Rename show_source_port to
+log_source_port</para></item>
+          <item><para>Rename hostname_lookup to
+log_hostname</para></item>
+          <item><para>Add checkpoint_warning to warn of excessive
+checkpointing. In prior releases, it was difficult to determine if
+checkpoint was happening too frequently. This feature adds a warning
+to the server logs when excessive checkpointing happens.</para></item>
+          <item><para>New read-only server parameters for
+localization</para></item>
+          <item><para>Change debug server log messages to output as
+DEBUG rather than LOG</para></item>
+          <item><para>Prevent server log variables from being turned
+off by non-superusers. This is a security feature so non-superusers
+cannot disable logging that was enabled by the
+administrator.</para></item>
+          <item><para>log_min_messages/client_min_messages now
+controls debug_* output. This centralizes client debug information so
+all debug output can be sent to either the client or server
+logs.</para></item>
+          <item><para>Add Mac OS X Rendezvous server support. This
+allows Mac OS X hosts to query the network for available PostgreSQL
+servers.</para></item>
+          <item><para>Add ability to print only slow statements using
+log_min_duration_statement. This is an often requested debugging
+feature that allows administrators to see only slow queries in their
+server logs.</para></item>
+          <item><para>Allow "pg_hba.conf" to accept netmasks in CIDR
+format. This allows administrators to merge the host IP address and
+netmask fields into a single CIDR field in
+"pg_hba.conf".</para></item>
+          <item><para>New read-only parameter
+is_superuser</para></item>
+          <item><para>New parameter log_error_verbosity to control
+error detail. This works with the new error reporting feature to
+supply additional error information like hints, file names and line
+numbers.</para></item>
+          <item><para>postgres --describe-config now dumps server
+config variables. This option is useful for administration tools that
+need to know the configuration variable names and their minimums,
+maximums, defaults, and descriptions.</para></item>
+          <item><para>Add new columns in pg_settings: context, type,
+source, min_val, max_val</para></item>
+          <item><para>Make default shared_buffers 1000 and
+max_connections 100, if possible. Prior versions defaulted to 64
+shared buffers so PostgreSQL would start on even very old systems.
+This release tests the amount of shared memory allowed by the platform
+and selects more reasonable default values if possible. Of course,
+users are still encouraged to evaluate their resource load and size
+shared_buffers accordingly.</para></item>
+          <item><para>New "pg_hba.conf" record type hostnossl to
+prevent SSL connections. In prior releases, there was no way to
+prevent SSL connections if both the client and server supported SSL.
+This option allows that capability.</para></item>
+          <item><para>Remove parameter geqo_random_seed</para></item>
+          <item><para>Add server parameter regex_flavor to control
+regular expression processing</para></item>
+          <item><para>Make "pg_ctl" better handle nonstandard
+ports</para></item>
+        </items>
+
+        <items name="Query Changes">
+          <item><para>New SQL-standard information
+schema</para></item>
+          <item><para>Add read-only transactions</para></item>
+          <item><para>Print key name and value in foreign-key
+violation messages</para></item>
+          <item><para>Allow users to see their own queries in
+pg_stat_activity. In prior releases, only the superuser could see
+query strings using pg_stat_activity. Now ordinary users can see their
+own query strings.</para></item>
+          <item><para>Fix aggregates in subqueries to match SQL
+standard. The SQL standard says that an aggregate function appearing
+within a nested subquery belongs to the outer query if its argument
+contains only outer-query variables. Prior PostgreSQL releases did not
+handle this fine point correctly.</para></item>
+          <item><para>Add option to prevent auto-addition of tables
+referenced in query. By default, tables mentioned in the query are
+automatically added to the FROM clause if they are not already there.
+This is compatible with historic POSTGRES behavior but is contrary to
+the SQL standard. This option allows selecting standard-compatible
+behavior.</para></item>
+          <item><para>Allow UPDATE ... SET col = DEFAULT. This allows
+"UPDATE" to set a column to its declared default value.</para></item>
+          <item><para>Allow expressions to be used in LIMIT/OFFSET. In
+prior releases, LIMIT/OFFSET could only use constants, not
+expressions.</para></item>
+          <item><para>Implement CREATE TABLE AS EXECUTE</para></item>
+        </items>
+
+        <items name="Object Manipulation Changes">
+          <item><para>Make "CREATE SEQUENCE" grammar more conforming
+to SQL 2003</para></item>
+          <item><para>Add statement-level triggers. While this allows
+a trigger to fire at the end of a statement, it does not allow the
+trigger to access all rows modified by the statement. This capability
+is planned for a future release.</para></item>
+          <item><para>Add check constraints for domains. This greatly
+increases the usefulness of domains by allowing them to use check
+constraints.</para></item>
+          <item><para>Add "ALTER DOMAIN". This allows manipulation of
+existing domains.</para></item>
+          <item><para>Fix several zero-column table bugs. PostgreSQL
+supports zero-column tables. This fixes various bugs that occur when
+using such tables.</para></item>
+          <item><para>Have ALTER TABLE ... ADD PRIMARY KEY add
+not-null constraint. In prior releases, ALTER TABLE ... ADD PRIMARY
+would add a unique index, but not a not-null constraint. That is fixed
+in this release.</para></item>
+          <item><para>Add ALTER TABLE ... WITHOUT OIDS. This allows
+control over whether new and updated rows will have an OID column.
+This is most useful for saving storage space.</para></item>
+          <item><para>Add ALTER SEQUENCE to modify minimum, maximum,
+increment, cache, cycle values</para></item>
+          <item><para>Add ALTER TABLE ... CLUSTER ON. This command is
+used by "pg_dump" to record the cluster column for each table
+previously clustered. This information is used by database-wide
+cluster to cluster all previously clustered tables.</para></item>
+          <item><para>Improve automatic type casting for
+domains</para></item>
+          <item><para>Allow dollar signs in identifiers, except as
+first character</para></item>
+          <item><para>Disallow dollar signs in operator names, so x=$1
+works</para></item>
+          <item><para>Allow copying table schema using LIKE subtable,
+also SQL 2003 feature INCLUDING DEFAULTS</para></item>
+          <item><para>Add WITH GRANT OPTION clause to "GRANT". This
+enabled "GRANT" to give other users the ability to grant privileges on
+a object.</para></item>
+        </items>
+
+        <items name="Utility Command Changes">
+          <item><para>Add ON COMMIT clause to "CREATE TABLE" for
+temporary tables. This adds the ability for a table to be dropped or
+all rows deleted on transaction commit.</para></item>
+          <item><para>Allow cursors outside transactions using WITH
+HOLD. In previous releases, cursors were removed at the end of the
+transaction that created them. Cursors can now be created with the
+WITH HOLD option, which allows them to continue to be accessed after
+the creating transaction has committed.</para></item>
+          <item><para>FETCH 0 and MOVE 0 now do nothing. In previous
+releases, FETCH 0 fetched all remaining rows, and MOVE 0 moved to the
+end of the cursor.</para></item>
+          <item><para>Cause "FETCH" and "MOVE" to return the number of
+rows fetched/moved, or zero if at the beginning/end of cursor, per SQL
+standard. In prior releases, the row count returned by "FETCH" and
+"MOVE" did not accurately reflect the number of rows
+processed.</para></item>
+          <item><para>Properly handle SCROLL with cursors, or report
+an error. Allowing random access (both forward and backward scrolling)
+to some kinds of queries cannot be done without some additional work.
+If SCROLL is specified when the cursor is created, this additional
+work will be performed. Furthermore, if the cursor has been created
+with NO SCROLL, no random access is allowed.</para></item>
+          <item><para>Implement SQL-compatible options FIRST, LAST,
+ABSOLUTE n, RELATIVE n for "FETCH" and "MOVE"</para></item>
+          <item><para>Allow "EXPLAIN" on "DECLARE
+CURSOR"</para></item>
+          <item><para>Allow "CLUSTER" to use index marked as
+pre-clustered by default</para></item>
+          <item><para>Allow "CLUSTER" to cluster all tables. This
+allows all previously clustered tables in a database to be reclustered
+with a single command.</para></item>
+          <item><para>Prevent "CLUSTER" on partial
+indexes</para></item>
+          <item><para>Allow DOS and Mac line-endings in "COPY"
+files</para></item>
+          <item><para>Disallow literal carriage return as a data
+value, backslash-carriage-return and \r are still
+allowed</para></item>
+          <item><para>"COPY" changes (binary, \.)</para></item>
+          <item><para>Recover from "COPY" failure
+cleanly</para></item>
+          <item><para>Prevent possible memory leaks in
+"COPY"</para></item>
+          <item><para>Make "TRUNCATE" transaction-safe. "TRUNCATE" can
+now be used inside a transaction. If the transaction aborts, the
+changes made by the "TRUNCATE" are automatically rolled
+back.</para></item>
+          <item><para>Allow prepare/bind of utility commands like
+"FETCH" and "EXPLAIN"</para></item>
+          <item><para>Add "EXPLAIN EXECUTE"</para></item>
+          <item><para>Improve "VACUUM" performance on indexes by
+reducing WAL traffic</para></item>
+          <item><para>Functional indexes have been generalized into
+indexes on expressions. In prior releases, functional indexes only
+supported a simple function applied to one or more column names. This
+release allows any type of scalar expression.</para></item>
+          <item><para>Have "SHOW TRANSACTION ISOLATION" match input to
+"SET TRANSACTION ISOLATION"</para></item>
+          <item><para>Have "COMMENT ON DATABASE" on nonlocal database
+generate a warning, rather than an error. Database comments are stored
+in database-local tables so comments on a database have to be stored
+in each database.</para></item>
+          <item><para>Improve reliability of
+"LISTEN"/"NOTIFY"</para></item>
+          <item><para>Allow "REINDEX" to reliably reindex nonshared
+system catalog indexes. This allows system tables to be reindexed
+without the requirement of a standalone session, which was necessary
+in previous releases. The only tables that now require a standalone
+session for reindexing are the global system tables pg_database,
+pg_shadow, and pg_group.</para></item>
+        </items>
+
+        <items name="Data Type and Function Changes">
+          <item><para>New server parameter extra_float_digits to
+control precision display of floating-point numbers. This controls
+output precision which was causing regression testing
+problems.</para></item>
+          <item><para>Allow +1300 as a numeric time-zone specifier,
+for FJST</para></item>
+          <item><para>Remove rarely used functions oidrand, oidsrand,
+and userfntest functions</para></item>
+          <item><para>Add md5() function to main server, already in
+"contrib/pgcrypto". An MD5 function was frequently requested. For more
+complex encryption capabilities, use "contrib/pgcrypto".</para></item>
+          <item><para>Increase date range of timestamp</para></item>
+          <item><para>Change EXTRACT(EPOCH FROM timestamp) so
+timestamp without time zone is assumed to be in local time, not
+GMT</para></item>
+          <item><para>Trap division by zero in case the operating
+system doesn't prevent it</para></item>
+          <item><para>Change the numeric data type internally to base
+10000</para></item>
+          <item><para>New hostmask() function</para></item>
+          <item><para>Fixes for to_char() and
+to_timestamp()</para></item>
+          <item><para>Allow functions that can take any argument data
+type and return any data type, using anyelement and anyarray. This
+allows the creation of functions that can work with any data
+type.</para></item>
+          <item><para>Arrays may now be specified as ARRAY[1,2,3],
+ARRAY[['a','b'],['c','d']], or ARRAY[ARRAY[ARRAY[2]]]
+(Joe)</para></item>
+          <item><para>Allow proper comparisons for arrays, including
+ORDER BY and DISTINCT support</para></item>
+          <item><para>Allow indexes on array columns</para></item>
+          <item><para>Allow array concatenation with ||</para></item>
+          <item><para>Allow WHERE qualification expr op ANY/SOME/ALL
+(array_expr). This allows arrays to behave like a list of values, for
+purposes like SELECT * FROM tab WHERE col IN
+(array_val).</para></item>
+          <item><para>New array functions array_append, array_cat,
+array_lower, array_prepend, array_to_string, array_upper,
+string_to_array</para></item>
+          <item><para>Allow user defined aggregates to use polymorphic
+functions</para></item>
+          <item><para>Allow assignments to empty arrays</para></item>
+          <item><para>Allow 60 in seconds fields of time, timestamp,
+and interval input values. Sixty-second values are needed for leap
+seconds.</para></item>
+          <item><para>Allow cidr data type to be cast to
+text</para></item>
+          <item><para>Disallow invalid time zone names in SET
+TIMEZONE</para></item>
+          <item><para>Trim trailing spaces when char is cast to
+varchar or text</para></item>
+          <item><para>Make float(p) measure the precision "p" in
+binary digits, not decimal digits</para></item>
+          <item><para>Add IPv6 support to the inet and cidr data
+types</para></item>
+          <item><para>Add family() function to report whether address
+is IPv4 or IPv6</para></item>
+          <item><para>Have SHOW datestyle generate output similar to
+that used by SET datestyle</para></item>
+          <item><para>Make EXTRACT(TIMEZONE) and SET/SHOW TIME ZONE
+follow the SQL convention for the sign of time zone offsets, i.e.,
+positive is east from UTC</para></item>
+          <item><para>Fix date_trunc('quarter', ...). Prior releases
+returned an incorrect value for this function call.</para></item>
+          <item><para>Make initcap() more compatible with Oracle.
+initcap() now uppercases a letter appearing after any non-alphanumeric
+character, rather than only after whitespace.</para></item>
+          <item><para>Allow only datestyle field order for date values
+not in ISO-8601 format</para></item>
+          <item><para>Add new datestyle values MDY, DMY, and YMD to
+set input field order; honor US and European for backward
+compatibility</para></item>
+          <item><para>String literals like 'now' or 'today' will no
+longer work as a column default. Use functions such as now(),
+current_timestamp instead. (change required for prepared
+statements)</para></item>
+          <item><para>Treat NaN as larger than any other value in
+min()/max(). NaN was already sorted after ordinary numeric values for
+most purposes, but min() and max() didn't get this
+right.</para></item>
+          <item><para>Prevent interval from suppressing :00 seconds
+display</para></item>
+          <item><para>New functions pg_get_triggerdef(prettyprint) and
+pg_conversion_is_visible()</para></item>
+          <item><para>Allow time to be specified as 040506 or
+0405</para></item>
+          <item><para>Input date order must now be YYYY-MM-DD (with
+4-digit year) or match datestyle</para></item>
+          <item><para>Make pg_get_constraintdef support unique,
+primary-key, and check constraints</para></item>
+        </items>
+
+        <items name="Server-Side Language Changes">
+          <item><para>Prevent PL/pgSQL crash when RETURN NEXT is used
+on a zero-row record variable</para></item>
+          <item><para>Make PL/Python's spi_execute interface handle
+null values properly</para></item>
+          <item><para>Allow PL/pgSQL to declare variables of composite
+types without %ROWTYPE</para></item>
+          <item><para>Fix PL/Python's _quote() function to handle big
+integers</para></item>
+          <item><para>Make PL/Python an untrusted language, now called
+plpythonu. The Python language no longer supports a restricted
+execution environment, so the trusted version of PL/Python was
+removed. If this situation changes, a version of PL/Python that can be
+used by non-superusers will be readded.</para></item>
+          <item><para>Allow polymorphic PL/pgSQL
+functions</para></item>
+          <item><para>Allow polymorphic SQL functions</para></item>
+          <item><para>Improved compiled function caching mechanism in
+PL/pgSQL with full support for polymorphism</para></item>
+          <item><para>Add new parameter $0 in PL/pgSQL representing
+the function's actual return type</para></item>
+          <item><para>Allow PL/Tcl and PL/Python to use the same
+trigger on multiple tables</para></item>
+          <item><para>Fixed PL/Tcl's spi_prepare to accept fully
+qualified type names in the parameter type list</para></item>
+        </items>
+
+        <items name="psql Changes">
+          <item><para>Add \pset pager always to always use pager. This
+forces the pager to be used even if the number of rows is less than
+the screen height. This is valuable for rows that wrap across several
+screen rows.</para></item>
+          <item><para>Improve tab completion</para></item>
+          <item><para>Reorder \? help into groupings</para></item>
+          <item><para>Add backslash commands for listing schemas,
+casts, and conversions</para></item>
+          <item><para>"\encoding" now changes based on the server
+parameter client_encoding. In previous versions, "\encoding" was not
+aware of encoding changes made using SET
+client_encoding.</para></item>
+          <item><para>Save editor buffer into readline history. When
+"\e" is used to edit a query, the result is saved in the readline
+history for retrieval using the up arrow.</para></item>
+          <item><para>Improve "\d" display</para></item>
+          <item><para>Enhance HTML mode to be more
+standards-conforming</para></item>
+          <item><para>New "\set AUTOCOMMIT off" capability. This takes
+the place of the removed server parameter autocommit.</para></item>
+          <item><para>New "\set VERBOSITY" to control error detail.
+This controls the new error reporting details.</para></item>
+          <item><para>New prompt escape sequence %x to show
+transaction status</para></item>
+          <item><para>Long options for psql are now available on all
+platforms</para></item>
+        </items>
+
+        <items name="pg_dump Changes">
+          <item><para>Multiple pg_dump fixes, including tar format and
+large objects</para></item>
+          <item><para>Allow pg_dump to dump specific
+schemas</para></item>
+          <item><para>Make pg_dump preserve column storage
+characteristics. This preserves ALTER TABLE ... SET STORAGE
+information.</para></item>
+          <item><para>Make pg_dump preserve "CLUSTER"
+characteristics</para></item>
+          <item><para>Have pg_dumpall use "GRANT"/"REVOKE" to dump
+database-level privleges</para></item>
+          <item><para>Allow pg_dumpall to support the options "-a",
+"-s", "-x" of pg_dump</para></item>
+          <item><para>Prevent pg_dump from lowercasing identifiers
+specified on the command line</para></item>
+          <item><para>pg_dump options
+"--use-set-session-authorization" and "--no-reconnect" now do nothing,
+all dumps use "SET SESSION AUTHORIZATION" pg_dump no longer reconnects
+to switch users, but instead always uses "SET SESSION AUTHORIZATION".
+This will reduce password prompting during restores.</para></item>
+          <item><para>Long options for pg_dump are now available on
+all platforms PostgreSQL now includes its own long-option processing
+routines.</para></item>
+        </items>
+
+        <items name="libpq Changes">
+          <item><para>Add function PQfreemem for freeing memory on
+Windows, suggested for "NOTIFY". Windows requires that memory
+allocated in a library be freed by a function in the same library,
+hence free() doesn't work for freeing memory allocated by libpq.
+PQfreemem is the proper way to free libpq memory, especially on
+Windows, and is recommended for other platforms as well.</para></item>
+          <item><para>Document service capability, and add sample
+file. This allows clients to look up connection information in a
+central file on the client machine.</para></item>
+          <item><para>Make PQsetdbLogin have the same defaults as
+PQconnectdb</para></item>
+          <item><para>Allow libpq to cleanly fail when result sets are
+too large</para></item>
+          <item><para>Improve performance of function
+PQunescapeBytea</para></item>
+          <item><para>Allow thread-safe libpq with "configure" option
+"--enable-thread-safety"</para></item>
+          <item><para>Allow function pqInternalNotice to accept a
+format string and arguments instead of just a preformatted
+message</para></item>
+          <item><para>Control SSL negotiation with sslmode values
+disable, allow, prefer, and require</para></item>
+          <item><para>Allow new error codes and levels of
+text</para></item>
+          <item><para>Allow access to the underlying table and column
+of a query result. This is helpful for query-builder applications that
+want to know the underlying table and column names associated with a
+specific result set.</para></item>
+          <item><para>Allow access to the current transaction
+status</para></item>
+          <item><para>Add ability to pass binary data directly to the
+server</para></item>
+          <item><para>Add function PQexecPrepared and
+PQsendQueryPrepared functions which perform bind/execute of previously
+prepared statements</para></item>
+        </items>
+
+        <items name="JDBC Changes">
+          <item><para>Allow setNull on updateable result
+sets</para></item>
+          <item><para>Allow executeBatch on a prepared statement
+(Barry)</para></item>
+          <item><para>Support SSL connections (Barry)</para></item>
+          <item><para>Handle schema names in result sets (Paul
+Sorenson)</para></item>
+          <item><para>Add refcursor support (Nic
+Ferrier)</para></item>
+        </items>
+
+        <items name="Miscellaneous Interface Changes">
+          <item><para>Prevent possible memory leak or core dump during
+libpgtcl shutdown</para></item>
+          <item><para>Add Informix compatibility to ECPG. This allows
+ECPG to process embedded C programs that were written using certain
+Informix extensions.</para></item>
+          <item><para>Add type decimal to ECPG that is fixed length,
+for Informix</para></item>
+          <item><para>Allow thread-safe embedded SQL programs with
+"configure" option "--enable-thread-safety". This allows multiple
+threads to access the database at the same time.</para></item>
+          <item><para>Moved Python client PyGreSQL to <ulink url="http://www.pygresql.org">http://www.pygresql.org</ulink></para></item>
+        </items>
+
+        <items name="Source Code Changes">
+          <item><para>Prevent need for separate platform geometry
+regression result files</para></item>
+          <item><para>Improved PPC locking primitive</para></item>
+          <item><para>New function palloc0 to allocate and clear
+memory</para></item>
+          <item><para>Fix locking code for s390x CPU
+(64-bit)</para></item>
+          <item><para>Allow OpenBSD to use local ident
+credentials</para></item>
+          <item><para>Make query plan trees read-only to
+executor</para></item>
+          <item><para>Add Darwin startup scripts</para></item>
+          <item><para>Allow libpq to compile with Borland C++
+compiler</para></item>
+          <item><para>Use our own version of getopt_long() if
+needed</para></item>
+          <item><para>Convert administration scripts to
+C</para></item>
+          <item><para>Bison &gt;= 1.85 is now required to build the
+PostgreSQL grammar, if building from CVS</para></item>
+          <item><para>Merge documentation into one book</para></item>
+          <item><para>Add Windows compatibility
+functions</para></item>
+          <item><para>Allow client interfaces to compile under
+MinGW</para></item>
+          <item><para>New ereport() function for error
+reporting</para></item>
+          <item><para>Support Intel compiler on Linux</para></item>
+          <item><para>Improve Linux startup scripts</para></item>
+          <item><para>Add support for AMD Opteron and
+Itanium</para></item>
+          <item><para>Remove "--enable-recode" option from
+"configure". This was no longer needed now that we have "CREATE
+CONVERSION".</para></item>
+          <item><para>Generate a compile error if spinlock code is not
+found. Platforms without spinlock code will now fail to compile,
+rather than silently using semaphores. This failure can be disabled
+with a new "configure" option.</para></item>
+        </items>
+
+        <items name="Contrib Changes">
+          <item><para>Change dbmirror license to BSD</para></item>
+          <item><para>Improve earthdistance (Bruno Wolff
+III)</para></item>
+          <item><para>Portability improvements to pgcrypto (Marko
+Kreen)</para></item>
+          <item><para>Prevent crash in xml (John Gray, Michael
+Richards)</para></item>
+          <item><para>Update oracle</para></item>
+          <item><para>Update mysql</para></item>
+          <item><para>Update cube</para></item>
+          <item><para>Update earthdistance to use cube</para></item>
+          <item><para>Update btree_gist</para></item>
+          <item><para>New tsearch2 full-text search
+module</para></item>
+          <item><para>Add hash-based crosstab function to
+tablefuncs</para></item>
+          <item><para>Add serial column to order connectby() siblings
+in tablefuncs</para></item>
+          <item><para>Add named persistent connections to
+dblink</para></item>
+          <item><para>New pg_autovacuum allows automatic
+"VACUUM"</para></item>
+          <item><para>Make pgbench honor environment variables PGHOST,
+PGPORT, PGUSER</para></item>
+          <item><para>Improve intarray</para></item>
+          <item><para>Improve pgstattuple</para></item>
+          <item><para>Fix bug in metaphone() in
+fuzzystrmatch</para></item>
+          <item><para>Improve adddepend</para></item>
+          <item><para>Update spi/timetravel</para></item>
+          <item><para>Fix dbase "-s" option and improve non-ASCII
+handling</para></item>
+          <item><para>Remove array module because features now
+included by default</para></item>
+        </items>
+      </change>
+
+      <change from="7.3.5" to="7.3.6">
+        <item><para>Revert erroneous changes in rule permissions
+checking. A patch applied in 7.3.3 to fix a corner case in rule
+permissions checks turns out to have disabled rule-related permissions
+checks in many not-so-corner cases. This would for example allow users
+to insert into views they weren't supposed to have permission to
+insert into. We have therefore reverted the 7.3.3 patch. The original
+bug will be fixed in 7.5.</para></item>
+        <item><para>Repair incorrect order of operations in
+GetNewTransactionId(). This bug could result in failure under
+out-of-disk-space conditions, including inability to restart even
+after disk space is freed.</para></item>
+        <item><para>Ensure configure selects -fno-strict-aliasing even
+when an external value for CFLAGS is supplied. On some platforms,
+building with -fstrict-aliasing causes bugs.</para></item>
+        <item><para>Make pg_restore handle 64-bit off_t correctly.
+This bug prevented proper restoration from archive files exceeding
+4Gb.</para></item>
+        <item><para>Make contrib/dblink not assume that local and
+remote type OIDs match</para></item>
+        <item><para>Quote connectby()'s start_with argument
+properly</para></item>
+        <item><para>Don't crash when a rowtype argument to a plpgsql
+function is NULL</para></item>
+        <item><para>Avoid generating invalid character encoding
+sequences in corner cases when planning LIKE operations</para></item>
+        <item><para>Ensure text_position() cannot scan past end of
+source string in multibyte cases</para></item>
+        <item><para>Fix index optimization and selectivity estimates
+for LIKE operations on bytea columns</para></item>
+      </change>
+
+      <change from="7.3.4" to="7.3.5">
+        <item><para>Force zero_damaged_pages to be on during recovery
+from WAL</para></item>
+        <item><para>Prevent some obscure cases of "variable not in
+subplan target lists"</para></item>
+        <item><para>Force stats processes to detach from shared
+memory, ensuring cleaner shutdown</para></item>
+        <item><para>Make PQescapeBytea and byteaout consistent with
+each other</para></item>
+        <item><para>Added missing SPI_finish() calls to dblink's
+get_tuple_of_interest()</para></item>
+        <item><para>Fix for possible foreign key violation when rule
+rewrites INSERT</para></item>
+        <item><para>Support qualified type names in PL/Tcl's
+spi_prepare command</para></item>
+        <item><para>Make pg_dump handle a procedural language handler
+located in pg_catalog</para></item>
+        <item><para>Make pg_dump handle cases where a custom opclass
+is in another schema</para></item>
+        <item><para>Make pg_dump dump binary-compatible casts
+correctly</para></item>
+        <item><para>Fix insertion of expressions containing subqueries
+into rule bodies</para></item>
+        <item><para>Fix incorrect argument processing in clusterdb
+script</para></item>
+        <item><para>Fix problems with dropped columns in plpython
+triggers</para></item>
+        <item><para>Repair problems with to_char() reading past end of
+its input string</para></item>
+        <item><para>Fix GB18030 mapping errors</para></item>
+        <item><para>Fix several problems with SSL error handling and
+asynchronous SSL I/O</para></item>
+        <item><para>Remove ability to bind a list of values to a
+single parameter in JDBC (prevents possible SQL-injection
+attacks)</para></item>
+        <item><para>Fix some errors in HAVE_INT64_TIMESTAMP code
+paths</para></item>
+        <item><para>Fix corner case for btree search in parallel with
+first root page split</para></item>
+      </change>
+
+      <note type="installation">
+        <para>PostgreSQL requires a superuser account to manage the
+database. This can be any account you wish, though the default is
+"<command>postgres</command>". The startup scripts for this account
+should set the following variables:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/bin should be in $PATH
+${SB_INSTALL_PREFIX}/man should be in $MANPATH
+Set PGLIB to ${SB_INSTALL_PREFIX}/lib 
+Set PGDATA to the path where the Postgres database will be stored
+        </screen>
+
+        <para>The default startup script for PostgreSQL assumes the
+superuser account is "<command>postgres</command>". To specify an
+alternate superuser account, modify the <command>USER</command>
+variable. The <command>PGDATA</command> variable in the startup script
+must be set to the path of the database. Until the database has been
+created with initdb, the startup script will not start the
+database.</para>
+
+        <para>The postmaster will given an error if the size of the
+shared memory segment is not large enough.</para>
+      </note>
+
+      <note type="configuration">
+        <para>If upgrading from a previous minor release (7.3.x,
+7.2.x), and database dump/restore is required. In addition, the
+"Migration to v7.4" section in the changelog documents
+incompatibilities with previous releases.</para>
+      </note>
+
+      <platform name="HP-UX">
+        <para>On HP-UX, the latest Software Distributor (SD) patch
+might be required, <command>PHCO_25875</command>. If the
+<command>TWWpgsql731.TWWpgsql731-CONF</command> fileset fails to
+install, install the SD patch and retry.</para>
+      </platform>
+
+      <platform name="Solaris">
+        <para>On Solaris, it might be necessary to increase the size
+of the maximum shared memory segment by adding the following entry to
+<command>/etc/system</command>:</para>
+        <screen>
+E:  set shmsys:shminfo_shmmax = 1245184
+        </screen>
+      </platform>
+    </notes>
+  </program>
+</programs>

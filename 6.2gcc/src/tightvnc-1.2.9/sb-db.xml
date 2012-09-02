@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="tightvnc" version="1.2.9" revision="1">
+    <build-name>vnc_unixsrc</build-name>
+
+    <install-name>${NAME}12</install-name>
+
+    <sources>
+      <source checksum="f804b26c098625e3a2675a0aa7709e31"
+        checksum-type="md5" size="1738256"
+        path="src/tightvnc-1.2.9_unixsrc.tar.bz2"/>
+      <patch checksum="78ff841350e064c60d54314bdaf65b26"
+        checksum-type="md5" size="4479"
+        path="src/tightvnc-1.2.9_unixsrc.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="jpeg" var="JPEG">v&gt;=6b</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s -Wl,+b," ;;
+*-irix6*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2*)
+  CC="gcc" CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+esac
+
+xmkmf -a
+
+(cd Xvnc
+cat >config/cf/vnclibs.def <<_EOT_
+VNCLIBS = \$(TOP)/../libvncauth/libvncauth.a
+VNCSYSLIBS = -L${JPEG_LIB} -L${ZLIB_LIB} ${CC_LD_RT}${JPEG_LIB}:${ZLIB_LIB} ${LDFLAGS+${LDFLAGS}} -ljpeg -lz
+VNCCPPFLAGS = -I\$(TOP)/../include -I${JPEG_INC} -I${ZLIB_INC}
+_EOT_
+
+case "${SYSTYPE}" in
+*-aix*)
+  ;;
+*-hpux*)
+  cat >config/cf/platform.def <<_EOT_
+#define CcCmd cc
+#define OptimizedCDebugFlags +O2
+#define DefaultCCOptions -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit
+_EOT_
+  ;;
+*-solaris2.[89])
+  cat >>config/cf/site.def <<_EOT_
+#define HasGcc2 YES
+_EOT_
+
+  cat >config/cf/platform.def <<_EOT_
+#define CcCmd gcc
+#define DefaultCCOptions -mcpu=v8
+_EOT_
+  ;;
+*)
+  cat >config/cf/platform.def <<_EOT_
+#define CcCmd cc
+_EOT_
+  ;;
+esac
+
+./configure
+case "${SYSTYPE}" in
+*-aix*)
+  # fix bug in generated Makefile
+  sed 's/""$/"/' programs/Xserver/dix/Makefile >/tmp/$$
+  cp /tmp/$$ programs/Xserver/dix/Makefile && rm /tmp/$$
+  sed 's/""/"/' programs/Xserver/hw/vnc/Makefile >/tmp/$$
+  cp /tmp/$$ programs/Xserver/hw/vnc/Makefile && rm /tmp/$$
+  ;;
+esac)
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake MAKE=gmake CC=xlc CDEBUGFLAGS="-O2 -qmaxmem=-1 -qarch=com" \
+ZLIB_INC=-I${SB_VAR_ZLIB_INC} JPEG_INC=-I${SB_VAR_JPEG_INC} \
+JPEG_LIB="-L${SB_VAR_JPEG_LIB} -Wl,-brtl \
+-Wl,-blibpath:${SB_VAR_JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${SB_VAR_ZLIB_LIB} -Wl,-brtl \
+-Wl,-blibpath:${SB_VAR_ZLIB_LIB} -lz" \
+LDPOSTLIB="-blibpath:/usr/lib" LDPOSTLIBS="-blibpath:/usr/lib" \
+Makefiles depend all
+
+  (cd Xvnc
+  gmake MAKE=gmake CC=xlc CDEBUGFLAGS="-O2 -qmaxmem=-1 -qarch=com")
+  ;;
+*-hpux*)
+  make Makefiles depend
+  for _subdir in libvncauth vncviewer vncpasswd vncconnect; do
+    (cd ${_subdir}
+    gmake MAKE=gmake CCOPTIONS="+O2" CDEBUGFLAGS="-Ae +ESlit \
++Onofltacc +DAportable +Oentrysched +Odataprefetch +Onolimit" \
+JPEG_INC="-I${SB_VAR_JPEG_INC} -I/usr/contrib/X11R6/include" \
+ZLIB_INC=-I${SB_VAR_ZLIB_INC} EXTRA_LDOPTIONS=-L/usr/contrib/X11R6/lib \
+JPEG_LIB="-L${SB_VAR_JPEG_LIB} -Wl,+s,+b,${SB_VAR_JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${SB_VAR_ZLIB_LIB} -Wl,+s,+b,${SB_VAR_ZLIB_LIB} -lz")
+  done
+
+  (cd Xvnc
+  gmake MAKE=gmake MFLAGS="CDEBUGFLAGS=+O2 CCOPTIONS=\"-Ae -z +ESlit \
++Onofltacc +DAportable +Oentrysched +Odataprefetch +Onolimit\"")
+  ;;
+*-irix6*)
+  gmake MAKE=gmake CDEBUGFLAGS="-Wl,-woff,84 -Wl,-woff,85 \
+-woff 1429 -O2 -OPT:Olimit=0" \
+ZLIB_INC=-I${SB_VAR_ZLIB_INC} JPEG_INC=-I${SB_VAR_JPEG_INC} \
+JPEG_LIB="-L${SB_VAR_JPEG_LIB} -Wl,-rpath,${SB_VAR_JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${SB_VAR_ZLIB_LIB} -Wl,-rpath,${SB_VAR_ZLIB_LIB} -lz" \
+Makefiles depend all
+
+  (cd Xvnc
+  gmake MAKE=gmake CDEBUGFLAGS="-Wl,-woff,84 -Wl,-woff,85 \
+-woff 1429 -O2 -OPT:Olimit=0")
+  ;;
+*-linux*)
+  gmake MAKE=gmake CDEBUGFLAGS="-O2" \
+ZLIB_INC=-I${SB_VAR_ZLIB_INC} JPEG_INC=-I${SB_VAR_JPEG_INC} \
+JPEG_LIB="-L${SB_VAR_JPEG_LIB} -Wl,-rpath,${SB_VAR_JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${SB_VAR_ZLIB_LIB} -Wl,-rpath,${SB_VAR_ZLIB_LIB} -lz" \
+Makefiles depend all
+
+  (cd Xvnc
+  gmake MAKE=gmake CDEBUGFLAGS="-O2")
+  ;;
+*-osf*)
+  gmake MAKE=gmake CDEBUGFLAGS="-O2 -msym -readonly_strings" \
+ZLIB_INC=-I${SB_VAR_ZLIB_INC} JPEG_INC=-I${SB_VAR_JPEG_INC} \
+JPEG_LIB="-L${SB_VAR_JPEG_LIB} -Wl,-rpath,${SB_VAR_JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${SB_VAR_ZLIB_LIB} -Wl,-rpath,${SB_VAR_ZLIB_LIB} -lz" \
+Makefiles depend all
+
+  (cd Xvnc
+  gmake MAKE=gmake CDEBUGFLAGS="-O2 -std")
+  ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+
+  gmake MAKE=gmake CC="${CC:-gcc}" CDEBUGFLAGS="${CFLAGS}" CCOPTIONS="" \
+ZLIB_INC=-I${ZLIB_INC} JPEG_INC=-I${JPEG_INC} \
+JPEG_LIB="-L${JPEG_LIB} -R${JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${ZLIB_LIB} -R${ZLIB_LIB} -lz" \
+Makefiles depend all
+
+  (cd Xvnc
+  gmake MAKE=gmake CC="${CC:-gcc}" CDEBUGFLAGS="${CFLAGS}" CCOPTIONS="")
+  ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+
+  gmake MAKE=gmake CC="${CC:-gcc}" CDEBUGFLAGS="${CFLAGS}" CCOPTIONS="" \
+ZLIB_INC=-I${ZLIB_INC} JPEG_INC=-I${JPEG_INC} \
+JPEG_LIB="-L${JPEG_LIB} -R${JPEG_LIB} -ljpeg" \
+ZLIB_LIB="-L${ZLIB_LIB} -R${ZLIB_LIB} -lz" \
+Makefiles depend all
+
+  (cd Xvnc
+  gmake MAKE=gmake CC="${CC:-gcc}" CDEBUGFLAGS="${CFLAGS}" CCOPTIONS="")
+  ;;
+esac
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/man/man1 \
+${SB_INSTALL_PREFIX}/lib/app-defaults ${_datadir}/classes
+
+./vncinstall ${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/man
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 classes/* ${_datadir}/classes
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 vncviewer/Vncviewer \
+${SB_INSTALL_PREFIX}/lib/app-defaults
+${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+
+sed -e "1 s!/usr/bin/perl!${SB_VAR_PERL}/bin/perl!" \
+-e "s!/usr/local/vnc/classes!${_datadir}/classes!" \
+${SB_INSTALL_PREFIX}/bin/vncserver >/tmp/$$
+cp /tmp/$$ ${SB_INSTALL_PREFIX}/bin/vncserver && rm -f /tmp/$$
+]]>
+    </install>
+
+    <notes>
+      <change from="1.2.8" to="1.2.9">
+        <item><para>New "Request refresh" button has been implemented in
+the viewer's F8 popup menu</para></item>
+        <item><para>Xvnc compilation fixes for HP-UX and MacOS X have
+been applied, from Ki NETWORKS, Inc</para></item>
+        <item><para>New vncpasswd -f command-line option has been
+implemented. It allows providing passwords on stdin and writes
+encrypted passwords to stdout. In addition, the password file name "-"
+now denotes stdout. Finally, a buffer overflow has been fixed in
+vncpasswd -- it could be caused by a long file name in the command
+line.</para></item>
+        <item><para>A patch to fix input focus problems in the X11
+viewer has been applied, from Greg Breland</para></item>
+        <item><para>A patch fixing Xvnc crashes on Sparc has been
+applied, from the RealVNC distribution</para></item>
+        <item><para>A problem with incorrect port interpretation has
+been fixed, in the vncviewer's -tunnel option handling</para></item>
+        <item><para>Other minor improvements and bugfixes</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

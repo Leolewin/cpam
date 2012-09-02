@@ -1,0 +1,683 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="lftp" version="3.7.8" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}37</install-name>
+
+    <sources>
+      <source checksum="999e2d77a2f1db5b6f883a8e3a40cee2"
+        checksum-type="md5" size="1385167"
+        path="src/lftp-3.7.8.tar.bz2"/>
+      <patch checksum="9b6c116dd1209760f392ce4dd503c3b5"
+        checksum-type="md5" size="4777"
+        path="src/lftp-3.7.8.CVE-2010-2251.patch"/>
+      <patch checksum="6d71839903c3f36047e5d05833149135"
+        checksum-type="md5" size="107815"
+        path="src/lftp-3.7.8.tww.patch"/>
+      <patch checksum="155939a54dad7267d51f001f3be8bab6"
+        checksum-type="md5" size="2701517"
+        path="src/lftp-3.7.8.gnulib.patch"/>
+      <patch checksum="8e4b3bc2bd1f1c435a60678a91c5dc43"
+        checksum-type="md5" size="10383"
+        path="src/lftp-3.7.8.tww-gnulib.patch"/>
+      <patch checksum="d2dc5d5652778998655ec5df8854d618"
+        checksum-type="md5" size="5145851"
+        path="src/lftp-3.7.8.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="curl" var="CURL" install-name="curl722"
+        type="build">v&gt;=7.22.0</depend>
+      <depend program="gperf" install-name="gperf30"
+        add-path="prepend" type="build">v&gt;=3.0.4</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="*-hpux10*|*-irix*|*-solaris*">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="*-hpux10*|*-irix*|*-solaris*"/>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v&gt;=2.0.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="gnutls" var="GNUTLS"
+        install-name="libgnutls210"
+        add-path="prepend">v&gt;=2.10.5</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses57">v&gt;=5.7</depend>
+      <depend program="readline" var="READLINE"
+        install-name="libreadline62">v&gt;=6.2</depend>
+      <depend program="perl" var="PERL">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_curl_datadir="${SB_VAR_CURL}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix6.1*)
+  # -O2 triggers a bug in xlC when linking lftp
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O1 -qobjmodel=ibm -qro -qroconst \
+-qnotempinc -qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qobjmodel=ibm -qro -qroconst \
+-qnotempinc -qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-D_HPUX_SOURCE -z +O2 +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # strtoull isn't available to C++ so use gnulib replacement
+  export ac_cv_func_strtoll=no
+  export ac_cv_func_strtoull=no ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-D_HPUX_SOURCE -z +O2 +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-D_HPUX_SOURCE -AA -z +O2 +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # strtoull isn't available to C++ so use gnulib replacement
+  export ac_cv_func_strtoll=no
+  export ac_cv_func_strtoull=no ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-D_HPUX_SOURCE -AA -z +O2 +Ofltacc +Olit=all \
++DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  # otherwise our C decls clash with the system C++ std:: decls
+  export ac_cv_have_decl_strtoll=yes
+
+  # strtoull isn't available to C++ so use gnulib replacement
+  export ac_cv_func_strtoull=no ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -nodtk -ieee -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-D_BSD -O2 -arch ev5 -model ansi -ieee -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CPPFLAGS="${CPPFLAGS+${CPPFLAGS}} \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}}" \
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2} \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}}" \
+LDFLAGS="\
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_READLINE+${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_LIBEXPAT+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_GETTEXT+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_GNUTLS_LIB}/pkgconfig" \
+--enable-static --mandir=${SB_INSTALL_PREFIX}/man \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX} \
+ac_cv_search_tigetstr=-lncurses
+
+# lftpget should use absolute path to lftp
+${SB_PATH_SED} -i -e "\
+s! lftp ! ${SB_INSTALL_PREFIX}/bin/lftp !;" src/lftpget
+
+# fix path to Perl
+${SB_PATH_SED} -i -e "\
+1s|.*|#!${SB_VAR_PERL}/bin/perl|;" \
+src/convert-netscape-cookies src/verify-file
+
+# path to curl ca-bundle.crt
+${SB_PATH_SED} -i -e "\
+s!@CURL_DATADIR@!${_curl_datadir}!;" src/lftp_ssl.cc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+
+# We don't need the static libraries
+rm -rf ${SB_INSTALL_PREFIX}/lib
+]]>
+    </install>
+
+    <notes>
+      <change from="3.7.7" to="3.7.8">
+        <item><para>fixed upload via ftps in encrypted
+mode</para></item>
+        <item><para>gnulib sources updated</para></item>
+      </change>
+
+      <change from="3.7.6" to="3.7.7">
+        <item><para>new ftp proxy auth type:
+proxy-user@host</para></item>
+        <item><para>new setting ftp:trust-feat (default
+no)</para></item>
+        <item><para>changed GPL version to 3 (as gnulib modules require
+it)</para></item>
+      </change>
+
+      <change from="3.7.5" to="3.7.6">
+        <item><para>fixed memory corruption in zmore</para></item>
+        <item><para>fixed compilation on some systems</para></item>
+      </change>
+
+      <change from="3.7.4" to="3.7.5">
+        <item><para>new setting
+cmd:move-background-detach.</para></item>
+        <item><para>added support for number suffixes in settings (k -
+kibi, m - mebi, etc).</para></item>
+        <item><para>shutdown SSL connection before closing the socket
+on upload.</para></item>
+        <item><para>fixed mirror -RP.</para></item>
+        <item><para>fixed another problem with `kill
+all'.</para></item>
+        <item><para>updated gnulib.</para></item>
+      </change>
+
+      <change from="3.7.3" to="3.7.4">
+        <item><para>fixed a coredump in `kill all'.</para></item>
+        <item><para>fixed compilation problems on some
+systems.</para></item>
+        <item><para>used getdate from gnulib.</para></item>
+      </change>
+
+      <change from="3.7.2" to="3.7.3">
+        <item><para>added support for 2-argument SITE UTIME and MFMT
+commands.</para></item>
+        <item><para>added a workaround for paramiko sftp
+server.</para></item>
+        <item><para>included newer gnulib sources using
+gnulib-tool.</para></item>
+        <item><para>Polish translation updated.</para></item>
+        <item><para>fixed German translation encoding.</para></item>
+      </change>
+
+      <change from="3.7.1" to="3.7.2">
+        <item><para>fixed core dump when sending http
+cookies.</para></item>
+        <item><para>fixed assertion failure for ftp over http proxy
+(CONNECT mode).</para></item>
+        <item><para>fixed cwd tracking for ftps.</para></item>
+      </change>
+
+      <change from="3.7.0" to="3.7.1">
+        <item><para>use time 12:00:00 instead of 12:00:30 when the
+time is unknown.</para></item>
+        <item><para>make sftp:use-full-path on by
+default.</para></item>
+        <item><para>fixed sftp du on non-existent files.</para></item>
+        <item><para>GNU Lib sources updated.</para></item>
+        <item><para>fixed compilation on cygwin.</para></item>
+        <item><para>French translation updated.</para></item>
+        <item><para>German translation updated.</para></item>
+      </change>
+
+      <change from="3.6.3" to="3.7.0">
+        <item><para>new setting ftp:proxy-auth-type and two new ftp
+proxy modes (joined-acct, open)</para></item>
+        <item><para>don't add the same network address multiple times;
+report resolved addresses</para></item>
+        <item><para>added new open -s option; help for "slot"
+command</para></item>
+        <item><para>added a workaround for proftpd NLST
+bug</para></item>
+        <item><para>added a workaround for servers sending single
+NL</para></item>
+        <item><para>handle host key verification error in fish and
+sftp</para></item>
+        <item><para>handle http codes 307 and 303</para></item>
+        <item><para>fixed a core dump when doing "open
+host&gt;file"</para></item>
+        <item><para>fixed CCC handling in secure ftp</para></item>
+        <item><para>fixed spinning when cmd:fail-exit is true in a
+script</para></item>
+        <item><para>included zh_HK translation</para></item>
+      </change>
+
+      <change from="3.6.2" to="3.6.3">
+        <item><para>new setting sftp:use-full-path to send full path
+instead of home-relative</para></item>
+        <item><para>don't use sftp FSETSTAT when not
+needed</para></item>
+        <item><para>fixed core dump on `kill all' with
+mirror</para></item>
+        <item><para>fixed sftp:charset setting</para></item>
+        <item><para>fixed debug printing of sftp file
+handle</para></item>
+        <item><para>fixed unsetting of fish:charset
+setting</para></item>
+        <item><para>fixed compilation on systems lacking
+wcwidth</para></item>
+      </change>
+
+      <change from="3.6.1" to="3.6.2">
+        <item><para>added a workaround for ftp servers which don't
+open data connection in certain conditions.</para></item>
+        <item><para>don't decode URL escapes in get/put when no URL
+schema used.</para></item>
+        <item><para>fixed counting of file removal errors in
+mirror.</para></item>
+        <item><para>fixed a 2-byte buffer overflow when showing
+transfer percents.</para></item>
+        <item><para>fixed a problem with incorrect port/host name in
+http requests.</para></item>
+        <item><para>fixed coredump in du command with long paths on
+some systems.</para></item>
+        <item><para>fixed coredump in html parser on empty
+links.</para></item>
+        <item><para>fixed compilation on some systems.</para></item>
+      </change>
+
+      <change from="3.6.0" to="3.6.1">
+        <item><para>repeat --weak option to terminate the loop
+automatically when exiting lftp.</para></item>
+        <item><para>ftp:use-stat-for-list is off by
+default.</para></item>
+        <item><para>slot command fixed.</para></item>
+        <item><para>fixed timeout handling in ftp.</para></item>
+        <item><para>french and polish translations
+updated.</para></item>
+      </change>
+
+      <change from="3.5.15" to="3.6.0">
+        <item><para>major code cleanup.</para></item>
+        <item><para>new setting ftp:use-stat-for-list allows faster
+directory listing.</para></item>
+        <item><para>new command `eval' with -f option allows complex
+aliases.</para></item>
+        <item><para>send encoded parts of ftp URLs untranslated to ftp
+server.</para></item>
+        <item><para>new mirror options --on-change, --depth-first,
+--no-empty-dirs, --ascii.</para></item>
+        <item><para>new mirror option --only-existing.</para></item>
+        <item><para>new setting xfer:log, log successful transfers if
+true to ~/.lftp/tarnsfer_log.</para></item>
+        <item><para>new setting ssl:check-hostname.</para></item>
+        <item><para>fixed cls exit code in case of an
+error.</para></item>
+      </change>
+
+      <change from="3.5.14" to="3.5.15">
+        <item><para>fixed timeout handling when waiting for 150 or 125
+ftp reply.</para></item>
+        <item><para>fixed a bug occuring when turning off proxy server
+setting.</para></item>
+      </change>
+
+      <change from="3.5.13" to="3.5.14">
+        <item><para>handle ftp reply with code 125 same as code
+150.</para></item>
+        <item><para>french translation updated.</para></item>
+      </change>
+
+      <change from="3.5.12" to="3.5.13">
+        <item><para>fixed ftps not to access data socket before 150
+reply.</para></item>
+        <item><para>fixed sftp to send properly sized packets on
+upload.</para></item>
+        <item><para>fixed infinite retrying on upload.</para></item>
+        <item><para>fixed compilation without iconv.</para></item>
+        <item><para>fixed buffering in ascii mode
+transfers.</para></item>
+      </change>
+
+      <change from="3.5.11" to="3.5.12">
+        <item><para>hex-encode all non-ascii characters in
+URLs.</para></item>
+        <item><para>allow cross-compilation without
+iconv.</para></item>
+        <item><para>french translation updated.</para></item>
+      </change>
+
+      <change from="3.5.10" to="3.5.11">
+        <item><para>fixed mirror for MDTM-less ftp
+servers</para></item>
+        <item><para>fixed readline prompt for \[\] (visible on
+win32)</para></item>
+        <item><para>fixed compilation with Sun native
+compiler</para></item>
+      </change>
+
+      <change from="3.5.9" to="3.5.10">
+        <item><para>fixed core dump when doing ls on file:
+connection</para></item>
+        <item><para>fixed core dump when doing pget to write-protected
+directory</para></item>
+      </change>
+
+      <change from="3.5.9" to="3.5.10">
+        <item><para>fixed core dump when doing ls on file:
+connection</para></item>
+        <item><para>fixed core dump when doing pget to write-protected
+directory</para></item>
+      </change>
+
+      <change from="3.5.8" to="3.5.9">
+        <item><para>fixed 'mirror --script' which generated improperly
+quoted shell commands (potential security vulnerability, when someone
+executes the resulting script)</para></item>
+      </change>
+
+      <change from="3.5.7" to="3.5.8">
+        <item><para>fixed 'sleep' command</para></item>
+      </change>
+
+      <change from="3.5.6" to="3.5.7">
+        <item><para>Fixed a spurious timeout when uploading a
+file</para></item>
+      </change>
+
+      <change from="3.5.5" to="3.5.6">
+        <item><para>fixed a coredump in mget</para></item>
+      </change>
+
+      <change from="3.5.4" to="3.5.5">
+        <item><para>new settings cmd:parallel and cmd:queue-parallel
+to set number of jobs executed in parallel in non-interactive mode and
+in a queue</para></item>
+        <item><para>new mirror option --skip-noaccess and setting
+mirror:skip-noaccess</para></item>
+        <item><para>fixed a coredump when lftp was compiled with a
+non-gcc compiler</para></item>
+        <item><para>fixed compilation when stdbool.h is
+missing</para></item>
+        <item><para>fixed a failed assertion</para></item>
+        <item><para>fixed coredump when doing 'ls ..' on a http
+site</para></item>
+        <item><para>fixed memory and file descriptor leak in
+mget/mput</para></item>
+      </change>
+
+      <change from="3.5.3" to="3.5.4">
+        <item><para>new setting mirror:include-regex</para></item>
+        <item><para>load ssl keys for protected data connection as
+well; use new option ftp:ssl-data-use-keys to disable it</para></item>
+        <item><para>fixed human-readable options of du and
+cls</para></item>
+        <item><para>fixed compilation on certain systems</para></item>
+      </change>
+
+      <change from="3.5.2" to="3.5.3">
+        <item><para>fixed a core dump in ftps with gnu
+tls</para></item>
+        <item><para>fixed random queue duplication</para></item>
+        <item><para>fixed compilation with modules and
+socks</para></item>
+        <item><para>fixed installation with modules</para></item>
+        <item><para>added configure --enable-packager-mode
+option</para></item>
+      </change>
+
+      <change from="3.5.1" to="3.5.2">
+        <item><para>strip CRs from ls output, as before</para></item>
+        <item><para>updated help for pget</para></item>
+        <item><para>fixed mirror -c and get -c hang</para></item>
+        <item><para>fixed mirror timestamps for hftp and
+http</para></item>
+        <item><para>fixed mirror for files starting with a
+tilde</para></item>
+        <item><para>fixed use of PROPFIND when http:use-propfind is
+no</para></item>
+        <item><para>fixed directory listing and globbing for ftp over
+http proxy</para></item>
+        <item><para>updated gnulib sources</para></item>
+      </change>
+
+      <change from="3.5.0" to="3.5.1">
+        <item><para>fixed a coredump in pget</para></item>
+      </change>
+
+      <change from="3.4.7" to="3.5.0">
+        <item><para>implemented pget -c (continue) with a status file.
+('set pget:save-status never' to disable periodic saving of the
+status)</para></item>
+        <item><para>new options of 'repeat' command: --count (-c),
+--delay (-d), --while-ok, --until-ok</para></item>
+        <item><para>listing and dns cache optimized; added per host
+enable/disable for caching</para></item>
+        <item><para>made ABOR more robust</para></item>
+        <item><para>added support for ALLO command and ftp:use-allo
+setting</para></item>
+        <item><para>use binary mode for 'quote' (e.g. 'quote POST' for
+http)</para></item>
+        <item><para>sped up uploading in fish protocol</para></item>
+        <item><para>fixed coredump in pget when terminal lacks
+prev_line capability</para></item>
+        <item><para>fixed pget for URLs with question
+sign</para></item>
+      </change>
+
+      <change from="3.4.6" to="3.4.7">
+        <item><para>get1 can now automatically rename files to server
+suggested file name</para></item>
+        <item><para>new settings fish:charset and sftp:charset (for
+sftp version&lt;4)</para></item>
+        <item><para>fixed http chunked transfers with explicit
+Content-Length</para></item>
+        <item><para>fixed compilation with sun c++
+compiler</para></item>
+        <item><para>fixed compilation without ssl</para></item>
+      </change>
+
+      <change from="3.4.5" to="3.4.6">
+        <item><para>fixed opening sites with explicitly specified port
+(it could either use default port or spin)</para></item>
+        <item><para>fixed ftps over http proxy with CONNECT
+method</para></item>
+      </change>
+
+      <change from="3.4.4" to="3.4.5">
+        <item><para>handle ftp PRET errors</para></item>
+        <item><para>send ssh password twice if needed, this fixes a
+problem with encoded secret keys</para></item>
+        <item><para>updated programming examples</para></item>
+        <item><para>fixed cross-references between jobs/tasks
+libraries and lftp</para></item>
+      </change>
+
+      <change from="3.4.3" to="3.4.4">
+        <item><para>new setting mirror:dereference</para></item>
+        <item><para>new exit options: top, kill</para></item>
+        <item><para>fixed stalling when uploading empty files with
+ftps</para></item>
+        <item><para>fixed lftp exit code when cmd:at-exit is
+set</para></item>
+        <item><para>fixed a rare spinning</para></item>
+      </change>
+
+      <change from="3.4.2" to="3.4.3">
+        <item><para>don't create target file when source file does not
+exist</para></item>
+        <item><para>show done jobs before exit</para></item>
+        <item><para>changed default for http:use-propfind to
+no</para></item>
+        <item><para>fixed condition for getting exact time for
+cls</para></item>
+        <item><para>fixed coredump with non-absolute http
+redirection</para></item>
+        <item><para>fixed coredump when exiting lftp with a done
+job</para></item>
+      </change>
+
+      <change from="3.4.1" to="3.4.2">
+        <item><para>fixed a coredump in cls (option
+parsing)</para></item>
+        <item><para>import TIME_STYLE environment variable to
+cmd:time-style</para></item>
+      </change>
+
+      <change from="3.4.0" to="3.4.1">
+        <item><para>new cls option --time-style, new setting
+cmd:time-style</para></item>
+        <item><para>use PROPFIND first to check directory existence
+(http)</para></item>
+        <item><para>fixed CCC - don't try to shutdown ssl connection
+gracefully</para></item>
+        <item><para>fixed an abortion when completing with
+cmd:remote-completion set to false</para></item>
+      </change>
+
+      <change from="3.3.5" to="3.4.0">
+        <item><para>flush cache when changing
+ftp:charset</para></item>
+        <item><para>show all queued commands on 'queue'
+command</para></item>
+        <item><para>support open ranges for 'mirror
+--size-range'</para></item>
+        <item><para>new setting dns:max-retries</para></item>
+        <item><para>change dns:fatal-timeout setting to accept time
+interval suffixes</para></item>
+        <item><para>prefer getaddrinfo over
+gethostbyname2</para></item>
+        <item><para>treat GNUTLS_E_UNEXPECTED_PACKET_LENGTH as EOF
+indicator - this fixes secure ftp with ProFTPD server</para></item>
+        <item><para>fixed netrc usage when no user name is
+given</para></item>
+      </change>
+
+      <change from="3.3.4" to="3.3.5">
+        <item><para>added mirror --older-than, --size-range and
+--max-errors options</para></item>
+        <item><para>improved CCC support - allowed protected transfers
+after CCC</para></item>
+        <item><para>added support for sftp v5 and v6
+(experimental)</para></item>
+        <item><para>added configure option --with-pager</para></item>
+        <item><para>fixed file uploading via protected ftp with
+openssl</para></item>
+        <item><para>fixed compilation on cygwin</para></item>
+        <item><para>fixed compilation with sun c++</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The global configuration file resides in
+<command>${SB_INSTALL_PREFIX}/etc/lftp.conf</command>.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 12" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update curl dependency from 7.19.2 to
+7.22.0</para></item>
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 0.12 to
+0.13.1</para></item>
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+        <item><para>Update readline dependency from 5.2 to
+6.2</para></item>
+        <item><para>Update gnutls dependency from 2.4.2 to
+2.10.5</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2010 November 5" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2010 July 8" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2010-2251 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-2251">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-2251</ulink>).
+The <command>get1</command> command, as used by
+<command>lftpget</command>, does not properly validate a
+server-provided filename before determining the destination filename
+of a download, which allows remote servers to create or overwrite
+arbitrary files via a Content-Disposition header that suggests a
+crafted filename, and possibly execute arbitrary code as a consequence
+of writing to a dotfile in a home directory.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

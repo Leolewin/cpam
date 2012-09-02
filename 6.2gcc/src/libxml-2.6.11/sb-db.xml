@@ -1,0 +1,562 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libxml" version="2.6.11" revision="3">
+    <build-name>${SB_PROG_NAME}2-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="c391173a26ec7c2ac702b54d06420fdb"
+        checksum-type="md5" size="3693599"
+        path="src/libxml2-2.6.11.tar.gz"/>
+      <patch checksum="d34ffd457a4c5f3fbc02bc1aa12b1a7d"
+        checksum-type="md5" size="1274259"
+        path="src/libxml2-2.6.11.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--enable-ipv6=no" ;;
+*-hpux10*)
+  CC=cc CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED"
+  CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ARGS="--enable-ipv6=no" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std1 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6=no" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" ${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${ZLIB_LIB}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--enable-shared --enable-static --with-zlib=${ZLIB} \
+--with-python=no --without-readline --without-history \
+${SB_VAR_LIBICONV+--with-iconv=${SB_VAR_LIBICONV}} \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${SB_VAR_XMLCATALOG+--with-sgml-catalog="${SB_VAR_XMLCATALOG}/catalog.sgml"} \
+${SB_VAR_XMLCATALOG+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml"} \
+${SB_VAR_PYTHON+--with-python=${SB_VAR_PYTHON}} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SHTOOL} subst -e \
+'s!-L\(${libdir}\) !-L\1 '"${CC_LD_RT}"'\1 !g' xml2-config libxml-2.0.pc
+
+# fix paths in documentation
+${SB_PATH_SHTOOL} subst -e "\
+s!/depot/lib/libxml_2.0.0!${SB_INSTALL_PREFIX}/lib!; \
+s!/depot/package/libxml_2.0.0!${SB_INSTALL_PREFIX}/bin!; \
+s!libxml.so!libxml.la!;" libxml.3
+
+if [ "${SB_VAR_XMLCATALOG+set}" = set ]; then
+  ${SB_PATH_SHTOOL} subst -e "\
+s!/etc/xml/catalog!${SB_VAR_XMLCATALOG}/catalog.xml!;" \
+doc/xmlcatalog.1 doc/xmllint.1
+fi
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="!*-aix*">v&gt;=1.9.2</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend var="XMLCATALOG" install-name="xmlcatalog11"
+          set-var-only="1" type="build"/>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GCHOWN} -hR 0:0 ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <module name="python-2.3.2">
+      <dependencies>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+        <depend program="zlib" var="ZLIB">v&gt;=1.1.4</depend>
+        <depend var="PYTHONP" install-name="python232p"
+          type="build"/>
+        <depend program="libxml">v==2.6.11</depend>
+        <depend program="gcc" add-path="prepend"
+          type="build">v==3.3.2</depend>
+        <depend program="python" var="PYTHON"
+          type="build">v==2.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_install_prefix="${PYTHONP}/lib/python2.3/site-packages"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" LDFLAGS="-Wl,-rpath,${SB_INSTALL_PREFIX}/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CC_LD_RT="-Wl,-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" ${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${ZLIB_LIB}\
+${LIBICONV+:${LIBICONV_LIB}}:${SB_VAR_PYTHON}/lib/support \
+${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static \
+--with-zlib=${ZLIB} --without-readline --without-history \
+${LIBICONV+--with-iconv=${LIBICONV}} --with-python=no \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${PYTHON+--with-python=${PYTHON}} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd python
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake AM_LDFLAGS="-Wl,-einitlibxml2mod" ;;
+*-osf4*)
+  gmake libxml2mod_la_LIBADD= \
+  libxml2mod_la_LDFLAGS="-module -avoid-version \
+-L${SB_INSTALL_PREFIX}/lib -L${LIBICONV_LIB} -L${ZLIB_LIB} \
+-Wl,-no_so,-lxml2,-liconv,-lz,-so_archive"
+  ;;
+*)
+  gmake
+  ;;
+esac)
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+(cd python; gmake tests)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+(cd python; gmake install pythondir=${_install_prefix})
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/drv_libxml2.py ${_install_prefix}/libxml2mod* \
+${_install_prefix}/libxml2.py
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.6.10" to="2.6.11">
+        <item><para>Schemas: a lot of changes and improvements for
+attributes, namespaces and simple types</para></item>
+        <item><para>build fixes: --with-minimum,  some gcc cleanup,
+--with-thread-alloc</para></item>
+        <item><para>portability: Windows binary package change,
+Catalog path on Windows</para></item>
+        <item><para>documentation: update to the tutorial, xmllint
+return code, man pages</para></item>
+        <item><para>bug fixes: C14N bug serializing namespaces,
+testSAX properly initialize the library, empty node set in XPath,
+xmlSchemas errors, invalid charref problem, XInclude xml:base
+generation, Relax-NG bug with div processing, XPointer and xml:base
+problem, Reader and entities, xmllint return code for schemas, reader
+streaming problem, DTD serialization problem, libxml.m4 fixes, do not
+provide destructors as methods on Python classes, xmlReader buffer
+bug, Python bindings memory interfaces improvement, Fixed the push
+parser to be back to synchronous behaviour</para></item>
+        <item><para>improvement: custom per-thread I/O enhancement,
+register namespace in debug shell, Python based regression test for
+non-Unix users, dynamically increase the number of XPath extension
+functions in Python and fix a memory leak</para></item>
+        <item><para>performance: hack done with Arjan van de Ven to
+reduce ELF footprint and generated code on Linux, plus use gcc runtime
+profiling to optimize the code generated in the RPM
+packages</para></item>
+      </change>
+
+      <change from="2.6.9" to="2.6.10">
+        <item><para>Web page generated for ChangeLog</para></item>
+        <item><para>build fixes: --without-html problems, make check
+without make all</para></item>
+        <item><para>portability: problem with xpath.c on Windows (MSC
+and Borland), memcmp vs. strncmp on Solaris, XPath tests on Windows,
+C++ do not use "list" as parameter name, make tests work with Python
+1.5</para></item>
+        <item><para>improvements: made xmlTextReaderMode public, small
+buffers resizing, add --maxmem option to xmllint, add
+xmlPopInputCallback(), refactoring of serialization escaping, added
+escaping customization</para></item>
+        <item><para>bugfixes: xsd:extension, assorted regexp bugs,
+xmlReader end of stream problem, node deregistration with reader, URI
+escaping and filemanes,  XHTML1 formatting, regexp transition
+reduction, various XSD Schemas fixes, XInclude fallback problem, weird
+problems with DTD, structured error handler callback context, reverse
+xmlEncodeSpecialChars() behaviour back to escaping '"'</para></item>
+      </change>
+
+      <change from="2.6.8" to="2.6.9">
+        <item><para>implement xml:id Working Draft, relaxed XPath id()
+checking</para></item>
+        <item><para>bugfixes: xmlCtxtReset, line number and CDATA,
+Relax-NG compilation, Regexp patches, xmlUriEscape, a Relax-NG
+notAllowed problem, Relax-NG name classes compares, XInclude duplicate
+fallback, external DTD encoding detection, a DTD validation bug,
+xmlReader Close() fix, recusive extention schemas</para></item>
+        <item><para>improvements: use xmlRead* APIs in test tools,
+indenting save optimization, better handle IIS broken HTTP redirect
+behaviour, HTML parser frameset, libxml2-python RPM dependancy, XML
+Schemas union support, warning removal clanup, keep ChangeLog
+compressed when installing from RPMs</para></item>
+        <item><para>documentation: examples and xmlDocDumpMemory docs,
+new example (load, xpath, modify, save), xmlCatalogDump()
+comments,</para></item>
+        <item><para>Windows: Borland C++ builder, work around
+Microsoft compiler NaN handling bug</para></item>
+      </change>
+
+      <change from="2.6.7" to="2.6.8">
+        <item><para>First step of the cleanup of the serialization
+code and APIs</para></item>
+        <item><para>XML Schemas: mixed content, QName handling fixes,
+anyURI for ""</para></item>
+        <item><para>Python: Canonicalization C14N support
+added</para></item>
+        <item><para>xmlDocCopyNode() extension</para></item>
+        <item><para>Relax-NG: fix when processing XInclude results,
+external reference in interleave, missing error on &lt;choice&gt;
+failure, memory leak in schemas datatype facets</para></item>
+        <item><para>xmlWriter: patch for better DTD
+support</para></item>
+        <item><para>bug fixes: xmlXPathLangFunction memory leak, no ID
+errors if using HTML_PARSE_NOERROR, xmlcatalog fallbacks to URI on
+SYSTEM lookup failure, XInclude parse flags inheritance, XInclude and
+XPointer fixes for entities, XML parser bug, nanohttp fd leak,
+regexps char groups '-' handling, dictionnary reference counting
+problems, do not close stderr</para></item>
+        <item><para>performance patches from Petr Pajas</para></item>
+        <item><para>Documentation fixes: XML_CATALOG_FILES in man
+pages</para></item>
+        <item><para>compilation and portability fixes:
+--without-valid, catalog cleanups, MingW patch, cross-compilation to
+Windows (Christophe de Vienne),  --with-html-dir fixup, Windows
+build</para></item>
+      </change>
+
+      <change from="2.6.6" to="2.6.7">
+        <item><para>documentation: tutorial updates, benchmark
+results</para></item>
+        <item><para>xmlWriter: updates and fixes</para></item>
+        <item><para>XPath optimization</para></item>
+        <item><para>DTD ID handling optimization</para></item>
+        <item><para>bugfixes: xpath number with &gt; 19 fractional,
+push mode with unescaped '&gt;' characters, fix xmllint --stream
+--timing, fix xmllint --memory --stream memory usage,
+xmlAttrSerializeTxtContent handling NULL, trying to fix Relax-NG/Perl
+interface</para></item>
+        <item><para>python: 2.3 compatibility, whitespace
+fixes</para></item>
+        <item><para>Added relaxng option to xmllint
+--shell</para></item>
+      </change>
+
+      <change from="2.6.5" to="2.6.6">
+        <item><para>nanohttp and nanoftp: buffer overflow error on URI
+parsing</para></item>
+        <item><para>bugfixes: make test and path issues, xmlWriter
+attribute serialization, xmlWriter indentation, schemas validation,
+XInclude dictionnaries issues, XInclude empty fallback, HTML warnings,
+XPointer in XInclude, Python namespace serialization, isolat1ToUTF8
+bound error, output of parameter entities in internal subset, internal
+subset bug in push mode, &lt;xs:all&gt; fix</para></item>
+        <item><para>Build: fix for automake-1.8, warnings removal,
+SOCKLEN_T detection fixes, fix --with-minimum
+configuration</para></item>
+        <item><para>XInclude: allow the 2001 namespace without
+warning</para></item>
+        <item><para>Documentation: missing example/index.html, version
+dependancies</para></item>
+        <item><para>reader API: structured error
+reporting</para></item>
+        <item><para>Windows compilation: mingw, msys, function
+prototype, MSVC6 compiler warnings, _WINSOCKAPI_ patch</para></item>
+        <item><para>Parsers: added xmlByteConsumed(ctxt) API to get
+the byte offest in input</para></item>
+      </change>
+
+      <change from="2.6.4" to="2.6.5">
+        <item><para>Bugfixes: dictionnaries for schemas, regexp
+segfault, xs:all problem, a number of XPointer bugfixes, xmllint error
+go to stderr, DTD validation problem with namespace, memory leak, SAX1
+cleanup and minimal options fixes, parser context reset on error,
+XPath union evaluation problem, xmlReallocLoc with NULL, XML Schemas
+double free, XInclude with no href, argument callbacks order for XPath
+callback </para></item>
+        <item><para>Documentation: python scripts, xslt stylesheets,
+doc, I/O example</para></item>
+        <item><para>Python bindings: fixes, enum support, structured
+error reporting</para></item>
+        <item><para>XInclude: various fixes for conformance, problem
+related to dictionnary references, recursion</para></item>
+        <item><para>xmlWriter: indentation, memory leaks</para></item>
+        <item><para>xmlSchemas: normalizedString
+datatype</para></item>
+        <item><para>code cleanup for strings functions</para></item>
+        <item><para>Windows: compiler patches</para></item>
+        <item><para>Parser optimizations, a few new XPath and
+dictionnary APIs for future XSLT optimizations</para></item>
+      </change>
+
+      <change from="2.6.3" to="2.6.4">
+        <item><para>Windows build fixes</para></item>
+        <item><para>Some serious XInclude problems</para></item>
+        <item><para>Unix and Makefile packaging fixes</para></item>
+        <item><para>Documentation improvements, example
+fix</para></item>
+        <item><para>bugfixes: xmlTextReaderExpand() with
+xmlReaderWalker, XPath handling of NULL strings, API building reader
+or parser from filedescriptor should not close it, changed XPath
+sorting to be stable again, xmlGetNodePath() generating '(null)', DTD
+validation and namespace bug, XML Schemas double inclusion
+behaviour</para></item>
+      </change>
+
+      <change from="2.6.2" to="2.6.3">
+        <item><para>documentation updates and cleanup</para></item>
+        <item><para>added a repository of examples</para></item>
+        <item><para>Windows updates, Mingw</para></item>
+        <item><para>Unicode range checking</para></item>
+        <item><para>code cleanup</para></item>
+        <item><para>Python bindings: doc,  bug fixes</para></item>
+        <item><para>UTF-16 cleanup and BOM issues</para></item>
+        <item><para>bug fixes: ID and xmlReader validation, XPath,
+xmlWriter, hash.h inclusion problem, HTML parser, attribute defaulting
+and validation, some serialization cleanups, XML_GET_LINE macro,
+memory debug when using threads, serialization of attributes and
+entities content, xmlWriter</para></item>
+        <item><para>XInclude bugfix, new APIs and update to the last
+version including the namespace change</para></item>
+        <item><para>XML Schemas improvements: include, import and
+namespace handling, fixed the regression tests troubles, added
+examples based on Eric van der Vlist book, regexp fixes</para></item>
+        <item><para>preliminary pattern support for streaming (needed
+for schemas constraints), added xmlTextReaderPreservePattern() to
+collect subdocument when streaming</para></item>
+        <item><para>various fixes in the structured error
+handling</para></item>
+      </change>
+
+      <change from="2.6.1" to="2.6.2">
+        <item><para>XPath context unregistration fixes</para></item>
+        <item><para>text node coalescing fixes</para></item>
+        <item><para>API to screate a W3C Schemas from an existing
+document</para></item>
+        <item><para>BeOS patches</para></item>
+        <item><para>xmlStrVPrintf function added</para></item>
+        <item><para>compilation fixes</para></item>
+        <item><para>stdin parsing fix</para></item>
+        <item><para>a posteriori DTD validation fixes</para></item>
+        <item><para>xmlReader bug fixes: Walker fixes, python
+bindings</para></item>
+        <item><para>fixed xmlStopParser() to really stop the parser
+and errors</para></item>
+        <item><para>always generate line numbers when using the new
+xmlReadxxx functions</para></item>
+        <item><para>added XInclude support to the xmlReader
+interface</para></item>
+        <item><para>implemented XML_PARSE_NONET parser
+option</para></item>
+        <item><para>DocBook XSLT processing bug fixed</para></item>
+        <item><para>HTML serialization for &lt;p&gt;
+elements</para></item>
+        <item><para>XPointer failure in XInclude are now handled as
+resource errors</para></item>
+        <item><para>fixed xmllint --html to use the HTML serializer on
+output (added --xmlout to implement the previous behaviour of saving
+it using the XML serializer)</para></item>
+      </change>
+
+      <change from="2.6.0" to="2.6.1">
+        <item><para>Mostly bugfixes after the big 2.6.0
+changes</para></item>
+        <item><para>Unix compilation patches: libxml.m4, warnings
+cleanup</para></item>
+        <item><para>Windows compilation patches</para></item>
+        <item><para>xmlWriter bugfix</para></item>
+        <item><para>chvalid.[ch]: couple of fixes</para></item>
+        <item><para>context reset: error state reset, push parser
+reset</para></item>
+        <item><para>context reuse: generate errors if file is not
+readable</para></item>
+        <item><para>defaulted attributes for element coming from
+internal entities</para></item>
+        <item><para>Python: tab and spaces mix</para></item>
+        <item><para>Error handler could crash in DTD validation in
+2.6.0</para></item>
+        <item><para>xmlReader: do not use the document or element
+_private field</para></item>
+        <item><para>testSAX.c: avoid a problem with some
+PIs</para></item>
+        <item><para>general bug fixes: mandatory encoding in text
+decl, serializing Document Fragment nodes, xmlSearchNs 2.6.0 problem,
+XPath errors not reported, slow HTML parsing of large
+documents</para></item>
+      </change>
+
+      <change from="2.5.11" to="2.6.0">
+        <item><para>Major revision release: should be API and ABI
+compatible but got a lot of change</para></item>
+        <item><para>Increased the library modularity, far more options
+can be stripped out, a --with-minimum configuration will weight around
+160KBytes</para></item>
+        <item><para>Use per parser and per document dictionnary,
+allocate names and small text nodes from the dictionnary</para></item>
+        <item><para>Switch to a SAX2 like parser rewrote most of the
+XML parser core, provides namespace resolution and defaulted
+attributes, minimize memory allocations and copies, namespace checking
+and specific error handling, immutable buffers, make predefined
+entities static structures, etc.</para></item>
+        <item><para>rewrote all the error handling in the library, all
+errors can be intercepted at a structured level, with precise
+information available</para></item>
+        <item><para>New simpler and more generic XML and HTML parser
+APIs, allowing to easilly modify the parsing options and reuse parser
+context for multiple consecutive documents</para></item>
+        <item><para>Similar new APIs for the xmlReader, for options
+and reuse, provided new functions to access content as const strings,
+use them for Python bindings</para></item>
+        <item><para>a  lot of other smaller API improvements:
+xmlStrPrintf, Walker i.e. reader on a document tree, make room in
+nodes for line numbers, reference counting and future PSVI extensions,
+generation of character ranges to be checked with faster algorithm,
+xmlParserMaxDepth, buffer access</para></item>
+        <item><para>New xmlWriter API</para></item>
+        <item><para>Schemas: base64 support</para></item>
+        <item><para>Parser&lt;-&gt;HTTP integration fix, proper
+processing of the Mime-Type and charset informations if
+available</para></item>
+        <item><para>Relax-NG: bug fixes, better error
+reporting</para></item>
+        <item><para>Python bindings, never use stdout for errors
+output</para></item>
+        <item><para>Portability: all the headers have macros for
+export and calling convention definitions, VMS update, Windows:
+threads, Borland compiler, Mingw, typos, beta version, warning
+cleanups on AIX and MIPS compilers, BeOS</para></item>
+        <item><para>Documentation fixes and README, search fix,
+tutorial updates, namespace docs</para></item>
+        <item><para>Bug fixes: xmlCleanupParser (Dave Beckett),
+threading uninitialized mutexes, HTML doctype lowercase, SAX/IO,
+compression detection and restore, attribute declaration in DTDs,
+namespace on attribute in HTML output, input filename, namespace DTD
+validation, xmlReplaceNode, I/O callbacks, CDATA serialization,
+xmlReader, high codepoint charref like &amp;#x10FFFF;, buffer access
+in push mode, TLS threads on Windows, XPath bug, xmlCleanupParser,
+CDATA output, HTTP error handling</para></item>
+        <item><para>xmllint options: --dtdvalidfpi for Tobias Reif,
+--sax1 for compat testing,  --nodict for building without tree
+dictionnary, --nocdata to replace CDATA by text, --nsclean to remove
+surperfluous  namespace declarations</para></item>
+        <item><para>added xml2-config --libtool-libs
+option</para></item>
+        <item><para>a lot of profiling and tuning of the code, speedup
+patch for xmlSearchNs(). The xmlReader should do far less allocation
+and it speed should get closer to SAX.</para></item>
+        <item><para>cleanup of "make tests"</para></item>
+        <item><para>libxml-2.0-uninstalled.pc</para></item>
+        <item><para>deactivated the broken docBook SGML parser code
+and plugged the XML parser instead</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>64-bit libraries are available for the following 
+platforms:</para>
+        <screen>
+AIX 5.x            ${SB_INSTALL_PREFIX}/lib/ppc64
+HP-UX 11.x         ${SB_INSTALL_PREFIX}/lib/pa20_64
+IRIX 6.5           ${SB_INSTALL_PREFIX}/lib64
+Solaris 7-9/SPARC  ${SB_INSTALL_PREFIX}/lib/sparcv9
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 August 24" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64-bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="imlib" version="1.9.15" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}19</install-name>
+
+    <sources>
+      <source checksum="7db987e6c52e4daf70d7d0f471238eae"
+        checksum-type="md5" size="683242"
+        path="src/imlib-1.9.15.tar.bz2"/>
+      <patch checksum="b2ea802ac20fdf2cf708ba83b769c4a1"
+        checksum-type="md5" size="13144"
+        path="src/imlib-1.9.15.CVE-2004-1025_1026.patch"/>
+      <patch checksum="5bc5440ee1ed2bda2e15b4355662d37d"
+        checksum-type="md5" size="545"
+        path="src/imlib-1.9.15.CVE-2007-3568.patch"/>
+      <patch checksum="9d3928b5fb9c383af93f16ff2d05b8b7"
+        checksum-type="md5" size="5445"
+        path="src/imlib-1.9.15.tww.patch"/>
+      <patch checksum="39b1d433e440998357423a64016320ef"
+        checksum-type="md5" size="1116882"
+        path="src/imlib-1.9.15.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ImageMagick" var="IMAGEMAGICK"
+        install-name="imagemagick66"
+        type="build">v&gt;=6.6.6</depend>
+      <depend program="gtk+" var="GTK"
+        install-name="gtk+12">v&gt;=1.2.10</depend>
+      <depend program="glib" var="GLIB" install-name="glib12"
+        add-path="prepend">v&gt;=1.2.10</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="giflib" var="LIBGIF"
+        install-name="libgif41">v&gt;=4.1.6</depend>
+      <depend program="netpbm" var="NETPBM"
+        install-name="netpbm1047">v&gt;=10.47</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff39">v&gt;=3.9.5</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qcpluscmt -qro -qroconst -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" LDFLAGS="-L/usr/openwin/lib" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" LDFLAGS="-L/usr/openwin/lib" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" LDFLAGS="-L/usr/openwin/lib" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} \
+${SB_VAR_ZLIB+-I${SB_VAR_ZLIB_INC}} \
+${SB_VAR_LIBGIF+-I${LIBGIF_INC}}" LDFLAGS="\
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_ZLIB+-L${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_LIBGIF+-L${SB_VAR_LIBGIF_LIB}} \
+${LDFLAGS+${LDFLAGS}}  \
+${SB_VAR_JPEG+${CC_LD_RT}${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBPNG+${CC_LD_RT}${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBTIFF+${CC_LD_RT}${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_ZLIB+${CC_LD_RT}${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_LIBGIF+${CC_LD_RT}${SB_VAR_LIBGIF_LIB}}" \
+DJPEG_PROG="${SB_VAR_JPEG-/usr}/bin/djpeg" \
+CJPEG_PROG="${SB_VAR_JPEG-/usr}/bin/cjpeg" \
+CONVERT_PROG="${SB_VAR_IMAGEMAGICK}/bin/convert" \
+GIFTOPNM_PROG="${SB_VAR_NETPBM-/usr}/bin/giftopnm" \
+--enable-shm --enable-shared --enable-static \
+${SB_VAR_GTK+--with-gtk-prefix="${SB_VAR_GTK}"} \
+--disable-gtktest ${ARGS+${ARGS}} --datadir="${_datadir}" \
+--sysconfdir="${_sysconfdir}" --libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir=${SB_INSTALL_PREFIX}/man \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" imlib.pc imlib-config
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake CJPEG_PROG=cjpeg DJPEG_PROG=djpeg
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+
+gmake install
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/* ${_docdir}
+rm ${_docdir}/Makefile*
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 February 1" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update ImageMagick dependency from 6.4.7 to
+6.6.6</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b</para></item>
+        <item><para>Update netpbm dependency from 10.35 to
+10.47</para></item>
+        <item><para>Update tiff dependency from 3.8.2 to
+3.9.5</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+1.4.4</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update libungif 4.1.1 dependency to giflib
+4.1.6</para></item>
+      </change>
+
+      <change date="2009 May 4" revision="2"
+      author="Peter O'Gorman" email="peter@pogma.com">
+        <item><para>Add support fox AIX 6.1</para></item>
+        <item><para>Add support fox HP-UX 11.31/IA</para></item>
+        <item><para>Update ImageMagic dependency from 6.3.6 to
+6.4.7</para></item>
+        <item><para>Update libpng dependency from 1.2.18 to
+1.2.29</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

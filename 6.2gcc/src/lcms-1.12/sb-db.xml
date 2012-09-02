@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="lcms" version="1.12" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}11</install-name>
+
+    <sources>
+      <source checksum="ac377fc055cf50aa8a8505aedb13a125"
+        checksum-type="md5" size="567985"
+        path="src/lcms-1.12.tar.gz"/>
+      <patch checksum="bee77de1a8367ed08c4517890ed10880"
+        checksum-type="md5" size="895558"
+        path="src/lcms-1.12.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_JPEG_INC} -I${SB_VAR_LIBTIFF_INC} \
+-I${SB_VAR_ZLIB_INC}" LDFLAGS="-L${SB_VAR_JPEG_LIB} \
+-L${SB_VAR_LIBTIFF_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_JPEG_LIB}:${SB_VAR_LIBTIFF_LIB}:\
+${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${INSTALL_PREFIX}
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!-L(\\\${libdir})!-L\$1 ${CC_LD_RT}\$1!" lcms.pc
+
+# Don't use system swab() on Tru64 UNIX
+case "${SB_SYSTYPE}" in
+*-osf*)
+  ${SB_VAR_PERL}/bin/perl -pi -e "\
+s!^// #define USE_CUSTOM_SWAB!#define USE_CUSTOM_SWAB!" include/lcms.h
+  ;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+# remove C++ comments
+gmake filter
+
+
+(for _c in include/*.h src/*.c testbed/*.c; do
+  mv ${_c} ${_c}.orig
+  ./filter ${_c}.orig ${_c}
+done)
+
+gmake
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install documentation
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/* ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

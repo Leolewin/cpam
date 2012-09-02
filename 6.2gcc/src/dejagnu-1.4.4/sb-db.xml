@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="dejagnu" version="1.4.4" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="053f18fd5d00873de365413cab17a666"
+        checksum-type="md5" size="1080346"
+        path="src/dejagnu-1.4.4.tar.gz"/>
+      <patch checksum="1ad175152ea4b150ef335b4a086d12f0"
+        checksum-type="md5" size="1698"
+        path="src/dejagnu-1.4.4.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="tcl" var="TCL"
+        install-name="tcl84">v&gt;=8.4.6</depend>
+      <depend program="texinfo" var="TEXINFO">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+#  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+   CC=gcc  ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure ac_cv_path_tclsh=${SB_VAR_TCL}/bin/tclsh8.4 \
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir="${_datadir}"
+
+sed "s!@datadir@!${_datadir}!g" runtest >/tmp/$$
+cp /tmp/$$ runtest && rm -f /tmp/$$
+sed "s!@datadir@!${_datadir}!g" runtest.exp >/tmp/$$
+cp /tmp/$$ runtest.exp && rm -f /tmp/$$
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake pkgdatadir="${_datadir}" install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/info
+${SB_VAR_TEXINFO}/bin/makeinfo --no-split \
+-o ${SB_INSTALL_PREFIX}/info/dejagnu.info doc/dejagnu.texi
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/dejagnu.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="1.4.2" to="1.4.4">
+        <item><para>New XML output option, so test results can be
+loaded into a database</para></item>
+        <item><para>Support for the KFAIL/KPASS (known
+failures)</para></item>
+        <item><para>New "Hello World" example</para></item>
+        <item><para>New tutorial chapter</para></item>
+        <item><para>Test cases build with either GCC 2.x or
+3.x</para></item>
+        <item><para>BlueGnu has been removed from the contrib
+directory</para></item>
+        <item><para>The contrib/test* scipts were bitrotten and have
+been removed. If you still want copies of these, they can be found in
+the previous DejaGnu release.</para></item>
+        <item><para>i960glue.c has been removed</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

@@ -1,0 +1,134 @@
+Index: src/nl.c
+===================================================================
+--- src/nl.c.orig	2005-11-17 09:33:21.456958000 -0600
++++ src/nl.c	2005-11-17 09:33:26.652501000 -0600
+@@ -315,7 +315,7 @@
+ proc_text (void)
+ {
+   static intmax_t blank_lines = 0;	/* Consecutive blank lines so far. */
+-
++  regoff_t re_sult = 0;
+   switch (*current_type)
+     {
+     case 'a':
+@@ -342,20 +342,14 @@
+       fputs (print_no_line_fmt, stdout);
+       break;
+     case 'p':
+-      switch (re_search (current_regex, line_buf.buffer, line_buf.length - 1,
+-			 0, line_buf.length - 1, (struct re_registers *) 0))
+-	{
+-	case -2:
++      re_sult = re_search (current_regex, line_buf.buffer, line_buf.length - 1,
++		 0, line_buf.length - 1, (struct re_registers*) 0);
++      if (re_sult == -2)
+ 	  error (EXIT_FAILURE, errno, _("error in regular expression search"));
+-
+-	case -1:
++      else if (re_sult == -1)
+ 	  fputs (print_no_line_fmt, stdout);
+-	  break;
+-
+-	default:
++      else
+ 	  print_lineno ();
+-	  break;
+-	}
+     }
+   fwrite (line_buf.buffer, sizeof (char), line_buf.length, stdout);
+ }
+Index: src/copy.c
+===================================================================
+--- src/copy.c.orig	2005-11-17 09:33:21.481069000 -0600
++++ src/copy.c	2005-11-17 09:33:26.710456000 -0600
+@@ -180,7 +180,7 @@
+       ok &= copy_internal (src_name, dst_name, new_dst, src_sb->st_dev,
+ 			   ancestors, &non_command_line_options, false,
+ 			   &local_copy_into_self, NULL);
+-      *copy_into_self |= local_copy_into_self;
++      *copy_into_self = *copy_into_self | local_copy_into_self;
+ 
+       free (dst_name);
+       free (src_name);
+@@ -750,7 +750,8 @@
+ {
+   struct F_triple const *a = x;
+   struct F_triple const *b = y;
+-  return (SAME_INODE (*a, *b) && same_name (a->name, b->name)) ? true : false;
++  if (SAME_INODE (*a, *b) && same_name (a->name, b->name)) return true;
++  return false;
+ }
+ 
+ /* Free an F_triple.  */
+Index: src/ptx.c
+===================================================================
+--- src/ptx.c.orig	2005-11-17 09:33:21.505184000 -0600
++++ src/ptx.c	2005-11-17 09:33:26.813542000 -0600
+@@ -833,7 +833,7 @@
+   char *word_start;		/* start of word */
+   char *word_end;		/* end of word */
+   char *next_context_start;	/* next start of left context */
+-
++  regoff_t re_sult = 0;
+   /* reference_length is always used within `if (input_reference)'.
+      However, GNU C diagnoses that it may be used uninitialized.  The
+      following assignment is merely to shut it up.  */
+@@ -881,18 +881,13 @@
+ 
+       next_context_start = text_buffer.end;
+       if (context_regex_string)
+-	switch (re_search (context_regex, cursor, text_buffer.end - cursor,
+-			   0, text_buffer.end - cursor, &context_regs))
+-	  {
+-	  case -2:
+-	    matcher_error ();
+-
+-	  case -1:
+-	    break;
+-
+-	  default:
++	 {
++	  re_sult = re_search (context_regex, cursor, text_buffer.end - cursor,
++			   0, text_buffer.end - cursor, &context_regs);
++	  if (re_sult == -2)
++	      matcher_error ();
++	  else if (re_sult != -1)
+ 	    next_context_start = cursor + context_regs.end[0];
+-	    break;
+ 	  }
+ 
+       /* Include the separator into the right context, but not any suffix
+Index: src/pr.c
+===================================================================
+--- src/pr.c.orig	2005-11-17 09:33:21.530045000 -0600
++++ src/pr.c	2005-11-17 09:33:26.964597000 -0600
+@@ -1089,10 +1089,12 @@
+     }
+ 
+   if (! date_format)
+-    date_format = (getenv ("POSIXLY_CORRECT") && !hard_locale (LC_TIME)
+-		   ? "%b %e %H:%M %Y"
+-		   : "%Y-%m-%d %H:%M");
+-
++    {
++      if (getenv ("POSIXLY_CORRECT") && !hard_locale (LC_TIME))
++	date_format = "%b %e %H:%M %Y";
++      else
++	date_format = "%Y-%m-%d %H:%M";
++    }
+   /* Now we can set a reasonable initial value: */
+   if (first_page_number == 0)
+     first_page_number = 1;
+Index: src/sort.c
+===================================================================
+--- src/sort.c.orig	2005-11-17 09:33:21.554147000 -0600
++++ src/sort.c	2005-11-17 09:33:27.119907000 -0600
+@@ -1375,7 +1375,7 @@
+   size_t alloc = 0;
+   uintmax_t line_number = 0;
+   struct keyfield const *key = keylist;
+-  bool nonunique = ! unique;
++  int nonunique = ! unique;
+   bool ordered = true;
+ 
+   initbuf (&buf, sizeof (struct line),

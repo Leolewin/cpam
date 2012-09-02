@@ -1,0 +1,334 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="ncftp" version="3.1.7" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}31</install-name>
+
+    <sources>
+      <source checksum="2a310a3c9ca126e6b409d0d1d1ccda75"
+        checksum-type="md5" size="397742"
+        path="src/ncftp-3.1.7-src.tar.bz2"/>
+      <patch checksum="5911493c3c8977916979383c92e21c71"
+        checksum-type="md5" size="477209"
+        path="src/ncftp-3.1.7-src.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="ncurses" var="NCURSES">v==5.4</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_NCURSES_INC} -I${SB_VAR_NCURSES_INC}/ncurses" \
+LDFLAGS="-L${SB_VAR_NCURSES_LIB} ${CC_LD_RT}${SB_VAR_NCURSES_LIB} \
+${LDFLAGS+${LDFLAGS}}" ./configure --sysconfdir=${_sysconfdir} \
+--disable-ccdv --disable-precomp --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/etc/${SB_INSTALL_NAME}
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.firewall
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.firewall.fixed
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.prefs_v3
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.prefs_v3.fixed
+
+cat >${_sysconfdir}/ncftp.prefs_v3 <<_EOT_
+confirm-close=no
+yes-i-know-about-NcFTPd=yes
+_EOT_
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/html
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/FIREWALLS_AND_PROXIES.txt \
+doc/CHANGELOG.txt doc/LICENSE.txt ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/html/* ${_docdir}/html
+
+gmake install
+]]>
+    </install>
+
+    <notes>
+      <change from="3.1.6" to="3.1.7">
+        <item><para>Fixed a memory leak introduced in
+3.1.6</para></item>
+        <item><para>Fixed problem where it was assumed that daylight
+saving's time occurred at the same time each year for all
+timezones</para></item>
+        <item><para>Bug fixed with running a shell
+escape</para></item>
+        <item><para>Ncftpget now uses passive-with-fall-back-to-port
+mode like ncftpput and ncftpls</para></item>
+        <item><para>Problem fixed with "ls -a" where occasionally a
+row with ".." and another file would be omitted</para></item>
+        <item><para>Ncftpbatch now uses the UTC timezone for spool
+files</para></item>
+        <item><para>The configure script can now detect when the
+config.cache file has been improperly recycled from a machine with a
+different OS</para></item>
+        <item><para>The Windows version now uses the USERPROFILE
+environment variable, if it was set, as the location of the user's
+home directory</para></item>
+        <item><para>Recognize broken DG/UX servers and work around
+them</para></item>
+      </change>
+
+      <change from="3.1.5" to="3.1.6">
+        <item><para>Fixed an important bug that was causing socket
+leaks on Windows</para></item>
+        <item><para>Added support for GCC 3.4 precompiled
+headers</para></item>
+        <item><para>Aborting transfers is now more
+robust</para></item>
+        <item><para>Re-fixed a problem where high ASCII characters at
+the NcFTP prompt could cause it to exit</para></item>
+        <item><para>Bug fixed where timeouts may not have
+worked</para></item>
+        <item><para>To the improved ASCII handling from 3.1.5, added
+another case where we workaround files sent by a buggy FTP server
+implementation whose files have CR+CR+LF end-of-lines</para></item>
+        <item><para>Bug fixed where an upload filename could have been
+limited to 127 characters</para></item>
+        <item><para>Firewall exception hosts are no longer case
+sensitive</para></item>
+        <item><para>Bug fixed in ncftpput's "-c" option so it works
+with the "-f" option</para></item>
+        <item><para>Ncftpbatch will now try to temporarily skip a
+failing host in the current run</para></item>
+        <item><para>Bug fixed where a several minute delay would be
+incurred if you tried to transfer a file that did not
+exist</para></item>
+        <item><para>For the malicious server problem that was
+addressed in 3.1.5, enhanced the fix for better compatibility with
+Serv-U and WS_FTP servers</para></item>
+      </change>
+
+      <change from="3.1.4" to="3.1.5">
+        <item><para>Problem fixed where a malicious or trojaned FTP
+server could send back pathnames with directories different from the
+directory requested. For example, if you did:</para>
+        <screen>
+cd /pub
+get *.zip
+        </screen>
+        <para>the malicious server could send back a pathname like
+../../../some/other/dir/filename.here rather than pathnames such as
+filename.zip and trick NcFTP into writing into a different local
+pathname if your user privileges had permission to write it.</para>
+        <para>For details, see the CERT Vulnerability Note, at <ulink url="http://www.kb.cert.org/vuls/id/210409">http://www.kb.cert.org/vuls/id/210409</ulink>.</para></item>
+        <item><para>Bug fixed where cd messages from remote server were
+not being displayed</para></item>
+        <item><para>It's now possible to capture the output of the
+progress reports from ncftpget/put by redirecting descriptor(s) to a
+file. Previous releases required a "tty" to enable progress
+reports.</para></item>
+        <item><para>Compatibility fixes for AIX, Linux, Mac OS X, IRIX
+6.2 and SunOS 4</para></item>
+        <item><para>Be less pedantic about incorrectly formatted
+multi-line responses</para></item>
+        <item><para>Bug fixed where NcFTP could hang at
+exit</para></item>
+        <item><para>For ASCII transfers, try harder to handle
+non-native end-of-line formats</para></item>
+      </change>
+
+      <change from="3.1.3" to="3.1.4">
+        <item><para>Bug fixed in Win32 port which could cause NcFTP to
+mis-parse output from Roxen FTP servers</para></item>
+        <item><para>We now try to have ncftpbatch leave a core file
+for debugging if it exits with SIGSEGV, SIGBUS, or
+SIGILL</para></item>
+        <item><para>Fixed(?) an elusive bug which had been present for
+the past few versions which could cause ncftpbatch to infinite loop or
+sleep too long</para></item>
+        <item><para>New configure flag, --disable-ccdv</para></item>
+        <item><para>Compatibility fixes for C++ and
+Linux</para></item>
+        <item><para>Fixed a socket leak and a crash on
+Win32</para></item>
+        <item><para>A few minor fixes for firewall logins (Thanks,
+Jochen Schnapka)</para></item>
+        <item><para>By default, proxy connections for PORT are no
+longer allowed. This is mostly an extra security precaution, to
+eliminate cases where someone could hijack a data connection by
+connecting to us after we issue PORT but before the server could
+connect to us.</para></item>
+        <item><para>ncftpls now accepts a "-R" flag which is
+equivalent to "-x -lR"</para></item>
+        <item><para>Bugs fixed in configure script for our "--with-*"
+arguments</para></item>
+        <item><para>A few new firewalls (permutations of type
+1)</para></item>
+      </change>
+
+      <change from="3.1.2" to="3.1.3">
+        <item><para>Bug fixed on Solaris where a socket could be left
+in non-blocking mode</para></item>
+        <item><para>Ls parsing is now more forgiving of weird /bin/ls
+implementations (AIX)</para></item>
+        <item><para>Be more lenient on broken server implementations
+which include extra blank lines in the control connection
+conversation</para></item>
+        <item><para>Fix for ncftpget which was exiting with code 3 if
+URL mode was used and the file already existed</para></item>
+        <item><para>Fix for resume prompts which in some cases was
+printing dates in the format like "Sun Feb 20:02:15 CST 2002" instead
+of "Sun Feb 24 20:02:15 CST 2002" (i.e. the day of the month was
+missing).</para></item>
+        <item><para>Compatibility fixes for IRIX 5.x and AIX
+4.2.x</para></item>
+        <item><para>Compatibility fixes for Cygwin</para></item>
+        <item><para>Some extra debugging information is now logged to
+the trace logs</para></item>
+        <item><para>When running the Windows bookmark editor in
+standalone mode, the program may not have launched NcFTP correctly
+with the selected bookmark</para></item>
+      </change>
+
+      <change from="3.1.1" to="3.1.2">
+        <item><para>A fix for the local hostname detection code which
+could result with only the first character of the domain appended,
+rather than the entire domain</para></item>
+        <item><para>Another bug fixed in local hostname detection
+where looking up the host by IP address was not done
+correctly</para></item>
+        <item><para>Fixed a few portability problems on HP-UX 10.20
+which were introduced in 3.1.0</para></item>
+        <item><para>Fixed bug with readdir_r usage on Solaris, which
+could cause crashes when doing "put -R", among other
+things</para></item>
+        <item><para>On Linux, use gethostbyname2_r() to specify that
+we only want IPv4 addresses returned</para></item>
+        <item><para>Reversing behavior from 3.1.0 where we did a
+shutdown() on the half of the socket that wasn't used. We suspect
+this was causing some firewalls and routers to panic and assume the
+whole connection was to be closed.</para></item>
+        <item><para>Bug fixed where an unresolvable hostname caused a
+pointless connection attempt which would fail</para></item>
+        <item><para>Shell utilities now print an error message when
+incompatible flags are used in conjunction with "-b" or
+"-c"</para></item>
+        <item><para>A few fixes for ncftpbatch</para></item>
+        <item><para>Numerous fixes for SOCKS5</para></item>
+      </change>
+
+      <change from="3.1.0" to="3.1.1">
+        <item><para>Fixed bugs with our use of gethostbyname_r/addr_r
+on Linux</para></item>
+        <item><para>Fixed bugs with our implementation of stat64() on
+Windows, which caused problems when querying information about local
+directories</para></item>
+        <item><para>Source distributions now include install-sh
+again</para></item>
+        <item><para>Bug fixed with Win32 version of ncftpbookmarks,
+which could look in $HOME/.ncftp rather than $HOME/ncftp. Many Win32
+users weren't affected, since the HOME environment variable is not
+always set.</para></item>
+      </change>
+
+      <change from="3.0.4" to="3.1.0">
+        <item><para>ACCT is now always sent if the server requests it
+and you're going through the firewall</para></item>
+        <item><para>Bug fixed where puts could delay a few seconds
+unnecessarily after the file had been sent</para></item>
+        <item><para>Bug fixed where passwords were saved if you chose
+to autosave bookmarks. NcFTP also makes an effort to avoid saving
+passwords in the history and trace files if you foolishly use
+passwords on your command lines</para></item>
+        <item><para>Bug fixed on Win32 port where putting a file that
+did not exist could cause a crash</para></item>
+        <item><para>The "-r" (recursive) flag is back for "bgget" and
+"bgput". We now spool the directory by creating individual spool
+files for each file in the directory, which should increase
+reliability and usability of this feature.</para></item>
+        <item><para>The binary packages should be a bit leaner, since
+ncftpls wasn't getting stripped</para></item>
+        <item><para>Library optimizations should result in less
+unneeded code included with programs that use the libraries. The
+binaries should be smaller as a result.</para></item>
+        <item><para>Recursive uploading has been substantially
+reworked. "put -R" should now work better, especially on the Win32
+port. Arbitrary pathname sizes have also been removed, so directory
+trees should only be limited by available memory and stack
+space.</para></item>
+        <item><para>Huge number of lint fixes. NcFTP now compiles
+cleanly on several platforms even with extra warning options
+enabled.</para></item>
+        <item><para>Large number of internal changes to the configure
+scripts</para></item>
+        <item><para>Using my cool hack, "ccdv", in Makefiles.
+Originally this became a necessity since some platforms could have
+$CFLAGS 4 or 5 lines long! Besides streamlining the build process so
+that lint warnings can easily be spotted, the builds are pleasing to
+the eye with ANSI color if your $TERM supports it.</para></item>
+        <item><para>Fixed bug where Win32 $HOME bug fixed for 3.0.4
+wasn't fixed for ncftpbookmarks</para></item>
+        <item><para>Fixes for large file support for the Win32
+port</para></item>
+        <item><para>Bugs fixed in Win32 port of
+ncftpbatch</para></item>
+        <item><para>A few bug fixes for getline</para></item>
+        <item><para>The default ASCII extensions list no longer
+include ".sh", since Sun apparently distributes the JDK as a shell
+script with binary data appended</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>NcFTP configuration files reside in
+<command>${SB_INSTALL_PREFIX}/etc</command> as <command>ncftp.firewall</command>,
+<command>ncftp.firewall.fixed</command>, <command>prefs_v3</command>,
+and <command>prefs_v3.fixed</command>. The
+<command>ncftp.firewall</command> and <command>prefs_v3</command>
+configuration files contains defaults that can be reconfigured by the
+user. The <command>ncftp.firewall.fixed</command> and
+<command>prefs_v3.fixed</command> configuration files contains
+defaults the user cannot reconfigure.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

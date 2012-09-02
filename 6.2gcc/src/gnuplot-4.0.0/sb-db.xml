@@ -1,0 +1,266 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gnuplot" version="4.0.0" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}40</install-name>
+
+    <sources>
+      <source checksum="66258443d9f93cc4f46b147dac33e63a"
+        checksum-type="md5" size="2160918"
+        path="src/gnuplot-4.0.0.tar.gz"/>
+      <patch checksum="9f575b635ef08564b033f42a6a499fe9"
+        checksum-type="md5" size="249569"
+        path="src/gnuplot-4.0.0.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="tetex" install-name="tetex20"
+        add-path="prepend">v&gt;=2.0.2</depend>
+      <depend program="ghostscript" var="GS">v&gt;=7.07</depend>
+      <depend program="gd" var="LIBGD"
+        install-name="libgd20">v&gt;=2.0.15</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="ncurses" var="NCURSES">v==5.4</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_gs_datadir="${SB_VAR_GS}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl,-bnortllib,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b"
+  X_INCLUDES="/usr/include/X11R6 -I/usr/contrib/X11R6/include"
+  X_LIBRARIES="/usr/lib/X11R6 -L/usr/contrib/X11R6/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-Ae" CC_LD_RT="-Wl,+s,+b"
+  X_INCLUDES="/usr/include/X11R6 -I/usr/contrib/X11R6/include"
+  X_LIBRARIES="/usr/lib/X11R6 -L/usr/contrib/X11R6/lib" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134 \
+-woff 1429 -O2 -OPT:Olimit=0:IEEE_comparisons=ON:IEEE_NaN_inf=ON"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8";
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+# set correct path to ghostscript fonts
+${SB_PATH_SHTOOL} subst -v -e "s!@GS_FONT_DIR@!${_gs_datadir}/fonts!;" \
+${SB_BUILD_PREFIX}/src/variable.c
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}} -I${SB_VAR_ZLIB_INC} \
+-I${SB_VAR_NCURSES_INC}" LDFLAGS="-L${SB_VAR_ZLIB_LIB} \
+-L${SB_VAR_NCURSES_LIB} ${CC_LD_RT}${SB_VAR_NCURSES_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_LIBGD_LIB}:\
+${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" --with-x \
+--with-lasergnu ${SB_VAR_LIBGD+--with-gd=${SB_VAR_LIBGD}} \
+--with-png=${SB_VAR_LIBPNG} --datadir="${_datadir}" \
+--with-readline --x-includes="${X_INCLUDES:-NONE}" \
+--x-libraries="${X_LIBRARIES:-NONE}" --with-gihdir=${_datadir} \
+--without-cwdrc --without-pdf --with-row-help \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkglibexecdir="${SB_INSTALL_PREFIX}/libexec" &&
+(cd docs; gmake pdf ps html info ms) &&
+(cd tutorial; gmake tutorial.pdf tutorial.ps)
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkglibexecdir="${SB_INSTALL_PREFIX}/libexec"
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 src/lasergnu \
+${SB_INSTALL_PREFIX}/bin
+
+# install demo files
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/contrib/demo
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 demo/binary? demo/*.bor \
+demo/*.cor demo/*.dat demo/*.dem demo/*.fnc demo/*.inc \
+demo/*.par demo/*.rot ${SB_INSTALL_PREFIX}/contrib/demo
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 docs/gnuplot.texi \
+${_docdir}/texinfo
+(for _doc in gnuplot.html gnuplot.ms gnuplot.pdf gnuplot.ps gpcard.ps; do
+  ${SB_PATH_GINSTALL} -m 644 -o root -g 0 docs/${_doc} ${_docdir}
+done
+
+for _doc in tutorial.pdf tutorial.ps; do
+  ${SB_PATH_GINSTALL} -m 644 -o root -g 0 tutorial/${_doc} ${_docdir}
+done)
+]]>
+    </install>
+
+    <notes>
+      <change from="3.7.3" to="4.0.0">
+        <items name="Terminals">
+          <item><para>"aqua": New terminal for Mac OS X. Requires
+AquaTerm 1.0 or later.</para></item>
+          <item><para>"epslatex": New terminal. Prepares eps figures
+for inclusion in LaTeX documents.</para></item>
+          <item><para>"gif": Support for this terminal has been dropped
+in favour of the "png" format for legal reasons; under usual configure
+conditions, old scripts that request gif will work but will produce a
+"png" file instead.</para></item>
+          <item><para>"ggi": New full-screen interactive terminal for
+Linux. Interface to the General Graphics Interface
+Library.</para></item>
+          <item><para>"pdf": New terminal exporting Adobe Portable
+Document Format. Requires libpdf.</para></item>
+          <item><para>"png" and "jpeg": Support for both PNG and JPEG
+image output is provided by a new driver via libgd. The new driver
+supports many more features than the old png driver, including
+TrueType fonts. Requires libgd.</para></item>
+          <item><para>"postscript": The PostScript driver now provides
+an oblique symbol font, and allows run-time inclusion of embedded
+PostScript fonts. It also supports additional character encodings. See
+"postscript fontfile" and "set encoding".</para></item>
+          <item><para>"svg": New terminal exporting Scalable Vector
+Graphics.</para></item>
+          <item><para>"x11": The X-windows driver now allows you to
+specify fonts, see "set term x11 x11_fonts". There is no longer a
+limit to the number of x11 plot windows opened simultaneously, and
+each plot window can be given its own title. See "set term
+x11".</para></item>
+        </items>
+
+        <item><para>The pm, x11, ggi and windows terminals support
+interactive work with mouse and hotkeys. The usage of the mouse is
+mainly self-explanatory. Just type 'h' in the graph window (hereafter
+we mean either PM, X11, ... terminal window) and a short overview of
+commands will pop up. The mouse is turned on and off with the hotkey
+'m'. See 'help mouse' and 'help bind' for more details.</para>
+        <para>The coordinates of mouse clicks are exported to
+variables MOUSE_X, MOUSE_Y, MOUSE_X2, MOUSE_Y2, and MOUSE_BUTTON
+accessible from the gnuplot command line. This allows gnuplot scripts
+to alter their behaviour based on interactive mouse input. See 'help
+mouse variables' and 'help pause mouse', and the example script
+demo/mousevariables.dem. Further it allows interaction of a gnuplot
+mouseable terminal and external programs in C, Python, Octave, etc.
+using gnuplot as their graph engine.</para></item>
+        <item><para>The "splot" command is now capable of plotting 2D
+maps and 3D surfaces colored by greyscale or color palettes. See help
+for "set pm3d", "set palette", "set cbrange", "set view map", "set
+colorbox" and "test palette"</para></item>
+        <item><para>The style "filledcurves" allows to fill an area
+between the drawn curve and a horizontal line</para></item>
+        <item><para>A solid color or patterned fill style can be set
+for any plot style that contains boxes. See "boxes", "boxerrorbars",
+"boxxyerrorbars", "candlesticks", "set style fill".</para></item>
+        <item><para>Input data can be filtered through several
+built-in routines for interpolation or approximation of data. See
+"smooth", "frequency", "unique".</para></item>
+        <item><para>Most gnuplot plot commands that produce text
+labels now accept modifiers to specify text color, font, size, and
+rotation angle. See "set label".</para></item>
+        <item><para>Not all terminal types support these options,
+however. The enhanced text mode previously available for the
+postscript and pm terminals has been extended to other terminal types
+as well. Terminal types currently supported include dumb, jpeg, pdf,
+pm, png, postscript, and x11. See "enhanced text".</para></item>
+        <item><para>Several terminals, including "postscript", "x11"
+and "pm", support additional text "encodings": ISO 8859-1 (Latin 1),
+ISO 8859-2 (Latin 2), ISO 8859-15 (variant of 8859-1 with Euro sign),
+KOI8-R (cyrillic), and miscellaneous codepages. See "encoding" for
+more details.</para></item>
+        <item><para>Single- or double-ended arrows can be placed on a
+plot individually from the command line or from a data file via the
+"plot with vectors" style. See "set style arrow", "plotting styles
+vectors". The new "set datafile" command can be used to specify
+information about the format of input data files, including the
+characters used to separate fields, to indicate comment lines, and to
+specify missing data. Gnuplot now attempts to recognize text fields
+with embedded blanks as single entities based on the datafile format
+settings. This allows input from csv (comma-separated value) files
+such as those exported by spreadsheet programs. See "set
+datafile".</para></item>
+        <item><para>The preferred syntax to undo a command "set
+&lt;something&gt;" is now "unset &lt;something&gt;" rather than "set
+no&lt;something&gt;". The older form has been deprecated. Version 4.0
+continues to allow the older syntax, but such backwards compatibility
+may be lost in future versions.</para></item>
+        <item><para>Commands of the form "set &lt;something&gt;
+&lt;style&gt;" also are deprectated in favor of the more general form
+"set style &lt;something&gt; &lt;options&gt;". Many more plot elements
+now have style options of their own, including arrows, filled areas,
+lines, and points. There are also style settings for input data and
+formatting. Please see "set style", "set decimalsign", and "set
+datafile". Improved 2D and 3D clipping (hidden lines).</para></item>
+        <item><para>More consistent point styles and other default
+formatting styles across all terminals. Please use the "test" command
+to check default styles and plotting capabilities for the currently
+selected terminal type</para></item>
+        <item><para>The "set label" command supports associated
+points, and allows you to specify point style and text style (font,
+rotation, etc). User variables can be included in labels via format
+specifiers in the label text. See "set label".</para></item>
+        <item><para>New command "set view map" to select top-view 2D
+projection of 3D surface plot</para></item>
+        <item><para>New commands "set term push" and "set term pop"
+to achieve platform independent restoring of the terminal after
+printing.</para></item>
+        <item><para>The "load" and "save" commands accept piped input
+and output, respectively</para></item>
+        <item><para>The "history" command (for gnuplot with its own
+readline, not with GNU readline) now includes several useful
+options</para></item>
+        <item><para>The built-in function "rand(x)" has been modified
+to allow explicit seeding of the pseudo-random number generator. See
+"random".</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>GIF support is no long available. GNU plotutils support
+is no longer available because the Gnuplot license is incompatible
+with GPL.</para>
+      </note>
+
+      <note type="usage">
+        <para>Various demo scripts are available in
+<command>${SB_INSTALL_PREFIX}/contrib/demo</command>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 June 28" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove dependency on readline as its license is
+incompatible with the Gnuplot license</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

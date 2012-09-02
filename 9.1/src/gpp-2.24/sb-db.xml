@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="gpp" version="2.24" revision="9">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}22</install-name>
+
+    <sources>
+      <source checksum="f04c2a23312ab3d0c462c7972d1c6aa6"
+        checksum-type="md5" size="114880"
+        path="src/gpp-2.24.tar.bz2"/>
+      <patch checksum="54b34275aea068f6f35846360bfaff81"
+        checksum-type="md5" size="1071"
+        path="src/gpp-2.24.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <notes>
+      <change from="2.23" to="2.23">
+        <item><para>Added a #date meta-macro allowing for formatting
+of dates and times</para></item>
+      </change>
+
+      <change from="2.22" to="2.23">
+        <item><para>Fixed a bug where #error and #warning directives
+were processed in the false branch of a conditional</para></item>
+      </change>
+
+      <change from="2.21" to="2.22">
+        <item><para>Added --include option which allows user to
+specify a file to be processed before the regular input
+file</para></item>
+      </change>
+
+      <change from="2.20" to="2.21">
+        <item><para>Added CPP-style #error and #warning
+meta-macros</para></item>
+      </change>
+
+      <change from="2.14" to="2.20">
+        <item><para>GPP's arithmetic evaluation macro (#eval) now
+supports file-globbing via =~ (POSIX only)</para></item>
+        <item><para>there is now an #elif macro to simplify
+conditional branching</para></item>
+        <item><para>fixed a bug where GPP would be off by one when
+reporting line numbers in its error messages or with the #line
+meta-macro</para></item>
+      </change>
+
+      <change from="2.13" to="2.14">
+        <item><para>fixed a crash bug</para></item>
+        <item><para>added built-in macros `line' and
+'file'</para></item>
+        <item><para>GPP documentation is now under a free
+licence</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2010 November 9" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 August 11" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31/PA</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2009 January 6" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2007 June 3" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for
+<command>!~</command></para></item>
+      </change>
+
+      <change date="2007 April 30" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 July 5" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 April 5" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 December 5" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

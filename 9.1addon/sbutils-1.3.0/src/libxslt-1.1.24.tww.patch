@@ -1,0 +1,404 @@
+Index: configure.in
+===================================================================
+--- configure.in.orig	2008-05-13 15:40:31.000000000 +0000
++++ configure.in	2008-06-29 08:59:37.574391702 +0000
+@@ -16,6 +16,7 @@
+ LIBEXSLT_MINOR_VERSION=8
+ LIBEXSLT_MICRO_VERSION=13
+ LIBXML_REQUIRED_VERSION=2.6.27
++LIBGCRYPT_REQUIRED_VERSION=1.1.42
+ 
+ 
+ LIBXSLT_VERSION=$LIBXSLT_MAJOR_VERSION.$LIBXSLT_MINOR_VERSION.$LIBXSLT_MICRO_VERSION
+@@ -103,7 +104,8 @@
+ AC_PATH_PROG(TAR, tar, /bin/tar)
+ 
+ AC_STDC_HEADERS
+-AM_PROG_LIBTOOL
++AC_LIBTOOL_TAGS()
++AC_PROG_LIBTOOL
+ 
+ dnl
+ dnl Math detection
+@@ -114,22 +116,29 @@
+ AC_CHECK_HEADERS(sys/timeb.h time.h sys/stat.h sys/select.h stdarg.h)
+ AC_CHECK_FUNCS(stat _stat)
+ AC_CHECK_FUNC(isnan, , AC_CHECK_LIB(m, isnan,
+-  [M_LIBS="-lm"; AC_DEFINE(HAVE_ISNAN)]))
++  [M_LIBS="-lm"; AC_DEFINE(HAVE_ISNAN, 1,
++    [Define to 1 if you have the `isnan' function.])]))
+ 
+ AC_CHECK_FUNC(isinf, , AC_CHECK_LIB(m, isinf,
+-  [M_LIBS="-lm"; AC_DEFINE(HAVE_ISINF)]))
++  [M_LIBS="-lm"; AC_DEFINE(HAVE_ISINF, 1,
++    [Define to 1 if you have the `isinf' function.])]))
+ 
+ AC_CHECK_FUNC(pow, , AC_CHECK_LIB(m, pow,
+-  [M_LIBS="-lm"; AC_DEFINE(HAVE_POW)]))
++  [M_LIBS="-lm"; AC_DEFINE(HAVE_POW, 1,
++    [Define to 1 if you have the `pow' function.])]))
+ 
+ AC_CHECK_FUNC(floor, , AC_CHECK_LIB(m, floor,
+-  [M_LIBS="-lm"; AC_DEFINE(HAVE_FLOOR)]))
++  [M_LIBS="-lm"; AC_DEFINE(HAVE_FLOOR, 1,
++    [Define to 1 if you have the `floor' function.])]))
+ 
+ AC_CHECK_FUNC(fabs, , AC_CHECK_LIB(m, fabs,
+-  [M_LIBS="-lm"; AC_DEFINE(HAVE_FABS)]))
++  [M_LIBS="-lm"; AC_DEFINE(HAVE_FABS, 1,
++    [Define to 1 if you have the `fabs' function.])]))
+ AC_CHECK_FUNCS(gettimeofday)
+ AC_CHECK_FUNCS(mktime localtime localtime_r asctime time gmtime_r ftime)
+ 
++TYPE_SOCKLEN_T
++
+ dnl Checking the standard string functions availability
+ AC_CHECK_FUNCS(printf sprintf fprintf snprintf vfprintf vsprintf vsnprintf sscanf,,
+                NEED_TRIO=1)
+@@ -254,26 +263,11 @@
+     LIBGCRYPT_CFLAGS=""
+     LIBGCRYPT_LIBS=""
+ else
+-    AC_PATH_PROG(LIBGCRYPT_CONFIG, libgcrypt-config, no)
+-    if test "$LIBGCRYPT_CONFIG" != "no" ; then
+-      LIBGCRYPT_VERSION=`$LIBGCRYPT_CONFIG --version`
+-      if test VERSION_TO_NUMBER(echo $LIBGCRYPT_VERSION) -lt VERSION_TO_NUMBER(echo "1.1.42")
+-      then
+-        LIBGCRYPT_CFLAGS=""
+-        LIBGCRYPT_LIBS=""
+-        echo 'gcrypt library version < 1.1.42 - Crypto extensions will not be available.'
+-      else
+-        LIBGCRYPT_CFLAGS=`$LIBGCRYPT_CONFIG $libgcrypt_config_args --cflags`
+-        LIBGCRYPT_LIBS=`$LIBGCRYPT_CONFIG $libgcrypt_config_args --libs`
++    PKG_CHECK_MODULES(LIBGCRYPT,libgcrypt >= $LIBGCRYPT_REQUIRED_VERSION,[
+         AC_DEFINE(HAVE_GCRYPT, 1, [Define if gcrypt library is available.])
+-        echo 'Crypto extensions will be available.'
+-		WITH_CRYPTO=1
+-      fi
+-    else
+-      LIBGCRYPT_CFLAGS=""
+-      LIBGCRYPT_LIBS=""
+-      echo 'Crypto extensions will not be available. Install libgcrypt and reconfigure to make available.'
+-    fi
++	AC_MSG_NOTICE([Crypto extensions available])
++      WITH_CRYPTO=1],[
++	AC_MSG_NOTICE([Crypto extensions unavailable (install libgcrypt)])])
+ fi
+ AC_SUBST(WITH_CRYPTO)
+ AC_SUBST(LIBGCRYPT_CFLAGS)
+@@ -334,7 +328,7 @@
+ else
+     echo Enabling debugger
+     WITH_DEBUGGER=1
+-    AC_DEFINE(WITH_DEBUGGER)
++    AC_DEFINE(WITH_DEBUGGER, 1, [Define to 1 if debugging support enabled])
+ fi
+ AC_SUBST(WITH_DEBUGGER)
+ 
+@@ -372,85 +366,10 @@
+ AC_SUBST(LIBXML_SRC)
+ 
+ dnl
+-dnl where is xml2-config
+-dnl
+-
+-AC_SUBST(LIBXML_REQUIRED_VERSION)
+-AC_MSG_CHECKING(for libxml libraries >= $LIBXML_REQUIRED_VERSION) 
+-if test "x$LIBXML_CONFIG_PREFIX" != "x"
+-then
+-	XML_CONFIG=${LIBXML_CONFIG_PREFIX}/bin/xml2-config
+-else
+-	XML_CONFIG=xml2-config
+-fi
+-
+-dnl
+-dnl imported from libxml2, c.f. #77827 
+-dnl
+-if test "${GCC}" != "yes" ; then
+-    case "${host}" in
+-          *-*-hpux* )
+-	       CFLAGS="${CFLAGS} -Wp,-H30000"
+-	       ;;
+-          *-dec-osf* )
+-               CFLAGS="${CFLAGS} -ieee"
+-               ;;
+-    esac
+-else
+-    CFLAGS="${CFLAGS} -Wall"
+-    case "${host}" in
+-          alpha*-*-linux* )
+-	       CFLAGS="${CFLAGS} -mieee"
+-	       ;;
+-	  alpha*-*-osf* )
+-	       CFLAGS="${CFLAGS} -mieee"
+-	       ;;
+-    esac
+-fi
+-
+-dnl
+-dnl Override other variables if LIBXML_SRC is set
+-dnl
+-
+-if test "x$LIBXML_SRC" != "x"
+-then
+-	CWD=`pwd`
+-	if cd $LIBXML_SRC
+-	then
+-		SRC_DIR=`pwd`
+-		XML_CONFIG=${SRC_DIR}/xml2-config
+-		LIBXML_CFLAGS="-I${SRC_DIR}/include"
+-		LIBXML_LIBS="-L${SRC_DIR}"
+-		cd $CWD
+-	else
+-		AC_MSG_ERROR([libxml source dir not found (${LIBXML_SRC}), typo?])
+-	fi
+-fi
+-
+-dnl
+-dnl make sure xml2-config is executable,
+-dnl test version and init our variables
++dnl Path to LibXML
+ dnl
+ 
+-if ${XML_CONFIG} --libs print > /dev/null 2>&1
+-then
+-	XMLVERS=`$XML_CONFIG --version`
+-	if test VERSION_TO_NUMBER(echo $XMLVERS) -ge VERSION_TO_NUMBER(echo $LIBXML_REQUIRED_VERSION)
+-	then
+-		LIBXML_LIBS="$LIBXML_LIBS `$XML_CONFIG --libs`"
+-		LIBXML_CFLAGS="$LIBXML_CFLAGS `$XML_CONFIG --cflags`"
+-		AC_MSG_RESULT($XMLVERS found)
+-	else
+-		AC_MSG_ERROR(Version $XMLVERS found. You need at least libxml2 $LIBXML_REQUIRED_VERSION for this version of libxslt)
+-	fi
+-else
+-	AC_MSG_ERROR([Could not find libxml2 anywhere, check ftp://xmlsoft.org/.])
+-fi
+-
+-
+-AC_SUBST(CFLAGS)
+-AC_SUBST(CPPFLAGS)
+-AC_SUBST(LDFLAGS)
++PKG_CHECK_MODULES(LIBXML, libxml-2.0 >= $LIBXML_REQUIRED_VERSION)
+ 
+ AC_ARG_WITH(plugins,
+ [  --with-plugins          Add plugin extension support (on)])
+@@ -471,7 +390,7 @@
+ 
+ if test "$with_plugins" = "yes" ; then
+   AC_MSG_CHECKING([libxml2 module support])
+-  WITH_MODULES="`$XML_CONFIG --modules`"
++  WITH_MODULES="`(xml2-config --modules) 2>/dev/null`"
+   if test "${WITH_MODULES}" = "1"; then
+     AC_MSG_RESULT(yes)
+   else
+@@ -524,7 +443,6 @@
+ 
+ AC_SUBST(XSLTPROCDV)
+ AC_SUBST(PYTHONSODV)
+-AC_SUBST(XML_CONFIG)
+ AC_SUBST(LIBXML_LIBS)
+ AC_SUBST(LIBXML_CFLAGS)
+ AC_SUBST(PYTHON)
+Index: doc/Makefile.am
+===================================================================
+--- doc/Makefile.am.orig	2007-01-15 12:54:32.000000000 +0000
++++ doc/Makefile.am	2008-06-29 08:55:11.652889189 +0000
+@@ -9,12 +9,12 @@
+ # The directory containing the source code (if it contains documentation).
+ DOC_SOURCE_DIR=..
+ 
+-HTML_DIR=$(datadir)/doc
++HTML_DIR=@HTML_DIR@
+ 
+ # A file in win32 depends upon two of the doc files
+ WIN32_DIR=$(top_srcdir)/win32
+ 
+-TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)/html
++TARGET_DIR=$(HTML_DIR)/html
+ PAGES=   API.html bugs.html contribs.html FAQ.html docs.html \
+          downloads.html help.html index.html intro.html news.html \
+ 	 xsltproc.html xsltproc2.html
+@@ -180,19 +180,18 @@
+ rebuild: api eapi all
+ 
+ install-data-local: 
++	$(mkinstalldirs) $(DESTDIR)$(HTML_DIR)
++	-@INSTALL@ -m 0644 $(srcdir)/*.html $(DESTDIR)$(HTML_DIR)
++	-@INSTALL@ -m 0644 $(srcdir)/*.gif $(DESTDIR)$(HTML_DIR)
+ 	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)
+-	-@INSTALL@ -m 0644 $(srcdir)/*.html $(DESTDIR)$(TARGET_DIR)
+-	-@INSTALL@ -m 0644 $(srcdir)/*.gif $(DESTDIR)$(TARGET_DIR)
+-	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)/html
+-	-@INSTALL@ -m 0644 $(srcdir)/html/*.html $(DESTDIR)$(TARGET_DIR)/html
+-	-@INSTALL@ -m 0644 $(srcdir)/html/*.png $(DESTDIR)$(TARGET_DIR)/html
+-	-@INSTALL@ -m 0644 $(srcdir)/html/index.sgml $(DESTDIR)$(TARGET_DIR)/html
+-	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)/EXSLT
+-	-@INSTALL@ -m 0644 $(srcdir)/EXSLT/*.html $(DESTDIR)$(TARGET_DIR)/EXSLT
+-	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)/tutorial
+-	-@INSTALL@ -m 0644 $(srcdir)/tutorial/* $(DESTDIR)$(TARGET_DIR)/tutorial
+-	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)/tutorial2
+-	-@INSTALL@ -m 0644 $(srcdir)/tutorial2/* $(DESTDIR)$(TARGET_DIR)/tutorial2
++	-@INSTALL@ -m 0644 $(srcdir)/html/*.html $(DESTDIR)$(TARGET_DIR)
++	-@INSTALL@ -m 0644 $(srcdir)/html/*.png $(DESTDIR)$(TARGET_DIR)
++	$(mkinstalldirs) $(DESTDIR)$(HTML_DIR)/EXSLT
++	-@INSTALL@ -m 0644 $(srcdir)/EXSLT/*.html $(DESTDIR)$(HTML_DIR)/EXSLT
++	$(mkinstalldirs) $(DESTDIR)$(HTML_DIR)/tutorial
++	-@INSTALL@ -m 0644 $(srcdir)/tutorial/* $(DESTDIR)$(HTML_DIR)/tutorial
++	$(mkinstalldirs) $(DESTDIR)$(HTML_DIR)/tutorial2
++	-@INSTALL@ -m 0644 $(srcdir)/tutorial2/* $(DESTDIR)$(HTML_DIR)/tutorial2
+ 
+ dist-hook:
+ 	(cd $(srcdir) ; tar cvf - *.1 *.html site.xsl news.xsl xsa.xsl \
+Index: libexslt.pc.in
+===================================================================
+--- libexslt.pc.in.orig	2007-01-03 15:11:57.000000000 +0000
++++ libexslt.pc.in	2008-06-29 08:55:11.659601997 +0000
+@@ -3,10 +3,9 @@
+ libdir=@libdir@
+ includedir=@includedir@
+ 
+-
+ Name: libexslt
+ Version: @LIBEXSLT_VERSION@
+ Description: EXSLT Extension library
+ Requires: libxml-2.0
+-Libs: @EXSLT_LIBDIR@ @EXSLT_LIBS@
+-Cflags: @EXSLT_INCLUDEDIR@
++Libs: -L${libdir} -lexslt
++Cflags: -I${includedir}
+Index: libexslt/date.c
+===================================================================
+--- libexslt/date.c.orig	2008-04-08 17:18:06.000000000 +0000
++++ libexslt/date.c	2008-06-29 08:56:13.799245176 +0000
+@@ -28,12 +28,6 @@
+ #include "config.h"
+ #endif
+ 
+-#if HAVE_LOCALTIME_R	/* _POSIX_SOURCE required by gnu libc */
+-#ifndef _AIX51		/* but on AIX we're not using gnu libc */
+-#define _POSIX_SOURCE
+-#endif
+-#endif
+-
+ #include <libxml/tree.h>
+ #include <libxml/xpath.h>
+ #include <libxml/xpathInternals.h>
+Index: libxslt.pc.in
+===================================================================
+--- libxslt.pc.in.orig	2007-01-03 15:11:57.000000000 +0000
++++ libxslt.pc.in	2008-06-29 08:55:11.684566923 +0000
+@@ -3,10 +3,9 @@
+ libdir=@libdir@
+ includedir=@includedir@
+ 
+-
+ Name: libxslt
+ Version: @VERSION@
+-Description: XSLT library version 2.
++Description: XSLT library version 2
+ Requires: libxml-2.0
+-Libs: @XSLT_LIBDIR@ @XSLT_LIBS@
+-Cflags: @XSLT_INCLUDEDIR@
++Libs: -L${libdir} -lxslt
++Cflags: -I${includedir}
+Index: python/Makefile.am
+===================================================================
+--- python/Makefile.am.orig	2007-01-03 15:11:42.000000000 +0000
++++ python/Makefile.am	2008-06-29 08:55:11.735389431 +0000
+@@ -10,7 +10,7 @@
+ 	-I$(top_srcdir) \
+ 	-I../libexslt
+ 
+-DOCS_DIR = $(datadir)/doc/libxslt-python-$(LIBXSLT_VERSION)
++DOCS_DIR = $(HTML_DIR)
+ # libxsltclass.txt is generated
+ DOCS = TODO
+ 
+@@ -24,12 +24,12 @@
+ 	libxslt-python-api.xml	\
+ 	$(DOCS)
+ 
+-libxsltmod_la_LDFLAGS = -module -avoid-version
++libxsltmod_la_LDFLAGS = -module -avoid-version -L$(libdir)
+ 
+ if WITH_PYTHON
+ mylibs = \
+-	$(top_builddir)/libxslt/libxslt.la \
+-	$(top_builddir)/libexslt/libexslt.la
++	$(libdir)/libxslt.la \
++	$(libdir)/libexslt.la
+ 
+ all-local: libxslt.py
+ 
+Index: python/tests/Makefile.am
+===================================================================
+--- python/tests/Makefile.am.orig	2007-01-03 15:11:42.000000000 +0000
++++ python/tests/Makefile.am	2008-06-29 08:55:11.749132155 +0000
+@@ -1,4 +1,4 @@
+-EXAMPLE_DIR = $(datadir)/doc/libxslt-python-$(LIBXSLT_VERSION)/examples
++EXAMPLE_DIR = $(HTML_DIR)/examples
+ 
+ TESTSPY=	\
+     basic.py	\
+Index: xslt-config.in
+===================================================================
+--- xslt-config.in.orig	2007-01-17 13:18:26.000000000 +0000
++++ xslt-config.in	2008-06-29 08:55:11.755986930 +0000
+@@ -91,9 +91,9 @@
+ 
+ the_libs="@XSLT_LIBDIR@ @XSLT_LIBS@"
+ if test "$includedir" != "/usr/include"; then
+-    the_flags="$the_flags -I$includedir `@XML_CONFIG@ --cflags`"
++    the_flags="$the_flags -I$includedir `xml2-config --cflags`"
+ else
+-    the_flags="$the_flags `@XML_CONFIG@ --cflags`"
++    the_flags="$the_flags `xml2-config --cflags`"
+ fi
+ 
+ if $cflags; then
+Index: m4/socklen_t.m4
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ m4/socklen_t.m4	2008-08-20 22:07:09.383880789 +0000
+@@ -0,0 +1,40 @@
++dnl Check for socklen_t: historically on BSD it is an int, and in
++dnl POSIX 1g it is a type of its own, but some platforms use different
++dnl types for the argument to getsockopt, getpeername, etc.  So we
++dnl have to test to find something that will work.
++AC_DEFUN([TYPE_SOCKLEN_T],
++[
++   AC_CHECK_TYPE([socklen_t], ,[
++      AC_MSG_CHECKING([for socklen_t equivalent])
++      AC_CACHE_VAL([_cv_socklen_t_equiv],
++      [
++         # Systems have either "struct sockaddr *" or
++         # "void *" as the second argument to getpeername
++         _cv_socklen_t_equiv=
++         for arg2 in "struct sockaddr" void; do
++            for t in int size_t unsigned long "unsigned long"; do
++               AC_TRY_COMPILE([
++                  #include <sys/types.h>
++                  #include <sys/socket.h>
++
++                  int getpeername (int, $arg2 *, $t *);
++               ],[
++                  $t len;
++                  getpeername(0,0,&len);
++               ],[
++                  _cv_socklen_t_equiv="$t"
++                  break
++               ])
++            done
++         done
++
++         if test "x$_cv_socklen_t_equiv" = x; then
++            AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
++         fi
++      ])
++      AC_MSG_RESULT($_cv_socklen_t_equiv)
++      AC_DEFINE_UNQUOTED(socklen_t, $_cv_socklen_t_equiv,
++			[type to use in place of socklen_t if not defined])],
++      [#include <sys/types.h>
++#include <sys/socket.h>])
++])

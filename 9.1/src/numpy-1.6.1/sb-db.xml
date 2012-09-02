@@ -1,0 +1,1107 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="numpy" version="1.6.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="2bce18c08fc4fce461656f0f4dd9103e"
+        checksum-type="md5" size="2637779"
+        path="src/numpy-1.6.1.tar.gz"/>
+      <patch checksum="e9183b611540a862b21b31a0a923f826"
+        checksum-type="md5" size="21794"
+        path="src/numpy-1.6.1.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="atlas" var="LIBATLAS"
+        install-name="libatlas36"
+        module="gcc44-shared">v&gt;=3.6.0 r&gt;=3</depend>
+      <depend program="fftw" var="LIBFFTW"
+        install-name="libfftw33">v&gt;=3.3</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_fcompiler="gnu95"
+_libatlas_lib="${SB_VAR_LIBATLAS_LIB}/gcc44"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+cat >site.cfg <<_EOT_
+[DEFAULT]
+library_dirs = ${SB_VAR_LIBFFTW_LIB}:${_libatlas_lib}
+include_dirs = ${SB_VAR_LIBFFTW_INC}
+
+[atlas]
+library_dirs = ${_libatlas_lib}
+atlas_libs = lapack, blas
+
+_EOT_
+
+case "${SB_SYSTYPE}" in
+x86_64*-linux*)
+  cat >>site.cfg <<_EOT_
+[x11]
+library_dirs = /usr/X11R6/lib64
+include_dirs = /usr/X11R6/include
+_EOT_
+  ;;
+i?86*-linux*)
+  cat >>site.cfg <<_EOT_
+[x11]
+library_dirs = /usr/X11R6/lib
+include_dirs = /usr/X11R6/include
+_EOT_
+  ;;
+i?86*-solaris*)
+  # There is a stack corruption bug on Solaris/x86 with linear algebra
+  # complex types and liblapack. Avoid triggering the bug at test time
+  # by removing the test.
+  rm numpy/linalg/tests/test_linalg.py ;;
+esac
+
+if [ "${_include_f2py+set}" = "set" ]; then
+  ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" numpy/f2py/setup.py
+else
+  ${SB_PATH_SED} -i -e "\
+/config.add_scripts/ d" numpy/f2py/setup.py
+fi
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+LD_LIBRARY_PATH=${_libatlas_lib} \
+LIBPATH=${_libatlas_lib} \
+SHLIB_PATH=${_libatlas_lib} \
+CC="gcc -fno-builtin" \
+${_python} setup.py config_fc --fcompiler=${_fcompiler} \
+build build_ext -R${_libatlas_lib}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+LD_LIBRARY_PATH=${_libatlas_lib} \
+LIBPATH=${_libatlas_lib} \
+SHLIB_PATH=${_libatlas_lib} \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--install-lib=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX} || :
+]]>
+    </uninstall>
+
+    <module name="default">
+      <validate>
+        <depend program="numpy" module="2.6.7">v==1.6.1</depend>
+        <depend program="numpy" module="2.7.2">v==1.6.1</depend>
+      </validate>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_include_f2py=1
+
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+_python="${SB_VAR_PYTHON}/bin/python"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >site.cfg <<_EOT_
+[DEFAULT]
+library_dirs = ${SB_VAR_LIBFFTW_LIB}:${_libatlas_lib}
+include_dirs = ${SB_VAR_LIBFFTW_INC}
+
+[atlas]
+library_dirs = ${_libatlas_lib}
+atlas_libs = lapack, blas
+
+_EOT_
+
+case "${SB_SYSTYPE}" in
+x86_64*-linux*)
+  cat >>site.cfg <<_EOT_
+[x11]
+library_dirs = /usr/X11R6/lib64
+include_dirs = /usr/X11R6/include
+_EOT_
+  ;;
+i?86*-linux*)
+  cat >>site.cfg <<_EOT_
+[x11]
+library_dirs = /usr/X11R6/lib
+include_dirs = /usr/X11R6/include
+_EOT_
+  ;;
+i?86*-solaris*)
+  # There is a stack corruption bug on Solaris/x86 with linear algebra
+  # complex types and liblapack. Avoid triggering the bug at test time
+  # by removing the test.
+  rm numpy/linalg/tests/test_linalg.py ;;
+esac
+
+if [ "${_include_f2py+set}" = "set" ]; then
+  ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" numpy/f2py/setup.py
+else
+  ${SB_PATH_SED} -i -e "\
+/config.add_scripts/ d" numpy/f2py/setup.py
+fi
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH=${_libatlas_lib} \
+LIBPATH=${_libatlas_lib} \
+SHLIB_PATH=${_libatlas_lib} \
+CC="gcc -fno-builtin" \
+${_python} setup.py config_fc --fcompiler=${_fcompiler} \
+build build_ext -R${_libatlas_lib}
+]]>
+      </build>
+
+      <test auto-include="0">
+        <dependencies replace="0">
+          <depend program="nose" var="NOSE"
+            module="2.7.2">v==1.0.0</depend>
+        </dependencies>
+<![CDATA[
+# Don't just cd / because we want core dumps, if any
+mkdir -p f
+(cd f
+ PYTHONPATH=${_install_prefix}:${SB_VAR_NOSE}/lib/${_pysubdir} \
+ ${SB_VAR_PYTHON}/bin/python -c 'import numpy; numpy.test(verbose=2)'
+)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+LD_LIBRARY_PATH=${_libatlas_lib} \
+LIBPATH=${_libatlas_lib} \
+SHLIB_PATH=${_libatlas_lib} \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--install-lib=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX} || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_include_f2py=1
+
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+_python="${SB_VAR_PYTHON}/bin/python"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >site.cfg <<_EOT_
+[DEFAULT]
+library_dirs = ${SB_VAR_LIBFFTW_LIB}:${_libatlas_lib}
+include_dirs = ${SB_VAR_LIBFFTW_INC}
+
+[atlas]
+library_dirs = ${_libatlas_lib}
+atlas_libs = lapack, blas
+
+_EOT_
+
+case "${SB_SYSTYPE}" in
+x86_64*-linux*)
+  cat >>site.cfg <<_EOT_
+[x11]
+library_dirs = /usr/X11R6/lib64
+include_dirs = /usr/X11R6/include
+_EOT_
+  ;;
+i?86*-linux*)
+  cat >>site.cfg <<_EOT_
+[x11]
+library_dirs = /usr/X11R6/lib
+include_dirs = /usr/X11R6/include
+_EOT_
+  ;;
+i?86*-solaris*)
+  # There is a stack corruption bug on Solaris/x86 with linear algebra
+  # complex types and liblapack. Avoid triggering the bug at test time
+  # by removing the test.
+  rm numpy/linalg/tests/test_linalg.py ;;
+esac
+
+if [ "${_include_f2py+set}" = "set" ]; then
+  ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" numpy/f2py/setup.py
+else
+  ${SB_PATH_SED} -i -e "\
+/config.add_scripts/ d" numpy/f2py/setup.py
+fi
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH=${_libatlas_lib} \
+LIBPATH=${_libatlas_lib} \
+SHLIB_PATH=${_libatlas_lib} \
+CC="gcc -fno-builtin" \
+${_python} setup.py config_fc --fcompiler=${_fcompiler} \
+build build_ext -R${_libatlas_lib}
+]]>
+      </build>
+
+      <test auto-include="0">
+        <dependencies replace="0">
+          <depend program="nose" var="NOSE"
+            module="2.6.7">v==1.0.0</depend>
+        </dependencies>
+<![CDATA[
+# Don't just cd / because we want core dumps, if any
+mkdir -p f
+(cd f
+ PYTHONPATH=${_install_prefix}:${SB_VAR_NOSE}/lib/${_pysubdir} \
+ ${SB_VAR_PYTHON}/bin/python -c 'import numpy; numpy.test(verbose=2)'
+)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+LD_LIBRARY_PATH=${_libatlas_lib} \
+LIBPATH=${_libatlas_lib} \
+SHLIB_PATH=${_libatlas_lib} \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--install-lib=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX} || :
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para skip="0">Copyright (c) 2005-2009, NumPy Developers.</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of the NumPy Developers nor the
+names of any contributors may be used to endorse or promote products
+derived from this software without specific prior written
+permission.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="1.5.0" to="1.6.0">
+        <items name="Highlights">
+          <item><para>Re-introduction of datetime dtype support to
+deal with dates in arrays</para></item>
+          <item><para>A new 16-bit floating point type</para></item>
+          <item><para>A new iterator, which improves performance of
+many functions</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>New 16-bit floating point type: This release
+adds support for the IEEE 754-2008 binary16 format, available as the
+data type "numpy.half". Within Python, the type behaves similarly to
+"float" or "double", and C extensions can add support for it with the
+exposed half-float API.</para></item>
+          <item><para>New iterator: A new iterator has been added,
+replacing the functionality of the existing iterator and
+multi-iterator with a single object and API. This iterator works well
+with general memory layouts different from C or Fortran contiguous,
+and handles both standard NumPy and customized broadcasting. The
+buffering, automatic data type conversion, and optional output
+parameters, offered by ufuncs but difficult to replicate elsewhere,
+are now exposed by this iterator.</para></item>
+          <item><para>Legendre, Laguerre, Hermite, HermiteE
+polynomials in "numpy.polynomial": Extend the number of polynomials
+available in the polynomial package. In addition, a new "window"
+attribute has been added to the classes in order to specify the range
+the "domain" maps to. This is mostly useful for the Laguerre, Hermite,
+and HermiteE polynomials whose natural domains are infinite and
+provides a more intuitive way to get the correct mapping of values
+without playing unnatural tricks with the domain.</para></item>
+          <item><para>Fortran assumed shape array and size function
+support in "numpy.f2py": F2py now supports wrapping Fortran 90
+routines that use assumed shape arrays. Before such routines could be
+called from Python but the corresponding Fortran routines received
+assumed shape arrays as zero length arrays which caused unpredicted
+results.</para>
+          <para>In addition, f2py supports now automatic wrapping of
+Fortran routines that use two argument "size" function in dimension
+specifications.</para></item>
+          <item><para>"numpy.ravel_multi_index": Converts a
+multi-index tuple into an array of flat indices, applying boundary
+modes to the indices.</para></item>
+          <item><para>"numpy.einsum": Evaluate the Einstein summation
+convention. Using the Einstein summation convention, many common
+multi-dimensional array operations can be represented in a simple
+fashion. This function provides a way compute such
+summations.</para></item>
+          <item><para>"numpy.count_nonzero": Counts the number of
+non-zero elements in an array.</para></item>
+          <item><para>"numpy.result_type" and "numpy.min_scalar_type":
+These functions expose the underlying type promotion used by the
+ufuncs and other operations to determine the types of outputs. These
+improve upon the "numpy.common_type" and "numpy.mintypecode" which
+provide similar functionality but do not match the ufunc
+implementation.</para></item>
+        </items>
+
+        <items name="Changes">
+          <item><para>"default error handling": The default error
+handling has been change from "print" to "warn" for all except for
+"underflow", which remains as "ignore".</para></item>
+          <item><para>"numpy.distutils": Several new compilers are
+supported for building Numpy: the Portland Group Fortran compiler on
+OS X, the PathScale compiler suite and the 64-bit Intel C compiler on
+Linux.</para></item>
+          <item><para>"numpy.testing": The testing framework gained
+"numpy.testing.assert_allclose", which provides a more convenient way
+to compare floating point arrays than "assert_almost_equal",
+"assert_approx_equal" and "assert_array_almost_equal".</para></item>
+          <item><para>"C API": In addition to the APIs for the new
+iterator and half data type, a number of other additions have been
+made to the C API. The type promotion mechanism used by ufuncs is
+exposed via "PyArray_PromoteTypes", "PyArray_ResultType", and
+"PyArray_MinScalarType". A new enumeration "NPY_CASTING" has been
+added which controls what types of casts are permitted. This is used
+by the new functions "PyArray_CanCastArrayTo" and
+"PyArray_CanCastTypeTo". A more flexible way to handle conversion of
+arbitrary python objects into arrays is exposed by
+"PyArray_GetArrayParamsFromObject".</para></item>
+        </items>
+
+        <items name="Deprecated features">
+          <item><para>The "normed" keyword in "numpy.histogram" is
+deprecated. Its functionality will be replaced by the new "density"
+keyword.</para></item>
+        </items>
+
+        <items name="Removed features">
+          <item><para>"numpy.fft": The functions "refft", "refft2",
+"refftn", "irefft", "irefft2", "irefftn", which were aliases for the
+same functions without the 'e' in the name, were
+removed.</para></item>
+          <item><para>"numpy.memmap": The "sync()" and "close()"
+methods of memmap were removed. Use "flush()" and "del memmap"
+instead.</para></item>
+          <item><para>"numpy.lib": The deprecated functions
+"numpy.unique1d", "numpy.setmember1d", "numpy.intersect1d_nu" and
+"numpy.lib.ufunclike.log2" were removed.</para></item>
+          <item><para>"numpy.ma": Several deprecated items were
+removed from the "numpy.ma" module:</para>
+          <unorderedlist>
+            <item><para>"numpy.ma.MaskedArray" "raw_data"
+method</para></item>
+            <item><para>"numpy.ma.MaskedArray" constructor "flag"
+keyword</para></item>
+            <item><para>"numpy.ma.make_mask" "flag"
+keyword</para></item>
+            <item><para>"numpy.ma.allclose" "fill_value"
+keyword</para></item>
+          </unorderedlist></item>
+          <item><para>"numpy.distutils": The "numpy.get_numpy_include"
+function was removed, use "numpy.get_include" instead.</para></item>
+        </items>
+      </change>
+
+      <change from="1.4.1" to="1.5.0">
+        <items name="New features">
+          <item><para>Warning on casting complex to real: Numpy now
+emits a "numpy.ComplexWarning" when a complex number is cast into a
+real number. For example:</para>
+          <screen>
+&gt;&gt;&gt; x = np.array([1,2,3])
+&gt;&gt;&gt; x[:2] = np.array([1+2j, 1-2j])
+ComplexWarning: Casting complex values to real discards the imaginary part
+          </screen>
+          <para>The cast indeed discards the imaginary part, and this
+may not be the intended behavior in all cases, hence the warning. This
+warning can be turned off in the standard way:</para>
+          <screen>
+&gt;&gt;&gt; import warnings
+&gt;&gt;&gt; warnings.simplefilter("ignore", np.ComplexWarning)
+          </screen></item>
+          <item><para>Dot method for ndarrays: Ndarrays now have the
+dot product also as a method, which allows writing chains of matrix
+products as</para>
+          <screen>
+&gt;&gt;&gt; a.dot(b).dot(c)
+          </screen>
+          <para>instead of the longer alternative</para>
+          <screen>
+&gt;&gt;&gt; np.dot(a, np.dot(b, c))
+          </screen></item>
+          <item><para>linalg.slogdet function: The slogdet function
+returns the sign and logarithm of the determinant of a matrix. Because
+the determinant may involve the product of many small/large values,
+the result is often more accurate than that obtained by simple
+multiplication.</para></item>
+          <item><para>new header: The new header file ndarraytypes.h
+contains the symbols from ndarrayobject.h that do not depend on the
+PY_ARRAY_UNIQUE_SYMBOL and NO_IMPORT/_ARRAY macros. Broadly, these
+symbols are types, typedefs, and enumerations; the array function
+calls are left in ndarrayobject.h. This allows users to include
+array-related types and enumerations without needing to concern
+themselves with the macro expansions and their side-
+effects.</para></item>
+        </items>
+
+        <items name="Changes">
+          <item><para>polynomial.polynomial</para>
+          <unorderedlist>
+            <item><para>The polyint and polyder functions now check
+that the specified number integrations or derivations is a
+non-negative integer. The number 0 is a valid value for both
+functions.</para></item>
+            <item><para>A degree method has been added to the
+Polynomial class.</para></item>
+            <item><para>A trimdeg method has been added to the
+Polynomial class. It operates like truncate except that the argument
+is the desired degree of the result, not the number of
+coefficients.</para></item>
+            <item><para>Polynomial.fit now uses None as the default
+domain for the fit. The default Polynomial domain can be specified by
+using [] as the domain value.</para></item>
+            <item><para>Weights can be used in both polyfit and
+Polynomial.fit</para></item>
+            <item><para>A linspace method has been added to the
+Polynomial class to ease plotting.</para></item>
+            <item><para>The polymulx function was added.</para></item>
+          </unorderedlist></item>
+          <item><para>polynomial.chebyshev</para>
+          <unorderedlist>
+            <item><para>The chebint and chebder functions now check
+that the specified number integrations or derivations is a
+non-negative integer. The number 0 is a valid value for both
+functions.</para></item>
+            <item><para>A degree method has been added to the
+Chebyshev class.</para></item>
+            <item><para>A trimdeg method has been added to the
+Chebyshev class. It operates like truncate except that the argument is
+the desired degree of the result, not the number of
+coefficients.</para></item>
+            <item><para>Chebyshev.fit now uses None as the default
+domain for the fit. The default Chebyshev domain can be specified by
+using [] as the domain value.</para></item>
+            <item><para>Weights can be used in both chebfit and
+Chebyshev.fit</para></item>
+            <item><para>A linspace method has been added to the
+Chebyshev class to ease plotting.</para></item>
+            <item><para>The chebmulx function was added.</para></item>
+            <item><para>Added functions for the Chebyshev points of
+the first and second kind.</para></item>
+          </unorderedlist></item>
+          <item><para>histogram: After a two years transition period,
+the old behavior of the histogram function has been phased out, and
+the "new" keyword has been removed.</para></item>
+          <item><para>correlate: The old behavior of correlate was
+deprecated in 1.4.0, the new behavior (the usual definition for
+cross-correlation) is now the default.</para></item>
+        </items>
+      </change>
+
+      <change from="1.4.0" to="1.4.1">
+        <item><para>This minor release removes datetime support, which
+fixes the binary incompatibility issues with SciPy and other packages.
+It also includes several bug fixes. No new features are introduced.
+</para></item>
+        <items name="Bugs fixed">
+          <item><para>#1336: Fix for 1299 exposes Bus error on
+Sparc</para></item>
+          <item><para>#1379: CPU ID not set correctly on
+PARISC</para></item>
+          <item><para>#1388: frombuffer calls PyErr_Format without
+throwing an error</para></item>
+          <item><para>log1p </para></item>
+          <item><para>kaiser for M=1</para></item>
+          <item><para>paver execution on Windows 7 for Python
+2.6</para></item>
+          <item><para>several fixes to Chebyshev and
+Polynomial</para></item>
+        </items>
+      </change>
+
+      <change from="1.3.0" to="1.4.0">
+        <items name="Highlights">
+          <item><para>Faster import time</para></item>
+          <item><para>Extended array wrapping mechanism for
+ufuncs</para></item>
+          <item><para>New Neighborhood iterator (C-level
+only)</para></item>
+          <item><para>C99-like complex functions in
+npymath</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Extended array wrapping mechanism for
+ufuncs</para>
+          <para>An __array_prepare__ method has been added to
+ndarray to provide subclasses greater flexibility to interact with
+ufuncs and ufunc-like functions. ndarray already provided
+__array_wrap__, which allowed subclasses to set the array type for the
+result and populate metadata on the way out of the ufunc (as seen in
+the implementation of MaskedArray). For some applications it is
+necessary to provide checks and populate metadata *on the way in*.
+__array_prepare__ is therefore called just after the ufunc has
+initialized the output array but before computing the results and
+populating it. This way, checks can be made and errors raised before
+operations which may modify data in place.</para></item>
+          <item><para>Automatic detection of forward
+incompatibilities</para>
+          <para>Previously, if an extension was built against a
+version N of NumPy, and used on a system with NumPy M &lt; N, the
+import_array was successfull, which could cause crashes because the
+version M does not have a function in N. Starting from NumPy 1.4.0,
+this will cause a failure in import_array, so the error will be
+catched early on.</para></item>
+          <item><para>New iterators</para>
+          <para>A new neighborhood iterator has been added to the C
+API. It can be used to iterate over the items in a neighborhood of an
+array, and can handle boundaries conditions automatically. Zero and
+one padding are available, as well as arbitrary constant value, mirror
+and circular padding.</para></item>
+          <item><para>New polynomial support</para>
+          <para>New modules chebyshev and polynomial have been
+added. The new polynomial module is not compatible with the current
+polynomial support in numpy, but is much like the new chebyshev
+module. The most noticeable difference to most will be that
+coefficients are specified from low to high power, that the low level
+functions do *not* work with the Chebyshev and Polynomial classes as
+arguements, and that the Chebyshev and Polynomial classes include a
+domain. Mapping between domains is a linear substitution and the two
+classes can be converted one to the other, allowing, for instance, a
+Chebyshev series in one domain to be expanded as a polynomial in
+another domain. The new classes should generally be used instead of
+the low level functions, the latter are provided for those who wish to
+build their own classes.</para>
+          <para>The new modules are not automatically imported into
+the numpy namespace, they must be explicitly brought in with an
+"import numpy.polynomial" statement.</para></item>
+          <item><para>New C API</para>
+          <para>The following C functions have been added to the C
+API:</para>
+          <unorderedlist>
+            <item><para>PyArray_GetNDArrayCFeatureVersion: return the
+*API* version of the loaded numpy.</para></item>
+            <item><para>PyArray_Correlate2 - like PyArray_Correlate,
+but implements the usual definition of correlation. Inputs are not
+swapped, and conjugate is taken for complex arrays.</para></item>
+            <item><para>PyArray_NeighborhoodIterNew - a new iterator
+to iterate over a neighborhood of a point, with automatic boundaries
+handling. It is documented in the iterators section of the C-API
+reference, and you can find some examples in  the
+multiarray_test.c.src file in numpy.core.</para></item>
+          </unorderedlist></item>
+          <item><para>New ufuncs</para>
+          <para>The following ufuncs have been added to the C
+API:</para>
+          <unorderedlist>
+            <item><para>copysign - return the value of the first
+argument with the sign copied from the second argument.</para></item>
+            <item><para>nextafter - return the next representable
+floating point value of the first argument toward the second
+argument.</para></item>
+          </unorderedlist></item>
+          <item><para>New defines</para>
+          <para>The alpha processor is now defined and available in
+numpy/npy_cpu.h. The failed detection of the PARISC processor has been
+fixed. The defines are:</para>
+          <unorderedlist>
+            <item><para>NPY_CPU_HPPA: PARISC</para></item>
+            <item><para>NPY_CPU_ALPHA: Alpha</para></item>
+          </unorderedlist></item>
+          <item><para>Testing</para>
+          <unorderedlist>
+            <item><para>deprecated decorator: this decorator may be
+used to avoid cluttering testing output while testing
+DeprecationWarning is effectively raised by the decorated
+test.</para></item>
+            <item><para>assert_array_almost_equal_nulps: new method
+to compare two arrays of floating point values. With this function,
+two values are considered close if there are not many representable
+floating point values in between, thus being more robust than
+assert_array_almost_equal when the values fluctuate a
+lot.</para></item>
+            <item><para>assert_array_max_ulp: raise an assertion if
+there are more than N representable numbers between two floating point
+values.</para></item>
+            <item><para>assert_warns: raise an AssertionError if a
+callable does not generate a warning of the appropriate class, without
+altering the warning state.</para></item>
+          </unorderedlist></item>
+          <item><para>Reusing npymath</para>
+          <para>In 1.3.0, we started putting portable C math
+routines in npymath library, so that people can use those to write
+portable extensions. Unfortunately, it was not possible to easily link
+against this library: in 1.4.0, support has been added to
+numpy.distutils so that 3rd party can reuse this library. See coremath
+documentation for more information.</para></item>
+          <item><para>Improved set operations</para>
+          <para>In previous versions of NumPy some set functions
+(intersect1d, setxor1d, setdiff1d and setmember1d) could return
+incorrect results if the input arrays contained duplicate items. These
+now work correctly for input arrays with duplicates. setmember1d has
+been renamed to in1d, as with the change to accept arrays with
+duplicates it is no longer a set operation, and is conceptually
+similar to an elementwise version of the Python operator 'in'. All of
+these functions now accept the boolean keyword assume_unique. This is
+False by default, but can be set True if the input arrays are known
+not to contain duplicates, which can increase the functions' execution
+speed.</para></item>
+        </items>
+
+        <items name="Improvements">
+          <item><para>numpy import is noticeably faster (from 20 to 30
+% depending on the platform and computer)</para></item>
+          <item><para>The sort functions now sort nans to the
+end.</para>
+          <para>Real sort order is [R, nan]</para>
+          <para>Complex sort order is [R + Rj, R + nanj, nan + Rj,
+nan + nanj]</para>
+          <para>Complex numbers with the same nan placements are
+sorted according to the non-nan part if it exists.</para></item>
+          <item><para>The type comparison functions have been made
+consistent with the new sort order of nans. Searchsorted now works
+with sorted arrays containing nan values.</para></item>
+          <item><para>Complex division has been made more resistent to
+overflow.</para></item>
+          <item><para>Complex floor division has been made more
+resistent to overflow.</para></item>
+        </items>
+
+        <items name="Deprecations">
+          <item><para>The following functions are
+deprecated:</para></item>
+          <item><para>correlate: it takes a new keyword argument
+old_behavior. When True (the default), it returns the same result as
+before. When False, compute the conventional correlation, and take the
+conjugate for complex arrays. The old behavior will be removed in
+NumPy 1.5, and raises a DeprecationWarning in 1.4.</para></item>
+          <item><para>unique1d: use unique instead. unique1d raises a
+deprecation warning in 1.4, and will be removed in 1.5.</para></item>
+          <item><para>intersect1d_nu: use intersect1d instead.
+intersect1d_nu raises a deprecation warning in 1.4, and will be
+removed in 1.5.</para></item>
+          <item><para>setmember1d: use in1d instead. setmember1d
+raises a deprecation warning in 1.4, and will be removed in
+1.5.</para></item>
+          <item><para>The following raise errors:</para></item>
+          <item><para>When operating on 0-d arrays, "numpy.max" and
+other functions accept only "axis=0", "axis=-1" and "axis=None".
+Using an out-of-bounds axes is an indication of a bug, so Numpy raises
+an error for these cases now.</para></item>
+          <item><para>Specifying "axis &gt; MAX_DIMS" is no longer
+allowed; Numpy raises now an error instead of behaving similarly as
+for "axis=None".</para></item>
+        </items>
+
+        <items name="Internal changes">
+          <item><para>Use C99 complex functions when
+available</para>
+          <para>The numpy complex types are now guaranteed to be ABI
+compatible with C99 complex type, if availble on the platform.
+Moreoever, the complex ufunc now use the platform C99 functions intead
+of our own.</para></item>
+          <item><para>split multiarray and umath source
+code</para>
+          <para>The source code of multiarray and umath has been
+split into separate logic compilation units. This should make the
+source code more amenable for newcomers.</para></item>
+          <item><para>Separate compilation</para>
+          <para>By default, every file of multiarray (and umath) is
+merged into one for compilation as was the case before, but if
+NPY_SEPARATE_COMPILATION env variable is set to a non-negative value,
+experimental individual compilation of each file is enabled. This
+makes the compile/debug cycle much faster when working on core
+numpy.</para></item>
+          <item><para>Separate core math library</para>
+          <para>New functions which have been added:</para>
+          <unorderedlist>
+            <item><para>npy_copysign</para></item>
+            <item><para>py_nextafter</para></item>
+            <item><para>npy_cpack</para></item>
+            <item><para>npy_creal</para></item>
+            <item><para>npy_cimag</para></item>
+            <item><para>npy_cabs</para></item>
+            <item><para>npy_cexp</para></item>
+            <item><para>npy_clog</para></item>
+            <item><para>npy_cpow</para></item>
+            <item><para>npy_csqr</para></item>
+            <item><para>npy_ccos</para></item>
+            <item><para>npy_csin</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.2.1" to="1.3.0">
+        <items name="Highlights">
+          <item><para>Python 2.6 support</para>
+          <para>Python 2.6 is now supported on all previously
+supported platforms, including windows.</para>
+          <para>http://www.python.org/dev/peps/pep-0361/</para></item>
+          <item><para>Generalized ufuncs</para>
+          <para>There is a general need for looping over not only
+functions on scalars but also over functions on vectors (or arrays),
+as explained on
+http://scipy.org/scipy/numpy/wiki/GeneralLoopingFunctions. We propose
+to realize this concept by generalizing the universal functions
+(ufuncs), and provide a C implementation that adds ~500 lines to the
+numpy code base. In current (specialized) ufuncs, the elementary
+function is limited to element-by-element operations, whereas the
+generalized version supports "sub-array" by "sub-array" operations.
+The Perl vector library PDL provides a similar functionality and its
+terms are re-used in the following.</para>
+          <para>Each generalized ufunc has information associated
+with it that states what the "core" dimensionality of the inputs is,
+as well as the corresponding dimensionality of the outputs (the
+element-wise ufuncs have zero core dimensions). The list of the core
+dimensions for all arguments is called the "signature" of a ufunc. For
+example, the ufunc numpy.add has signature "(),()-&gt;()" defining two
+scalar inputs and one scalar output.</para>
+          <para>Another example is (see the GeneralLoopingFunctions
+page) the function inner1d(a,b) with a signature of "(i),(i)-&gt;()".
+This applies the inner product along the last axis of each input, but
+keeps the remaining indices intact. For example, where a is of shape
+(3,5,N) and b is of shape (5,N), this will return an output of shape
+(3,5). The underlying elementary function is called 3*5 times. In the
+signature, we specify one core dimension "(i)" for each input and zero
+core dimensions "()" for the output, since it takes two 1-d arrays and
+returns a scalar. By using the same name "i", we specify that the two
+corresponding dimensions should be of the same size (or one of them is
+of size 1 and will be broadcasted).</para>
+          <para>The dimensions beyond the core dimensions are called
+"loop" dimensions. In the above example, this corresponds to
+(3,5).</para>
+          <para>The usual numpy "broadcasting" rules apply, where
+the signature determines how the dimensions of each input/output
+object are split into core and loop dimensions:</para>
+          <para>While an input array has a smaller dimensionality
+than the corresponding number of core dimensions, 1's are pre-pended
+to its shape. The core dimensions are removed from all inputs and the
+remaining dimensions are broadcasted; defining the loop dimensions.
+The output is given by the loop dimensions plus the output core
+dimensions.</para></item>
+          <item><para>Experimental Windows 64 bits
+support</para>
+          <para>Numpy can now be built on windows 64 bits (amd64
+only, not IA64), with both MS compilers and mingw-w64
+compilers:</para>
+          <para>This is *highly experimental*: DO NOT USE FOR
+PRODUCTION USE. See INSTALL.txt, Windows 64 bits section for more
+information on limitations and how to build it by
+yourself.</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Formatting issues</para>
+          <para>Float formatting is now handled by numpy instead of
+the C runtime: this enables locale independent formatting, more robust
+fromstring and related methods. Special values (inf and nan) are also
+more consistent across platforms (nan vs IND/NaN, etc...), and more
+consistent with recent python formatting work (in 2.6 and
+later).</para></item>
+          <item><para>Nan handling in max/min</para>
+          <para>The maximum/minimum ufuncs now reliably propagate
+nans. If one of the arguments is a nan, then nan is retured. This
+affects np.min/np.max, amin/amax and the array methods max/min. New
+ufuncs fmax and fmin have been added to deal with non-propagating
+nans.</para></item>
+          <item><para>Nan handling in sign</para>
+          <para>The ufunc sign now returns nan for the sign of
+anan.</para></item>
+          <item><para>New ufuncs</para>
+          <unorderedlist>
+            <item><para>fmax - same as maximum for integer types and
+non-nan floats. Returns the non-nan argument if one argument is nan
+and returns nan if both arguments are nan.</para></item>
+            <item><para>fmin - same as minimum for integer types and
+non-nan floats. Returns the non-nan argument if one argument is nan
+and returns nan if both arguments are nan.</para></item>
+            <item><para>deg2rad - converts degrees to radians, same
+as the radians ufunc.</para></item>
+            <item><para>rad2deg - converts radians to degrees, same
+as the degrees ufunc.</para></item>
+            <item><para>log2 - base 2 logarithm.</para></item>
+            <item><para>exp2 - base 2 exponential.</para></item>
+            <item><para>trunc - truncate floats to nearest integer
+towards zero.</para></item>
+            <item><para>logaddexp - add numbers stored as logarithms
+and return the logarithm of the result.</para></item>
+            <item><para>logaddexp2 - add numbers stored as base 2
+logarithms and return the base 2 logarithm of the result
+result.</para></item>
+          </unorderedlist></item>
+          <item><para>Masked arrays</para>
+          <para>Several new features and bug fixes,
+including:</para>
+          <unorderedlist>
+            <item><para>structured arrays should now be fully
+supported by MaskedArray (r6463, r6324, r6305, r6300,
+r6294...)</para></item>
+            <item><para>Minor bug fixes (r6356, r6352, r6335, r6299,
+r6298)</para></item>
+            <item><para>Improved support for __iter__
+(r6326)</para></item>
+            <item><para>made baseclass, sharedmask and hardmask
+accesible to the user (but read-only)</para></item>
+            <item><para>doc update</para></item>
+          </unorderedlist></item>
+          <item><para>gfortran support on windows</para>
+          <para>Gfortran can now be used as a fortran compiler for
+numpy on windows, even when the C compiler is Visual Studio (VS 2005
+and above; VS 2003 will NOT work). Gfortran + Visual studio does not
+work on windows 64 bits (but gcc + gfortran does). It is unclear
+whether it will be possible to use gfortran and visual studio at all
+on x64.</para></item>
+          <item><para>Arch option for windows binary</para>
+          <para>Automatic arch detection can now be bypassed from
+the command line for the superpack installed:
+<command>numpy-1.3.0-superpack-win32.exe /arch=nosse</command> will
+install a numpy which works on any x86, even if the running computer
+supports SSE set.</para></item>
+        </items>
+
+        <items name="Deprecated features">
+          <item><para>Histogram</para>
+          <para>The semantics of histogram has been modified to fix
+long-standing issues with outliers handling. The main changes
+concern</para>
+          <unorderedlist>
+            <item><para>the definition of the bin edges, now
+including the rightmost edge, and</para></item>
+            <item><para>the handling of upper outliers, now ignored
+rather than tallied in the rightmost bin.</para></item>
+          </unorderedlist>
+          <para>The previous behavior is still accessible using
+"new=False", but this is deprecated, and will be removed entirely in
+1.4.0.</para></item>
+        </items>
+
+        <items name="Documentation changes">
+          <item><para>A lot of documentation has been added. Both user
+guide and references can be built from sphinx.</para></item>
+        </items>
+
+        <items name="New C API">
+          <item><para>Multiarray API</para>
+          <para>The following functions have been added to the
+multiarray C API:</para>
+          <para>PyArray_GetEndianness: to get runtime
+endianness</para></item>
+          <item><para>Ufunc API</para>
+          <para>The following functions have been added to the ufunc
+API:</para>
+          <para>PyUFunc_FromFuncAndDataAndSignature: to declare a
+more general ufunc (generalized ufunc).</para></item>
+          <item><para>New defines</para>
+          <para>New public C defines are available for ARCH specific
+code through numpy/npy_cpu.h:</para>
+          <unorderedlist>
+            <item><para>NPY_CPU_X86: x86 arch (32
+bits)</para></item>
+            <item><para>NPY_CPU_AMD64: amd64 arch (x86_64, NOT
+Itanium)</para></item>
+            <item><para>NPY_CPU_PPC: 32 bits ppc</para></item>
+            <item><para>NPY_CPU_PPC64: 64 bits ppc</para></item>
+            <item><para>NPY_CPU_SPARC: 32 bits sparc</para></item>
+            <item><para>NPY_CPU_SPARC64: 64 bits sparc</para></item>
+            <item><para>NPY_CPU_S390: S390</para></item>
+            <item><para>NPY_CPU_IA64: ia64</para></item>
+            <item><para>NPY_CPU_PARISC: PARISC</para></item>
+          </unorderedlist>
+          <para>New macros for CPU endianness has been added as well
+(see internal changes below for details):</para>
+          <unorderedlist>
+            <item><para>NPY_BYTE_ORDER: integer</para></item>
+            <item><para>NPY_LITTLE_ENDIAN/NPY_BIG_ENDIAN
+defines</para></item>
+          </unorderedlist>
+          <para>Those provide portable alternatives to glibc
+endian.h macros for platforms without it.</para></item>
+          <item><para>Portable NAN, INFINITY, etc...</para>
+          <para>npy_math.h now makes available several portable
+macro to get NAN, INFINITY:</para>
+          <unorderedlist>
+            <item><para>NPY_NAN: equivalent to NAN, which is a GNU
+extension</para></item>
+            <item><para>NPY_INFINITY: equivalent to C99
+INFINITY</para></item>
+            <item><para>NPY_PZERO, NPY_NZERO: positive and negative zero
+respectively</para></item>
+          </unorderedlist>
+          <para>Corresponding single and extended precision macros
+are available as well. All references to NAN, or home-grown
+computation of NAN on the fly have been removed for
+consistency.</para></item>
+        </items>
+
+        <items name="Internal changes">
+          <item><para>numpy.core math configuration
+revamp</para>
+          <para>This should make the porting to new platforms
+easier, and more robust. In particular, the configuration stage does
+not need to execute any code on the target platform, which is a first
+step toward cross-compilation.</para>
+          <para>http://projects.scipy.org/numpy/browser/trunk/doc/neps/math_config_clean.txt</para></item>
+          <item><para>umath refactor</para>
+          <para>A lot of code cleanup for umath/ufunc
+code.</para></item>
+          <item><para>Improvements to build warnings</para>
+          <para>Numpy can now build with -W -Wall without
+warnings</para>
+          <para>http://projects.scipy.org/numpy/browser/trunk/doc/neps/warnfix.txt</para></item>
+          <item><para>Separate core math library</para>
+          <para>The core math functions (sin, cos, etc... for basic
+C types) have been put into a separate library; it acts as a
+compatibility layer, to support most C99 maths functions (real only
+for now). The library includes platform-specific fixes for various
+maths functions, such as using those versions should be more robust
+than using your platform functions directly. The API for existing
+functions is exactly the same as the C99 math functions API; the only
+difference is the npy prefix (npy_cos vs cos).</para>
+          <para>The core library will be made available to any
+extension in 1.4.0.</para></item>
+          <item><para>CPU arch detection</para>
+          <para>npy_cpu.h defines numpy specific CPU defines, such
+as NPY_CPU_X86, etc... Those are portable across OS and toolchains,
+and set up when the header is parsed, so that they can be safely used
+even in the case of cross-compilation (the values is not set when
+numpy is built), or for multi-arch binaries (e.g. fat binaries on Max
+OS X).</para>
+          <para>npy_endian.h defines numpy specific endianness
+defines, modeled on the glibc endian.h. NPY_BYTE_ORDER  is equivalent
+to BYTE_ORDER, and one of NPY_LITTLE_ENDIAN or NPY_BIG_ENDIAN is
+defined. As for CPU archs, those are set when the header is parsed by
+the compiler, and as such can be used for cross-compilation and
+multi-arch binaries.</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The numpy Python binding is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

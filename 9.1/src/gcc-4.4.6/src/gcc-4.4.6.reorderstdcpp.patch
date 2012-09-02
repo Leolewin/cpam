@@ -1,0 +1,80 @@
+Index: gcc/config/mips/iris6.h
+===================================================================
+--- gcc/config/mips/iris6.h.orig	2009-02-20 15:20:38.000000000 +0000
++++ gcc/config/mips/iris6.h	2011-08-22 05:31:15.183075593 +0000
+@@ -23,7 +23,12 @@
+ #undef TARGET_IRIX6
+ #define TARGET_IRIX6 1
+ 
++/* We need to reorder -lpthread to come after -lstdc++. */
++#undef PTHREAD_LIBRARY
++#define PTHREAD_LIBRARY "-lpthread"
++
+ /* Default to -mabi=n32 and -mips3.  */
++
+ #undef MULTILIB_DEFAULTS
+ #define MULTILIB_DEFAULTS { "mabi=n32" }
+ 
+Index: gcc/cp/g++spec.c
+===================================================================
+--- gcc/cp/g++spec.c.orig	2009-02-20 15:20:38.000000000 +0000
++++ gcc/cp/g++spec.c	2011-08-22 05:31:15.197762627 +0000
+@@ -30,10 +30,17 @@
+ #define MATHLIB		(1<<2)
+ /* This bit is set if they did `-lc'.  */
+ #define WITHLIBC	(1<<3)
++/* This bit is set if they did '-lpthread'. */
++#define WITHLIBPTHREAD	(1<<4)
+ 
+ #ifndef MATH_LIBRARY
+ #define MATH_LIBRARY "-lm"
+ #endif
++
++#ifndef PTHREAD_LIBRARY
++#define PTHREAD_LIBRARY ""
++#endif
++
+ #ifndef MATH_LIBRARY_PROFILE
+ #define MATH_LIBRARY_PROFILE MATH_LIBRARY
+ #endif
+@@ -86,6 +93,9 @@
+   /* "-lm" or "-lmath" if it appears on the command line.  */
+   const char *saw_math = 0;
+ 
++  /* "-lpthread" if it appears on the command line.  */
++  const char *saw_pthread = 0;
++
+   /* "-lc" if it appears on the command line.  */
+   const char *saw_libc = 0;
+ 
+@@ -143,6 +153,8 @@
+ 	      args[i] |= MATHLIB;
+ 	      need_math = 0;
+ 	    }
++	  else if (strcmp (argv[i], PTHREAD_LIBRARY) == 0)
++	    args[i] |= WITHLIBPTHREAD;
+ 	  else if (strcmp (argv[i], "-lc") == 0)
+ 	    args[i] |= WITHLIBC;
+ 	  else if (strcmp (argv[i], "-pg") == 0 || strcmp (argv[i], "-p") == 0)
+@@ -282,6 +294,12 @@
+ 	  saw_math = argv[i];
+ 	}
+ 
++      if (!saw_pthread && (args[i] & WITHLIBPTHREAD) && library > 0)
++	{
++	  --j;
++	  saw_pthread = argv[i];
++	}
++
+       if (!saw_libc && (args[i] & WITHLIBC) && library > 0)
+ 	{
+ 	  --j;
+@@ -335,6 +353,8 @@
+     }
+   if (saw_libc)
+     arglist[j++] = saw_libc;
++  if (saw_pthread)
++    arglist[j++] = saw_pthread;
+   if (shared_libgcc)
+     arglist[j++] = "-shared-libgcc";
+ 

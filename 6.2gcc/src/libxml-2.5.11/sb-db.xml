@@ -1,0 +1,301 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libxml" version="2.5.11" revision="6">
+    <build-name>${SB_PROG_NAME}2-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}25</install-name>
+
+    <sources>
+      <source checksum="560bcab5812d3d544a58368574c9f17b"
+        checksum-type="md5" size="2950895"
+        path="src/libxml2-2.5.11.tar.gz"/>
+      <patch checksum="fa9540ca9d97c4a6f35632a47368a6b2"
+        checksum-type="md5" size="1017973"
+        path="src/libxml2-2.5.11.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--enable-ipv6=no" ;;
+*-hpux10*)
+  CC=cc CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED"
+  CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ARGS="--enable-ipv6=no" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std1 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6=no" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" ${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${ZLIB_LIB}\
+${LIBICONV+:${LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--enable-shared --enable-static --with-zlib=${ZLIB} \
+--without-readline --without-history \
+${LIBICONV+--with-iconv=${LIBICONV}} --with-python=no \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${SB_VAR_XMLCATALOG+--with-sgml-catalog="${SB_VAR_XMLCATALOG}/catalog.sgml"} \
+${SB_VAR_XMLCATALOG+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml"} \
+${SB_VAR_PYTHON+--with-python=${SB_VAR_PYTHON}} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+sed 's!-L\(${libdir}\) !-L\1 '"${CC_LD_RT}"'\1 !g' xml2-config >/tmp/$$
+cp /tmp/$$ xml2-config && rm -f /tmp/$$
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" libxml-2.0.pc
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv18"
+          systype="!*-aix*">v&gt;=1.8</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend var="XMLCATALOG" install-name="xmlcatalog10"
+          set-var-only="1" type="build"/>
+      </dependencies>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/doc
+]]>
+      </install>
+    </module>
+
+    <module name="python-2.3.2">
+      <dependencies>
+        <depend program="libxml">v==2.5.11</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv18"
+          systype="!*-aix*">v&gt;=1.8</depend>
+        <depend program="zlib" var="ZLIB">v&gt;=1.1.4</depend>
+        <depend var="PYTHONP" install-name="python232p"
+          type="build"/>
+        <depend program="gcc" add-path="prepend"
+          type="build">v==3.3.2</depend>
+        <depend program="python" var="PYTHON"
+          type="build">v==2.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_install_prefix="${PYTHONP}/lib/python2.3/site-packages"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" LDFLAGS="-Wl,-rpath,${SB_INSTALL_PREFIX}/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CC_LD_RT="-Wl,-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" ${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${ZLIB_LIB}\
+${LIBICONV+:${LIBICONV_LIB}}:${SB_VAR_PYTHON}/lib/support \
+${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static \
+--with-zlib=${ZLIB} --without-readline --without-history \
+${LIBICONV+--with-iconv=${LIBICONV}} --with-python=no \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${PYTHON+--with-python=${PYTHON}} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd python
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake AM_LDFLAGS="-Wl,-einitlibxml2mod" ;;
+*-osf4*)
+  gmake libxml2mod_la_LIBADD= \
+  libxml2mod_la_LDFLAGS="-module -avoid-version \
+-L${SB_INSTALL_PREFIX}/lib -L${LIBICONV_LIB} -L${ZLIB_LIB} \
+-Wl,-no_so,-lxml2,-liconv,-lz,-so_archive"
+  ;;
+*)
+  gmake
+  ;;
+esac)
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+(cd python; gmake tests)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+(cd python; gmake install pythondir=${_install_prefix})
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/drv_libxml2.py ${_install_prefix}/libxml2mod* \
+${_install_prefix}/libxml2.py
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.5.9" to="2.5.10">
+        <item><para>UTF-16 support fixes</para></item>
+        <item><para>Makefile and portability: automake, Linux alpha,
+Mingw on Windows</para></item>
+        <item><para>HTML parser</para></item>
+        <item><para>XInclude performance problem</para></item>
+        <item><para>XML parser performance problem</para></item>
+        <item><para>xmlSAXParseDTD() bug fix</para></item>
+      </change>
+
+      <change from="2.5.8" to="2.5.9">
+        <item><para>bugfixes: IPv6 portability, xmlHasNsProp, Windows
+build, Schemas, threading, hexBinary type (), UTF-16 BOM, xmlReader,
+Relax-NG schemas compilation, namespace handling, EXSLT, HTML parsing
+problem, DTD validation for mixed content + namespaces, HTML
+serialization, library initialization, progressive HTML
+parser</para></item>
+        <item><para>better interfaces for Relax-NG error
+handling</para></item>
+        <item><para>adding xmlXIncludeProcessTree() for XInclud'ing in
+a subtree</para></item>
+        <item><para>doc fixes and improvements</para></item>
+        <item><para>configure flag for -with-fexceptions when
+embedding in C++</para></item>
+        <item><para>couple of new UTF-8 helper functions</para></item>
+        <item><para>general encoding cleanup + ISO-8859-x without
+iconv</para></item>
+        <item><para>xmlTextReader cleanup + enum for node
+types</para></item>
+        <item><para>general compilation/warning cleanup
+Solaris/HP-UX/...</para></item>
+      </change>
+
+      <change from="2.5.7" to="2.5.8">
+        <item><para>bugfixes: XPath, XInclude, file/URI mapping,
+UTF-16 save, UTF-8 checking, URI saving, error printing, PI related
+memleak, compilation without schemas or without xpath, xmlUnlinkNode
+problem with DTDs, rpm problem on , i86_64, removed a few compilation
+problems from 2.5.7, xmlIOParseDTD, and xmlSAXParseDTD</para></item>
+        <item><para>portability: DJGPP, OpenVMS</para></item>
+        <item><para>fix for multithreading lock problems</para></item>
+        <item><para>IPv6 patch for FTP and HTTP accesses</para></item>
+        <item><para>Windows fixes, threading</para></item>
+        <item><para>A few W3C Schemas Structure
+improvements</para></item>
+        <item><para>W3C Schemas Datatype improvements</para></item>
+        <item><para>Python bindings for thread globals, and
+method/class generator</para></item>
+        <item><para>added --nonet option to xmllint</para></item>
+        <item><para>documentation improvements</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>64-bit libraries are available for the following
+platforms:</para>
+        <screen>
+AIX 5.x            ${SB_INSTALL_PREFIX}/lib/ppc64
+HP-UX 11.x         ${SB_INSTALL_PREFIX}/lib/pa20_64
+IRIX 6.5           ${SB_INSTALL_PREFIX}/lib64
+Solaris 7-9/SPARC  ${SB_INSTALL_PREFIX}/lib/sparcv9
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 August 24" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64-bit module</para></item>
+      </change>
+
+      <change date="2004 April 14" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix thread problems on Tru64 UNIX</para></item>
+      </change>
+
+      <change date="2004 February 27" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix for buffer overflow in URI parsing code <ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0110">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0110</ulink></para></item>
+      </change>
+
+      <change date="2004 January 8" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Set path to default XML catalog
+files</para></item>
+      </change>
+
+      <change date="2003 November 24" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add python-2.3.2 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

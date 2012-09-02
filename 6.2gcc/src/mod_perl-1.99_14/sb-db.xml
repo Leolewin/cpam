@@ -1,0 +1,167 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mod_perl" version="1.99_14" revision="2"
+  systype="*-aix5*|*-hpux*|*-irix*|*-linux*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>modperl20</install-name>
+
+    <sources>
+      <source checksum="116dce5c909701b3812ae4ad6d91c6bd"
+        checksum-type="md5" size="1264246"
+        path="src/mod_perl-1.99_14.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="apache" var="APACHE">v==2.0.49</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="perl" var="PERLP" version="5.8.2"
+        set-var-only="1"/>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+MP_APXS=${SB_VAR_APACHE}/bin/apxs \
+PREFIX=${SB_INSTALL_PREFIX} \
+INSTALLARCHLIB="${SB_INSTALL_PREFIX}/lib" \
+INSTALLSITEARCH="${SB_INSTALL_PREFIX}/lib" \
+INSTALLSITELIB="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  gmake LDFLAGS="-L${SB_VAR_PERL}/lib/support" \
+  OTHERLDFLAGS="-L${SB_VAR_PERL}/lib/support" ;;
+*)
+  gmake ;;
+esac
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake test APACHE_TEST_HTTPD="${SB_VAR_APACHE}/bin/httpd.prefork"
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1 \
+MODPERL_AP_LIBEXECDIR="${SB_INSTALL_PREFIX}/modules"
+]]>
+    </install>
+
+    <notes>
+      <change from="1.99_13" to="1.99_14">
+        <item><para>APR::SockAddr::port() accessor is now
+read-only</para></item>
+        <item><para>APR::Pool now has destroy() and clear()
+available</para></item>
+        <item><para>now logging the errors happening in pool cleanup
+callbacks</para></item>
+        <item><para>use the new Apache-Test attribute -minclient in
+the test suites. Now along with the default maxclients = minclients+1,
+we no longer should get 'server reached MaxClients setting'
+errors</para></item>
+        <item><para>new API for APR::Socket recv() and send() +
+updated tests</para></item>
+        <item><para>add infrastructure for new ModPerl::Const
+constants and the first constant ModPerl::EXIT</para></item>
+        <item><para>re-implement ModPerl::Util::exit to use exception
+objects, so it's possible to detect exit called in eval context and
+call it again outside the eval context</para></item>
+        <item><para>add the perl interface for the new exception
+handling code (mod_perl, apache and apr methods will now throw
+exceptions with $@ being an object). New class APR::Error was added,
+to handle the exception objects with overload methods. Also added
+confess and croak equivalents of Carp's methods, since at the moment
+the Carp's ones don't work as is. The following perl and C methods
+have been renamed:</para>
+        <screen>
+modperl_apr_strerror  =&gt; modperl_error_strerror 
+APR::strerror         =&gt; APR::Error::strerr
+        </screen></item>
+        <item><para>set the 'error-notes' table to the error message
+on HTTP_INTERNAL_SERVER_ERROR</para></item>
+        <item><para>fix the apxs build function to not handle empty
+lookups as errors</para></item>
+        <item><para>fix type casting problems in the io
+functions</para></item>
+        <item><para>add support for libgtop 2.5.0+ (maintenance
+mode)</para></item>
+        <item><para>APR::Socket::timeout_set now croaks on
+failure</para></item>
+        <item><para>significantly speedup the startup of threaded mpm
+test suite, by configuring only the minimal number of perl
+interpreters to start</para></item>
+        <item><para>make APR::Socket::opt_(set|get) working (and
+change the previous behavior)</para></item>
+        <item><para>make sure that our protocol module tests that
+interact with the socket use a blocking read</para></item>
+        <item><para>Use a better approach to figure out whether we
+need to strip perl's LargeFilesSource flag, by checking whether libapr
+was compiled with -D_FILE_OFFSET_BITS=64 or not. Checking for
+APR_HAS_LARGE_FILES is useless since it doesn't tell whether 32 vs 64
+bits off_t and similar types are used.</para></item>
+        <item><para>'SetHandler perl-script' no longer grabs any newly
+encountered END blocks, and removes them from PL_endav, but only if
+they are explicitly registered via
+ModPerl::Global::special_list_register(END =&gt; $package_name) (this
+is a new function). It's now possible to have a complete control of
+when END blocks are run from the user space, not only in the registry
+handlers</para></item>
+        <item><para>END blocks encountered by child processes and not
+hijacked by ModPerl::Global::special_list_register() are now executed
+at the server shutdown (previously they weren't executed at
+all)</para></item>
+        <item><para>Added test to ensure &lt;Perl&gt; sections can
+have things like %Location tied</para></item>
+        <item><para>Fix the installation on Win32 so that an
+appropriate Apache2 subdirectory under the Perl tree is used when
+MP_INST_APACHE2 is specified</para></item>
+        <item><para>Fix a redefined warning in
+Apache::Status</para></item>
+        <item><para>Fix Apache::Status, to lookup the Apache::Request
+version without loading it. Only if a suitable (2.x) version is found
+-- load and use it. Previously loading the 1.x version was affecting
+Apache::compat.</para></item>
+        <item><para>Fix a bug in special blocks handling (like END),
+which until now was dropping on the floor all blocks but the last one
+(mainly affecting registry handlers) The filter streaming API print()
+function, now correctly handles a binary dat </para></item>
+        <item><para>Fix Registry handlers, not to lose the execution
+errors, when they include END blocks</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>The Apache module, <command>mod_perl.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules</command>. It is
+automatically added to the default Apache configuration file,
+<command>/etc${SB_INSTALL_BASE}/apache2049/httpd.conf</command>:</para>
+        <screen>
+LoadModule perl_module ${SB_INSTALL_PREFIX}/modules/mod_perl.so
+        </screen>
+
+        <para>The default Perl library path,
+<command>${SB_INSTALL_PREFIX}/lib</command>, is automatically added
+to the list of Perl module paths by adding it to the library search
+path configuration file,
+<command>${SB_INSTALL_BASE}/perl582/etc/include.paths/include.paths</command>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 June 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Ignore test failures</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

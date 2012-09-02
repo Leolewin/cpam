@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="rsync" version="2.6.2" revision="2">
+    <package-manager name="pkgadd">
+      <category>Applications/Internet</category>
+      <title>Rsync File Synchronizer</title>
+      <vendor>Rsync Development Team</vendor>
+
+      <description>
+rsync is a replacement for rcp that has many more features.
+
+rsync uses the "rsync algorithm" which provides a very fast method for
+bringing remote files into sync. It does this by sending just the
+differences in the files across the link, without requiring that both
+sets of files are present at one of the ends of the link beforehand.
+At first glance this may seem impossible because the calculation of
+diffs between two files normally requires local access to both files.
+      </description>
+
+      <install-name>rsync26</install-name>
+
+      <pkgname-base>TWWrsy26</pkgname-base>
+
+      <version>2.6.2</version>
+      <revision>1</revision>
+
+      <init name="/etc/init.d/TWWrsync26"
+        path="pkg/init-sol"
+        checksum="8f75a6b39ed4dce917c04550b9ef9248"
+        checksum-type="md5" size="1071"/>
+      <init link-src="/etc/rc2.d/S79TWWrsync26"
+        link-dest="/etc/init.d/TWWrsync26"/>
+      <init link-src="/etc/rc1.d/K19TWWrsync26"
+        link-dest="/etc/init.d/TWWrsync26"/>
+      <init link-src="/etc/rc0.d/K19TWWrsync26"
+        link-dest="/etc/init.d/TWWrsync26"/>
+
+      <config>/etc/init.d/TWWrsync26</config>
+      <config>/etc${INSTALL_PREFIX}/rsyncd.conf</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+      </subpkg>
+
+      <replace pkgname-base="TWWrsy25"
+        install-name="rsync25"/>
+      <replace pkgname-base="TWWrsy24"
+        install-name="rsync24"/>
+    </package-manager>
+
+    <changelog>
+      <change date="2004 August 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix for a path-sanitizing bug that affects daemon 
+mode if chroot is disabled. It does not affect the normal send/receive 
+filenames that specify what files should be transferred ((this is
+because these names happen to get sanitized twice, and thus the second
+call removes any lingering leading slash(es) that the first call left
+behind). It does affect certain option paths that cause auxilliary
+files to be read or written.</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

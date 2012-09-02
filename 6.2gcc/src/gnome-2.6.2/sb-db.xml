@@ -1,0 +1,3339 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gnome" version="2.6.2" revision="1"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk16">v&gt;=1.6.1</depend>
+      <depend program="audiofile" var="LIBAUDIOFILE"
+        install-name="libaudiofile02">v&gt;=0.2.6</depend>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip2">v&gt;=1.0.2</depend>
+      <depend program="esound" var="ESOUND"
+        install-name="esound022">v&gt;=0.2.34</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="flex" var="FLEX" install-name="flex"
+        add-path="prepend" type="build">v&gt;=2.5.4a</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib24"
+        add-path="prepend">v&gt;=2.4.4</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+24"
+        add-path="prepend">v&gt;=2.4.4</depend>
+      <depend program="gtk-doc" var="GTKDOC" install-name="gtkdoc12"
+        add-path="prepend" systype="!*-aix*"
+        type="build">v&gt;=1.2</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libIDL" var="LIBIDL"
+        install-name="libidl08">v&gt;=0.8.3</depend>
+      <depend program="libart_lgpl" var="LIBART"
+        install-name="libart23">v&gt;=2.3.16</depend>
+      <depend program="libglade" var="LIBGLADE"
+        install-name="libglade23"
+        add-path="prepend">v&gt;=2.3.6</depend>
+      <depend program="libiconv" install-name="libiconv19"
+        add-path="prepend">v&gt;=1.9.2</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="!*-aix*">v&gt;=1.9.2</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml26"
+        add-path="prepend">v&gt;=2.6.11</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11">v&gt;=1.1.8</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango14">v&gt;=1.4.0</depend>
+      <depend program="popt" var="LIBPOPT"
+        install-name="libpopt17">v&gt;=1.7</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v==1.1.4</depend>
+      <depend program="perl" add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <uninstall>
+<![CDATA[
+# remove entry for scrollkeeper DTD
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+  ${_datadir}/scrollkeeper-omf.dtd ${SB_VAR_XMLCATALOG}
+
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <module name="nautilus">
+      <build-name>${SB_MODULE_NAME}-2.6.3</build-name>
+
+      <sources>
+        <source checksum="ef91c7eefd219800a3aab93e6510a5c9"
+          checksum-type="md5" size="5665374"
+          path="src/nautilus-2.6.3.tar.bz2"/>
+        <patch checksum="c3da435bef6ced904ca4c49ff8242679"
+          checksum-type="md5" size="791591"
+          path="src/nautilus-2.6.3.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_JPEG_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_GETTEXT_LIB} -L${SB_VAR_JPEG_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_JPEG_LIB}${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_VAR_ESOUND_LIB}/pkgconfig:\
+${SB_VAR_LIBAUDIOFILE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-gconf-schema-file-dir="${_sysconfdir}/gconf/schemas" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libnautilus/libnautilus.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-vfs">
+      <build-name>${SB_MODULE_NAME}-2.6.1.1</build-name>
+
+      <sources>
+        <source checksum="a5a7e86dbe539d64c7be99ccef5bc8db"
+          checksum-type="md5" size="1482056"
+          path="src/gnome-vfs-2.6.1.1.tar.bz2"/>
+        <patch checksum="f25f0544dfaf1205ed2aa6879bb552b5"
+          checksum-type="md5" size="838201"
+          path="src/gnome-vfs-2.6.1.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-mime-data"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--disable-ipv6" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--disable-ipv6" ;;
+*-linux9*|*-linuxe3*)
+  CPPFLAGS="-DOPENSSL_NO_KRB5"
+  ARGS="--enable-ipv6" ;;
+*-linux*)
+  CFLAGS="-O1" ARGS="--enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  ARGS="--disable-ipv6" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-ipv6" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  ARGS="--disable-ipv6" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_BZIP2_INC} -I${SB_VAR_ZLIB_INC} \
+${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_GETTEXT_LIB} -L${SB_VAR_BZIP2_LIB} -L${SB_VAR_ZLIB_LIB} \
+${SB_VAR_LIBOPENSSL+-L${SB_VAR_LIBOPENSSL_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:${SB_VAR_BZIP2_LIB}:\
+${SB_VAR_ZLIB_LIB}${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --with-html-dir="${_docdir}/html" \
+--disable-samba --sysconfdir="${_sysconfdir}" \
+--with-gconf-schema-file-dir="${_sysconfdir}/gconf/schemas" \
+--disable-gtk-doc --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gnome-vfs-2.0.pc gnome-vfs-module-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-themes">
+      <build-name>${SB_MODULE_NAME}-2.6.3</build-name>
+
+      <sources>
+        <source checksum="dfaf15f973e7ed91459b8ad0ca368839"
+          checksum-type="md5" size="2608334"
+          path="src/gnome-themes-2.6.3.tar.bz2"/>
+        <patch checksum="05bf3a07fed7c2d673873f05b37f1a8d"
+          checksum-type="md5" size="759297"
+          path="src/gnome-themes-2.6.3.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="startup-notification"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="gtk-themes" var="GTKTHEMES"
+          module="gtk-thinice">v==2.4</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_GTKTHEMES_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--disable-dependency-tracking --datadir="${_datadir}" \
+--enable-static --enable-shared --prefix=${SB_INSTALL_PREFIX}
+
+# sed that can handle long lines
+case "${SB_SYSTYPE}" in
+*-solaris2.[678]*)
+  perl -pi -e "\
+s!sed -f!/usr/xpg4/bin/sed -f!g; \
+s!sed '!/usr/xpg4/bin/sed '!g; \
+s!sed \"!/usr/xpg4/bin/sed \"!g;" config.status
+  sh config.status ;;
+esac
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-mag"
+    systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[89]*">
+      <build-name>${SB_MODULE_NAME}-0.10.11</build-name>
+
+      <sources>
+        <source checksum="8a117fc965c792a3b4a8ae0d8fa5a33e"
+          checksum-type="md5" size="291851"
+          path="src/gnome-mag-0.10.11.tar.bz2"/>
+        <patch checksum="a623b5aa2517c14f298181796fd73fd0"
+          checksum-type="md5" size="673075"
+          path="src/gnome-mag-0.10.11.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gnome-mag-1.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libcroco">
+      <build-name>${SB_MODULE_NAME}-0.6.0</build-name>
+
+      <sources>
+        <source checksum="78fb2bf78d469df83b1fc94ce196c1c4"
+          checksum-type="md5" size="358346"
+          path="src/libcroco-0.6.0.tar.bz2"/>
+        <patch checksum="ceb91e27a6d0e460be2117810cc79467"
+          checksum-type="md5" size="582683"
+          path="src/libcroco-0.6.0.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgsf"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libcroco.pc.in; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gedit">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="a4773bd9884371041cf6236f0fe1505f"
+          checksum-type="md5" size="2370962"
+          path="src/gedit-2.6.2.tar.bz2"/>
+        <patch checksum="8e243b7de10295fdfd458479c1493e16"
+          checksum-type="md5" size="615237"
+          path="src/gedit-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="aspell" var="LIBASPELL"
+          add-path="prepend">v&gt;=0.50.5</depend>
+        <depend program="gnome" module="gtksourceview"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama"
+  ASPELL_LIB=${SB_VAR_LIBASPELL_LIB} ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_LIBASPELL_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_GETTEXT_LIB} -L${SB_VAR_FCPACKAGE_LIB} \
+-L${ASPELL_LIB:-${SB_VAR_LIBASPELL_LIB}/gcc32} \
+${CC_LD_RT}${ASPELL_LIB:-${SB_VAR_LIBASPELL_LIB}/gcc32}:\
+${SB_VAR_LIBPOPT_LIB}${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gucharmap">
+      <build-name>${SB_MODULE_NAME}-1.4.1</build-name>
+
+      <sources>
+        <source checksum="8838c3171b9c7110f5d3110af5594141"
+          checksum-type="md5" size="1482646"
+          path="src/gucharmap-1.4.1.tar.bz2"/>
+        <patch checksum="6ea2275ac29954bc53617aaefeaae0cf"
+          checksum-type="md5" size="850110"
+          path="src/gucharmap-1.4.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="libgtkhtml">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="a9b71134e50e62d20ab4777f899225b3"
+          checksum-type="md5" size="427891"
+          path="src/libgtkhtml-2.6.2.tar.bz2"/>
+        <patch checksum="5803f4f0d9c789b8267a549614678b1f"
+          checksum-type="md5" size="818209"
+          path="src/libgtkhtml-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="eel"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgtkhtml-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gcalctool">
+      <build-name>${SB_MODULE_NAME}-4.4.8</build-name>
+
+      <sources>
+        <source checksum="c1adea7f8d1348a33c0734a0dfd8c643"
+          checksum-type="md5" size="882531"
+          path="src/gcalctool-4.4.8.tar.bz2"/>
+        <patch checksum="5f92613052f861b871c909074d6a5d02"
+          checksum-type="md5" size="1204931"
+          path="src/gcalctool-4.4.8.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--enable-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-applets">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="6604c456fe2a469d6aaed3c527fd1a21"
+          checksum-type="md5" size="5600227"
+          path="src/gnome-applets-2.6.2.tar.bz2"/>
+        <patch checksum="09485ef5bc9cfd68c4c298b34d39facf"
+          checksum-type="md5" size="806244"
+          path="src/gnome-applets-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="libxklavier" var="LIBXKLAVIER"
+          install-name="libxklavier10"
+          systype="*-aix*|*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris2.[89]">v&gt;=1.03</depend>
+        <depend program="gnome" module="gail"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--disable-ipv6" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--disable-ipv6" ;;
+*-linux*)
+  ARGS="--enable-xinerama --enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  ARGS="--disable-ipv6" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-ipv6" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  ARGS="--disable-ipv6" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBAUDIOFILE_LIB}/pkgconfig:${SB_VAR_ESOUND_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBXKLAVIER+:${SB_VAR_LIBXKLAVIER_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+# <sys/audio.h> only in Solaris 8+
+case "${SB_SYSTYPE}" in
+*-solaris2.[67])
+  gmake cdplayer_SUBDIRS= ;;
+*)
+  gmake ;;
+esac
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+# <sys/audio.h> only in Solaris 8+
+case "${SB_SYSTYPE}" in
+*-solaris2.[67])
+  gmake cdplayer_SUBDIRS= install ;;
+*)
+  gmake install ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <module name="zenity">
+      <build-name>${SB_MODULE_NAME}-2.6.3</build-name>
+
+      <sources>
+        <source checksum="ce6678c406e9a834e4da04ca00338931"
+          checksum-type="md5" size="650351"
+          path="src/zenity-2.6.3.tar.bz2"/>
+        <patch checksum="f31e2b4e7d957558dfade46a07fee082"
+          checksum-type="md5" size="146609"
+          path="src/zenity-2.6.3.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="GConf">
+      <build-name>${SB_MODULE_NAME}-2.6.3</build-name>
+
+      <sources>
+        <source checksum="5230454d8855aa578954af55eae14059"
+          checksum-type="md5" size="1522330"
+          path="src/GConf-2.6.3.tar.bz2"/>
+        <patch checksum="6083db5808aba798d286ec5701ed322f"
+          checksum-type="md5" size="482231"
+          path="src/GConf-2.6.3.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libbonobo">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" 
+  CXXFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}}\
+${GCC_RT+:${GCC_RT}/lib} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-html-dir="${_docdir}/html" \
+--enable-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--disable-gtk-doc --enable-shared --enable-static \
+--disable-bdbbackend --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gconf-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="at-spi"
+    systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[89]*">
+      <build-name>${SB_MODULE_NAME}-1.4.2</build-name>
+
+      <sources>
+        <source checksum="e36683a6e55fcb5ef2e6ef05806f9c3e"
+          checksum-type="md5" size="510355"
+          path="src/at-spi-1.4.2.tar.bz2"/>
+        <patch checksum="103d84873d607b6dd6d2f252359b1833"
+          checksum-type="md5" size="818238"
+          path="src/at-spi-1.4.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gail"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_FCPACKAGE_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-gtk-doc --with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in cspi-1.0.pc libspi-1.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libgnomeprintui">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="b26f7f70eb67fe29f20f6312d4f3085e"
+          checksum-type="md5" size="562712"
+          path="src/libgnomeprintui-2.6.2.tar.bz2"/>
+        <patch checksum="f6117020c2f7f7ac2ca3c454c3780cc7"
+          checksum-type="md5" size="493962"
+          path="src/libgnomeprintui-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgnomeprint"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC}" LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-gtk-doc --enable-shared \
+--enable-static --with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgnomeprintui/libgnomeprintui-2.2.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="control-center">
+      <build-name>${SB_MODULE_NAME}-2.6.1</build-name>
+
+      <sources>
+        <source checksum="da02f983fbf2e94cd5f09fc8f9d1d143"
+          checksum-type="md5" size="2487807"
+          path="src/control-center-2.6.1.tar.bz2"/>
+        <patch checksum="e77092168aa768ed8878c558ae26c45a"
+          checksum-type="md5" size="805416"
+          path="src/control-center-2.6.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="libxklavier" var="LIBXKLAVIER"
+          install-name="libxklavier10"
+          systype="*-aix*|*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris2.[89]">v&gt;=1.03</depend>
+        <depend program="gnome" module="metacity"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_FCPACKAGE_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBAUDIOFILE_LIB}/pkgconfig:${SB_VAR_ESOUND_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBXKLAVIER+:${SB_VAR_LIBXKLAVIER_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libwindow-settings/gnome-window-settings-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libgsf">
+      <build-name>${SB_MODULE_NAME}-1.10.0</build-name>
+
+      <sources>
+        <source checksum="d3b650ccef7e5278baf546025d4b3848"
+          checksum-type="md5" size="398346"
+          path="src/libgsf-1.10.0.tar.bz2"/>
+        <patch checksum="f92821ed1653ebe3b7ec1ca2c273f704"
+          checksum-type="md5" size="561879"
+          path="src/libgsf-1.10.0.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-applets"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="python" add-path="prepend">v==2.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_BZIP2_INC} \
+-I${SB_VAR_ZLIB_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_BZIP2_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:${SB_VAR_BZIP2_LIB}:\
+${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--with-svgz --without-gimp --disable-dependency-tracking \
+--disable-gtk-doc --with-html-dir="${_docdir}/html" \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgsf-1.pc libgsf-gnome-1.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-desktop">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="efe9949e7aed8ca143287ec551b6852a"
+          checksum-type="md5" size="1131159"
+          path="src/gnome-desktop-2.6.2.tar.bz2"/>
+        <patch checksum="8ce37de6a85ad12cb2c289f3408d4167"
+          checksum-type="md5" size="602201"
+          path="src/gnome-desktop-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="scrollkeeper"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="gtk-themes" var="GTKTHEMES"
+          module="gtk-thinice">v==2.4</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgnome-desktop/gnome-desktop-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="intltool">
+      <build-name>${SB_MODULE_NAME}-0.31</build-name>
+
+      <sources>
+        <source checksum="ea8e0d71175c0d542b900e63fb426792"
+          checksum-type="md5" size="118172"
+          path="src/intltool-0.31.tar.bz2"/>
+        <patch checksum="645bf15a59c1fbd3ebde49c12f1db3b3"
+          checksum-type="md5" size="16233"
+          path="src/intltool-0.31.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="XML-Parser" module="5.8.2">v==2.31</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="vte"
+    systype="*-linux*|*-solaris2.[789]*">
+      <build-name>${SB_MODULE_NAME}-0.11.11</build-name>
+
+      <sources>
+        <source checksum="4d7a3674df5b8be7f1adffa981c1fc3d"
+          checksum-type="md5" size="888405"
+          path="src/vte-0.11.11.tar.bz2"/>
+        <patch checksum="5fb1cd564066d1decc90cb40cea19781"
+          checksum-type="md5" size="678911"
+          path="src/vte-0.11.11.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend var="PYTHONP" install-name="python232p"
+          add-path="prepend"/>
+        <depend program="gnome" module="gnome-session"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="pygtk" module="2.3.2">v&gt;=2.2.0</depend>
+        <depend program="python" add-path="prepend">v==2.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_FCPACKAGE_INC} \
+${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_PYTHONP}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+am_cv_python_pyexecdir="${SB_INSTALL_PREFIX}/lib/python" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--disable-dependency-tracking --enable-python \
+--with-ft-prefix=${SB_VAR_LIBTTF} --disable-gtk-doc \
+--with-html-dir="${_docdir}/html" --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in vte.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="eel">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="a0350d241c01afc184d0e24521e4e3f9"
+          checksum-type="md5" size="556016"
+          path="src/eel-2.6.2.tar.bz2"/>
+        <patch checksum="7536972cab38c8e7e90b19b332a07f37"
+          checksum-type="md5" size="628611"
+          path="src/eel-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgnomeprintui"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_GETTEXT_LIB} -L${SB_VAR_FCPACKAGE_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in eel-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="ORBit2">
+      <build-name>${SB_MODULE_NAME}-2.10.3</build-name>
+
+      <sources>
+        <source checksum="17fee360a7d59271204b99d26899365f"
+          checksum-type="md5" size="649717"
+          path="src/ORBit2-2.10.3.tar.bz2"/>
+        <patch checksum="4e99155a90843ff9d5205be2ec571fed"
+          checksum-type="md5" size="738462"
+          path="src/ORBit2-2.10.3.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} \
+${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC}}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_LIBIDL_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+--datadir="${_datadir}" --with-html-dir="${_docdir}/html" \
+--disable-indent --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\$libdir\)!-L\1 ${CC_LD_RT}\1 !g" orbit2-config
+
+for _pc in ORBit-2.0.pc ORBit-CosNaming-2.0.pc \
+ORBit-imodule-2.0.pc src/idl-compiler/ORBit-idl-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/orbitrc
+]]>
+      </install>
+    </module>
+
+    <module name="startup-notification">
+      <build-name>${SB_MODULE_NAME}-0.7</build-name>
+
+      <sources>
+        <source checksum="60417dc65c4e88af3c8bafc11ef5242a"
+          checksum-type="md5" size="225970"
+          path="src/startup-notification-0.7.tar.bz2"/>
+        <patch checksum="b041fa332a31b2c778d8d574aa88771c"
+          checksum-type="md5" size="570576"
+          path="src/startup-notification-0.7.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgnomeui">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --datadir="${_datadir}" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libstartup-notification-1.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="librsvg">
+      <build-name>${SB_MODULE_NAME}-2.6.5</build-name>
+
+      <sources>
+        <source checksum="2d1d16f9493c80ce8214e585727334ae"
+          checksum-type="md5" size="294229"
+          path="src/librsvg-2.6.5.tar.bz2"/>
+        <patch checksum="9a753474a9f9e652f1258ab0a4dc5d0b"
+          checksum-type="md5" size="846344"
+          path="src/librsvg-2.6.5.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libcroco"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--enable-shared --enable-static --with-svgz --with-croco \
+--disable-gtk-doc --with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in librsvg-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gob">
+      <build-name>${SB_MODULE_NAME}2-2.0.9</build-name>
+
+      <sources>
+        <source checksum="75a5449097984cc57858e39140c64047"
+          checksum-type="md5" size="190984"
+          path="src/gob2-2.0.9.tar.bz2"/>
+        <patch checksum="6063469ce9a814f6e5d766bb3cb35779"
+          checksum-type="md5" size="10994"
+          path="src/gob2-2.0.9.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="libgnome">
+      <build-name>${SB_MODULE_NAME}-2.6.1.1</build-name>
+
+      <sources>
+        <source checksum="8fb8d073987cb4c5d9bfe577550d11c2"
+          checksum-type="md5" size="1093492"
+          path="src/libgnome-2.6.1.1.tar.bz2"/>
+        <patch checksum="197fa25dd7785c5e61e02fcbbb916878"
+          checksum-type="md5" size="717053"
+          path="src/libgnome-2.6.1.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-vfs"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_BZIP2_INC} -I${SB_VAR_ZLIB_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_BZIP2_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:${SB_VAR_BZIP2_LIB}:\
+${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_LIBAUDIOFILE_LIB}/pkgconfig:${SB_VAR_ESOUND_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking --sysconfdir="${_sysconfdir}" \
+--with-gconf-schema-file-dir="${_sysconfdir}/gconf/schemas" \
+--disable-gtk-doc --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgnome/libgnome-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libgail-gnome"
+    systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[89]*">
+      <build-name>${SB_MODULE_NAME}-1.0.5</build-name>
+
+      <sources>
+        <source checksum="706be3a6b642468b6415bf00f9f880dc"
+          checksum-type="md5" size="200446"
+          path="src/libgail-gnome-1.0.5.tar.bz2"/>
+        <patch checksum="1cc3cc78ee52d0bfdf835258fa7a1e6f"
+          checksum-type="md5" size="752464"
+          path="src/libgail-gnome-1.0.5.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="at-spi"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-gtk-doc --enable-shared \
+--enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgail-gnome.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libgnomeprint">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="f742bb321fab833b67270f7b86af0fdb"
+          checksum-type="md5" size="701216"
+          path="src/libgnomeprint-2.6.2.tar.bz2"/>
+        <patch checksum="2459303a229ba4c1e6ffe584108af251"
+          checksum-type="md5" size="523942"
+          path="src/libgnomeprint-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="librsvg"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_ZLIB_INC}" CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_ZLIB_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_ZLIB_LIB}${CUPS_RT+:${CUPS_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+${SB_VAR_CUPS+--with-cups} --datadir="${_datadir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--with-html-dir="${_docdir}/html" --sysconfdir="${_sysconfdir}" \
+--disable-gtk-doc --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgnomeprint/libgnomeprint-2.2.pc.in; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="ggv">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="c02779b6ac22331c60df568301ca48c5"
+          checksum-type="md5" size="1234678"
+          path="src/ggv-2.6.2.tar.bz2"/>
+        <patch checksum="594b439be62d530f2138826a489963ec"
+          checksum-type="md5" size="721754"
+          path="src/ggv-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="ghostscript" var="GHOSTSCRIPT"
+          install-name="ghostscript70"
+          add-path="prepend">v&gt;=7.07</depend>
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--with-gconf-schema-file-dir="${_sysconfdir}/gconf/schemas" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--with-gs=${SB_VAR_GHOSTSCRIPT}/bin/gs --enable-shared \
+--enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="libgtop"
+    systype="*-linux*|*-solaris2.[6789]">
+      <build-name>${SB_MODULE_NAME}-2.6.0</build-name>
+
+      <sources>
+        <source checksum="5d0ec207842b54d2f2d04c99af7c98b9"
+          checksum-type="md5" size="946822"
+          path="src/libgtop-2.6.0.tar.bz2"/>
+        <patch checksum="e1a7b5fec0dc8df92b6c0e21c9c16ddc"
+          checksum-type="md5" size="597643"
+          path="src/libgtop-2.6.0.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="startup-notification"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="gtk-themes" var="GTKTHEMES"
+          module="gtk-thinice">v==2.4</depend>
+        <depend program="texinfo" add-path="prepend">v==4.6</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+for _pc in libgtop-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+    </module>
+
+    <module name="gnome-terminal"
+    systype="*-linux*|*-solaris2.[789]*">
+      <build-name>${SB_MODULE_NAME}-2.6.1</build-name>
+
+      <sources>
+        <source checksum="43e04260410e66e767a4b247d0af8b46"
+          checksum-type="md5" size="1999378"
+          path="src/gnome-terminal-2.6.1.tar.bz2"/>
+        <patch checksum="fef478a082190b44f0d6fb5992af0463"
+          checksum-type="md5" size="737958"
+          path="src/gnome-terminal-2.6.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="vte"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_LIBOPENSSL_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${LIBART_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gconf-editor">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="4b739532de350969c71f96c3b97f1093"
+          checksum-type="md5" size="387614"
+          path="src/gconf-editor-2.6.2.tar.bz2"/>
+        <patch checksum="46267bb2d2df71b7907592c37f403789"
+          checksum-type="md5" size="710193"
+          path="src/gconf-editor-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="file-roller">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="88c6441d286c8f0810a37a3f3107f985"
+          checksum-type="md5" size="1294588"
+          path="src/file-roller-2.6.2.tar.bz2"/>
+        <patch checksum="6a0e85be5a19f103bff0665c4145fb35"
+          checksum-type="md5" size="793309"
+          path="src/file-roller-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-panel">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="41318b24e18f497b4418c7d60aaf33f6"
+          checksum-type="md5" size="3082567"
+          path="src/gnome-panel-2.6.2.tar.bz2"/>
+        <patch checksum="1f2ef3e8638c0530ea1dc0b5f3720ead"
+          checksum-type="md5" size="718351"
+          path="src/gnome-panel-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libwnck"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  ARGS="--enable-xinerama" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_LIBPNG_INC} -I${SB_VAR_ZLIB_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_ZLIB_LIB} -L${SB_VAR_FCPACKAGE_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:${SB_VAR_LIBPNG_LIB}:${SB_VAR_ZLIB_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-gtk-doc --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libpanel-applet/libpanelapplet-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome2-user-docs">
+      <build-name>${SB_MODULE_NAME}-2.6.0.1</build-name>
+
+      <sources>
+        <source checksum="8125558f7f515b681fdeb853adf06ebb"
+          checksum-type="md5" size="1018591"
+          path="src/gnome2-user-docs-2.6.0.1.tar.bz2"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gpdf">
+      <build-name>${SB_MODULE_NAME}-0.132</build-name>
+
+      <sources>
+        <source checksum="1b8ba3384210b89a3628281e6aa5edaa"
+          checksum-type="md5" size="1109005"
+          path="src/gpdf-0.132.tar.bz2"/>
+        <patch checksum="cf2345c19fea3b0ac4d973a5f5619847"
+          checksum-type="md5" size="403754"
+          path="src/gpdf-0.132.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend var="GCC_RT" install-name="gcc332r"
+          systype="*-aix*"/>
+        <depend program="gcc" add-path="prepend"
+          systype="*-aix*">v==3.3.2</depend>
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${GCC_RT+:${GCC_RT_LIB}}${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--with-appdef-dir=${INSTALL_PREFIX}/lib/app-defaults --enable-opi \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-mime-data">
+      <build-name>${SB_MODULE_NAME}-2.4.1</build-name>
+
+      <sources>
+        <source checksum="a8bd52c6876a5294abc402f8a581ac1a"
+          checksum-type="md5" size="651417"
+          path="src/gnome-mime-data-2.4.1.tar.bz2"/>
+        <patch checksum="7437f330417e9f2b9631aed083d3cf86"
+          checksum-type="md5" size="73197"
+          path="src/gnome-mime-data-2.4.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="GConf">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC}" LDFLAGS="-L${SB_VAR_GETTEXT_LIB}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gail">
+      <build-name>${SB_MODULE_NAME}-1.6.6</build-name>
+
+      <sources>
+        <source checksum="0741e06cd58088d4973dda98d3995a99"
+          checksum-type="md5" size="519879"
+          path="src/gail-1.6.6.tar.bz2"/>
+        <patch checksum="2418951d85f6fd4d6d220449e485be4c"
+          checksum-type="md5" size="847953"
+          path="src/gail-1.6.6.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-session"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-gtk-doc --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gail.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-utils">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="b2325307fd311c8ba1bd045d7432830e"
+          checksum-type="md5" size="1625287"
+          path="src/gnome-utils-2.6.2.tar.bz2"/>
+        <patch checksum="0589c1b8561a526c8da0fbc9f1797763"
+          checksum-type="md5" size="294487"
+          path="src/gnome-utils-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--disable-ipv6" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  LDFLAGS="-L${LIBTTF_LIB}" ARGS="--disable-ipv6" ;;
+*-linux*)
+  ARGS="--enable-xinerama --enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  ARGS="--disable-ipv6" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-ipv6" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_LIBGLIB_LIB}:${SB_VAR_LIBGTK_LIB}:${SB_VAR_LIBPANGO_LIB}:\
+${SB_VAR_LIBATK_LIB}:${SB_VAR_LIBXML_LIB}:${SB_VAR_ZLIB_LIB}:\
+${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--with-gconf-schema-file-dir="${_sysconfdir}/gconf/schemas" \
+--enable-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="libbonoboui">
+      <build-name>${SB_MODULE_NAME}-2.6.1</build-name>
+
+      <sources>
+        <source checksum="ee26630368b541dc101a65e46e67f5c4"
+          checksum-type="md5" size="879500"
+          path="src/libbonoboui-2.6.1.tar.bz2"/>
+        <patch checksum="d7868fc9f95987ad0ce0f5a4bafcd3ed"
+          checksum-type="md5" size="760338"
+          path="src/libbonoboui-2.6.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgnomecanvas"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+--datadir="${_datadir}" --localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-gtk-doc --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in bonobo/libbonoboui-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="metacity">
+      <build-name>${SB_MODULE_NAME}-2.8.1</build-name>
+
+      <sources>
+        <source checksum="b311b41446c559056281f205f16d8aca"
+          checksum-type="md5" size="2085521"
+          path="src/metacity-2.8.1.tar.bz2"/>
+        <patch checksum="3f28036e932a6e1b6e30a23e2425a7c9"
+          checksum-type="md5" size="621790"
+          path="src/metacity-2.8.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+
+  # without -Xc, __STDC__ defined but not defined to 1. set
+  # -DANSICPP to get correct SIZEOF() definition
+  CPPFLAGS="-DANSICPP" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_GETTEXT_LIB} -L${SB_VAR_FCPACKAGE_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--with-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--with-gconf-schema-file-dir="${_sysconfdir}/gconf/schemas" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in src/libmetacity-private.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libwnck">
+      <build-name>${SB_MODULE_NAME}-2.6.2.1</build-name>
+
+      <sources>
+        <source checksum="79feeef845f34768ac4dfdec4b927cde"
+          checksum-type="md5" size="346751"
+          path="src/libwnck-2.6.2.1.tar.bz2"/>
+        <patch checksum="9df68cbfc351c6344045a6acf7b03c42"
+          checksum-type="md5" size="571766"
+          path="src/libwnck-2.6.2.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-desktop"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libwnck-1.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-keyring">
+      <build-name>${SB_MODULE_NAME}-0.2.1</build-name>
+
+      <sources>
+        <source checksum="2fe5fb39cc18d1a6792fd3281223dfff"
+          checksum-type="md5" size="324989"
+          path="src/gnome-keyring-0.2.1.tar.bz2"/>
+        <patch checksum="2d1825e012a7444dc31fe5b3b59c3ddc"
+          checksum-type="md5" size="757695"
+          path="src/gnome-keyring-0.2.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libbonoboui"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --enable-shared --enable-static \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gnome-keyring-1.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-icon-theme">
+      <build-name>${SB_MODULE_NAME}-1.2.3</build-name>
+
+      <sources>
+        <source checksum="95bafdf2dd4d9ef2b7dfc4e015ddafcb"
+          checksum-type="md5" size="2760153"
+          path="src/gnome-icon-theme-1.2.3.tar.bz2"/>
+        <patch checksum="50be4cbba6fc3fb497a030e1082dd6a1"
+          checksum-type="md5" size="1140"
+          path="src/gnome-icon-theme-1.2.3.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-keyring"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_GETTEXT_INC}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+${LDFLAGS+${LDFLAGS}}" --datadir="${_datadir}" \
+--disable-dependency-tracking --disable-hicolor-check \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="eog">
+      <build-name>${SB_MODULE_NAME}-2.6.1</build-name>
+
+      <sources>
+        <source checksum="a7207082b9034e9e24ec7adde744c3a9"
+          checksum-type="md5" size="863021"
+          path="src/eog-2.6.1.tar.bz2"/>
+        <patch checksum="45855cd507e410a2148dcbb1627b9a5b"
+          checksum-type="md5" size="33243"
+          path="src/eog-2.6.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${JPEG_INC} -I${SB_VAR_LIBPNG_INC} \
+-I${SB_VAR_ZLIB_INC} -I${SB_VAR_LIBPOPT_INC} \
+-I${SB_VAR_GETTEXT_INC}" LDFLAGS="-L${JPEG_LIB} \
+-L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_ZLIB_LIB} \
+-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_JPEG_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_LIBGLIB_LIB}:${SB_VAR_LIBGTK_LIB}:${SB_VAR_LIBATK_LIB}:\
+${SB_VAR_LIBPANGO_LIB}:${SB_VAR_LIBXML_LIB}:${SB_VAR_ZLIB_LIB}:\
+${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--enable-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--without-libexif --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="yelp">
+      <build-name>${SB_MODULE_NAME}-2.6.1</build-name>
+
+      <sources>
+        <source checksum="965ab4cb4f40c76554ce850d63281f06"
+          checksum-type="md5" size="515442"
+          path="src/yelp-2.6.1.tar.bz2"/>
+        <patch checksum="3224fd3f62bcf9ce36630203bbede860"
+          checksum-type="md5" size="843095"
+          path="src/yelp-2.6.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgtkhtml"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_BZIP2_INC} -I${SB_VAR_ZLIB_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_BZIP2_LIB} -L${SB_VAR_ZLIB_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_BZIP2_LIB}:${SB_VAR_ZLIB_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="libbonobo">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="d99ababb4569c66c3002cba97b076c31"
+          checksum-type="md5" size="1055680"
+          path="src/libbonobo-2.6.2.tar.bz2"/>
+        <patch checksum="ab164f65d125bbdcdc9db0fae57ac814"
+          checksum-type="md5" size="776364"
+          path="src/libbonobo-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="ORBit2">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+--datadir="${_datadir}" --with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" --disable-gtk-doc \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in bonobo/libbonobo-2.0.pc \
+bonobo-activation/bonobo-activation-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="scrollkeeper">
+      <build-name>${SB_MODULE_NAME}-0.3.14</build-name>
+
+      <sources>
+        <source checksum="b175e582a6cec3e50a9de73a5bb7455a"
+          checksum-type="md5" size="546059"
+          path="src/scrollkeeper-0.3.14.tar.bz2"/>
+        <patch checksum="90c663d1e944c4e96fa7e12b7f6603e8"
+          checksum-type="md5" size="991772"
+          path="src/scrollkeeper-0.3.14.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+        <depend program="gnome" module="gnome-themes"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig" --datadir="${_datadir}" \
+--sysconfdir="${_sysconfdir}" --with-omfdirs="${_datadir}/omf" \
+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} --enable-shared \
+--enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/lib/scrollkeeper
+]]>
+      </install>
+    </module>
+
+    <module name="glade">
+      <build-name>${SB_MODULE_NAME}-2.6.0</build-name>
+
+      <sources>
+        <source checksum="49ff3e8123f55937e53a3a3bb3ec90fa"
+          checksum-type="md5" size="2145674"
+          path="src/glade-2.6.0.tar.bz2"/>
+        <patch checksum="0f38ce6dc11887a60c0a68f5c3da9608"
+          checksum-type="md5" size="719469"
+          path="src/glade-2.6.0.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="startup-notification"
+          add-path="prepend">v==2.6.2</depend>
+        <depend program="gtk-themes" var="GTKTHEMES"
+          module="gtk-thinice">v==2.4</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="libgnomeui">
+      <build-name>${SB_MODULE_NAME}-2.6.1.1</build-name>
+
+      <sources>
+        <source checksum="16e6717b5d7da982db00fea6167188ef"
+          checksum-type="md5" size="1505062"
+          path="src/libgnomeui-2.6.1.1.tar.bz2"/>
+        <patch checksum="f7a338e99b0412ff80cd549c3a3d3c63"
+          checksum-type="md5" size="615373"
+          path="src/libgnomeui-2.6.1.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-icon-theme"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+-I${SB_VAR_JPEG_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+-L${SB_VAR_GETTEXT_LIB} -L${SB_VAR_JPEG_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_JPEG_LIB}${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_ESOUND+:${SB_VAR_ESOUND_LIB}/pkgconfig}\
+${SB_VAR_LIBAUDIOFILE+:${SB_VAR_LIBAUDIOFILE_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking --sysconfdir="${_sysconfdir}" \
+--enable-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-gtk-doc --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgnomeui/libgnomeui-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="libgnomecanvas">
+      <build-name>${SB_MODULE_NAME}-2.6.1.1</build-name>
+
+      <sources>
+        <source checksum="040257b0231fd5fc507f731d73d9738b"
+          checksum-type="md5" size="520488"
+          path="src/libgnomecanvas-2.6.1.1.tar.bz2"/>
+        <patch checksum="5f4742d9f92c547073341b706fbf8aca"
+          checksum-type="md5" size="1279561"
+          path="src/libgnomecanvas-2.6.1.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="libgnome"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGLADE_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_INSTALL_PREFIX}/lib/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --with-html-dir="${_docdir}/html" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-gtk-doc --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libgnomecanvas/libgnomecanvas-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-system-monitor"
+    systype="*-linux*|*-solaris2.[6789]">
+      <build-name>${SB_MODULE_NAME}-2.6.0</build-name>
+
+      <sources>
+        <source checksum="1bc8709baa43fdca7eee8cad1dc76b17"
+          checksum-type="md5" size="597694"
+          path="src/gnome-system-monitor-2.6.0.tar.bz2"/>
+        <patch checksum="a59550f16580ef9e6b3667f178c2a3a2"
+          checksum-type="md5" size="42811"
+          path="src/gnome-system-monitor-2.6.0.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="aspell" var="LIBASPELL"
+          add-path="prepend">v&gt;=0.50.5</depend>
+        <depend program="gnome" module="glade"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}:\
+${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--enable-gconf-source="xml::${_sysconfdir}/gconf/gconf.xml.defaults" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gnome-session">
+      <build-name>${SB_MODULE_NAME}-2.6.2</build-name>
+
+      <sources>
+        <source checksum="0c80fbb64123cef7f2d7a9b69b0b965e"
+          checksum-type="md5" size="873420"
+          path="src/gnome-session-2.6.2.tar.bz2"/>
+        <patch checksum="a78db7fd0f623e77f5fb96910a32f7b1"
+          checksum-type="md5" size="599980"
+          path="src/gnome-session-2.6.2.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="gnome-panel"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--disable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  ARGS="--disable-ipv6" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--disable-ipv6" ;;
+*-linux*)
+  ARGS="--enable-xinerama --enable-ipv6" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-ipv6" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  ARGS="--disable-ipv6" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_LIBAUDIOFILE_LIB}/pkgconfig:${SB_VAR_ESOUND_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--localstatedir="${SB_INSTALL_PREFIX}/lib" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gtksourceview">
+      <build-name>${SB_MODULE_NAME}-1.0.1</build-name>
+
+      <sources>
+        <source checksum="dccdc61d7626f2d222605f25fee41997"
+          checksum-type="md5" size="656525"
+          path="src/gtksourceview-1.0.1.tar.bz2"/>
+        <patch checksum="d0a278b9047347fd4e891081a22a2bd2"
+          checksum-type="md5" size="721094"
+          path="src/gtksourceview-1.0.1.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnome" module="nautilus"
+          add-path="prepend">v==2.6.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC} -I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBART_LIB}/pkgconfig:${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--disable-dependency-tracking --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gtksourceview-1.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+    </module>
+  </program>
+</programs>

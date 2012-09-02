@@ -1,0 +1,179 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release: 3.2
+Patch-ID: bash32-039
+
+Bug-Reported-by:	rew@erebor.com
+Bug-Reference-ID:	<20070119065603.546D011E9C@kansas.erebor.com>
+Bug-Reference-URL:	
+
+Bug-Description:
+
+Bash-3.2 changed the behavior of the [[ command's `=~' operator when the
+right-hand side was quoted:  it matched the quoted portions as strings.
+This patch introduces a new shell option: compat31.  When enabled, it
+restores the bash-3.1 behavior with respect to evaluating quoted arguments
+to the =~ operator.
+
+Patch:
+
+Index: execute_cmd.c
+===================================================================
+--- execute_cmd.c.orig
++++ execute_cmd.c
+@@ -2546,7 +2546,8 @@ execute_cond_node (cond)
+       arg1 = cond_expand_word (cond->left->op, 0);
+       if (arg1 == 0)
+ 	arg1 = nullstr;
+-      arg2 = cond_expand_word (cond->right->op, rmatch ? 2 : (patmatch ? 1 : 0));
++      arg2 = cond_expand_word (cond->right->op,
++			       (rmatch && shell_compatibility_level > 31) ? 2 : (patmatch ? 1 : 0));
+       if (arg2 == 0)
+ 	arg2 = nullstr;
+ 
+Index: shell.h
+===================================================================
+--- shell.h.orig
++++ shell.h
+@@ -89,6 +89,7 @@ extern int debugging_mode;
+ extern int executing, login_shell;
+ extern int interactive, interactive_shell;
+ extern int startup_state;
++extern int shell_compatibility_level;
+ 
+ /* Structure to pass around that holds a bitmap of file descriptors
+    to close, and the size of that structure.  Used in execute_cmd.c. */
+Index: version.c
+===================================================================
+--- version.c.orig
++++ version.c
+@@ -43,6 +43,9 @@ const char *release_status = (char *)0;
+ #endif
+ const char *sccs_version = SCCSVERSION;
+ 
++/* If == 31, shell compatible with bash-3.1, == 32 with bash-3.2, and so on */
++int shell_compatibility_level = 32;
++
+ /* Functions for getting, setting, and displaying the shell version. */
+ 
+ /* Forward declarations so we don't have to include externs.h */
+Index: builtins/shopt.def
+===================================================================
+--- builtins/shopt.def.orig
++++ builtins/shopt.def
+@@ -101,11 +101,14 @@ static void shopt_error __P((char *));
+ 
+ static int set_shellopts_after_change __P((int));
+ 
++static int set_compatibility_level __P((int));
++
+ #if defined (RESTRICTED_SHELL)
+ static int set_restricted_shell __P((int));
+ #endif
+ 
+ static int shopt_login_shell;
++static int shopt_compat31;
+ 
+ typedef int shopt_set_func_t __P((int));
+ 
+@@ -121,6 +124,7 @@ static struct {
+ #if defined (HISTORY)
+   { "cmdhist", &command_oriented_history, (shopt_set_func_t *)NULL },
+ #endif
++  { "compat31", &shopt_compat31, set_compatibility_level },
+   { "dotglob", &glob_dot_filenames, (shopt_set_func_t *)NULL },
+   { "execfail", &no_exit_on_failed_exec, (shopt_set_func_t *)NULL },
+   { "expand_aliases", &expand_aliases, (shopt_set_func_t *)NULL },
+@@ -457,6 +461,18 @@ set_shellopts_after_change (mode)
+ {
+   set_shellopts ();
+   return (0);
++}
++
++static int
++set_compatibility_level (mode)
++     int mode;
++{
++  /* Need to change logic here as we add more compatibility levels */
++  if (shopt_compat31)
++    shell_compatibility_level = 31;
++  else
++    shell_compatibility_level = 32;
++  return 0;
+ }
+ 
+ #if defined (RESTRICTED_SHELL)
+Index: doc/bash.1
+===================================================================
+--- doc/bash.1.orig
++++ doc/bash.1
+@@ -7977,6 +7977,12 @@ attempts to save all lines of a multiple
+ command in the same history entry.  This allows
+ easy re-editing of multi-line commands.
+ .TP 8
++.B compat31
++If set,
++.B bash
++changes its behavior to that of version 3.1 with respect to quoted
++arguments to the conditional command's =~ operator.
++.TP 8
+ .B dotglob
+ If set, 
+ .B bash
+Index: doc/bashref.texi
+===================================================================
+--- doc/bashref.texi.orig
++++ doc/bashref.texi
+@@ -3598,6 +3598,11 @@ attempts to save all lines of a multiple
+ command in the same history entry.  This allows
+ easy re-editing of multi-line commands.
+ 
++@item compat31
++If set, Bash
++changes its behavior to that of version 3.1 with respect to quoted
++arguments to the conditional command's =~ operator.
++
+ @item dotglob
+ If set, Bash includes filenames beginning with a `.' in
+ the results of filename expansion.
+Index: tests/shopt.right
+===================================================================
+--- tests/shopt.right.orig
++++ tests/shopt.right
+@@ -6,6 +6,7 @@ shopt -s cdspell
+ shopt -u checkhash
+ shopt -u checkwinsize
+ shopt -s cmdhist
++shopt -u compat31
+ shopt -u dotglob
+ shopt -u execfail
+ shopt -s expand_aliases
+@@ -53,6 +54,7 @@ shopt -s sourcepath
+ shopt -u cdable_vars
+ shopt -u checkhash
+ shopt -u checkwinsize
++shopt -u compat31
+ shopt -u dotglob
+ shopt -u execfail
+ shopt -u extdebug
+@@ -77,6 +79,7 @@ shopt -u xpg_echo
+ cdable_vars    	off
+ checkhash      	off
+ checkwinsize   	off
++compat31       	off
+ dotglob        	off
+ execfail       	off
+ extdebug       	off
+Index: patchlevel.h
+===================================================================
+--- patchlevel.h.orig
++++ patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 38
++#define PATCHLEVEL 39
+ 
+ #endif /* _PATCHLEVEL_H_ */

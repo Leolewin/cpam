@@ -1,0 +1,17 @@
+Index: m4/include_next.m4
+===================================================================
+--- m4/include_next.m4.orig	2008-11-06 20:27:01.696524916 +0000
++++ m4/include_next.m4	2008-11-06 20:27:14.976560429 +0000
+@@ -13,8 +13,12 @@
+     [gl_cv_have_include_next],
+     [rm -rf conftestd1 conftestd2
+      mkdir conftestd1 conftestd2
++     dnl The include of <stdio.h> is because IBM C 9.0 on AIX 6.1 supports
++     dnl include_next when used as first preprocessor directive in a file,
++     dnl but not when preceded by another include directive.
+      cat <<EOF > conftestd1/conftest.h
+ #define DEFINED_IN_CONFTESTD1
++#include <stdio.h>
+ #include_next <conftest.h>
+ #ifdef DEFINED_IN_CONFTESTD2
+ int foo;

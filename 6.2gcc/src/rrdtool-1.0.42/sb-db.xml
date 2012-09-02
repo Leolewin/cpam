@@ -1,0 +1,221 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="rrdtool" version="1.0.42" revision="6">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}10</install-name>
+
+    <sources>
+      <source checksum="20183bf09b52030a6e29a0678930bb42"
+        checksum-type="md5" size="1158148"
+        path="src/rrdtool-1.0.42.tar.gz"/>
+      <patch checksum="f806f9904d9025c376af651b175f653b"
+        checksum-type="md5" size="800242"
+        path="src/rrdtool-1.0.42.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  if [ "${SB_VAR_GCC+set}" = "set" ]; then
+    CFLAGS="-O2 -mcpu=common"
+  else
+    CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  fi
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  if [ "${SB_VAR_GCC+set}" = "set" ]; then
+    CFLAGS="-O2 -mcpu=ev4"
+  else
+    CC=cc CFLAGS="-O2 -std -msym -readonly_strings"
+  fi ;;
+*-hpux*)
+  if [ "${SB_VAR_GCC+set}" = "set" ]; then
+    CFLAGS="-O2 -march=1.1"
+  else
+    CC=cc CFLAGS="+O2 -Ae -z +ESlit +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  fi ;;
+*-irix6*)
+  if [ "${SB_VAR_GCC+set}" != "set" ]; then
+    CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  fi ;;
+*-solaris2.[89])
+  if [ "${SB_VAR_GCC+set}" = "set" ]; then
+    CFLAGS="-O2 -mcpu=v8"
+  else
+    CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  fi ;;
+*-solaris2*)
+  if [ "${SB_VAR_GCC+set}" = "set" ]; then
+    CFLAGS="-O2 -mcpu=v7"
+  else
+    CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  fi ;;
+esac
+
+rm -f config.cache
+./configure --enable-shared CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+PERL=${PERL}/bin/perl LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--with-tcllib=${TCL_LIB} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+touch configure; sleep 1
+touch Makefile
+case "${SYSTYPE}" in
+*-aix*)
+  gmake ;;
+*)
+  gmake TCL_LIB_SPEC= ;;
+esac
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" var="GCC"
+          add-path="prepend">v==3.3.2</depend>
+        <depend program="groff" install-name="groff11"
+          add-path="prepend">v&gt;=1.17.2</depend>
+        <depend program="tcl" var="TCL"
+          install-name="tcl83">v&gt;=8.3.5</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <install>
+<![CDATA[
+_tcldir=${SB_INSTALL_PREFIX}/lib/tcl83
+
+_perldir=${SB_INSTALL_PREFIX}/lib/perl582
+
+
+gmake install idocdir=${_docdir} ihtmldir=${_docdir}/html \
+PERL_PREFIX="${_perldir}" TCL_PACKAGE_PATH=${_tcldir}
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_tcldir}
+(cd tcl; gmake tcl-install TCL_PACKAGE_PATH=${_tcldir})
+
+${SB_PATH_GLN} -s ./$(basename ${_tcldir}) ${SB_INSTALL_PREFIX}/lib/tcl
+${SB_PATH_GLN} -s ./$(basename ${_perldir}) ${SB_INSTALL_PREFIX}/lib/perl
+]]>
+      </install>
+    </module>
+
+    <module name="tcl846">
+      <dependencies>
+        <depend program="gcc" var="GCC"
+          add-path="prepend">v==3.3.2</depend>
+        <depend program="groff" install-name="groff11"
+          add-path="prepend">v&gt;=1.17.2</depend>
+        <depend program="tcl" var="TCL"
+          install-name="tcl84">v&gt;=8.4.6</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_tcldir="${SB_INSTALL_PREFIX}/lib/tcl84"
+]]>
+      </script-header>
+
+      <install>
+<![CDATA[
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_tcldir}
+(cd tcl; gmake tcl-install TCL_PACKAGE_PATH=${_tcldir})
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_tcldir}
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <note type="installation">
+        <para>Modules for Perl 5.8.0/5.8.2 and Tcl 8.3.5/8.4.4 are
+available in the following directories</para>
+        <unorderedlist>
+          <item><para><command>${SB_INSTALL_PREFIX}/lib/perl580</command></para></item>
+          <item><para><command>${SB_INSTALL_PREFIX}/lib/perl582</command></para></item>
+          <item><para><command>${SB_INSTALL_PREFIX}/lib/tcl83</command></para></item>
+          <item><para><command>${SB_INSTALL_PREFIX}/lib/tcl84</command></para></item>
+        </unorderedlist>
+
+        <para>To use the RRD module, the module search path must be
+appended to the Perl search path:</para>
+        <screen>
+use lib "${SB_INSTALL_PREFIX}/lib/perl580";
+use lib "${SB_INSTALL_PREFIX}/lib/perl582";
+        </screen>
+
+        <para>To use the interface which works via UNIX pipes to the
+<command>rrdtool</command> command:</para>
+        <screen>
+use RRDp;
+        </screen>
+
+        <para>To use the Tcl module, the module search path must be
+appended to the Tcl search path:</para>
+        <screen>
+lappend auto_path ${SB_INSTALL_PREFIX}/lib/tcl83
+lappend auto_path ${SB_INSTALL_PREFIX}/lib/tcl84
+
+package require Rrd
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 11" revision="6"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Fix an underquote in the AC_IEEE declaration in
+configure.in, and then regenerate configure with autoconf25 so that
+CFLAGS and the like are propogated correctly when gmake reruns the
+configure tools after other patches to the sources break the timestamp
+dependencies between generated files.</para></item>
+        <item><para>Rename perl-5.8.2 and tcl-8.4.6 modules to perl582
+and tcl846 respectively, to prevent syntax violations from sb</para></item>
+      </change>
+
+      <change date="2004 August 9" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Backport libpng changes from 1.0.49 release to
+resolve security issues: CAN-2004-0597, CAN-2004-0598, CAN-2004-0599,
+CAN-2004-0768</para></item>
+      </change>
+
+      <change date="2004 April 16" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade tcl-8.4.4 module to
+tcl-8.4.6</para></item>
+      </change>
+
+      <change date="2004 January 12" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace default build with Perl
+5.8.0</para></item>
+        <item><para>Add Perl 5.8.2 build</para></item>
+      </change>
+
+      <change date="2003 November 29" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade tcl dependency to 8.4.4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

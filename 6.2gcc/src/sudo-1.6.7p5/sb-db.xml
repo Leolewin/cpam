@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="sudo" version="1.6.7p5" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="55d503e5c35bf1ea83d38244e0242aaf"
+        checksum-type="md5" size="349785"
+        path="src/sudo-1.6.7p5.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ARGS="--with-pam" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  NROFF=awf ;;
+*-linux*)
+  ARGS="--with-pam" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--with-pam" ;;
+*-solaris2.5.1*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  ARGS="--with-pam" ;;
+esac
+
+rm -f config.cache
+CFLAGS="${CFLAGS:--O2}" NROFFPROG=${NROFF:-nroff} \
+./configure --with-CC="${CC:-gcc}" \
+--disable-path-info --enable-shell-sets-home \
+--enable-log-host --with-logfac=auth --with-env-editor \
+--with-ignore-dot --without-lecture --with-logging=syslog \
+--with-goodpri=notice --with-badpri=alert \
+--disable-sia --disable-root-mailer --without-blibpath \
+--sysconfdir="${SB_INSTALL_PREFIX}/etc" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <notes>
+      <note type="configuration">
+        <para>Sudo has been compiled without the
+<command>--secure-path</command> option. Therefore, by default, the
+<command>$PATH</command> variable of users running sudo is trusted.
+This can be overridden with the "<command>secure_path</command>" flag
+in the sudoers file.</para>
+
+        <para>The default location of the sudoers file is
+<command>${SB_INSTALL_PREFIX}/etc/sudoers</command>. It has been marked as a
+configuration file and its contents will be preserved then sudo is
+upgraded.</para>
+
+        <para>PAM support is enabled on Solaris 2.6, 7, 8, 9/SPARC,
+and HP-UX 11.x, and Redhat Linux.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

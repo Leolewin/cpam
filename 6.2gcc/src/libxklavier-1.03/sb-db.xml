@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libxklavier" version="1.03" revision="1"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}10</install-name>
+
+    <sources>
+      <source checksum="266af32cb4ec1707f6cb8f3a568f62cf"
+        checksum-type="md5" size="415013"
+        path="src/libxklavier-1.03.tar.gz"/>
+      <patch checksum="a4ba2b049986695f72ffcb892b863e67"
+        checksum-type="md5" size="1125190"
+        path="src/libxklavier-1.03.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml26">v==2.6.11</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  ARGS="--with-xkb-base=/usr/lib/X11/xkb" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-msym -O2 -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+  ARGS="--with-xkb-base=/usr/lib/X11/xkb" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R"
+  ARGS="--with-xkb-base=/usr/openwin/lib/X11/xkb" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBXML_LIB}/pkgconfig" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV_LIB}} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libxklavier.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ${_pc}
+done
+]]>
+    </configure>
+  </program>
+</programs>

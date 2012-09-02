@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="xemacs" version="21.4.15" revision="1"
+  systype="*-aix4*|*-aix5.2*|*-hpux*|*-irix*|*-linux*|*-osf5*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}214</install-name>
+
+    <sources>
+      <source checksum="74f899d38a230d629375f7e3cf656ca5"
+        checksum-type="md5" size="8799299"
+        path="src/xemacs-21.4.15.tar.bz2"/>
+      <patch checksum="836df4586320070f9df0eb3b90040fda"
+        checksum-type="md5" size="202830"
+        path="src/xemacs-21.4.15.patch"/>
+      <source checksum="88f222c6d4a15475c991f56a3467078c"
+        checksum-type="md5" size="22817783"
+        path="src/xemacs-sumo-2004-02-02.tar.bz2"
+        noop="1" var="SUMO"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend var="XEMACSP" install-name="${SB_PROG_NAME}214p"
+        set-var-only="1">v&gt;=21.4.15</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb31">v&gt;=3.1.17</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="ncurses" var="NCURSES">v==5.4</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  ARGS="--without-gcc --with-dragndrop --with-cde --with-tooltalk"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--site-includes=/usr/dt/include" ;;
+*-hpux11*)
+  # Link against Motif 1.2 to work around bug in Motif 2.1
+  CC=cc CFLAGS="+O1 -Ae -z +DAportable"
+  ARGS="--without-gcc --with-dragndrop --with-cde --with-tooltalk"
+  X_LIBRARIES="/usr/lib/Motif1.2_R6 -L/usr/lib/X11R6"
+  ARGS="--site-includes=/usr/dt/include" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +DAportable +ESlit +Onofltacc \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--without-gcc --with-dragndrop --with-cde --with-tooltalk \
+--site-includes=/usr/dt/include --site-libraries=/usr/dt/lib" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O1 -OPT:Olimit=0"
+  ARGS="--without-gcc --with-system-malloc" ;;
+*-linux*)
+  X_LIBRARIES="/usr/X11R6/lib" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings"
+  ARGS="--without-gcc --with-dragndrop --with-cde --with-tooltalk"
+  RUNTIME_LIBS="/usr/dt/lib"
+  ARGS="--site-includes=/usr/dt/include" ;;
+*-solaris2.[89])
+  CC=gcc CFLAGS="-O2 -mcpu=v8"
+  ARGS="--with-gcc --with-dragndrop --with-cde --with-tooltalk \
+--site-includes=/usr/dt/include"
+  RUNTIME_LIBS="/usr/dt/lib /usr/openwin/lib"
+  LDFLAGS="-L/usr/openwin/lib -L/usr/dt/lib" ;;
+*-solaris2.5.1*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v7"
+  ARGS="--without-gcc --with-cde --with-tooltalk \
+--site-includes=/usr/dt/include"
+  RUNTIME_LIBS="/usr/dt/lib /usr/openwin/lib"
+  LDFLAGS="-L/usr/openwin/lib -L/usr/dt/lib" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v7"
+  ARGS="--without-gcc --with-dragndrop --with-cde --with-tooltalk \
+--site-includes=/usr/dt/include"
+  RUNTIME_LIBS="/usr/dt/lib /usr/openwin/lib"
+  LDFLAGS="-L/usr/openwin/lib -L/usr/dt/lib" ;;
+esac
+
+rm -f config.cache
+./configure --cflags="${CFLAGS:--O2}" --compiler="${CC:-gcc}" \
+${LDFLAGS+--ldflags="${LDFLAGS}"} --dynamic=yes --with-pop --with-mule \
+--with-database=berkdb --with-site-lisp=yes --with-menubars=lucid \
+--with-scrollbars=lucid --error-checking=none --debug=no \
+--memory-usage-stats=no --without-modules --with-sound=none \
+--with-ncurses --infodir=${SB_INSTALL_PREFIX}/info \
+--infopath="/opt/info:${SB_INSTALL_BASE}/info:/usr/local/info:/usr/info:\
+${XEMACSP}/packages/info:${XEMACSP}/xemacs-packages/info" \
+--site-prefixes="${SB_VAR_NCURSES} ${SB_VAR_XPM} ${SB_VAR_JPEG} \
+${SB_VAR_LIBTIFF} ${SB_VAR_LIBPNG} ${SB_VAR_ZLIB} ${SB_VAR_LIBDB}" \
+--site-runtime-libraries="${SB_VAR_NCURSES_LIB} ${SB_VAR_XPM_LIB} \
+${SB_VAR_JPEG_LIB} ${SB_VAR_LIBTIFF_LIB} ${SB_VAR_LIBPNG_LIB} \
+${SB_VAR_ZLIB_LIB} ${SB_VAR_LIBDB_LIB} \
+${RUNTIME_LIBS+ ${RUNTIME_LIBS}}" \
+--package-path="~/.xemacs::\
+${SB_INSTALL_PREFIX}/lib/xemacs-${SB_PROG_VER}/mule-packages:\
+${SB_INSTALL_PREFIX}/lib/xemacs/mule-packages:\
+${SB_INSTALL_PREFIX}/lib/xemacs-${SB_PROG_VER}/xemacs-packages:\
+${SB_INSTALL_PREFIX}/lib/xemacs/xemacs-packages:\
+${SB_VAR_XEMACSP}/packages:${SB_VAR_XEMACSP}/xemacs-packages" \
+${X_LIBRARIES+--x-libraries="${X_LIBRARIES}"} \
+--with-ldap=no --with-postgresql=no ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+(cd info
+rm *.info* || :)
+
+gmake && gmake dist
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+case "${SB_SYSTYPE}" in
+*-hpux10*)
+  # Depot package name not long enough but we don't want to
+  # change package name.
+  ;;
+*)
+  ${SB_PATH_GINSTALL} -o root -g 0 -m 755 -d ${_docdir}
+  ${SB_PATH_GINSTALL} -m 644 -o root -g 0 man/*.texi man/*/*.texi ${_docdir}
+  ;;
+esac
+
+# Install all packages
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_VAR_XEMACSP}
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_VAR_XEMACSP}/packages
+(cd ${XEMACSP}; gtar jxf ${SRC_SUMO})
+
+for _bin in ${SB_VAR_XEMACSP}/xemacs-packages/etc/bbdb/*.pl; do
+  sed -e "1 s!/usr/local/bin/perl5!${SB_VAR_PERL}/bin/perl!" \
+  -e "1 s!/usr/bin/perl!${SB_VAR_PERL}/bin/perl!" \
+  -e "1 s!/usr/local/bin/perl!${SB_VAR_PERL}/bin/perl!" ${_bin} >/tmp/$$
+  cp /tmp/$$ ${_bin}; rm -f /tmp/$$
+done
+
+chown -hR 0:0 ${SB_INSTALL_PREFIX}/lib ${SB_VAR_XEMACSP}/xemacs-packages
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${SB_VAR_XEMACSP}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="21.4.14" to="21.4.15">
+        <item><para>Fix: Remove miscellaneous typos and documentation
+cleanups</para></item>
+        <item><para>Fix: Fix X resizing on redisplay</para></item>
+        <item><para>Fix: Fix byte-code compiler for
+defvar</para></item>
+        <item><para>Fix: Fix shrink-to-fit function</para></item>
+        <item><para>Fix: Repair test harness to better report
+failures</para></item>
+        <item><para>Fix: Fix Solaris 2.9 build failure</para></item>
+        <item><para>Fix: Repair case-folding in latin1
+searches</para></item>
+        <item><para>Fix: Conditionally compile missing cygwin
+messages</para></item>
+        <item><para>Fix: Add configuration support for Solaris
+2.10</para></item>
+        <item><para>Fix: Use null device when we have it</para></item>
+        <item><para>Fix: Add test for regexp \{m,n\}
+construct</para></item>
+        <item><para>Fix: Find installexe.sh correctly</para></item>
+        <item><para>Fix: Fix XtSetArg idiom in frame-x.</para></item>
+        <item><para>Fix: Fdelete_window fix</para></item>
+        <item><para>Fix: Support the Intel compiler
+(icc)</para></item>
+        <item><para>Fix: Prevent regexp stack overflow</para></item>
+        <item><para>Fix: Deprecate Motif on Linux</para></item>
+        <item><para>Fix: Give full version and build date in
+about.el</para></item>
+        <item><para>Fix: Sync test harness to 21.5</para></item>
+        <item><para>Fix: Call princ and prin1 as
+functions</para></item>
+        <item><para>Fix: Sync minitar.c from 21.5</para></item>
+        <item><para>Fix: Fix 'make install' assert caused by version
+control</para></item>
+        <item><para>Fix: Only display search dialog box if available
+and requested</para></item>
+        <item><para>Fix: Don't apply format in
+byte-compile-warn</para></item>
+        <item><para>Fix: Allow overwrite on Windows
+installation</para></item>
+        <item><para>Fix: Make start-itimer punctual</para></item>
+        <item><para>Fix: Use shell-command-switch in
+info.el</para></item>
+        <item><para>Fix: Support icc 8.0</para></item>
+        <item><para>Fix: Support passing ldflags to
+lib-src</para></item>
+        <item><para>Fix: Workaround hanging on X errors.</para></item>
+        <item><para>Update: Add descriptions of 2 Solaris build
+problems</para></item>
+        <item><para>Update: Update package versions</para></item>
+        <item><para>Update: Sync PUI to 21.5</para></item>
+        <item><para>Update: Improve specifier
+documentation</para></item>
+        <item><para>Feature: Add variable_binding_locus to identify
+where a variable comes from</para></item>
+        <item><para>Feature: Add compiler and libc version to
+installation info</para></item>
+      </change>
+
+      <change from="21.4.13" to="21.4.14">
+        <item><para>Fix: Make sure local variables get
+processed</para></item>
+        <item><para>Fix: Make Windows scrollwheel work even if no
+scrollbars </para></item>
+        <item><para>Fix: Fix bytecompiler infinite
+recursion</para></item>
+        <item><para>Fix: Handle embedded carriage returns in
+make-docfile</para></item>
+        <item><para>Fix: Regexp matching of degenerate word
+boundaries</para></item>
+        <item><para>Fix: Don't use DB_AUTO_COMMIT in
+database.c</para></item>
+        <item><para>Fix: FAQ, docstring and PROBLEMS
+corrections</para></item>
+        <item><para>Fix: Discard docstrings in compiler only if
+appropriate</para></item>
+        <item><para>Fix: Reverse bogus regexp tests</para></item>
+        <item><para>Fix: Modify configure to add -fno-strict-aliasing
+to gcc</para></item>
+        <item><para>Fix: Disable event compression under
+Motif</para></item>
+        <item><para>Fix: Enable -DREGEX_MALLOC by
+default</para></item>
+        <item><para>Fix: Turn off widgets by default</para></item>
+        <item><para>Fix: Add docstrings for lisp-mode
+hooks</para></item>
+        <item><para>Fix: Support MacOSX shared library
+loading</para></item>
+        <item><para>Fix: Font-lock fix for defuns</para></item>
+        <item><para>Fix: cl-macs generated incorrect
+docstrings</para></item>
+        <item><para>Fix: Remove bogus key definitions</para></item>
+        <item><para>Update: Latest package index</para></item>
+        <item><para>Update: about.el information</para></item>
+        <item><para>Update: Use X Font Sets in
+sample.Xdefaults</para></item>
+        <item><para>Update: etc/PACKAGES</para></item>
+      </change>
+
+      <note type="usage">
+        <para>Lisp packages found in
+<command>${SB_INSTALL_PREFIX}/lib/xemacs/site-lisp</command> will be
+loaded before lisp packages found in any other directory. This is the
+location to place customizations to the XEmacs environment. The
+following packages are automatically loaded on startup:
+<command>leim-list.el</command>, <command>site-start.el</command>,
+<command>default.el</command>.</para>
+
+        <para>The default path for 3rd-party lisp libraries is:</para>
+        <unorderedlist>
+          <item><para>${SB_INSTALL_BASE}/xemacs214p/packages</para></item>
+          <item><para>${SB_INSTALL_BASE}/xemacs214p/xemacs-packages</para></item>
+        </unorderedlist>
+
+        <para>The <command>${SB_INSTALL_BASE}/xemacs214p/xemacs-packages</command> path
+consists of packages from the sumo tarball provided by
+<command>xemacs.org</command> and the
+<command>${SB_INSTALL_BASE}/xemacs214p/packages</command> path consists of packages we
+build.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

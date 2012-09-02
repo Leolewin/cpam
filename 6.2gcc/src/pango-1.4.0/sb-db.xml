@@ -1,0 +1,255 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="pango" version="1.4.0" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="9b5d9a5dcce5b3899d401f9c2cd6873f"
+        checksum-type="md5" size="921472"
+        path="src/pango-1.4.0.tar.bz2"/>
+      <patch checksum="e79a455ebe4727d8afbc5e6684c6af50"
+        checksum-type="md5" size="607429"
+        path="src/pango-1.4.0.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf21"
+        add-path="prepend">v&gt;=2.1.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib24"
+        add-path="prepend">v&gt;=2.4.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="!*-aix*">v&gt;=1.9.2</depend>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CPPFLAGS="-DFUNCPROTO=1" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO=1" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-html-dir="${_docdir}" --disable-gtk-doc --disable-man \
+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml" \
+--enable-static --enable-shared --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+for _pc in pango.pc pangoft2.pc pangox.pc pangoxft.pc; do
+  ${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ${_pc}
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pangoincludedir="${SB_INSTALL_PREFIX}/include/pango" \
+moduledir="${SB_INSTALL_PREFIX}/lib/modules"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+: # CC on Solaris 2.5.1, 2.6 will error with:
+  #   "/opt/SUNWspro/WS6U2/include/CC/std/time.h", line 29: Error:
+  #   Multiple declaration for std::tm.
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install pangoincludedir="${SB_INSTALL_PREFIX}/include/pango" \
+moduledir="${SB_INSTALL_PREFIX}/lib/modules"
+
+# configuration file
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/pangorc
+
+_xftconfig="${SB_INSTALL_PREFIX}/etc/XftConfig"
+case "${SB_SYSTYPE}" in
+*-linux*) ;;
+*)
+  ginstall -m 644 -o root -g 0 /dev/null ${_xftconfig}
+
+  for _dir in /usr/openwin/lib/X11/fonts/Type1 \
+  /usr/openwin/lib/X11/fonts/Type3 \
+  /usr/openwin/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/Type1 \
+  /usr/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/type1.st/typefaces \
+  /usr/lib/X11/fonts/ttf.st/typefaces; do
+    [ ! -d "${_dir}" ] && continue
+
+    cat >>${_xftconfig} <<_EOT_
+dir "${_dir}"
+_EOT_
+  done
+  ;;
+esac
+]]>
+    </install>
+
+    <notes>
+      <change from="1.3.6" to="1.4.0">
+        <item><para>Use FC_WIDTH when available so that multiple width
+fonts are selected properly</para></item>
+      </change>
+
+      <change from="1.3.5" to="1.3.6">
+        <item><para>Improve handling of some Kannada
+vowels</para></item>
+        <item><para>Fix problem with excess symbol exports on
+Linux</para></item>
+        <item><para>Win32 build fixes</para></item>
+      </change>
+
+      <change from="1.3.3" to="1.3.5">
+        <item><para>Add support for automatically determining the base
+direction for PangoLayout from the contained text</para></item>
+        <item><para>Major rework of internal opentype interfaces to
+fix problems with GPOS. Turn on GPOS handling for
+Arabic.</para></item>
+        <item><para>Add a PangoAttribute to turn off font
+fallback</para></item>
+        <item><para>Add wavy error-indication underlines</para></item>
+        <item><para>Improve handling of BENGALI LETTER
+A/E</para></item>
+        <item><para>Win32 bug fixes and improvements</para></item>
+        <item><para>Misc bug fixes</para></item>
+      </change>
+
+      <change from="1.3.2" to="1.3.3">
+        <item><para>Add pango_font_face_list_sizes()</para></item>
+        <item><para>Add pango_font_family_is_monospace</para></item>
+        <item><para>Do OpenType processing for CFF fonts</para></item>
+        <item><para>Fix wrong sign for GPOS vertical
+positioning</para></item>
+        <item><para>Fix up -uninstalled .pc files</para></item>
+        <item><para>Misc bug and build fixes fixes</para></item>
+      </change>
+
+      <change from="1.3.1" to="1.3.2">
+        <item><para>Correct a mixup between ZWJ and ZWNJ in the Arabic
+engine</para></item>
+        <item><para>Build and bug fixes for Win32</para></item>
+        <item><para>Fix a problem with RTL scripts on
+Win32</para></item>
+        <item><para>Documentation improvements</para></item>
+      </change>
+
+      <change from="1.3.0" to="1.3.1">
+        <item><para>Support non-Unicode font encodings when supported
+by fontconfig</para></item>
+        <item><para>Draw 6-digit hex boxes for &gt;
+U+FFFF</para></item>
+        <item><para>Update to latest fribidi</para></item>
+        <item><para>Honor U+2028 LINE SEPARATOR</para></item>
+        <item><para>Fix a problem with iteration by
+chars</para></item>
+        <item><para>Misc bug and build fixes</para></item>
+        <item><para>Fix header file includes to work with recent
+FreeType</para></item>
+      </change>
+
+      <change from="1.2.x" to="1.3.0">
+        <item><para>Share modules between the FT2 and Xft backend.
+Export PangoFcFont and PangoFcFontMap base classes so that other
+fontconfig based backends can be written and use these same
+modules.</para></item>
+        <item><para>Redo module system to use GTypeModule and work
+much like GTK+ theme engines and input method modules</para></item>
+        <item><para>Change modules to declare coverage by script,
+rather than by code point. Add a -&gt;covers callback so that modules
+can dynamically decide whether they can cover a particular codepoint
+with a given font. (This will allow multiple modules to handle a
+script for different types fonts.)</para></item>
+        <item><para>Complete rewrite of itemization pass. Now uses
+script information to improve language tags. This solves problems with
+incorrect language tags resulting in drastically wrong fonts being
+selected by fontconfig.</para></item>
+        <item><para>Add backspace-deletes-character PangoLogAttr; will
+allow proper deletion behavior for non-Western scripts</para></item>
+        <item><para>Add pango_fc_font_kern_glyphs(), which speeds up
+kerning a lot over doing it pair-by-pair. Kern in the Xft backend as
+well as the FT2 backend.</para></item>
+        <item><para>Remove the X font backend, except a minimal set of
+stubs to maintain binary compatibility</para></item>
+        <item><para>Many improvements to pangoft2topgm to allow
+displaying PangoMarkup, saving to different file formats,
+etc</para></item>
+        <item><para>Convert build system to automake-1.7; many
+cleanups and improvements</para></item>
+        <item><para>Documentation additions and improvements; add man
+pages for the included binaries</para></item>
+        <item><para>Misc bug and build fixes</para></item>
+        <item><para>Win32 build fixes</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

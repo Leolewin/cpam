@@ -1,0 +1,246 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="imap" version="2007f" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}2007</install-name>
+
+    <sources>
+      <source checksum="2126fd125ea26b73b20f01fcd5940369"
+        checksum-type="md5" size="1990304"
+        path="src/imap-2007f.tar.gz"/>
+      <patch checksum="6608a44f24e3db5df8822ed766b735f6"
+        checksum-type="md5" size="9226"
+        path="src/imap-2007f.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="libtool" install-name="libtool15"
+        add-path="prepend" type="build">v&gt;=1.5</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v==1.0.0e</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc EXTRACFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" OS=a41 ;;
+ia64*-hpux*)
+  CC=cc EXTRACFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  OS=hpx PASSWDTYPE=pam PAMLDFLAGS="-lpam" ;;
+*-hpux11.[01]*)
+  CC=cc EXTRACFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  OS=hpx PASSWDTYPE=pam PAMLDFLAGS="-lpam" ;;
+*-hpux11*)
+  CC=cc EXTRACFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  OS=hpx PASSWDTYPE=pam PAMLDFLAGS="-lpam" ;;
+*-irix*)
+  CC=cc EXTRACFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," OS=sg6 ;;
+i?86*-linux*)
+  EXTRACFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," OS=lrh
+  PASSWDTYPE=pam ;;
+*-linux*)
+  EXTRACFLAGS="-O2"
+  CC_LD_RT="-Wl,-rpath," OS=lrh
+  PASSWDTYPE=pam ;;
+*-osf*)
+  CC=cc EXTRACFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," OS=os4 ;;
+i?86*-solaris*)
+  CC=cc EXTRACFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" OS=sol PASSWDTYPE=pam ;;
+*-solaris2.8)
+  CC=cc EXTRACFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" OS=sol PASSWDTYPE=pam ;;
+*-solaris*)
+  CC=cc EXTRACFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" OS=sol PASSWDTYPE=pam ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake MAKE=gmake CC=${CC:-gcc} EXTRACFLAGS="${EXTRACFLAGS}" \
+ALERT="${_sysconfdir}/alert" \
+ANO="${_sysconfdir}/anonymous.newsgroups" \
+SHUTDOWN="${_sysconfdir}/nologin" \
+CRAM_PWD="${_sysconfdir}/cram-md5.pwd" \
+EXTRASPECIALS="BASECFLAGS= SSLDIR=${LIBOPENSSL} \
+SSLCERTS=${SB_VAR_LIBOPENSSL}/certs" \
+EXTRALDFLAGS="${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PASSWDTYPE=${PASSWDTYPE:-std} ${PAMLDFLAGS+PAMLDFLAGS="${PAMLDFLAGS}"} \
+LIBDIR="${SB_INSTALL_PREFIX}/lib" ${OS}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/docs ${SB_INSTALL_PREFIX}/include \
+${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/sbin \
+${_sysconfdir} ${_sysconfdir}/certs
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 mailutil/mailutil \
+${SB_INSTALL_PREFIX}/bin
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 imapd/imapd ${SB_INSTALL_PREFIX}/sbin
+${SB_PATH_INSTALL} -m 755 -o root -g 0 ipopd/ipop3d ${SB_INSTALL_PREFIX}/sbin
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/bugs.txt docs/drivers.txt \
+docs/formats.txt docs/locking.txt docs/md5.txt docs/naming.txt \
+${SB_INSTALL_PREFIX}/docs
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/alert
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/anonymous.newsgroups.disabled
+${SB_PATH_INSTALL} -m 400 -o root -g 0 /dev/null \
+${_sysconfdir}/cram-md5.pwd.disabled
+
+# install c-client library
+(cd c-client
+${SB_PATH_INSTALL} -m 644 -o root -g 0 *.h linkage.c \
+../src/osdep/tops-20/shortsym.h ${SB_INSTALL_PREFIX}/include
+libtool --mode=install ${SB_PATH_INSTALL} -c libc-client.la \
+${SB_INSTALL_PREFIX}/lib)
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="2007e" to="2007f">
+        <item><para>Fix for RFC 4959 Initial Client Response auth
+failures noted first by MacOSX Lion Mail users.</para></item>
+        <item><para>Adjust tcp_open.c:tcp_socket_open to make it a
+little more useful by adding a write file descriptor test to the
+select in the case that the open timeout is set.</para></item>
+        <item><para>In osdep/unix/env_unix.c:create_path there was a
+printf that should have been an sprintf. Doesn't matter on modern
+systems.</para></item>
+      </change>
+
+      <change from="2007d" to="2007e">
+        <item><para>imap-2007e is a maintenance release, consisting
+primarily of bugfixes to problems discovered in the release that
+affected a small number of users plus a security fix for users of the
+RFC822BUFFER routines.</para></item>
+      </change>
+
+      <change from="2007c" to="2007d">
+        <item><para>imap-2007d is a maintenance release, consisting
+primarily of bugfixes to problems discovered in the release that
+affected a small number of users plus a security fix for users of
+tmail or dmail.</para></item>
+      </change>
+
+      <change from="2007a" to="2007b">
+        <item><para>imap-2007b is a maintenance release, consisting
+primarily of bugfixes to problems discovered in the release that
+affected a small number of users.</para></item>
+      </change>
+
+      <change from="2007" to="2007a">
+        <item><para>imap-2007a is a maintenance release, consisting
+primarily of bugfixes to problems discovered in the release that affected a small number of users.</para></item>
+      </change>
+
+      <change from="2006k" to="2007">
+        <item><para>imap-2007 is a release corresponding with the
+release of Alpine 1.0. The primary focus of the imap-2007 release is
+bugfixes and reliability improvements.  This includes:</para>
+        <unorderedlist>
+          <item><para>fixes to problems discovered between the
+Alpine 0.99999 pre-release and Alpine 1.0</para></item>
+          <item><para>fixes to the mix driver to timing race
+problems uncovered by imaptest suite.  imap-2007 using the mix format
+is believed to pass imaptest completely.</para></item>
+        </unorderedlist></item>
+        <item><para>A new function, utf8_csvalidmap(), has been added
+for the benefit of Alpine to use in examining UTF-8 text and
+determining efficiently whether it can be downgraded to a legacy
+charset.  If you develop an MUA, this may be useful for you too,
+although you'll have to read the source code to see how to use it.
+The purpose of the "not-CJK" bit is to prevent messages being
+downgraded to a CJK charset if all they have in that charset are some
+special punctuation.</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The configuration file
+<command>/etc${SB_INSTALL_PREFIX}/anonymous.newsgroups</command> is used to enable
+anonymous logins. This file is available as
+<command>/etc${SB_INSTALL_PREFIX}/anonymous.newsgroups.disabled</command> and, in
+order for anonymous logins to be enabled, must be renamed to
+<command>/etc${SB_INSTALL_PREFIX}/anonymous.newsgroups</command>. Like anonymous
+logins, CRAM-MD5 authentication is compiled in but disabled by default
+because <command>/etc${SB_INSTALL_PREFIX}/cram-md5.pwd</command> is available as
+<command>/etc${SB_INSTALL_PREFIX}/cram-md5.pwd.disabled</command>. Renaming it to
+<command>/etc${SB_INSTALL_PREFIX}/cram-md5.pwd</command> will enable CRAM-MD5
+authentication, which disables lookups in the standard UNIX passwd
+map.</para>
+        <para>Because these two files are disabled by default, the
+configuration files will not be managed when this package is upgraded.
+If the path of the upgraded version differs from this version, the
+files must be manually copied.</para>
+        <para>The default directory for the SSL certificate files is
+<command>/etc${SB_INSTALL_PREFIX}/certs</command> as the imapd binary,
+<command>${SB_INSTALL_PREFIX}/sbin/imapd</command> has been compiled
+with OpenSSL support for <command>imaps</command>
+functionality.</para>
+      </note>
+
+      <note type="usage">
+        <para>Both the POP3 and IMAP daemons are run from inetd.
+Therefore, entries must be added to <command>/etc/inetd.conf</command>
+(<command>/etc/xinetd.d</command> directory on Redhat Linux}}) and
+<command>/etc/services</command> for proper configuration. The
+following entries must be added to
+<command>/etc/services</command>:</para>
+        <screen>
+pop3        110/tcp
+imap        143/tcp
+imaps       993/tcp
+pop3s       995/tcp
+        </screen>
+
+        <para>Entries similar to the following must be added to
+<command>/etc/inetd.conf</command>. Because entries in
+<command>/etc/inetd.conf</command> differ depending on the platform,
+use the following only as a guide:</para>
+        <screen>
+pop3  stream tcp nowait root ${SB_INSTALL_PREFIX}/sbin/ipop3d ipop3d
+pop3s stream tcp nowait root ${SB_INSTALL_PREFIX}/sbin/ipop3d ipop3d
+imap  stream tcp nowait root ${SB_INSTALL_PREFIX}/sbin/imapd imapd
+imaps stream tcp nowait root ${SB_INSTALL_PREFIX}/sbin/imapd imapd
+        </screen>
+
+        <para>PAM is enabled for Redhat Linux, HP-UX 11.x, and Solaris
+2.6/SPARC and above.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

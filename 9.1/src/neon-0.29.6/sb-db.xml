@@ -1,0 +1,272 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="neon" version="0.29.6" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}029</install-name>
+
+    <sources>
+      <source checksum="591e0c82e6979e7e615211b386b8f6bc"
+        checksum-type="md5" size="882267"
+        path="src/neon-0.29.6.tar.gz"/>
+      <patch checksum="2878d036fed1cfccb99800cd5bf14962"
+        checksum-type="md5" size="7142"
+        path="src/neon-0.29.6.tww.patch"/>
+      <patch checksum="e3b743ef17ea8c2bcf19ea7082a856c2"
+        checksum-type="md5" size="1513612"
+        path="src/neon-0.29.6.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v&gt;=2.0.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="gnutls" var="GNUTLS"
+        install-name="libgnutls210"
+        add-path="prepend">v&gt;=2.4.2</depend>
+      <depend program="libgcrypt" var="LIBGCRYPT"
+        install-name="libgcrypt14" type="build">v&gt;=1.4.6</depend>
+      <depend program="libgpg-error" var="LIBGPG_ERROR"
+        install-name="libgpgerror110" type="build">v&gt;=1.6</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="prngd" var="PRNGD" install-name="prngd"
+        systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}}" \
+LDFLAGS="${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_LIBEXPAT+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_GNUTLS_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:\
+${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig" \
+--enable-shared --enable-static --with-expat --without-libxml2 \
+--enable-nls --with-ssl=gnutls --without-gssapi \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+${SB_VAR_PRNGD+--with-egd=${_prngd_socket}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" neon-config
+
+${SB_PATH_SED} -i "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" neon.pc
+]]>
+    </configure>
+
+    <test auto-include="0">
+<![CDATA[
+gmake -k check
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install docdir=${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="0.29.5" to="0.29.6">
+        <item><para>Don't abort SSL handshake with GnuTLS if a client
+cert is requested but none is configured/available</para></item>
+        <item><para>Fix GnuTLS build with Nettle</para></item>
+        <item><para>Win32: Fix handling of SSPI challenges</para></item>
+        <item><para>Fix the method string passed to create_request
+hooks to have the same lifetime as the request object</para></item>
+        <item><para>Docs updates</para></item>
+      </change>
+
+      <change from="0.29.4" to="0.29.5">
+        <item><para>Fix GnuTLS handshakes failures with 'TLS warning
+alert'</para></item>
+        <item><para>Further fix for SSPI support on
+Win32</para></item>
+      </change>
+
+      <change from="0.29.3" to="0.29.4">
+        <item><para>Fix SNI support</para></item>
+        <item><para>Fix possible Solaris linker errors if building
+static library</para></item>
+        <item><para>Win32: Fix Kerberos authentication support with
+SSPI</para></item>
+        <item><para>Fix error handling when pulling a request body
+from an file</para></item>
+        <item><para>Fix ne_request_dispatch() return value for SOCKS
+proxy failure cases</para></item>
+        <item><para>Tighten SSL cert ID checks to deny a wildcard
+match against an IP address</para></item>
+      </change>
+
+      <change from="0.29.2" to="0.29.3">
+        <item><para>Change ne_sock_close() to no longer wait for SSL
+closure alert:</para>
+        <unorderedlist>
+          <item><para>fixes possible hang with IIS servers when
+closing SSL connection</para></item>
+          <item><para>this reverts the behaviour with OpenSSL to match
+0.28.x, and changes the behaviour with GnuTLS to match that with
+OpenSSL</para></item>
+        </unorderedlist></item>
+        <item><para>Fix memory leak with GnuTLS</para></item>
+        <item><para>API clarification in ne_sock_close():</para>
+        <unorderedlist>
+          <item><para>SSL closure handling now documented</para></item>
+          <item><para>return value semantics fixed to describe the
+implementation</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="0.29.1" to="0.29.2">
+        <item><para>Fix spurious 'certificate verify failed' errors
+with OpenSSL</para></item>
+        <item><para>Fix unnecessary re-authentication with
+SSPI</para></item>
+      </change>
+
+      <change from="0.29.0" to="0.29.1">
+        <item><para>Fixes for (Unix) NTLM implementation:</para>
+        <unorderedlist>
+          <item><para>fix handling of session timeout</para></item>
+          <item><para>fix possible crash</para></item>
+        </unorderedlist></item>
+        <item><para>Build fixes for Win32:</para>
+        <unorderedlist>
+          <item><para>fix use of socklen_t with recent SDKs</para></item>
+          <item><para>fix USE_GETADDRINFO on Win2K</para></item>
+        </unorderedlist></item>
+        <item><para>Fix build with versions of GnuTLS older than
+2.8.0</para></item>
+      </change>
+
+      <change from="0.28.6" to="0.29.0">
+        <item><para>Interface changes:</para>
+        <unorderedlist>
+          <item><para>none, API and ABI backwards-compatible with
+0.28.x and 0.27.x</para></item>
+        </unorderedlist></item>
+        <item><para>New interfaces and features:</para>
+        <unorderedlist>
+          <item><para>added NTLM auth support for Unix builds</para></item>
+          <item><para>ne_auth.h: added NE_AUTH_GSSAPI and NE_AUTH_NTLM
+auth protocol codes</para></item>
+          <item><para>added ne_acl3744.h, updated WebDAV ACL
+support</para></item>
+          <item><para>added built-in SOCKS v4/v4a/v5 support:
+ne_socket.h:ne_sock_proxy(), and
+ne_session.h:ne_session_socks_proxy()</para></item>
+          <item><para>added support for system-default proxies:
+ne_session_system_proxy(), implemented using libproxy where
+available</para></item>
+          <item><para>ne_session.h: added NE_SESSFLAG_EXPECT100
+session flag, SSL verification failure bits extended by
+NE_SSL_BADCHAIN and NE_SSL_REVOKED, better handling of failures within
+the cert chain</para></item>
+          <item><para>ne_utils.h: added feature code
+NE_FEATURE_SYSPROXY</para></item>
+          <item><para>ne_socket.h: ne_sock_writev() (Julien Reichel),
+ne_sock_set_error(), ne_iaddr_raw(), ne_iaddr_parse()</para></item>
+          <item><para>ne_string.h: ne_buffer_qappend(),
+ne_strnqdup()</para></item>
+        </unorderedlist></item>
+        <item><para>Deprecated interfaces:</para>
+        <unorderedlist>
+          <item><para>ne_acl.h is obsoleted by ne_acl3744.h (but is
+still present)</para></item>
+          <item><para>obsolete feature "NE_FEATURE_SOCKS" now never
+marked present</para></item>
+        </unorderedlist></item>
+        <item><para>Other changes:</para>
+        <unorderedlist>
+          <item><para>fix handling of "stale" flag in RFC2069-style
+Digest auth challenge</para></item>
+          <item><para>ne_free() implemented as a function on
+Win32</para></item>
+          <item><para>symbol versioning used for new symbols, where
+supported</para></item>
+          <item><para>ensure SSL connections are closed cleanly with
+OpenSSL</para></item>
+          <item><para>fix build with OpenSSL 1.0 beta</para></item>
+          <item><para>updated Polish (pl) translation</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="0.28.5" to="0.28.6">
+        <item><para>SECURITY (CVE-2009-2473): Fix "billion laughs"
+attack against expat; could allow a Denial of Service attack by a
+malicious server.</para></item>
+        <item><para>SECURITY (CVE-2009-2474): Fix handling of an
+embedded NUL byte in a certificate subject name with OpenSSL; could
+allow an undetected MITM attack against an SSL server if a trusted CA
+issues such a cert.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

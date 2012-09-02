@@ -1,0 +1,1031 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="rsync" version="3.0.8" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}30</install-name>
+
+    <sources>
+      <source checksum="0ee8346ce16bdfe4c88a236e94c752b4"
+        checksum-type="md5" size="790722"
+        path="src/rsync-3.0.8.tar.gz"/>
+      <patch checksum="aaa05e09afe4b2269a0b8680fb336017"
+        checksum-type="md5" size="5837"
+        path="src/rsync-3.0.8.tww.patch"/>
+      <patch checksum="b6ea04d496a18ca57d9164e156d7171f"
+        checksum-type="md5" size="61847"
+        path="src/rsync-3.0.8.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  # getnameinfo and getaddrinfo are broken
+  export ac_cv_func_getnameinfo=no
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_search_getaddrinfo=no
+  export rsync_cv_getaddrinfo=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-freebsd*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--with-rsync-path="${SB_INSTALL_PREFIX}/bin/rsync" \
+--with-included-popt ${ARGS+${ARGS}} \
+--with-rsyncd-conf="${_sysconfdir}/rsyncd.conf" \
+--localstatedir=${_localstatedir:-/var} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+${SB_PATH_SED} -i -e "\
+s!/etc/rsyncd\\\\&.conf!${_sysconfdir}/rsyncd\\\\\&.conf!g; \
+s!/var/run/rsyncd\\\\&.lock!${_localstatedir:-/var}/run/rsyncd\\\\\&.lock!g; \
+s!/var/run/rsyncd\\\\&.pid!${_localstatedir:-/var}/run/rsyncd\\\\\&.pid!g; \
+s!/etc/rsyncd\\\\&.secrets!${_sysconfdir}/rsyncd\\\\\&.secrets!g;" \
+rsync.1 rsyncd.conf.5
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+
+# ignore testsuite failures
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/rsyncd.conf
+
+if [ "${_localstatedir+set}" = set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/run
+
+  cat >${_sysconfdir}/rsyncd.conf <<_EOT_
+lock file = ${_localstatedir}/run/rsyncd.lock
+log file = ${_localstatedir}/log
+
+# uncomment to start rsync in daemon mode
+#pid file = ${_localstatedir}/run/rsyncd.pid
+
+uid = nobody
+gid = nobody
+
+use chroot = yes
+
+# list of modules:
+# [module name]
+#   module options
+# ...
+_EOT_
+fi
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.0.7" to="3.0.8">
+        <items name="Bug fixes">
+          <item><para>Fixed two buffer-overflow issues: one where a
+directory path that is exactly MAXPATHLEN was not handled correctly,
+and one handling a --backup-dir that is extra extra
+large.</para></item>
+          <item><para>Fixed a data-corruption issue when preserving
+hard-links without preserving file ownership, and doing deletions
+either before or during the transfer (CVE-2011-1097).  This fixes some
+assert errors in the hard-linking code, and some potential failed
+checksums (via -c) that should have matched.</para></item>
+          <item><para>Fixed a potential crash when an rsync daemon has
+a filter/exclude list and the transfer is using ACLs or
+xattrs.</para></item>
+          <item><para>Fixed a hang if a really large file is being
+processed by an rsync that can't handle 64-bit numbers.  Rsync will
+now complain about the file being too big and skip it.</para></item>
+          <item><para>For devices and special files, we now avoid
+gathering useless ACL and/or xattr information for files that aren't
+being copied.  (The un-copied files are still put into the file list,
+but there's no need to gather data that is not going to be used.)
+This ensures that if the user uses --no-D, that rsync can't possibly
+complain about being unable to gather extended information from
+special files that are in the file list (but not in the
+transfer).</para></item>
+          <item><para>Properly handle requesting remote filenames that
+start with a dash.  This avoids a potential error where a filename
+could be interpreted as a (usually invalid) option.</para></item>
+          <item><para>Fixed a bug in the comparing of upper-case
+letters in file suffixes for --skip-compress.</para></item>
+          <item><para>If an rsync daemon has a module configured
+without a path setting, rsync will now disallow access to that
+module.</para></item>
+          <item><para>If the destination arg is an empty string, it
+will be treated as a reference to the current directory (as 2.x used
+to do).</para></item>
+          <item><para>If rsync was compiled with a newer time-setting
+function (such as lutimes), rsync will fall-back to an older function
+(such as utimes) on a system where the newer function is not around.
+This helps to make the rsync binary more portable in mixed-OS-release
+situations.</para></item>
+          <item><para>Fixed a batch-file writing bug that would not
+write out the full set of compatibility flags that the transfer was
+using.  This fixes a potential protocol problem for a batch file that
+contains a sender-side I/O error: it would have been sent in a way
+that the batch-reader wasn't expecting.</para></item>
+          <item><para>Some improvements to the hard-linking code to
+ensure that device-number hashing is working right, and to supply more
+information if the hard-link code fails.</para></item>
+          <item><para>The --inplace code was improved to not search
+for an impossible checksum position.  The quadruple-verbose chunk[N]
+message will now mention when an inplace chunk was handled by a seek
+rather than a read+write.</para></item>
+          <item><para>Improved ACL mask handling, e.g. for
+Solaris.</para></item>
+          <item><para>Fixed a bug that prevented --numeric-ids from
+disabling the translation of user/group IDs for ACLs.</para></item>
+          <item><para>Fixed an issue where an xattr and/or ACL
+transfer that used an alt-dest option (e.g. --link-dest) could output
+an error trying to itemize the changes against the alt-dest
+directory's xattr/ACL info but was instead trying to access the
+not-yet-existing new destination directory.</para></item>
+          <item><para>Improved xattr system-error messages to mention
+the full path to the file.</para></item>
+          <item><para>The --link-dest checking for identical symlinks
+now avoids considering attribute differences that cannot be changed on
+the receiver.</para></item>
+          <item><para>Avoid trying to read/write xattrs on certain
+file types for certain OSes. Improved configure to set
+NO_SYMLINK_XATTRS, NO_DEVICE_XATTRS, and/or NO_SPECIAL_XATTRS defines
+in config.h.</para></item>
+          <item><para>Improved the unsafe-symlink errors
+messages.</para></item>
+          <item><para>Fixed a bug setting xattrs on new files that
+aren't user writable.</para></item>
+          <item><para>Avoid re-setting xattrs on a hard-linked file
+w/the same xattrs.</para></item>
+          <item><para>Fixed a bug with --fake-super when copying files
+and dirs that aren't user writable.</para></item>
+          <item><para>Fixed a bug where a sparse file could have its
+last sparse block turned into a real block when rsync sets the file
+size (requires ftruncate).</para></item>
+          <item><para>If a temp-file name is too long, rsync now
+avoids truncating the name in the middle of adjacent high-bit
+characters.  This prevents a potential filename error if the
+filesystem doesn't allow a name to contain an invalid multi-byte
+sequence.</para></item>
+          <item><para>If a muli-protocol socket connection fails
+(i.e., when contacting a daemon), we now report all the failures, not
+just the last one.  This avoids losing a relevant error (e.g. an IPv4
+connection-refused error) that happened before the final error (e.g.
+an IPv6 protocol-not-supported error).</para></item>
+          <item><para>Generate a transfer error if we try to call
+chown with a -1 for a uid or a gid (which is not
+settable).</para></item>
+          <item><para>Fixed the working of --force when used with
+--one-file-system.</para></item>
+          <item><para>Fix the popt arg parsing so that an option that
+doesn't take an arg will reject an attempt to supply one (can
+configure --with-included-popt if your system's popt library doesn't
+yet have this fix).</para></item>
+          <item><para>A couple minor option tweaks to the
+support/rrsync script, and also some regex changes that make vim
+highlighting happier.</para></item>
+          <item><para>Fixed some issues in the support/mnt-excl
+script.</para></item>
+          <item><para>Various manpage improvements.</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Added ".hg/" to the default cvs excludes (see -C
+&amp; --cvs-exclude).</para></item>
+        </items>
+
+        <items name="Developer-related changes">
+          <item><para>Use lchmod() whenever it is available (not just
+on symlinks).</para></item>
+          <item><para>A couple fixes to the socketpair_tcp()
+routine.</para></item>
+          <item><para>Updated the helper scripts in the packaging
+subdirectory.</para></item>
+          <item><para>Renamed configure.in to
+configure.ac.</para></item>
+          <item><para>Fixed configure's checking for iconv routines
+for newer OS X versions.</para></item>
+          <item><para>Fixed the testsuite/xattrs.test script on OS
+X.</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.6" to="3.0.7">
+        <items name="Bug Fixes">
+          <item><para>Fixed a bogus free when using --xattrs with
+--backup.</para></item>
+          <item><para>Avoid an error when --dry-run  was trying to
+stat a prior hard-link file that hasn't really been
+created.</para></item>
+          <item><para>Fixed a problem with --compress (-z) where the
+receiving side could return the error "inflate (token) returned
+-5".</para></item>
+          <item><para>Fixed a bug where --delete-during could delete
+in a directory before it noticed that the sending side sent an I/O
+error for that directory (both sides of the transfer must be at least
+3.0.7).</para></item>
+          <item><para>Improved --skip-compress's error handling of bad
+character-sets and got rid of a lingering debug
+fprintf().</para></item>
+          <item><para>Fixed the daemon's conveyance of io_error value
+from the sender.</para></item>
+          <item><para>An rsync daemon use seteuid() (when available)
+if it used setuid().</para></item>
+          <item><para>Get the permissions right on a --fake-super
+transferred directory that needs more owner permissions to emulate
+root behavior.</para></item>
+          <item><para>An absolute-path filter rule (i.e. with a '/'
+modifier) no longer loses its modifier when sending the filter rules
+to the remote rsync.</para></item>
+          <item><para>Improved the "--delete does not work without -r
+or -d" message.</para></item>
+          <item><para>Improved rsync's handling of --timeout to avoid
+a weird timeout case where the sender could timeout even though it has
+recently written data to the socket (but hasn't read data recently,
+due to the writing).</para></item>
+          <item><para>Some misc manpage improvements.</para></item>
+          <item><para>Fixed the chmod-temp-dir testsuite on a system
+without /var/tmp.</para></item>
+          <item><para>Make sure that a timeout specified in the
+daemon's config is used as a maximum timeout value when the user also
+specifies a timeout.</para></item>
+          <item><para>Improved the error-exit reporting when rsync
+gets an error trying to cleanup after an error:  the initial error is
+reported.</para></item>
+          <item><para>Improved configure's detection of IPv6 for
+solaris and cygwin.</para></item>
+          <item><para>The AIX sysacls routines will now return ENOSYS
+if ENOTSUP is missing.</para></item>
+          <item><para>Made our (only used if missing) getaddrinfo()
+routine use inet_pton() (which we also provide) instead of
+inet_aton().</para></item>
+          <item><para>The exit-related debug messages now mention the
+program's role so it is clear who output what message.</para></item>
+        </items>
+
+        <items name="Developer-related changes">
+          <item><para>Got rid of type-punned compiler warnings output
+by newer gcc versions.</para></item>
+          <item><para>The Makefile now ensures that proto.h will be
+rebuilt if config.h changes.</para></item>
+          <item><para>The testsuite no longer uses "id -u", so it
+works better on solaris.</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.5" to="3.0.6">
+        <items name="Bug Fixes">
+          <item><para>Fixed a --read-batch hang when rsync is reading
+a batch file that was created from an incremental-recursion
+transfer.</para></item>
+          <item><para>Fixed the daemon's socket code to handle the
+simultaneous arrival of multiple connections.</para></item>
+          <item><para>Fix --safe-links/--copy-unsafe-links to properly
+handle symlinks that have consecutive slashes in the
+value.</para></item>
+          <item><para>Fixed the parsing of an [IPv6_LITERAL_ADDR] when
+a USER@ is prefixed.</para></item>
+          <item><para>The sender now skips a (bogus) symlink that has
+a 0-length value, which avoids a transfer error in the
+receiver.</para></item>
+          <item><para>Fixed a case where the sender could die with a
+tag-0 error if there was an I/O during the sending of the file
+list.</para></item>
+          <item><para>Fixed the rrsync script to avoid a server-side
+problem when -e is at the start of the short options.</para></item>
+          <item><para>Fixed a problem where a vanished directory could
+turn into an exit code 23 instead of the proper exit code
+24.</para></item>
+          <item><para>Fixed the --iconv conversion of symlinks when
+doing a local copy.</para></item>
+          <item><para>Fixed a problem where --one-file-system was not
+stopping deletions on the receiving side when a mount-point directory
+did not match a directory in the transfer.</para></item>
+          <item><para>Fixed the dropping of an ACL mask when no named
+ACL values were present.</para></item>
+          <item><para>Fixed an ACL/xattr corruption issue where the
+--backup option could cause rsync to associate the wrong ACL/xattr
+information with received files.</para></item>
+          <item><para>Fixed the use of --xattrs with
+--only-write-batch.</para></item>
+          <item><para>Fixed the use of --dry-run with
+--read-batch.</para></item>
+          <item><para>Fixed configure's erroneous use of
+target.</para></item>
+          <item><para>Fixed configure's --disable-debug
+option.</para></item>
+          <item><para>Fixed a run-time issue for systems that can't
+find iconv_open() by adding the --disable-iconv-open configure
+option.</para></item>
+          <item><para>Complain and die if the user tries to combine
+--remove-source-files (or the deprecated --remove-sent-files) with
+--read-batch.</para></item>
+          <item><para>Fixed an failure transferring special files from
+Solaris to Linux.</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.4" to="3.0.5">
+        <items name="Bug Fixes">
+          <item><para>Initialize xattr data in a couple spots in the
+hlink code, which avoids a crash when the xattr pointer's memory
+happens to start out non-zero. Also fixed the itemizing of an alt-dest
+file's xattrs when hard-linking.</para></item>
+          <item><para>Don't send a bogus "-" option to an older server
+if there were no short options specified.</para></item>
+          <item><para>Fixed skipping of unneeded updates in a batch
+file when incremental recursion is active. Added a test for this.
+Made batch-mode handle "redo" files properly (and without
+hanging).</para></item>
+          <item><para>Fix the %P logfile escape when the daemon logs
+from inside a chroot.</para></item>
+          <item><para>Fixed the use of -s (--protect-args) when used
+with a remote source or destination that had an empty path (e.g.
+"host:"). Also fixed a problem when -s was used when accessing a
+daemon via a remote-shell.</para></item>
+          <item><para>Fixed the use of a dot-dir path (e.g. foo/./bar)
+inside a --files-from file when the root of the transfer isn't the
+current directory.</para></item>
+          <item><para>Fixed a bug with "-K --delete" removing symlinks
+to directories when incremental recursion is active.</para></item>
+          <item><para>Fixed a hard to trigger hang when using
+--remove-source-files.</para></item>
+          <item><para>Got rid of an annoying delay when accessing a
+daemon via a remote-shell.</para></item>
+          <item><para>Properly ignore (superfluous) source args on a
+--read-batch command.</para></item>
+          <item><para>Improved the manpage's description of the '*'
+wildcard to remove the confusing "non-empty" qualifier.</para></item>
+          <item><para>Fixed reverse lookups in the
+compatibility-library version of getnameinfo().</para></item>
+          <item><para>Fixed a bug when using --sparse on a sparse file
+that has over 2GB of consecutive sparse data.</para></item>
+          <item><para>Avoid a hang when using at least 3 --verbose
+options on a transfer with a client sender (which includes local
+copying).</para></item>
+          <item><para>Fixed a problem with --delete-delay reporting an
+error when it was ready to remove a directory that was now
+gone.</para></item>
+          <item><para>Got rid of a bunch of "warn_unused_result"
+compiler warnings.</para></item>
+          <item><para>If an ftruncate() on a received file fails, it
+now causes a partial- transfer warning.</para></item>
+          <item><para>Allow a path with a leading "//" to be preserved
+(CYGWIN only).</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Made the support/atomic-rsync script able to
+perform a fully atomic update of the copied hierarchy when the
+destination is setup using a particular symlink idiom.</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.3" to="3.0.4">
+        <items name="Bug Fixes">
+          <item><para>Fixed a bug in the hard-linking code where it
+would sometimes try to allocate 0 bytes of memory (which fails on some
+OSes, such as AIX).</para></item>
+          <item><para>Fixed the hard-linking of files from a device
+that has a device number of 0 (which seems to be a common device
+number on NetBSD).</para></item>
+          <item><para>Fixed the handling of a --partial-dir that
+cannot be created. This particularly impacts the --delay-updates
+option (since the files cannot be delayed without a partial-dir), and
+was potentially destructive if the --remove-source-files was also
+specified.</para></item>
+          <item><para>Fixed a couple issues in the --fake-super
+handling of xattrs when the destination files have root-level
+attributes (e.g. selinux values) that a non-root copy can't
+affect.</para></item>
+          <item><para>Improved the keep-alive check in the generator
+to fire consistently in incremental-recursion mode when --timeout is
+enabled.</para></item>
+          <item><para>The --iconv option now converts the content of a
+symlink too, instead of leaving it in the wrong character-set
+(requires 3.0.4 on both sides of the transfer).</para></item>
+          <item><para>When using --iconv, if a filename fails to
+convert on the receiving side, this no longer makes deletions in the
+root-dir of the transfer fail silently (the user now gets a warning
+about deletions being disabled due to IO error as long as
+--ignore-errors was not specified).</para></item>
+          <item><para>When using --iconv, if a server-side receiver
+can't convert a filename, the error message sent back to the client no
+longer mangles the name with the wrong charset
+conversion.</para></item>
+          <item><para>Fixed a potential alignment issue in the IRIX
+ACL code when allocating the initial "struct acl" object. Also, cast
+mallocs to avoid warnings.</para></item>
+          <item><para>Changed some errors that were going to stdout to
+go to stderr.</para></item>
+          <item><para>Made human_num() and human_dnum() able to output
+a negative number (rather than outputting a cryptic string of
+punctuation).</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Rsync will avoid sending an -e option to the
+server if an older protocol is requested (and thus the option would
+not be useful). This lets the user specify the --protocol=29 option
+to access an overly-restrictive server that is rejecting the
+protocol-30 use of -e to the server.</para></item>
+          <item><para>Improved the message output for an RERR_PARTIAL
+exit.</para></item>
+        </items>
+
+        <items name="Developer related">
+          <item><para>The Makefile will not halt for just a timestamp
+change on the Makefile or the configure files, only for actual changes
+in content.</para></item>
+          <item><para>Changed some commands in the testsuite's
+xattrs.test that called "rsync" instead of "$RSYNC".</para></item>
+          <item><para>Enhanced the release scripts to be able to
+handle a branch release and to do even more consistency checks on the
+files.</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.2" to="3.0.3">
+        <items name="Bug Fixes">
+          <item><para>Fixed a wildcard matching problem in the daemon
+when a module has "use chroot" enabled</para></item>
+          <item><para>Fixed a crash bug in the hard-link
+code</para></item>
+          <item><para>Fixed the sending of xattr directory information
+when the code finds a --link-dest or --copy-dest directory with
+unchanged xattrs -- the destination directory now gets these unchanged
+xattrs properly applied</para></item>
+          <item><para>Fixed an xattr-sending glitch that could cause
+an "Internal abbrev" error</para></item>
+          <item><para>Fixed the combination of --xattrs and
+--backup</para></item>
+          <item><para>The generator no longer allows a '.' dir to be
+excluded by a daemon- exclude rule</para></item>
+          <item><para>Fixed deletion handling when copying a single,
+empty directory (with no files) to a differently named, non-existent
+directory</para></item>
+          <item><para>Fixed the conversion of spaces into dashes in
+the %M log escape</para></item>
+          <item><para>Fixed several places in the code that were not
+returning the right errno when a function failed</para></item>
+          <item><para>Fixed the backing up of a device or special file
+into a backup dir</para></item>
+          <item><para>Moved the setting of the socket options prior to
+the connect()</para></item>
+          <item><para>If rsync exits in the middle of a --progress
+output, it now outputs a newline to help prevent the progress line
+from being overwritten</para></item>
+          <item><para>Fixed a problem with how a destination path with
+a trailing slash or a trailing dot-dir was compared against the daemon
+excludes</para></item>
+          <item><para>Fixed the sending of large (size &gt; 16GB)
+files when talking to an older rsync (protocols &lt; 30): we now use a
+compatible block size limit</para></item>
+          <item><para>If a file's length is so huge that we overflow a
+checksum buffer count (i.e. several hundred TB), warn the user and
+avoid sending an invalid checksum struct over the wire</para></item>
+          <item><para>If a source arg is excluded, --relative no
+longer adds the excluded arg's implied dirs to the transfer. This fix
+also made the exclude check happen in the better place in the sending
+code.</para></item>
+          <item><para>Use the overflow_exit() function for overflows,
+not out_of_memory()</para></item>
+          <item><para>Improved the code to better handle a system that
+has only 32-bit file offsets</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>The rsyncd.conf manpage now consistently refers
+to the parameters in the daemon config file as
+"parameters"</para></item>
+          <item><para>The description of the --inplace option was
+improved</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.1" to="3.0.2">
+        <items name="Bug Fixes">
+          <item><para>Fixed a potential buffer overflow in the xattr
+code</para></item>
+        </items>
+      </change>
+
+      <change from="3.0.0" to="3.0.1">
+        <items name="Changes in behavior">
+          <item><para>Added the 'c'-flag to the itemizing of
+non-regular files so that the itemized output doesn't get hidden if
+there were no attribute changes, and also so that the itemizing of a
+--copy-links run will distinguish between copying an identical
+non-regular file and the creation of a revised version with a new
+value (e.g. a changed symlink referent, a new device number,
+etc.).</para></item>
+        </items>
+
+        <items name="Bug Fixes">
+          <item><para>Fixed a crash bug when a single-use rsync daemon
+(via remote shell) was run without specifying a --config=FILE
+option</para></item>
+          <item><para>Fixed a crash when backing up a directory that
+has a default ACL.</para></item>
+          <item><para>Fixed a bug in the handling of xattr values that
+could cause rsync to not think that a file's extended attributes are
+up-to-date.</para></item>
+          <item><para>Fixed the working of --fake-super with
+--link-dest and --xattrs</para></item>
+          <item><para>Fixed a hang when combining --dry-run with
+--remove-source-files</para></item>
+          <item><para>Fixed a bug with --iconv's handling of files
+that cannot be converted: a failed name can no longer cause a transfer
+failure</para></item>
+          <item><para>Fixed the building of the rounding.h file on
+systems that need custom CPPFLAGS to be used. Also improved the error
+reporting if the building of rounding.h fails.</para></item>
+          <item><para>Fixed the use of the --protect-args (-s) option
+when talking to a daemon.</para></item>
+          <item><para>Fixed the --ignore-existing option's protection
+of files on the receiver that are non-regular files on the sender
+(e.g. if a symlink or a dir on the sender is trying to replace a file
+on the receiver). The reverse protection (protecting a
+dir/symlink/device from being replaced by a file) was already
+working.</para></item>
+          <item><para>Fixed an assert failure if --hard-links is
+combined with an option that can skip a file in a set of hard-linked
+files (i.e. --ignore-existing, --append, etc.), without skipping all
+the files in the set.</para></item>
+          <item><para>Avoid setting the modify time on a directory
+that already has the right modify time set. This avoids tweaking the
+dir's ctime.</para></item>
+          <item><para>Improved the daemon-exclude handling to do a
+better job of applying the exclude rules to path entries. It also
+sends the user an error just as if the files were actually missing
+(instead of silently ignoring the user's args), and avoids sending the
+user the filter-action messages for these non-user-initiated
+rules.</para></item>
+          <item><para>Fixed some glitches with the dry-run code's
+missing-directory handling, including a problem when combined with
+--fuzzy.</para></item>
+          <item><para>Fixed some glitches with the skipped-directory
+handling</para></item>
+          <item><para>Fixed the 'T'-flag itemizing of symlinks when
+--time isn't preserved</para></item>
+          <item><para>Fixed a glitch in the itemizing of permissions
+with the -E option</para></item>
+          <item><para>The --append option's restricting of transfers
+to those that add data no longer prevents the updating of non-content
+changes to otherwise up-to- date files (i.e. those with the same
+content but differing permissions, ownership, xattrs,
+etc.).</para></item>
+          <item><para>Don't allow --fake-super to be specified with
+-XX (double --xattrs) because the options conflict. If a daemon has
+"fake super" enabled, it automatically downgrades a -XX request to
+-X.</para></item>
+          <item><para>Fixed a couple bugs in the parsing of
+daemon-config excludes that could make a floating exclude rule get
+treated as matching an absolute path</para></item>
+          <item><para>A daemon doesn't try to auto-refuse the "iconv"
+option if iconv-support wasn't compiled in to the daemon (avoiding a
+warning in the logs)</para></item>
+          <item><para>Fixed the inclusion of per-dir merge files from
+implied dirs</para></item>
+          <item><para>Fixed the support/rrsync script to work with the
+latest options that rsync sends (including its flag-specifying use of
+-e to the server)</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Added the --old-dirs (--old-d) option to make it
+easier for a user to ask for file-listings with older rsync versions
+(this is easier than having to type "-r --exclude='/*/*'"
+manually)</para></item>
+          <item><para>When getting an error while asking an older
+rsync daemon for a file listing, rsync will try to notice if the error
+is a rejection of the --dirs (-d) option and let the user know how to
+work around the issue</para></item>
+          <item><para>Added a few more --no-OPTION
+overrides</para></item>
+          <item><para>Improved the documentation of the --append
+option</para></item>
+          <item><para>Improved the documentation of the
+filter/exclude/include daemon parameters</para></item>
+        </items>
+
+        <items name="Internal Changes">
+          <item><para>Fixed a couple minor bugs in the included popt
+library (ones which I sent to the official popt project for inclusion
+in the 1.14 release)</para></item>
+          <item><para>Fixed a stat() call that should have been
+do_stat() so that the proper normal/64-bit stat() function gets
+called. (Was in an area that should not have caused problems,
+though.)</para></item>
+          <item><para>Changed the file-glob code to do a directory
+scan without using the "glob" and "glob.h". This lets us do the
+globbing with less memory churn, and also avoid adding daemon-excluded
+items to the returned args.</para></item>
+        </items>
+      </change>
+
+      <change from="2.6.9" to="3.0.0">
+        <items name="Changes in behavior">
+          <item><para>The handling of implied directories when using
+--relative has changed to send them as directories (e.g. no implied
+dir is ever sent as a symlink). This avoids unexpected behavior and
+should not adversely affect most people. If you're one of those rare
+individuals who relied upon having an implied dir be duplicated as a
+symlink, you should specify the transfer of the symlink and the
+transfer of the referent directory as separate args. (See also
+--keep-dirlinks and --no-implied-dirs.) Also, exclude rules no longer
+have a partial effect on implied dirs.</para></item>
+          <item><para>Requesting a remote file-listing without
+specifying -r (--recursive) now sends the -d (--dirs) option to the
+remote rsync rather than sending -r along with an extra exclude of
+/*/*. If the remote rsync does not understand the -d option (i.e. it
+is 2.6.3 or older), you will need to either turn off -d (--no-d), or
+specify  -r --exclude='/*/*'  manually.</para></item>
+          <item><para>In --dry-run mode, the last line of the verbose
+summary text is output with a "(DRY RUN)" suffix to help remind you
+that no updates were made. Similarly, --only-write-batch outputs
+"(BATCH ONLY)".</para></item>
+          <item><para>A writable rsync daemon with "use chroot"
+disabled now defaults to a symlink-munging behavior designed to make
+symlinks safer while also allowing absolute symlinks to be stored and
+retrieved. This also has the effect of making symlinks unusable while
+they're in the daemon's hierarchy. See the daemon's "munge symlinks"
+parameter for details.</para></item>
+          <item><para>Starting up an extra copy of an rsync daemon
+will not clobber the pidfile for the running daemon -- if the pidfile
+exists, the new daemon will exit with an error. This means that your
+wrapper script that starts the rsync daemon should be made to handle
+lock-breaking (if you want any automatic breaking of locks to be
+done).</para></item>
+        </items>
+
+        <items name="Bug Fixes">
+          <item><para>A daemon with "use chroot = no" and excluded
+items listed in the daemon config file now properly checks an
+absolute-path arg specified for these options:  --compare-dest,
+--link-dest, --copy-dest, --partial-dir, --backup-dir, --temp-dir, and
+--files-from.</para></item>
+          <item><para>A daemon can now be told to disable all user-
+and group-name translation on a per-module basis. This avoids a
+potential problem with a writable daemon module that has "use chroot"
+enabled -- if precautions weren't taken, a user could try to add a
+missing library and get rsync to use it. This makes rsync safer by
+default, and more configurable when id- translation is not desired.
+See the daemon's "numeric ids" parameter for full
+details.</para></item>
+          <item><para>A chroot daemon can now indicate which part of
+its path should affect the chroot call, and which part should become
+an inside-chroot path for the module. This allows you to have
+outside-the-transfer paths (such as for libraries) even when you
+enable chroot protection. The idiom used in the rsyncd.conf file is:
+path = /chroot/dirs/./dirs/inside</para></item>
+          <item><para>If a file's data arrived successfully on the
+receiving side but the rename of the temporary file to the destination
+file failed AND the --remove-source-files (or the deprecated
+--remove-sent-files) option was specified, rsync no longer erroneously
+removes the associated source file.</para></item>
+          <item><para>Fixed the output of -ii when combined with one
+of the --*-dest options: it now itemizes all the items, not just the
+changed ones.</para></item>
+          <item><para>Made the output of all file types consistent
+when using a --*-dest option. Prior versions would output too many
+creation events for matching items.</para></item>
+          <item><para>The code that waits for a child pid now handles
+being interrupted by a signal. This fixes a problem with the pre-xfer
+exec function not being able to get the exit status from the
+script.</para></item>
+          <item><para>A negated filter rule (i.e. with a '!' modifier)
+no longer loses the negation when sending the filter rules to the
+remote rsync.</para></item>
+          <item><para>Fixed a problem with the --out-format (aka
+--log-format) option %f:  it no longer outputs superfluous directory
+info for a non-daemon rsync.</para></item>
+          <item><para>Fixed a problem with -vv (double --verbose) and
+--stats when "pushing" files (which includes local copies). Version
+2.6.9 would complete the copy, but exit with an error when the
+receiver output its memory stats.</para></item>
+          <item><para>If --password-file is used on a non-daemon
+transfer, rsync now complains and exits. This should help users
+figure out that they can't use this option to control a remote shell's
+password prompt.</para></item>
+          <item><para>Make sure that directory permissions of a
+newly-created destination directory are handled right when --perms is
+left off.</para></item>
+          <item><para>The itemized output of a newly-created
+destination directory is now output as a creation event, not a change
+event.</para></item>
+          <item><para>Improved --hard-link so that more corner cases
+are handled correctly when combined with options such as --link-dest
+and/or --ignore-existing.</para></item>
+          <item><para>The --append option no longer updates a file
+that has the same size.</para></item>
+          <item><para>Fixed a bug when combining --backup and
+--backup-dir with --inplace: any missing backup directories are now
+created.</para></item>
+          <item><para>Fixed a bug when using --backup and --inplace
+with --whole-file or --read-batch: backup files are actually created
+now.</para></item>
+          <item><para>The daemon pidfile is checked and created sooner
+in the startup sequence.</para></item>
+          <item><para>If a daemon module's "path" value is not an
+absolute pathname, the code now makes it absolute internally (making
+it work properly).</para></item>
+          <item><para>Ensure that a temporary file always has
+owner-write permission while we are writing to it. This avoids
+problems with some network filesystems when transfering read-only
+files.</para></item>
+          <item><para>Any errors output about password-file reading no
+longer cause an error at the end of the run about a partial
+transfer.</para></item>
+          <item><para>The --read-batch option for protocol 30 now
+ensures that several more options are set correctly for the current
+batch file:  --iconv, --acls, --xattrs, --inplace, --append, and
+--append-verify.</para></item>
+          <item><para>Using --only-write-batch to a daemon receiver
+now works properly (older versions would update some files while
+writing the batch).</para></item>
+          <item><para>Avoid outputting a "file has vanished" message
+when the file is a broken symlink and --copy-unsafe-links or
+--copy-dirlinks is used (the code already handled this for
+--copy-links).</para></item>
+          <item><para>Fixed the combination of --only-write-batch and
+--dry-run.</para></item>
+          <item><para>Fixed rsync's ability to remove files that are
+not writable by the file's owner when rsync is running as the same
+user.</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>A new incremental-recursion algorithm is now
+used when rsync is talking to another 3.x version. This starts the
+transfer going more quickly (before all the files have been found),
+and requires much less memory. See the --recursive option in the
+manpage for some restrictions.</para></item>
+          <item><para>Lowered memory use in the
+non-incremental-recursion algorithm for typical option values (usually
+saving from 21-29 bytes per file).</para></item>
+          <item><para>The default --delete algorithm is now
+--delete-during when talking to a 3.x rsync. This is a faster scan
+than using --delete-before (which is the default when talking to older
+rsync versions), and is compatible with the new incremental recursion
+mode.</para></item>
+          <item><para>Rsync now allows multiple remote-source args to
+be specified rather than having to rely on a special space-splitting
+side-effect of the remote- shell. Additional remote args must specify
+the same host or an empty one (e.g. empty:  :file1  or
+::module/file2). For example, this means that local use of brace
+expansion now works:  rsync -av host:dir/{f1,f2} .</para></item>
+          <item><para>Added the --protect-args (-s) option, that tells
+rsync to send most of the command-line args at the start of the
+transfer rather than as args to the remote-shell command. This
+protects them from space-splitting, and only interprets basic wildcard
+special shell characters (*?[).</para></item>
+          <item><para>Added the --delete-delay option, which is a more
+efficient way to delete files at the end of the transfer without
+needing a separate delete pass.</para></item>
+          <item><para>Added the --acls (-A) option to preserve Access
+Control Lists. This is an improved version of the prior patch that
+was available, and it even supports OS X ACLs. If you need to have
+backward compatibility with old, ACL-patched versions of rsync, apply
+the acls.diff file from the patches dir.</para></item>
+          <item><para>Added the --xattrs (-X) option to preserve
+extended attributes. This is an improved version of the prior patch
+that was available, and it even supports OS X xattrs (which includes
+their resource fork data). If you need to have backward compatibility
+with old, xattr-patched versions of rsync, apply the xattrs.diff file
+from the patches dir.</para></item>
+          <item><para>Added the --fake-super option that allows a
+non-super user to preserve all attributes of a file by using a special
+extended-attribute idiom. It even supports the storing of foreign ACL
+data on your backup server. There is also an analogous "fake super"
+parameter for an rsync daemon.</para></item>
+          <item><para>Added the --iconv option, which allows rsync to
+convert filenames from one character-set to another during the
+transfer. The default is to make this feature available as long as
+your system has iconv_open(). If compilation fails, specify
+--disable-iconv to configure, and then rebuild. If you want rsync to
+perform character-set conversions by default, you can specify
+--enable-iconv=CONVERT_STRING with the default value for the --iconv
+option that you wish to use. For example, "--enable-iconv=." is a
+good choice. See the rsync manpage for an explanation of the --iconv
+option's settings.</para></item>
+          <item><para>A new daemon config parameter, "charset", lets
+you control the character- set that is used during an --iconv transfer
+to/from a daemon module. You can also set your daemon to refuse
+"no-iconv" if you want to force the client to use an --iconv transfer
+(requiring an rsync 3.x client).</para></item>
+          <item><para>Added the --skip-compress=LIST option to
+override the default list of file suffixes that will not be compressed
+when using --compress (-z).</para></item>
+          <item><para>The daemon's default for "dont compress" was
+extended to include:</para>
+          <screen>
+*.7z *.mp[34] *.mov *.avi *.ogg *.jpg *.jpeg
+          </screen>
+          <para>The name-matching routine was also optimized to run
+more quickly.</para></item>
+          <item><para>The --max-delete option now outputs a warning if
+it skipped any file deletions, including a count of how many deletions
+were skipped. (Older versions just silently stopped deleting
+things.)</para></item>
+          <item><para>You may specify --max-delete=0 to a 3.0.0 client
+to request that it warn about extraneous files without deleting
+anything. If you're not sure what version the client is, you can use
+the less-obvious --max-delete=-1, as both old and new versions will
+treat that as the same request (though older versions don't
+warn).</para></item>
+          <item><para>The --hard-link option now uses less memory on
+both the sending and receiving side for all protocol versions. For
+protocol 30, the use of a hashtable on the sending side allows us to
+more efficiently convey to the receiver what files are linked
+together. This reduces the amount of data sent over the socket by a
+considerable margin (rather than adding more data), and limits the
+in-memory storage of the device+inode information to just the sending
+side for the new protocol 30, or to the receiving side when speaking
+an older protocol (note that older rsync versions kept the
+device+inode information on both sides).</para></item>
+          <item><para>The filter rules now support a perishable ("p")
+modifier that marks rules that should not have an effect in a
+directory that is being deleted. e.g. -f '-p .svn/' would only affect
+"live" .svn directories.</para></item>
+          <item><para>Rsync checks all the alternate-destination args
+for validity (e.g. --link-dest). This lets the user know when they
+specified a directory that does not exist.</para></item>
+          <item><para>If we get an error setting the time on a
+symlink, we don't complain about it anymore (since some operating
+systems don't support that, and it's not that
+important).</para></item>
+          <item><para>Protocol 30 now uses MD5 checksums instead of
+MD4.</para></item>
+          <item><para>Changed the --append option to not checksum the
+existing data in the destination file, which speeds up file
+appending.</para></item>
+          <item><para>Added the --append-verify option, which works
+like the older --append option (verifying the existing data in the
+destination file). For compatibility with older rsync versions, any
+use of --append that is talking protocol 29 or older will revert to
+the --append-verify method.</para></item>
+          <item><para>Added the --contimeout=SECONDS option that lets
+the user specify a connection timeout for rsync daemon
+access.</para></item>
+          <item><para>Documented and extended the support for the
+RSYNC_CONNECT_PROG variable that can be used to enhance the client
+side of a daemon connection.</para></item>
+          <item><para>Improved the dashes and double-quotes in the
+nroff manpage output.</para></item>
+          <item><para>Rsync now supports a lot more --no-OPTION
+override options.</para></item>
+        </items>
+
+        <items name="Internal Changes">
+          <item><para>The file-list sorting algorithm now uses a sort
+that keeps any same- named items in the same order as they were
+specified. This allows rsync to always ensure that the first of the
+duplicates is the one that will be included in the copy. The new sort
+is also faster than the glibc version of qsort() and
+mergesort().</para></item>
+          <item><para>Rsync now supports the transfer of 64-bit
+timestamps (time_t values).</para></item>
+          <item><para>Made the file-deletion code use a little less
+stack when recursing through a directory hierarchy of extraneous
+files.</para></item>
+          <item><para>Fixed a build problem with older (2.x) versions
+of gcc.</para></item>
+          <item><para>Added some isType() functions that make dealing
+with signed characters easier without forcing variables via
+casts.</para></item>
+          <item><para>Changed strcat/strcpy/sprintf function calls to
+use safer versions.</para></item>
+          <item><para>Upgraded the included popt version to 1.10.2 and
+improved its use of string-handling functions.</para></item>
+          <item><para>Added missing prototypes for compatibility
+functions from the lib dir.</para></item>
+          <item><para>Configure determines if iconv() has a const arg,
+allowing us to avoid a compiler warning.</para></item>
+          <item><para>Made the sending of some numbers more efficient
+for protocol 30.</para></item>
+          <item><para>Make sure that a daemon process doesn't mind if
+the client was weird and omitted the --server option.</para></item>
+          <item><para>There are more internal logging categories
+available in protocol 30 than the age-old FINFO and FERROR, including
+FERROR_XFER and FWARN. These new categories allow some errors and
+warnings to go to stderr without causing an erroneous end-of-run
+warning about some files not being able to be
+transferred.</para></item>
+          <item><para>Improved the use of "const" on
+pointers.</para></item>
+          <item><para>Improved J.W.'s pool_alloc routines to add a way
+of incrementally freeing older sections of a pool's
+memory.</para></item>
+          <item><para>The getaddrinfo.c compatibility code in the
+"lib" dir was replaced with some new code (derived from samba, derived
+from PostgreSQL) that has a better license than the old
+code.</para></item>
+        </items>
+      </change>
+
+      <note type="configuration">
+        <para>The path to the default <command>rsyncd.conf</command>
+file has changed from <command>/etc/rsyncd.conf</command> to
+<command>/etc${SB_INSTALL_PREFIX}/rsyncd.conf</command>. This can be changed with
+the <command>--config</command> command-line option. The
+<command>rsyncd.conf</command> configuration file is used when rsync
+is run in daemon mode with <command>--daemon</command>.</para>
+        <para>The default path to the lock file is
+<command>/var${SB_INSTALL_PREFIX}/run/rsyncd.lock</command>.</para>
+      </note>
+
+      <note type="installation">
+        <para>Startup scripts are available for usage of rsync in
+daemon mode (<command>rsync --daemon</command>). To enable rsync in
+daemon mode on startup, uncomment the entry in the configuration file
+specifying the path to the PID file:</para>
+        <screen>
+# uncomment to start rsync in daemon mode
+#pid file = /var${SB_INSTALL_PREFIX}/run/rsyncd.pid
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The default remote shell is ssh.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2010 July 1" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

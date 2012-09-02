@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="pygtk" version="2.2.0" revision="1"
+  systype="*-aix*|*-hpux*|*-irix*|*-linux*|*-osf5*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="992122f8a61c266aeb1b7b35be9c4be1"
+        checksum-type="md5" size="553761"
+        path="src/pygtk-2.2.0.tar.bz2"/>
+      <patch checksum="c48cfccc883bbbb96133c1844a5039eb"
+        checksum-type="md5" size="737251"
+        path="src/pygtk-2.2.0.patch"/>
+    </sources>
+
+    <build>
+<![CDATA[
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+${SB_VAR_PYTHON}/bin/python \
+setup.py --include=${SB_VAR_GETTEXT_INC} \
+--include=${_include_prefix} ${_remove_wl+--remove-Wl} \
+--datadir=${_datadir} --datadir-component=${_datadir_component} \
+build_ext --inplace
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBGLADE_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+${SB_VAR_PYTHON}/bin/python setup.py --include=${SB_VAR_GETTEXT_INC} \
+--include=${_include_prefix} ${_remove_wl+--remove-Wl} \
+--datadir=${_datadir} --datadir-component=${_datadir_component} \
+install --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^includedir=.*!includedir=${_include_prefix}!" \
+${SB_INSTALL_PREFIX}/lib/pkgconfig/pygtk-2.0.pc
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/bin/pygtk-codegen-2.0 \
+${SB_INSTALL_PREFIX}/lib/pkgconfig/pygtk-2.0.pc \
+${_datadir}/pygtk ${_install_prefix}/gtk-2.0 \
+${_install_prefix}/pygtk.* \
+${_include_prefix}/pygtk
+
+rmdir ${_datadir} || :
+rmdir ${SB_INSTALL_PREFIX}/lib/pkgconfig || :
+]]>
+    </uninstall>
+
+    <module name="2.3.2">
+      <install-name>python232p</install-name>
+
+      <dependencies>
+        <depend program="Numeric" module="2.3.2">v&gt;=23.0</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk16">v&gt;=1.6.1</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage22">v&gt;=2.2</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf21">v==2.1.4</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext014">v&gt;=0.14.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib24">v&gt;=2.4.4</depend>
+        <depend program="gtk+" var="LIBGTK"
+          install-name="libgtk+24">v==2.4.4</depend>
+        <depend program="libglade" var="LIBGLADE"
+          install-name="libglade23">v&gt;=2.3.6</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml26">v&gt;=2.6.11</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango14">v&gt;=1.4.0</depend>
+        <depend var="PYTHONP" install-name="python232p"/>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_datadir_component="share"
+
+_include_prefix="${SB_INSTALL_PREFIX}/include/python2.3"
+_install_prefix="${SB_INSTALL_PREFIX}/lib/python2.3/site-packages"
+]]>
+      </script-header>
+    </module>
+
+    <module name="2.2.3">
+      <install-name>python223p</install-name>
+
+      <dependencies>
+        <depend program="Numeric" module="2.2.3">v&gt;=23.0</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk16">v&gt;=1.6.1</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage22">v&gt;=2.2</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf21">v==2.1.4</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext014">v&gt;=0.14.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib24">v&gt;=2.4.4</depend>
+        <depend program="gtk+" var="LIBGTK"
+          install-name="libgtk+24">v==2.4.4</depend>
+        <depend program="libglade" var="LIBGLADE"
+          install-name="libglade23">v&gt;=2.3.6</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml26">v&gt;=2.6.11</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango14">v&gt;=1.4.0</depend>
+        <depend var="PYTHONP" install-name="python232p"/>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.2.3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_datadir_component="share"
+
+_include_prefix="${SB_INSTALL_PREFIX}/include/python2.2"
+_install_prefix="${SB_INSTALL_PREFIX}/lib/python2.2/site-packages"
+
+_remove_wl=1
+]]>
+      </script-header>
+    </module>
+
+    <changelog>
+      <change date="2004 July 20" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade GTK+ dependency from 2.2.3 to
+2.4.4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

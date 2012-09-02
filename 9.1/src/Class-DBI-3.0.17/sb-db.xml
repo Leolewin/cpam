@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Class-DBI" version="3.0.17" revision="3">
+    <build-name>${SB_PROG_NAME}-v${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="df59962bab98a0d31bf1d04d7270831b"
+        checksum-type="md5" size="105416"
+        path="src/Class-DBI-v3.0.17.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Class/DBI/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Class/DBI/.packlist
+rmdir ${_installsitearch}/auto/Class/DBI
+rmdir ${_installsitearch}/auto/Class 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Class::DBI|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="Class-Accessor"
+          module="5.8.8">v&gt;=0.34</depend>
+        <depend program="Class-Fields"
+          module="5.8.8">v&gt;=0.203</depend>
+        <depend program="Class-Trigger"
+          module="5.8.8">v&gt;=0.13</depend>
+        <depend program="Clone" module="5.8.8">v&gt;=0.31</depend>
+        <depend program="DBD-CSV" module="5.8.8">v&gt;=0.31</depend>
+        <depend program="Ima-DBI" module="5.8.8">v&gt;=0.35</depend>
+        <depend program="UNIVERSAL-moniker"
+          module="5.8.8">v&gt;=0.08</depend>
+        <depend program="version" module="5.8.8">v&gt;=0.7701</depend>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Class-Accessor"
+          module="5.12.2">v&gt;=0.34</depend>
+        <depend program="Class-Fields"
+          module="5.12.2">v&gt;=0.203</depend>
+        <depend program="Class-Trigger"
+          module="5.12.2">v&gt;=0.13</depend>
+        <depend program="Clone" module="5.12.2">v&gt;=0.31</depend>
+        <depend program="DBD-CSV" module="5.12.2">v&gt;=0.31</depend>
+        <depend program="Ima-DBI" module="5.12.2">v&gt;=0.35</depend>
+        <depend program="UNIVERSAL-moniker"
+          module="5.12.2">v&gt;=0.08</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <licenses>
+      <license>
+        <para>This library is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.</para>
+      </license>
+    </licenses>
+
+    <changelog>
+      <change date="2011 September 16" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Updata Class-Accessor dependency from 0.31 to
+0.34.</para></item>
+        <item><para>Update Clone dependency from 0.29 to
+0.31.</para></item>
+        <item><para>Update DBD-CSV dependency from 0.22 to
+0.33.</para></item>
+        <item><para>Update version dependency form 0.76 to
+0.7701.</para></item>
+        <item><para>Added a license stanza.</para></item>
+      </change>
+
+      <change date="2011 August 9" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 5.12.2 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,518 @@
+Index: Makefile.am
+===================================================================
+--- Makefile.am.orig	2006-02-03 09:05:45.000000000 +0000
++++ Makefile.am	2008-06-23 19:53:47.799007820 +0000
+@@ -6,7 +6,7 @@
+ 
+ PACKAGE = sed
+ 
+-SUBDIRS = intl lib po sed doc testsuite
++SUBDIRS = lib po sed doc testsuite
+ 
+ noinst_DATA = bootstrap.sh
+ noinst_HEADERS = basicdefs.h
+Index: basicdefs.h
+===================================================================
+--- basicdefs.h.orig	2005-06-21 14:09:28.000000000 +0000
++++ basicdefs.h	2008-06-23 19:57:38.209033798 +0000
+@@ -96,12 +96,8 @@
+ #endif
+ 
+ 
+-/* Can the compiler grok function prototypes? */
+-#if (defined __STDC__ && __STDC__-0) || defined __GNUC__ || defined __SUNPRO_C || __PROTOTYPES
+-# define P_(s)		s
+-#else
+-# define P_(s)		()
+-#endif
++/* Function prototypes? */
++#define P_(s)		s
+ 
+ /* (VOID *) is the generic pointer type; some ancient compilers
+    don't know about (void *), and typically use (char *) instead.
+@@ -161,37 +157,35 @@
+    "... Some ctype macros are valid only for character codes that
+    isascii says are ASCII (SGI's IRIX-4.0.5 is one such system --when
+    using /bin/cc or gcc but without giving an ansi option).  So, all
+-   ctype uses should be through macros like ISPRINT...  If
++   ctype uses should be through macros like SED_ISPRINT...  If
+    STDC_HEADERS is defined, then autoconf has verified that the ctype
+    macros don't need to be guarded with references to isascii. ...
+    Defining isascii to 1 should let any compiler worth its salt
+    eliminate the && through constant folding."
+    Solaris defines some of these symbols so we must undefine them first. */
+ 
+-#undef ISASCII
+ #if defined STDC_HEADERS || (!defined isascii && !defined HAVE_ISASCII)
+-# define ISASCII(c) 1
++# define SED_ISASCII(c) 1
+ #else
+-# define ISASCII(c) isascii(c)
++# define SED_ISASCII(c) isascii(c)
+ #endif
+ 
+ #if defined isblank || defined HAVE_ISBLANK
+-# define ISBLANK(c) (ISASCII (c) && isblank (c))
++# define ISBLANK(c) (SED_ISASCII (c) && isblank (c))
+ #else
+ # define ISBLANK(c) ((c) == ' ' || (c) == '\t')
+ #endif
+ 
+-#undef ISPRINT
+-#define ISPRINT(c) (ISASCII (c) && isprint (c))
+-#define ISDIGIT(c) (ISASCII (c) && isdigit (c))
+-#define ISALNUM(c) (ISASCII (c) && isalnum (c))
+-#define ISALPHA(c) (ISASCII (c) && isalpha (c))
+-#define ISCNTRL(c) (ISASCII (c) && iscntrl (c))
+-#define ISLOWER(c) (ISASCII (c) && islower (c))
+-#define ISPUNCT(c) (ISASCII (c) && ispunct (c))
+-#define ISSPACE(c) (ISASCII (c) && isspace (c))
+-#define ISUPPER(c) (ISASCII (c) && isupper (c))
+-#define ISXDIGIT(c) (ISASCII (c) && isxdigit (c))
++#define SED_ISPRINT(c) (SED_ISASCII (c) && isprint (c))
++#define ISDIGIT(c) (SED_ISASCII (c) && isdigit (c))
++#define ISALNUM(c) (SED_ISASCII (c) && isalnum (c))
++#define ISALPHA(c) (SED_ISASCII (c) && isalpha (c))
++#define ISCNTRL(c) (SED_ISASCII (c) && iscntrl (c))
++#define ISLOWER(c) (SED_ISASCII (c) && islower (c))
++#define ISPUNCT(c) (SED_ISASCII (c) && ispunct (c))
++#define ISSPACE(c) (SED_ISASCII (c) && isspace (c))
++#define ISUPPER(c) (SED_ISASCII (c) && isupper (c))
++#define ISXDIGIT(c) (SED_ISASCII (c) && isxdigit (c))
+ 
+ #ifndef initialize_main
+ # ifdef __EMX__
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2006-02-03 09:23:48.000000000 +0000
++++ configure.ac	2008-06-23 19:53:48.026285833 +0000
+@@ -48,6 +48,7 @@
+ 		 wchar.h wctype.h sys/file.h mcheck.h, [], [],
+ 		 [AC_INCLUDES_DEFAULT])
+ AC_C_CONST
++AC_C_INLINE
+ AC_TYPE_SIZE_T
+ AC_CHECK_TYPE(ssize_t, int)
+ 
+@@ -117,7 +118,7 @@
+ 
+ AM_CONDITIONAL(BUILD_HTML, test "x$enable_html" != xno)
+ 
+-: ${TEXI2HTML=texi2html -monolithic}
++: ${TEXI2HTML="texi2html -monolithic"}
+ AC_SUBST(TEXI2HTML)
+ 
+ AC_MSG_CHECKING(how to build HTML documentation)
+@@ -143,22 +144,10 @@
+ 
+ AC_DEFUN([AM_MKINSTALLDIRS], [MKINSTALLDIRS="$mkdir_p" AC_SUBST(MKINSTALLDIRS)])
+ AM_GNU_GETTEXT_VERSION(0.14)
+-AM_GNU_GETTEXT(no-libtool, need-ngettext, ../intl)
+-AC_CONFIG_COMMANDS([gettext-fix], [
+-  sed -e '/^mkinstalldirs *=/a\' \
+-      -e "install_sh=$install_sh" \
+-      -e 's/^mkinstalldirs *=.*/mkinstalldirs=$(MKINSTALLDIRS)/' \
+-      intl/Makefile > intl/Makefile.tmp
+-  mv intl/Makefile.tmp intl/Makefile
+-  sed -e '/^mkinstalldirs *=/a\' \
+-      -e "install_sh=$install_sh" \
+-      -e 's/^mkinstalldirs *=.*/mkinstalldirs=$(MKINSTALLDIRS)/' \
+-      po/Makefile > po/Makefile.tmp
+-  mv po/Makefile.tmp po/Makefile], [
+-  install_sh="$install_sh"])
++AM_GNU_GETTEXT([external], [need-ngettext])
+ 
+ AC_CONFIG_FILES([bootstrap.sh], chmod +x bootstrap.sh)
+ AC_CONFIG_FILES([Makefile doc/Makefile \
+ lib/Makefile sed/Makefile testsuite/Makefile \
+-po/Makefile.in intl/Makefile])
++po/Makefile.in])
+ AC_OUTPUT
+Index: lib/regex_internal.h
+===================================================================
+--- lib/regex_internal.h.orig	2005-12-06 08:50:56.000000000 +0000
++++ lib/regex_internal.h	2008-06-23 17:45:01.099055447 +0000
+@@ -91,7 +91,6 @@
+ # define BE(expr, val) __builtin_expect (expr, val)
+ #else
+ # define BE(expr, val) (expr)
+-# define inline
+ #endif
+ 
+ /* Number of single byte character.  */
+Index: sed/execute.c
+===================================================================
+--- sed/execute.c.orig	2006-02-03 09:06:39.000000000 +0000
++++ sed/execute.c	2008-06-23 20:09:52.904130864 +0000
+@@ -505,11 +505,7 @@
+ 
+ static void output_line P_((const char *, size_t, bool, struct output *));
+ static void
+-output_line(text, length, nl, outf)
+-  const char *text;
+-  size_t length;
+-  bool nl;
+-  struct output *outf;
++output_line(const char *text, size_t length, bool nl, struct output *outf)
+ {
+   output_missing_newline(outf);
+ 
+@@ -748,10 +744,8 @@
+    Return zero if there is nothing left to input. */
+ static bool read_pattern_space P_((struct input *, struct vector *, bool));
+ static bool
+-read_pattern_space(input, the_program, append)
+-  struct input *input;
+-  struct vector *the_program;
+-  bool append;
++read_pattern_space(struct input *input, struct vector *the_program,
++		   bool append)
+ {
+   if (append_head) /* redundant test to optimize for common case */
+     dump_append_queue();
+@@ -974,9 +968,9 @@
+ 	 testsuite fail at 8to7.sed because the `l' command in fact will not
+ 	 convert the 8-bit characters. */
+ #if defined isascii || defined HAVE_ISASCII
+-      if (isascii(*p) && ISPRINT(*p)) {
++      if (isascii(*p) && SED_ISPRINT(*p)) {
+ #else
+-      if (ISPRINT(*p)) {
++      if (SED_ISPRINT(*p)) {
+ #endif
+ 	  *o++ = *p;
+ 	  if (*p == '\\')
+Index: doc/Makefile.am
+===================================================================
+--- doc/Makefile.am.orig	2005-09-23 14:08:59.000000000 +0000
++++ doc/Makefile.am	2008-06-23 17:53:27.631079804 +0000
+@@ -26,7 +26,6 @@
+ 
+ # This rule is used if --enable-html is passed
+ if BUILD_HTML
+-docdir = $(datadir)/doc
+ pkgdocdir = $(datadir)/doc/$(PACKAGE)-$(VERSION)
+ pkgdoc_DATA = sed.html
+ 
+Index: lib/regcomp.c
+===================================================================
+--- lib/regcomp.c.orig	2005-12-06 08:46:51.000000000 +0000
++++ lib/regcomp.c	2008-06-23 18:06:17.274579668 +0000
+@@ -558,7 +558,19 @@
+ static const bitset_t utf8_sb_map =
+ {
+   /* Set the first 128 bits.  */
+-  [0 ... 0x80 / BITSET_WORD_BITS - 1] = BITSET_WORD_MAX
++# if 4 * BITSET_WORD_BITS < ASCII_CHARS
++#  error "bitset_word_t is narrower than 32 bits"
++# elif 3 * BITSET_WORD_BITS < ASCII_CHARS
++  BITSET_WORD_MAX, BITSET_WORD_MAX, BITSET_WORD_MAX,
++# elif 2 * BITSET_WORD_BITS < ASCII_CHARS
++  BITSET_WORD_MAX, BITSET_WORD_MAX,
++# elif 1 * BITSET_WORD_BITS < ASCII_CHARS
++  BITSET_WORD_MAX,
++# endif
++  (BITSET_WORD_MAX
++   >> (SBC_MAX % BITSET_WORD_BITS == 0
++	? 0
++	: BITSET_WORD_BITS - SBC_MAX % BITSET_WORD_BITS))
+ };
+ #endif
+ 
+Index: sed/fmt.c
+===================================================================
+--- sed/fmt.c.orig	2005-06-21 14:09:47.000000000 +0000
++++ sed/fmt.c	2008-06-23 19:23:35.673062403 +0000
+@@ -20,6 +20,7 @@
+ #include "sed.h"
+ 
+ #include <stdio.h>
++#include <string.h>
+ #include <ctype.h>
+ #include <sys/types.h>
+ 
+Index: lib/utils.c
+===================================================================
+--- lib/utils.c.orig	2005-06-21 14:09:40.000000000 +0000
++++ lib/utils.c	2008-06-23 19:59:49.391065456 +0000
+@@ -55,19 +55,10 @@
+ static void do_ck_fclose P_((FILE *fp));
+ 
+ /* Print an error message and exit */
+-#if !defined __STDC__ || !(__STDC__-0)
+-# include <varargs.h>
+-# define VSTART(l,a)	va_start(l)
+-void
+-panic(str, va_alist)
+-  char *str;
+-  va_dcl
+-#else /*__STDC__*/
+ # include <stdarg.h>
+ # define VSTART(l,a)	va_start(l, a)
+ void
+ panic(const char *str, ...)
+-#endif /* __STDC__ */
+ {
+   va_list iggy;
+ 
+@@ -108,8 +99,7 @@
+ /* Internal routine to get a filename from open_files */
+ static const char *utils_fp_name P_((FILE *fp));
+ static const char *
+-utils_fp_name(fp)
+-  FILE *fp;
++utils_fp_name(FILE *fp)
+ {
+   struct open_file *p;
+ 
+@@ -128,10 +118,7 @@
+ 
+ /* Panic on failing fopen */
+ FILE *
+-ck_fopen(name, mode, fail)
+-  const char *name;
+-  const char *mode;
+-  bool fail;
++ck_fopen(const char *name, const char *mode, bool fail)
+ {
+   FILE *fp;
+   struct open_file *p;
+@@ -166,9 +153,7 @@
+ }
+ 
+ FILE *
+-ck_mkstemp (p_filename, tmpdir, base)
+-  char **p_filename;
+-  char *base, *tmpdir;
++ck_mkstemp (char **p_filename, char *tmpdir, char *base)
+ {
+   char *template;
+   FILE *fp;
+@@ -209,11 +194,7 @@
+ 
+ /* Panic on failing fwrite */
+ void
+-ck_fwrite(ptr, size, nmemb, stream)
+-  const VOID *ptr;
+-  size_t size;
+-  size_t nmemb;
+-  FILE *stream;
++ck_fwrite(const VOID *ptr, size_t size, size_t nmemb, FILE *stream)
+ {
+   clearerr(stream);
+   if (size && fwrite(ptr, size, nmemb, stream) != nmemb)
+@@ -224,11 +205,7 @@
+ 
+ /* Panic on failing fread */
+ size_t
+-ck_fread(ptr, size, nmemb, stream)
+-  VOID *ptr;
+-  size_t size;
+-  size_t nmemb;
+-  FILE *stream;
++ck_fread(VOID *ptr, size_t size, size_t nmemb, FILE *stream)
+ {
+   clearerr(stream);
+   if (size && (nmemb=fread(ptr, size, nmemb, stream)) <= 0 && ferror(stream))
+@@ -238,10 +215,7 @@
+ }
+ 
+ size_t
+-ck_getline(text, buflen, stream)
+-  char **text;
+-  size_t *buflen;
+-  FILE *stream;
++ck_getline(char **text, size_t *buflen, FILE *stream)
+ {
+   int result;
+   if (!ferror (stream))
+@@ -255,8 +229,7 @@
+ 
+ /* Panic on failing fflush */
+ void
+-ck_fflush(stream)
+-  FILE *stream;
++ck_fflush(FILE *stream)
+ {
+   clearerr(stream);
+   if (fflush(stream) == EOF && errno != EBADF)
+@@ -265,8 +238,7 @@
+ 
+ /* Panic on failing fclose */
+ void
+-ck_fclose(stream)
+-  FILE *stream;
++ck_fclose(FILE *stream)
+ {
+   struct open_file r;
+   struct open_file *prev;
+@@ -302,8 +274,7 @@
+ 
+ /* Close a single file. */
+ void
+-do_ck_fclose(fp)
+-  FILE *fp;
++do_ck_fclose(FILE *fp)
+ {
+   int fd;
+   ck_fflush(fp);
+@@ -317,9 +288,7 @@
+ 
+ /* Panic on failing rename */
+ void
+-ck_rename (from, to, unlink_if_fail)
+-  const char *from, *to;
+-  const char *unlink_if_fail;
++ck_rename (const char *from, const char *to, const char *unlink_if_fail)
+ {
+   int rd = rename (from, to);
+   if (rd != -1)
+@@ -346,8 +315,7 @@
+ 
+ /* Panic on failing malloc */
+ VOID *
+-ck_malloc(size)
+-  size_t size;
++ck_malloc(size_t size)
+ {
+   VOID *ret = calloc(1, size ? size : 1);
+   if (!ret)
+@@ -357,17 +325,14 @@
+ 
+ /* Panic on failing malloc */
+ VOID *
+-xmalloc(size)
+-  size_t size;
++xmalloc(size_t size)
+ {
+   return ck_malloc(size);
+ }
+ 
+ /* Panic on failing realloc */
+ VOID *
+-ck_realloc(ptr, size)
+-  VOID *ptr;
+-  size_t size;
++ck_realloc(VOID *ptr, size_t size)
+ {
+   VOID *ret;
+ 
+@@ -386,8 +351,7 @@
+ 
+ /* Return a malloc()'d copy of a string */
+ char *
+-ck_strdup(str)
+-  const char *str;
++ck_strdup(const char *str)
+ {
+   char *ret = MALLOC(strlen(str)+1, char);
+   return strcpy(ret, str);
+@@ -395,9 +359,7 @@
+ 
+ /* Return a malloc()'d copy of a block of memory */
+ VOID *
+-ck_memdup(buf, len)
+-  const VOID *buf;
+-  size_t len;
++ck_memdup(const VOID *buf, size_t len)
+ {
+   VOID *ret = ck_malloc(len);
+   return memcpy(ret, buf, len);
+@@ -405,8 +367,7 @@
+ 
+ /* Release a malloc'd block of memory */
+ void
+-ck_free(ptr)
+-  VOID *ptr;
++ck_free(VOID *ptr)
+ {
+   if (ptr)
+     free(ptr);
+@@ -436,24 +397,20 @@
+ }
+ 
+ char *
+-get_buffer(b)
+-  struct buffer *b;
++get_buffer(struct buffer *b)
+ {
+   return b->b;
+ }
+ 
+ size_t
+-size_buffer(b)
+-  struct buffer *b;
++size_buffer(struct buffer *b)
+ {
+   return b->length;
+ }
+ 
+ static void resize_buffer P_((struct buffer *b, size_t newlen));
+ static void
+-resize_buffer(b, newlen)
+-  struct buffer *b;
+-  size_t newlen;
++resize_buffer(struct buffer *b, size_t newlen)
+ {
+   char *try = NULL;
+   size_t alen = b->allocated;
+@@ -473,10 +430,7 @@
+ }
+ 
+ char *
+-add_buffer(b, p, n)
+-  struct buffer *b;
+-  const char *p;
+-  size_t n;
++add_buffer(struct buffer *b, const char *p, size_t n)
+ {
+   char *result;
+   if (b->allocated - b->length < n)
+@@ -487,9 +441,7 @@
+ }
+ 
+ char *
+-add1_buffer(b, c)
+-  struct buffer *b;
+-  int c;
++add1_buffer(struct buffer *b, int c)
+ {
+   /* This special case should be kept cheap;
+    *  don't make it just a mere convenience
+@@ -511,8 +463,7 @@
+ }
+ 
+ void
+-free_buffer(b)
+-  struct buffer *b;
++free_buffer(struct buffer *b)
+ {
+   if (b)
+     FREE(b->b);
+Index: sed/compile.c
+===================================================================
+--- sed/compile.c.orig	2006-02-03 09:06:26.000000000 +0000
++++ sed/compile.c	2008-06-23 20:08:39.454546034 +0000
+@@ -376,10 +376,7 @@
+ 
+ static struct output *get_openfile P_((struct output **file_ptrs, char *mode, bool fail));
+ static struct output *
+-get_openfile(file_ptrs, mode, fail)
+-     struct output **file_ptrs;
+-     char *mode;
+-     bool fail;
++get_openfile(struct output **file_ptrs, char *mode, bool fail)
+ {
+   struct buffer *b;
+   char *file_name;
+@@ -531,9 +528,7 @@
+ 
+ static struct buffer *match_slash P_((int slash, bool regex));
+ static struct buffer *
+-match_slash(slash, regex)
+-  int slash;
+-  bool regex;
++match_slash(int slash, bool regex)
+ {
+   struct buffer *b;
+   int ch;

@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="mod_perl" version="1.99_14">
+    <package-manager name="pkgadd">
+      <category>Development/Languages</category>
+      <title>mod_perl embedded Apache Perl interpreter</title>
+      <vendor>Apache Software Foundation</vendor>
+
+      <description>
+mod_perl brings together the full power of the Perl programming
+language and the Apache HTTP server. You can use Perl to manage
+Apache, respond to requests for web pages and much more.
+
+mod_perl gives you a persistent Perl interpreter embedded in your web
+server. This lets you avoid the overhead of starting an external
+interpreter and avoids the penalty of Perl start-up time, giving you
+super-fast dynamic content.
+      </description>
+
+      <install-name>modperl20</install-name>
+
+      <pkgname-base>TWWmpl20</pkgname-base>
+
+      <version>1.99.14</version>
+      <revision>1</revision>
+
+      <variable>
+        <path name="APACHE"
+          install-name="apache2049"></path>
+        <path name="PERL_INCLUDE_PATHS"
+          install-name="perl582">etc/include.paths</path>
+      </variable>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWa2049"
+          title="Apache Web Server"
+          subpkg="runtime">v&gt;=2.0.49</depend>
+        <depend pkgname-base="TWWa2049"
+          title="Apache Web Server"
+          subpkg="conf">v&gt;=2.0.49</depend>
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWpl582"
+          title="Perl Programming Language"
+          subpkg="runtime">v&gt;=5.8.2</depend>
+
+        <postinstall path="pkg/add-to-httpd.conf"
+          checksum="e62fe740ca712f9c29586f6fd6dc75f3"
+          checksum-type="md5" size="4534"/>
+        <preremove path="pkg/remove-from-httpd.conf"
+          checksum="2410769a7b8bc88a3d516f789f3cde17"
+          checksum-type="md5" size="2788"/>
+      </subpkg>
+    </package-manager>
+  </package>
+</packages>

@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="findlib" version="1.2.4" revision="2"
+  systype="*-aix*|*-hpux11*|*-linux*|*-osf5*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>ocaml31p</install-name>
+
+    <sources>
+      <source checksum="52cfcacff3e07a94bc3adb977fbb3c07"
+        checksum-type="md5" size="161667"
+        path="src/findlib-1.2.4.tar.gz"/>
+      <patch checksum="f281abb77930e4875716775e2b859471"
+        checksum-type="md5" size="874"
+        path="src/findlib-1.2.4.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ocaml" install-name="ocaml31"
+        add-path="prepend" type="build">v&gt;=3.11.0</depend>
+      <depend program="gcc" add-path="prepend"
+        systype="*-hpux*">v==4.4.6</depend>
+      <depend program="gcc" append="hppa1.1-hp-hpux11.00/bin"
+        add-path="prepend" systype="*-hpux11.00">v==4.4.6</depend>
+      <depend program="gcc" append="hppa1.1-hp-hpux11.11/bin"
+        add-path="prepend" systype="*-hpux11.11">v==4.4.6</depend>
+      <depend program="gcc" append="hppa2.0-hp-hpux11.23/bin"
+        add-path="prepend"
+        systype="hppa*-hpux11.23">v==4.4.6</depend>
+      <depend program="gcc" append="ia64-hp-hpux11.23/bin"
+        add-path="prepend"
+        systype="ia64*-hpux11.23">v==4.4.6</depend>
+      <depend program="gcc" append="hppa2.0-hp-hpux11.31/bin"
+        add-path="prepend"
+        systype="hppa2.0w-hp-hpux11.31">v==4.4.6</depend>
+      <depend program="gcc" append="ia64-hp-hpux11.31/bin"
+        add-path="prepend"
+        systype="ia64*-hpux11.31">v==4.4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SHELL} ./configure -bindir "${SB_INSTALL_PREFIX}/bin" \
+-mandir "${SB_INSTALL_PREFIX}/man" \
+-sitelib "${SB_INSTALL_PREFIX_LIB}/site" \
+-config "${_sysconfdir}/findlib.conf" -no-topfind
+]]>
+    </configure>
+
+    <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/bin/ocamlfind \
+${SB_INSTALL_PREFIX}/bin/safe_camlp4 \
+${SB_INSTALL_PREFIX}/etc/findlib.conf \
+${SB_INSTALL_PREFIX}/man/man1/ocamlfind.1 \
+${SB_INSTALL_PREFIX}/man/man5/META.5 \
+${SB_INSTALL_PREFIX}/man/man5/site-lib.5 \
+${SB_INSTALL_PREFIX}/man/man5/findlib.conf.5
+rm -rf ${SB_INSTALL_PREFIX}/lib/site \
+${SB_INSTALL_PREFIX}/lib/stublibs
+
+rmdir ${SB_INSTALL_PREFIX}/bin || :
+rmdir ${SB_INSTALL_PREFIX}/etc || :
+rmdir ${SB_INSTALL_PREFIX}/man/man1 || :
+rmdir ${SB_INSTALL_PREFIX}/man/man5 || :
+rmdir ${SB_INSTALL_PREFIX}/man || :
+]]>
+    </uninstall>
+
+    <changelog>
+      <change date="2012 January 20" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="wv" version="1.2.9" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="dbccf2e9f747e50c913b7e3d126b73f7"
+        checksum-type="md5" size="616256"
+        path="src/wv-1.2.9.tar.gz"/>
+      <patch checksum="e27787d05628b9fbc6ad2fe6b6d14b9c"
+        checksum-type="md5" size="18974"
+        path="src/wv-1.2.9.tww.patch"/>
+      <patch checksum="e0e13652c2922fe4feecd6a108501ac5"
+        checksum-type="md5" size="1701442"
+        path="src/wv-1.2.9.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="gnome" var="LIBGSF" install-name="gnome232"
+        module="libgsf">v&gt;=2.32</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libwmf" var="LIBWMF"
+        install-name="libwmf02">v&gt;=0.2.8</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGSF+${SB_VAR_LIBGSF_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML_LIB}/pkgconfig" \
+--with-zlib${SB_VAR_LIBZ+=${SB_VAR_LIBZ}} \
+--with-png${SB_VAR_LIBPNG+=${SB_VAR_LIBPNG}} \
+--with-libwmf=${SB_VAR_LIBWMF} --disable-dependency-tracking \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" wv-1.0.pc
+]]>
+    </configure>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+  </program>
+</programs>

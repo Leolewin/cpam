@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libglade" version="2.3.6" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}23</install-name>
+
+    <sources>
+      <source checksum="f579c881b95e6dee0f55f82940eb2004"
+        checksum-type="md5" size="343224"
+        path="src/libglade-2.3.6.tar.bz2"/>
+      <patch checksum="8cd6341e14bd721627d95700b2f75260"
+        checksum-type="md5" size="733289"
+        path="src/libglade-2.3.6.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk16">v&gt;=1.6.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v==2.1.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib24">v&gt;=2.4.4</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+24">v&gt;=2.4.4</depend>
+      <depend program="gtk-doc" install-name="gtkdoc12"
+        add-path="prepend"
+        systype="*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*"
+        type="build">v&gt;=1.2</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml26"
+        add-path="prepend">v&gt;=2.6.11</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango14">v&gt;=1.4.0</depend>
+      <depend program="python" add-path="prepend"
+        type="build">v==2.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  # override system Xft
+  CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC}"
+  LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB}"
+
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${SB_VAR_LIBATK_LIB}:\
+${SB_VAR_LIBGLIB_LIB}:${SB_VAR_LIBGTK_LIB}:${SB_VAR_LIBPANGO_LIB}:\
+${SB_VAR_LIBXML_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--disable-dependency-tracking --datadir=${_datadir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+for _pc in libglade-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ${_pc}
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake TARGET_DIR="${_docdir}/html"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install TARGET_DIR="${_docdir}/html"
+]]>
+    </install>
+
+    <notes>
+      <change from="2.3.2" to="2.3.6">
+        <item><para>Implement support GtkComboBoxEntry, GtkToolItem,
+GtkToolButton, GtkToggleToolButton, GtkRadioToolButton, and
+GtkSeparatorToolItem</para></item>
+        <item><para>Fix automake warning</para></item>
+        <item><para>Add libglade version number to the
+docs</para></item>
+        <item><para>Fix usage of C++ keyword as an argument
+name</para></item>
+        <item><para>Allow additional signal parameter for
+glademm</para></item>
+        <item><para>Support tooltips in toolbars</para></item>
+      </change>
+
+      <change from="2.3.1" to="2.3.2">
+        <item><para>Support disambiguating msgids by prefixing them
+with a context string</para></item>
+      </change>
+
+      <change from="2.0.1" to="2.3.1">
+        <item><para>Register GtkColorButton, GtkComboBox,
+GtkFileChooser and GtkFontButton types</para></item>
+        <item><para>Implemement support for GtkExpander</para></item>
+        <item><para>Fix memory leak and incorrect colour map
+usage</para></item>
+        <item><para>Win32 build support</para></item>
+        <item><para>Build fixes</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

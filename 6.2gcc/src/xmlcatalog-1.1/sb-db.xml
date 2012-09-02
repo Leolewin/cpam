@@ -1,0 +1,1240 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="xmlcatalog" version="1.1" revision="1">
+    <install-name>${SB_PROG_NAME}11</install-name>
+
+    <dependencies>
+      <depend program="libxml" var="LIBXML" install-name="libxml26"
+        type="build">v&gt;=2.6.11</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_docbook_xml_catalog="${_datadir}/docbook/catalog.xml"
+_docbook_sgml_catalog="${_datadir}/docbook/catalog.sgml"
+_ent_catalog="${_datadir}/entities/catalog.xml"
+_sgml_catalog="${SB_INSTALL_PREFIX}/catalog.sgml"
+_xml_catalog="${SB_INSTALL_PREFIX}/catalog.xml"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+:
+]]>
+    </build>
+
+    <module name="docbook-xsl-1.65">
+      <build-name>docbook-xsl-1.65.1</build-name>
+
+      <sources>
+        <source checksum="2f7d446de5523ec34a19ccbe8caf387f"
+          checksum-type="md5" size="1540437"
+          path="src/docbook-xsl-1.65.1.tar.gz"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_xsl_datadir="${_datadir}/docbook/xsl-stylesheet-1.65"
+_xsl_docdir="${_docdir}/docbook/xsl-stylesheet-1.65"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_xsl_datadir} ${_xsl_docdir}
+
+(cd ${_xsl_datadir} || exit 1
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d css common extensions fo html \
+htmlhelp images/callouts javahelp lib params profiling tools/olink \
+tools/profile manpages xhtml)
+
+# doc files
+${SB_PATH_INSTALL} -m 644 -o root -g 0 README RELEASE-NOTES.html \
+RELEASE-NOTES.xml ${_xsl_docdir}
+(cd doc
+${SB_PATH_TAR} cf - * | (cd ${_xsl_docdir}; ${SB_PATH_TAR} xf -)
+rm ${_xsl_docdir}/ChangeLog)
+${SB_PATH_CHOWN} -hR 0:0 ${_xsl_docdir}
+${SB_PATH_FIND} ${_xsl_docdir} -type d -exec chmod 755 {} \;
+${SB_PATH_FIND} ${_xsl_docdir} -type f -exec chmod 644 {} \;
+
+# data files
+${SB_PATH_INSTALL} -m 644 -o root -g 0 VERSION ${_xsl_datadir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 common/*.* ${_xsl_datadir}/common
+${SB_PATH_INSTALL} -m 644 -o root -g 0 extensions/*.jar \
+${_xsl_datadir}/extensions
+${SB_PATH_INSTALL} -m 644 -o root -g 0 fo/*.* ${_xsl_datadir}/fo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 html/*.* ${_xsl_datadir}/html
+${SB_PATH_INSTALL} -m 644 -o root -g 0 htmlhelp/*.* ${_xsl_datadir}/htmlhelp
+${SB_PATH_INSTALL} -m 644 -o root -g 0 images/*.* ${_xsl_datadir}/images
+${SB_PATH_INSTALL} -m 644 -o root -g 0 images/callouts/*.* \
+${_xsl_datadir}/images/callouts
+${SB_PATH_INSTALL} -m 644 -o root -g 0 javahelp/*.* ${_xsl_datadir}/javahelp
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/*.* ${_xsl_datadir}/lib
+${SB_PATH_INSTALL} -m 644 -o root -g 0 manpages/*.* ${_xsl_datadir}/manpages
+${SB_PATH_INSTALL} -m 644 -o root -g 0 params/*.* ${_xsl_datadir}/params
+${SB_PATH_INSTALL} -m 644 -o root -g 0 profiling/*.* \
+${_xsl_datadir}/profiling
+${SB_PATH_INSTALL} -m 644 -o root -g 0 tools/olink/*.* \
+${_xsl_datadir}/tools/olink
+${SB_PATH_INSTALL} -m 644 -o root -g 0 tools/profile/*.* \
+${_xsl_datadir}/tools/profile
+${SB_PATH_INSTALL} -m 644 -o root -g 0 xhtml/*.* ${_xsl_datadir}/xhtml
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/*.css ${_xsl_datadir}/css
+
+# add entry to catalog
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteSystem" "http://docbook.sourceforge.net/release/xsl/current" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteURI" "http://docbook.sourceforge.net/release/xsl/current" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_xsl_datadir="${_datadir}/docbook/xsl-stylesheet-1.65"
+_xsl_docdir="${_docdir}/docbook/xsl-stylesheet-1.65"
+
+# remove super catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} docbook-xsl >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "http://docbook.sourceforge.net/release/xsl/current" ${_xml_catalog}
+}
+
+rm -rf ${_xsl_datadir} ${_xsl_docdir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+rmdir ${_docdir}/docbook 2>/dev/null
+rmdir ${_docdir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-xml-4.1.2">
+      <build-name>docbook-xml-4.1.2</build-name>
+
+      <sources>
+        <source checksum="0d5a4a999a2d7b2e77a46bd069301caf"
+          checksum-type="md5" size="75570"
+          path="src/docbkx412.zip"
+          destdir="docbook-xml-4.1.2"/>
+        <patch checksum="e90a4ad4612b6c0b15215a2fd22f29ef"
+          checksum-type="md5" size="2108"
+          path="src/docbkx412.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="xmlcatalog"
+          module="xml-entities">v==1.1</depend>
+      </dependencies>
+
+      <install>
+<![CDATA[
+_docbook_xml_catalog="${_datadir}/docbook/catalog.xml"
+
+# create super catalog if it doesn't exist
+if [ ! -f ${_xml_catalog} ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(dirname ${_xml_catalog})
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create ${_xml_catalog}
+fi
+
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.1.2"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}/ent
+
+# create Docbook XML catalog if it doesn't exist
+if [ ! -f ${_docbook_xml_catalog} ]; then
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create \
+  ${_docbook_xml_catalog}
+fi
+
+# create entry in super catalog to Docbook XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateSystem" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateURI" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+
+for _file in calstblx.dtd dbcentx.mod dbgenent.mod dbhierx.mod \
+dbnotnx.mod dbpoolx.mod docbookx.dtd soextblx.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+for _file in ent/*; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}/ent
+done
+
+# install XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML CALS Table Model V4.1.2//EN" \
+  "xml-dtd-4.1.2/calstblx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML V4.1.2//EN" \
+  "xml-dtd-4.1.2/docbookx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD XML Exchange Table Model 19990315//EN" \
+  "xml-dtd-4.1.2/soextblx.dtd" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Character Entities V4.1.2//EN" \
+  "xml-dtd-4.1.2/dbcentx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" \
+  "-//OASIS//ENTITIES DocBook XML Additional General Entities V4.1.2//EN" \
+  "xml-dtd-4.1.2/dbgenent.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Document Hierarchy V4.1.2//EN" \
+  "xml-dtd-4.1.2/dbhierx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Notations V4.1.2//EN" \
+  "xml-dtd-4.1.2/dbnotnx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Information Pool V4.1.2//EN" \
+  "xml-dtd-4.1.2/dbpoolx.mod" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteSystem" "http://www.oasis-open.org/docbook/xml/4.1.2" \
+  "xml-dtd-4.1.2" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteURI" "http://www.oasis-open.org/docbook/xml/4.1.2" \
+  "xml-dtd-4.1.2" ${_docbook_xml_catalog}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.1.2"
+
+# remove XML catalog entries
+for _file in calstblx.dtd docbookx.dtd soextblx.dtd dbcentx.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod; do
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "xml-dtd-4.1.2/${_file}" ${_docbook_xml_catalog}
+done
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+  "xml-dtd-4.1.2" ${_docbook_xml_catalog}
+
+# remove super catalog entries
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} docbook-xml >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "file://${_docbook_xml_catalog}" ${_xml_catalog}
+}
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-xml-4.2">
+      <build-name>docbook-xml-4.2</build-name>
+
+      <sources>
+        <source checksum="73fe50dfe74ca631c1602f558ed8961f"
+          checksum-type="md5" size="78428"
+          path="src/docbook-xml-4.2.zip"
+          destdir="docbook-xml-4.2"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="xmlcatalog"
+          module="xml-entities">v==1.1</depend>
+      </dependencies>
+
+      <install>
+<![CDATA[
+_docbook_xml_catalog="${_datadir}/docbook/catalog.xml"
+
+# create super catalog if it doesn't exist
+if [ ! -f ${_xml_catalog} ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(dirname ${_xml_catalog})
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create ${_xml_catalog}
+fi
+
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.2"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}/ent
+
+# create Docbook XML catalog if it doesn't exist
+if [ ! -f ${_docbook_xml_catalog} ]; then
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create \
+  ${_docbook_xml_catalog}
+fi
+
+# create entry in super catalog to Docbook XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateSystem" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateURI" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+
+for _file in calstblx.dtd catalog.xml dbcentx.mod dbgenent.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod docbookx.dtd soextblx.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+for _file in ent/*; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}/ent
+done
+
+# install XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML CALS Table Model V4.2//EN" \
+  "xml-dtd-4.2/calstblx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML V4.2//EN" \
+  "xml-dtd-4.2/docbookx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD XML Exchange Table Model 19990315//EN" \
+  "xml-dtd-4.2/soextblx.dtd" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Character Entities V4.2//EN" \
+  "xml-dtd-4.2/dbcentx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" \
+  "-//OASIS//ENTITIES DocBook XML Additional General Entities V4.2//EN" \
+  "xml-dtd-4.2/dbgenent.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Document Hierarchy V4.2//EN" \
+  "xml-dtd-4.2/dbhierx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Notations V4.2//EN" \
+  "xml-dtd-4.2/dbnotnx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Information Pool V4.2//EN" \
+  "xml-dtd-4.2/dbpoolx.mod" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteSystem" "http://www.oasis-open.org/docbook/xml/4.2" \
+  "xml-dtd-4.2" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteURI" "http://www.oasis-open.org/docbook/xml/4.2" \
+  "xml-dtd-4.2" ${_docbook_xml_catalog}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.2"
+
+# remove XML catalog entries
+for _file in calstblx.dtd docbookx.dtd soextblx.dtd dbcentx.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod; do
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "xml-dtd-4.2/${_file}" ${_docbook_xml_catalog}
+done
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+  "xml-dtd-4.2" ${_docbook_xml_catalog}
+
+# remove super catalog entries
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} docbook-xml >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "file://${_docbook_xml_catalog}" ${_xml_catalog}
+}
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-xml-4.3">
+      <build-name>docbook-xml-4.3</build-name>
+
+      <sources>
+        <source checksum="ab200202b9e136a144db1e0864c45074"
+          checksum-type="md5" size="83865"
+          path="src/docbook-xml-4.3.zip"
+          destdir="docbook-xml-4.3"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="xmlcatalog"
+          module="xml-entities">v==1.1</depend>
+      </dependencies>
+
+      <install>
+<![CDATA[
+_docbook_xml_catalog="${_datadir}/docbook/catalog.xml"
+
+# create super catalog if it doesn't exist
+if [ ! -f ${_xml_catalog} ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(dirname ${_xml_catalog})
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create ${_xml_catalog}
+fi
+
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.3"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}/ent
+
+# add entry Docbook XML catalog
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateSystem" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateURI" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+
+# create Docbook XML catalog if it doesn't exist
+if [ ! -f ${_docbook_xml_catalog} ]; then
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create \
+  ${_docbook_xml_catalog}
+fi
+
+# create entry in super catalog to Docbook XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateSystem" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateURI" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+
+for _file in calstblx.dtd catalog.xml dbcentx.mod dbgenent.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod docbookx.dtd soextblx.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+for _file in ent/*; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}/ent
+done
+
+# install XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML CALS Table Model V4.3//EN" \
+  "xml-dtd-4.3/calstblx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML V4.3//EN" \
+  "xml-dtd-4.3/docbookx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD XML Exchange Table Model 19990315//EN" \
+  "xml-dtd-4.3/soextblx.dtd" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Character Entities V4.3//EN" \
+  "xml-dtd-4.3/dbcentx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" \
+  "-//OASIS//ENTITIES DocBook XML Additional General Entities V4.3//EN" \
+  "xml-dtd-4.3/dbgenent.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Document Hierarchy V4.3//EN" \
+  "xml-dtd-4.3/dbhierx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Notations V4.3//EN" \
+  "xml-dtd-4.3/dbnotnx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Information Pool V4.3//EN" \
+  "xml-dtd-4.3/dbpoolx.mod" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteSystem" "http://www.oasis-open.org/docbook/xml/4.3" \
+  "xml-dtd-4.3" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteURI" "http://www.oasis-open.org/docbook/xml/4.3" \
+  "xml-dtd-4.3" ${_docbook_xml_catalog}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.3"
+
+# remove XML catalog entries
+for _file in calstblx.dtd docbookx.dtd soextblx.dtd dbcentx.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod; do
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "xml-dtd-4.3/${_file}" ${_docbook_xml_catalog}
+done
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+  "xml-dtd-4.3" ${_docbook_xml_catalog}
+
+# remove super catalog entries
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} docbook-xml >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "file://${_docbook_xml_catalog}" ${_xml_catalog}
+}
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-sgml-4.2">
+      <build-name>docbook-4.2</build-name>
+
+      <sources>
+        <source checksum="0dfeb94569334dd22a62d90d99fc0630"
+          checksum-type="md5" size="61830"
+          path="src/docbook-4.2.zip"
+          destdir="docbook-4.2"/>
+        <patch checksum="5f0e5182f330d36527dd4f71b51d0b08"
+          checksum-type="md5" size="2461"
+          path="src/docbook-4.2.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.2"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}
+
+for _file in calstblx.dtd catalog.xml dbcentx.mod dbgenent.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod docbook.dcl docbook.dtd \
+docbookx.dtd soextblx.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+
+# install catalog
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docbook.cat \
+${_dtd_datadir}/catalog.sgml
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install 4.2 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.2"
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+# remove 4.2 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-sgml-4.3">
+      <build-name>docbook-4.3</build-name>
+
+      <sources>
+        <source checksum="e3beb1b0b2923c24fa55a68e88654b01"
+          checksum-type="md5" size="66117"
+          path="src/docbook-4.3.zip"
+          destdir="docbook-4.3"/>
+        <patch checksum="ab2b914caa79477b70c69c6440d4cc68"
+          checksum-type="md5" size="2481"
+          path="src/docbook-4.3.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.3"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}
+
+for _file in calstblx.dtd dbcentx.mod dbgenent.mod dbhierx.mod \
+dbnotnx.mod dbpoolx.mod docbook.dcl docbook.dtd docbookx.dtd \
+soextblx.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+
+# install catalog
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docbook.cat \
+${_dtd_datadir}/catalog.sgml
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install 4.3 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.3"
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+# remove 4.3 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-sgml-4.0">
+      <build-name>docbook-4.0</build-name>
+
+      <sources>
+        <source checksum="fabcf7dd1d88b94797b7e5344389eab9"
+          checksum-type="md5" size="55742"
+          path="src/docbk40.zip"
+          destdir="docbook-4.0"/>
+        <patch checksum="332fa521569851fc4e265c8686cfe27f"
+          checksum-type="md5" size="2569"
+          path="src/docbk40.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.0"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}
+
+for _file in dbcent.mod dbgenent.mod dbhier.mod dbnotn.mod \
+dbpool.mod docbook.dcl docbook.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+
+# install catalog
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docbook.cat \
+${_dtd_datadir}/catalog.sgml
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install 4.0 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.0"
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+# remove 4.0 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-sgml-4.1">
+      <build-name>docbook-4.1</build-name>
+
+      <sources>
+        <source checksum="489f6ff2a2173eb1e14216c10533ede2"
+          checksum-type="md5" size="56654"
+          path="src/docbk41.zip"
+          destdir="docbook-4.1"/>
+        <patch checksum="998973b3c0c8d7c08f5807bcbd483082"
+          checksum-type="md5" size="2569"
+          path="src/docbk41.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.1"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}
+
+for _file in cals-tbl.dtd dbcent.mod dbgenent.mod dbhier.mod \
+dbnotn.mod dbpool.mod docbook.dcl docbook.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+
+# install catalog
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docbook.cat \
+${_dtd_datadir}/catalog.sgml
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install 4.1 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-4.1"
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+# remove 4.1 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-dsssl-1.78">
+      <build-name>docbook-dsssl-1.78</build-name>
+
+      <sources>
+        <source checksum="f60521a38bd425e76f50d3f15b0325c0"
+          checksum-type="md5" size="388310"
+          path="src/docbook-dsssl-1.78.tar.gz"/>
+        <source checksum="880781543d103345b62919fa3f8cc263"
+          checksum-type="md5" size="237519"
+          path="src/docbook-dsssl-doc-1.78.tar.gz"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_dsssl_datadir="${_datadir}/docbook/dsssl-1.78"
+_dsssl_docdir="${_docdir}/docbook/dsssl-1.78"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dsssl_datadir} ${_dsssl_docdir}
+
+(cd ${_dsssl_datadir} || exit 1
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(cd ${SB_BUILD_PREFIX}; \
+${SB_PATH_FIND} images dtds common lib html print olink -type d))
+
+# doc files
+${SB_PATH_INSTALL} -m 644 -o root -g 0 README ${_dsssl_docdir}
+(cd doc
+${SB_PATH_TAR} cf - * | (cd ${_dsssl_docdir}; ${SB_PATH_TAR} xf -)
+rm ${_dsssl_docdir}/ChangeLog)
+${SB_PATH_CHOWN} -hR 0:0 ${_dsssl_docdir}
+${SB_PATH_FIND} ${_dsssl_docdir} -type d -exec chmod 755 {} \;
+${SB_PATH_FIND} ${_dsssl_docdir} -type f -exec chmod 644 {} \;
+
+# data files
+for _file in $(${SB_PATH_FIND} catalog images common lib html \
+print olink -type f); do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dsssl_datadir}/${_file}
+done
+for _file in $(${SB_PATH_FIND} dtds \( -name \*.dcl -o -name \*.dtd \
+-o -name \*.gml \)); do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dsssl_datadir}/${_file}
+done
+${SB_PATH_INSTALL} -m 644 -o root -g 0 VERSION ${_dsssl_datadir}
+
+# collateindex binary
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_INSTALL} -m 755 -o root -g 0 bin/collateindex.pl \
+${SB_INSTALL_PREFIX}/bin
+${SB_PATH_SHTOOL} subst -e "\
+s!/usr/bin/perl!${SB_VAR_PERL}/bin/perl!" \
+${SB_INSTALL_PREFIX}/bin/collateindex.pl
+${SB_PATH_INSTALL} -m 755 -o root -g 0 bin/collateindex.pl.1 \
+${SB_INSTALL_PREFIX}/man/man1
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install DSSSL catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dsssl_datadir}/catalog
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dsssl_datadir}/common/catalog
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dsssl_datadir="${_datadir}/docbook/dsssl-1.78"
+_dsssl_docdir="${_docdir}/docbook/dsssl-1.78"
+
+rm -rf ${_dsssl_datadir} ${_dsssl_docdir}
+
+rmdir ${_datadir}/docbook/dsssl-1.78 2>/dev/null
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+rmdir ${_docdir}/docbook/dsssl-1.78 2>/dev/null
+rmdir ${_docdir}/docbook 2>/dev/null
+rmdir ${_docdir} 2>/dev/null
+
+# remove DSSSL catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dsssl_datadir}/common/catalog
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dsssl_datadir}/catalog
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="sgml-entities">
+      <build-name>ISOEnts</build-name>
+
+      <sources>
+        <source checksum="c8a9561212c1a2ec6e48919640de9c67"
+          checksum-type="md5" size="20510"
+          path="src/ISOEnts.zip"
+          destdir="ISOEnts"/>
+        <patch checksum="dec4aec0fbb346a98ec997b38f4c8232"
+          checksum-type="md5" size="2117"
+          path="src/ISOEnts.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_ent_datadir="${_datadir}/entities/${SB_MODULE_NAME}-8879.1986"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_ent_datadir}
+
+for _file in ISO*; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} \
+  ${_ent_datadir}/${_file}.ent
+done
+${SB_PATH_INSTALL} -m 644 -o root -g 0 catalog \
+${_ent_datadir}/catalog.sgml
+
+# install catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_ent_datadir}/catalog.sgml
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_ent_datadir="${_datadir}/entities/${SB_MODULE_NAME}-8879.1986"
+
+# remove super catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_sgml_catalog} ${_ent_datadir}/catalog.sgml
+
+rm -rf ${_ent_datadir}
+
+rmdir ${_datadir}/entities 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="xml-entities">
+      <build-name>xmlcharent-0.3</build-name>
+
+      <sources>
+        <source checksum="3d962edaeb7be357ad0614ab3271dc41"
+          checksum-type="md5" size="29705"
+          path="src/xmlcharent-0.3.zip"
+          destdir="xmlcharent-0.3"/>
+        <patch checksum="f42a33688c58e4c54b906bc030672460"
+          checksum-type="md5" size="5588"
+          path="src/xmlcharent-0.3.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_ent_datadir="${_datadir}/entities/${SB_MODULE_NAME}-8879.1986"
+_ent_subdir=$(basename ${_ent_datadir})
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_ent_datadir}
+
+for _file in iso-*; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} \
+  ${_ent_datadir}/${_file}
+done
+
+# create super catalog if it doesn't exist
+if [ ! -f ${_xml_catalog} ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(dirname ${_xml_catalog})
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create ${_xml_catalog}
+fi
+
+# create Docbook XML catalog if it doesn't exist
+if [ ! -f ${_ent_catalog} ]; then
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create ${_ent_catalog}
+fi
+
+# create entry in super catalog to Docbook XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//ENTITIES DocBook XML" \
+  "file://${_ent_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "ISO 8879:1986" \
+  "file://${_ent_catalog}" ${_xml_catalog}
+
+# install XML character catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" \
+  "ISO 8879:1986//ENTITIES Added Math Symbols: Arrow Relations//EN" \
+  "${_ent_subdir}/iso-amsa.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" \
+  "ISO 8879:1986//ENTITIES Added Math Symbols: Binary Operators//EN" \
+  "${_ent_subdir}/iso-amsb.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Added Math Symbols: Delimiters//EN" \
+  "${_ent_subdir}/iso-amsc.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" \
+  "ISO 8879:1986//ENTITIES Added Math Symbols: Negated Relations//EN" \
+  "${_ent_subdir}/iso-amsn.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Added Math Symbols: Ordinary//EN" \
+  "${_ent_subdir}/iso-amso.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Added Math Symbols: Relations//EN" \
+  "${_ent_subdir}/iso-amsr.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Box and Line Drawing//EN" \
+  "${_ent_subdir}/iso-box.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Russian Cyrillic//EN" \
+  "${_ent_subdir}/iso-cyr1.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Non-Russian Cyrillic//EN" \
+  "${_ent_subdir}/iso-cyr2.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Diacritical Marks//EN" \
+  "${_ent_subdir}/iso-dia.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Greek Letters//EN" \
+  "${_ent_subdir}/iso-grk1.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Monotoniko Greek//EN" \
+  "${_ent_subdir}/iso-grk2.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Greek Symbols//EN" \
+  "${_ent_subdir}/iso-grk3.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Alternative Greek Symbols//EN" \
+  "${_ent_subdir}/iso-grk4.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Added Latin 1//EN" \
+  "${_ent_subdir}/iso-lat1.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Added Latin 2//EN" \
+  "${_ent_subdir}/iso-lat2.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Numeric and Special Graphic//EN" \
+  "${_ent_subdir}/iso-num.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES Publishing//EN" \
+  "${_ent_subdir}/iso-pub.ent" ${_ent_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "ISO 8879:1986//ENTITIES General Technical//EN" \
+  "${_ent_subdir}/iso-tech.ent" ${_ent_catalog}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_ent_datadir="${_datadir}/entities/${SB_MODULE_NAME}-8879.1986"
+_ent_subdir=$(basename ${_ent_datadir})
+
+# remove XML chatacter catalog entries
+(cd ${_ent_datadir}
+for _file in iso-*; do
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+  "${_ent_subdir}/${_file}" ${_ent_catalog}
+done)
+
+# remove super catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+"file://${_ent_catalog}" ${_xml_catalog}
+
+rm -rf ${_ent_datadir}
+
+rmdir ${_datadir}/entities 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-xml-4.0">
+      <build-name>docbook-xml-4.0</build-name>
+
+      <sources>
+        <source checksum="ca8e522feaafaacc227206d3fd81cd8f"
+          checksum-type="md5" size="72923"
+          path="src/docbkx40.zip"
+          destdir="docbook-xml-4.0"/>
+        <patch checksum="31437d045283db1f7ae31a07b1082d19"
+          checksum-type="md5" size="2192"
+          path="src/docbkx40.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="xmlcatalog"
+          module="xml-entities">v==1.1</depend>
+      </dependencies>
+
+      <install>
+<![CDATA[
+_docbook_xml_catalog="${_datadir}/docbook/catalog.xml"
+
+# create super catalog if it doesn't exist
+if [ ! -f ${_xml_catalog} ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(dirname ${_xml_catalog})
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create ${_xml_catalog}
+fi
+
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.0"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}/ent
+
+# create Docbook XML catalog if it doesn't exist
+if [ ! -f ${_docbook_xml_catalog} ]; then
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --create \
+  ${_docbook_xml_catalog}
+fi
+
+# create entry in super catalog to Docbook XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegatePublic" "-//OASIS//DTD DocBook XML" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateSystem" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "delegateURI" "http://www.oasis-open.org/docbook/" \
+  "file://${_docbook_xml_catalog}" ${_xml_catalog}
+
+for _file in calstblx.dtd dbcentx.mod dbgenent.ent dbhierx.mod \
+dbnotnx.mod dbpoolx.mod docbookx.dtd soextblx.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+for _file in ent/*; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}/ent
+done
+
+# install Docbook XML catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML CALS Table Model V4.0//EN" \
+  "xml-dtd-4.0/calstblx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD DocBook XML V4.0//EN" \
+  "xml-dtd-4.0/docbookx.dtd" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//DTD XML Exchange Table Model 19990315//EN" \
+  "xml-dtd-4.0/soextblx.dtd" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Character Entities V4.0//EN" \
+  "xml-dtd-4.0/dbcentx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Document Hierarchy V4.0//EN" \
+  "xml-dtd-4.0/dbhierx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ENTITIES DocBook XML Notations V4.0//EN" \
+  "xml-dtd-4.0/dbnotnx.mod" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "public" "-//OASIS//ELEMENTS DocBook XML Information Pool V4.0//EN" \
+  "xml-dtd-4.0/dbpoolx.mod" ${_docbook_xml_catalog}
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteSystem" "http://www.oasis-open.org/docbook/xml/4.0" \
+  "xml-dtd-4.0" ${_docbook_xml_catalog}
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --add \
+  "rewriteURI" "http://www.oasis-open.org/docbook/xml/4.0" \
+  "xml-dtd-4.0" ${_docbook_xml_catalog}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/xml-dtd-4.0"
+
+# remove Docbook XML catalog entries
+for _file in calstblx.dtd docbookx.dtd soextblx.dtd dbcentx.mod \
+dbhierx.mod dbnotnx.mod dbpoolx.mod; do
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "xml-dtd-4.0/${_file}" ${_docbook_xml_catalog}
+done
+
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+  "xml-dtd-4.0" ${_docbook_xml_catalog}
+
+# remove super catalog entries
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} docbook-xml >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --del \
+    "file://${_docbook_xml_catalog}" ${_xml_catalog}
+}
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="docbook-sgml-3.1">
+      <build-name>docbook-3.1</build-name>
+
+      <sources>
+        <source checksum="7ae94094b1ae43bf3965adde0483bdb4"
+          checksum-type="md5" size="51538"
+          path="src/docbook-3.1.tar.gz"/>
+        <patch checksum="333fbee133fd10a47bc5253fafda5b76"
+          checksum-type="md5" size="2605"
+          path="src/docbook-3.1.patch"/>
+      </sources>
+
+      <install>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-3.1"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dtd_datadir}
+
+for _file in cals-tbl.dtd dbcent.mod dbgenent.mod dbhier.mod \
+dbnotn.mod dbpool.mod docbook.dcl docbook.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_file} ${_dtd_datadir}
+done
+
+# install catalog
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docbook.cat \
+${_dtd_datadir}/catalog.sgml
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install 4.3 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_dtd_datadir="${_datadir}/docbook/sgml-dtd-3.1"
+
+rm -rf ${_dtd_datadir}
+
+rmdir ${_datadir}/docbook 2>/dev/null
+rmdir ${_datadir} 2>/dev/null
+
+# remove 3.1 catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dtd_datadir}/catalog.sgml
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i ${SB_PROG_NAME}-${SB_PROG_VER} |\
+${SB_PATH_EGREP} -v ${SB_MODULE_NAME} |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+:
+:
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="1.0" to="1.1">
+        <item><para>Add Docbook SGML DTD 4.3</para></item>
+        <item><para>Add Docbook XML DTD 4.3</para></item>
+        <item><para>Change installation paths to mirror the more
+consistent Redhat tree</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

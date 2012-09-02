@@ -1,0 +1,5832 @@
+Index: Makefile.am
+===================================================================
+--- Makefile.am.orig	2005-11-19 08:58:29.926585000 -0600
++++ Makefile.am	2005-11-19 08:58:44.958345000 -0600
+@@ -1,7 +1,7 @@
+ ## Process this file with automake to create Makefile.in
+ AUTOMAKE_OPTIONS = no-dependencies
+ 
+-SUBDIRS = intl po lib doc src tests m4 vms bootstrap
++SUBDIRS = po lib doc src tests m4 vms bootstrap
+ 
+ EXTRA_DIST = TODO README README-alpha PATCHES.AC PATCHES.AM
+ 
+Index: config.rpath
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ config.rpath	2005-11-19 08:58:44.990167000 -0600
+@@ -0,0 +1,563 @@
++#! /bin/sh
++# Output a system dependent set of variables, describing how to set the
++# run time search path of shared libraries in an executable.
++#
++#   Copyright 1996-2005 Free Software Foundation, Inc.
++#   Taken from GNU libtool, 2001
++#   Originally by Gordon Matzigkeit <gord@gnu.ai.mit.edu>, 1996
++#
++#   This file is free software; the Free Software Foundation gives
++#   unlimited permission to copy and/or distribute it, with or without
++#   modifications, as long as this notice is preserved.
++#
++# The first argument passed to this file is the canonical host specification,
++#    CPU_TYPE-MANUFACTURER-OPERATING_SYSTEM
++# or
++#    CPU_TYPE-MANUFACTURER-KERNEL-OPERATING_SYSTEM
++# The environment variables CC, GCC, LDFLAGS, LD, with_gnu_ld
++# should be set by the caller.
++#
++# The set of defined variables is at the end of this script.
++
++# Known limitations:
++# - On IRIX 6.5 with CC="cc", the run time search patch must not be longer
++#   than 256 bytes, otherwise the compiler driver will dump core. The only
++#   known workaround is to choose shorter directory names for the build
++#   directory and/or the installation directory.
++
++# All known linkers require a `.a' archive for static linking (except M$VC,
++# which needs '.lib').
++libext=a
++shrext=.so
++
++host="$1"
++host_cpu=`echo "$host" | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
++host_vendor=`echo "$host" | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
++host_os=`echo "$host" | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
++
++cc_basename=`echo "$CC" | sed -e 's%^.*/%%'`
++
++# Code taken from libtool.m4's AC_LIBTOOL_PROG_COMPILER_PIC.
++
++wl=
++if test "$GCC" = yes; then
++  wl='-Wl,'
++else
++  case "$host_os" in
++    aix*)
++      wl='-Wl,'
++      ;;
++    darwin*)
++      case "$cc_basename" in
++        xlc*)
++          wl='-Wl,'
++          ;;
++      esac
++      ;;
++    mingw* | pw32* | os2*)
++      ;;
++    hpux9* | hpux10* | hpux11*)
++      wl='-Wl,'
++      ;;
++    irix5* | irix6* | nonstopux*)
++      wl='-Wl,'
++      ;;
++    newsos6)
++      ;;
++    linux*)
++      case $cc_basename in
++        icc* | ecc*)
++          wl='-Wl,'
++          ;;
++        pgcc | pgf77 | pgf90)
++          wl='-Wl,'
++          ;;
++        ccc*)
++          wl='-Wl,'
++          ;;
++        como)
++          wl='-lopt='
++          ;;
++      esac
++      ;;
++    osf3* | osf4* | osf5*)
++      wl='-Wl,'
++      ;;
++    sco3.2v5*)
++      ;;
++    solaris*)
++      wl='-Wl,'
++      ;;
++    sunos4*)
++      wl='-Qoption ld '
++      ;;
++    sysv4 | sysv4.2uw2* | sysv4.3* | sysv5*)
++      wl='-Wl,'
++      ;;
++    sysv4*MP*)
++      ;;
++    unicos*)
++      wl='-Wl,'
++      ;;
++    uts4*)
++      ;;
++  esac
++fi
++
++# Code taken from libtool.m4's AC_LIBTOOL_PROG_LD_SHLIBS.
++
++hardcode_libdir_flag_spec=
++hardcode_libdir_separator=
++hardcode_direct=no
++hardcode_minus_L=no
++
++case "$host_os" in
++  cygwin* | mingw* | pw32*)
++    # FIXME: the MSVC++ port hasn't been tested in a loooong time
++    # When not using gcc, we currently assume that we are using
++    # Microsoft Visual C++.
++    if test "$GCC" != yes; then
++      with_gnu_ld=no
++    fi
++    ;;
++  openbsd*)
++    with_gnu_ld=no
++    ;;
++esac
++
++ld_shlibs=yes
++if test "$with_gnu_ld" = yes; then
++  case "$host_os" in
++    aix3* | aix4* | aix5*)
++      # On AIX/PPC, the GNU linker is very broken
++      if test "$host_cpu" != ia64; then
++        ld_shlibs=no
++      fi
++      ;;
++    amigaos*)
++      hardcode_libdir_flag_spec='-L$libdir'
++      hardcode_minus_L=yes
++      # Samuel A. Falvo II <kc5tja@dolphin.openprojects.net> reports
++      # that the semantics of dynamic libraries on AmigaOS, at least up
++      # to version 4, is to share data among multiple programs linked
++      # with the same dynamic library.  Since this doesn't match the
++      # behavior of shared libraries on other platforms, we cannot use
++      # them.
++      ld_shlibs=no
++      ;;
++    beos*)
++      if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
++        :
++      else
++        ld_shlibs=no
++      fi
++      ;;
++    cygwin* | mingw* | pw32*)
++      # hardcode_libdir_flag_spec is actually meaningless, as there is
++      # no search path for DLLs.
++      hardcode_libdir_flag_spec='-L$libdir'
++      if $LD --help 2>&1 | grep 'auto-import' > /dev/null; then
++        :
++      else
++        ld_shlibs=no
++      fi
++      ;;
++    netbsd*)
++      ;;
++    solaris* | sysv5*)
++      if $LD -v 2>&1 | grep 'BFD 2\.8' > /dev/null; then
++        ld_shlibs=no
++      elif $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
++        :
++      else
++        ld_shlibs=no
++      fi
++      ;;
++    sunos4*)
++      hardcode_direct=yes
++      ;;
++    linux*)
++      if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
++        :
++      else
++        ld_shlibs=no
++      fi
++      ;;
++    *)
++      if $LD --help 2>&1 | grep ': supported targets:.* elf' > /dev/null; then
++        :
++      else
++        ld_shlibs=no
++      fi
++      ;;
++  esac
++  if test "$ld_shlibs" = yes; then
++    # Unlike libtool, we use -rpath here, not --rpath, since the documented
++    # option of GNU ld is called -rpath, not --rpath.
++    hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
++  fi
++else
++  case "$host_os" in
++    aix3*)
++      # Note: this linker hardcodes the directories in LIBPATH if there
++      # are no directories specified by -L.
++      hardcode_minus_L=yes
++      if test "$GCC" = yes; then
++        # Neither direct hardcoding nor static linking is supported with a
++        # broken collect2.
++        hardcode_direct=unsupported
++      fi
++      ;;
++    aix4* | aix5*)
++      if test "$host_cpu" = ia64; then
++        # On IA64, the linker does run time linking by default, so we don't
++        # have to do anything special.
++        aix_use_runtimelinking=no
++      else
++        aix_use_runtimelinking=no
++        # Test if we are trying to use run time linking or normal
++        # AIX style linking. If -brtl is somewhere in LDFLAGS, we
++        # need to do runtime linking.
++        case $host_os in aix4.[23]|aix4.[23].*|aix5*)
++          for ld_flag in $LDFLAGS; do
++            if (test $ld_flag = "-brtl" || test $ld_flag = "-Wl,-brtl"); then
++              aix_use_runtimelinking=yes
++              break
++            fi
++          done
++        esac
++      fi
++      hardcode_direct=yes
++      hardcode_libdir_separator=':'
++      if test "$GCC" = yes; then
++        case $host_os in aix4.[012]|aix4.[012].*)
++          collect2name=`${CC} -print-prog-name=collect2`
++          if test -f "$collect2name" && \
++            strings "$collect2name" | grep resolve_lib_name >/dev/null
++          then
++            # We have reworked collect2
++            hardcode_direct=yes
++          else
++            # We have old collect2
++            hardcode_direct=unsupported
++            hardcode_minus_L=yes
++            hardcode_libdir_flag_spec='-L$libdir'
++            hardcode_libdir_separator=
++          fi
++        esac
++      fi
++      # Begin _LT_AC_SYS_LIBPATH_AIX.
++      echo 'int main () { return 0; }' > conftest.c
++      ${CC} ${LDFLAGS} conftest.c -o conftest
++      aix_libpath=`dump -H conftest 2>/dev/null | sed -n -e '/Import File Strings/,/^$/ { /^0/ { s/^0  *\(.*\)$/\1/; p; }
++}'`
++      if test -z "$aix_libpath"; then
++        aix_libpath=`dump -HX64 conftest 2>/dev/null | sed -n -e '/Import File Strings/,/^$/ { /^0/ { s/^0  *\(.*\)$/\1/; p; }
++}'`
++      fi
++      if test -z "$aix_libpath"; then
++        aix_libpath="/usr/lib:/lib"
++      fi
++      rm -f conftest.c conftest
++      # End _LT_AC_SYS_LIBPATH_AIX.
++      if test "$aix_use_runtimelinking" = yes; then
++        hardcode_libdir_flag_spec='${wl}-blibpath:$libdir:'"$aix_libpath"
++      else
++        if test "$host_cpu" = ia64; then
++          hardcode_libdir_flag_spec='${wl}-R $libdir:/usr/lib:/lib'
++        else
++          hardcode_libdir_flag_spec='${wl}-blibpath:$libdir:'"$aix_libpath"
++        fi
++      fi
++      ;;
++    amigaos*)
++      hardcode_libdir_flag_spec='-L$libdir'
++      hardcode_minus_L=yes
++      # see comment about different semantics on the GNU ld section
++      ld_shlibs=no
++      ;;
++    bsdi[45]*)
++      ;;
++    cygwin* | mingw* | pw32*)
++      # When not using gcc, we currently assume that we are using
++      # Microsoft Visual C++.
++      # hardcode_libdir_flag_spec is actually meaningless, as there is
++      # no search path for DLLs.
++      hardcode_libdir_flag_spec=' '
++      libext=lib
++      ;;
++    darwin* | rhapsody*)
++      hardcode_direct=no
++      if test "$GCC" = yes ; then
++        :
++      else
++        case "$cc_basename" in
++          xlc*)
++            ;;
++          *)
++            ld_shlibs=no
++            ;;
++        esac
++      fi
++      ;;
++    dgux*)
++      hardcode_libdir_flag_spec='-L$libdir'
++      ;;
++    freebsd1*)
++      ld_shlibs=no
++      ;;
++    freebsd2.2*)
++      hardcode_libdir_flag_spec='-R$libdir'
++      hardcode_direct=yes
++      ;;
++    freebsd2*)
++      hardcode_direct=yes
++      hardcode_minus_L=yes
++      ;;
++    freebsd* | kfreebsd*-gnu | dragonfly*)
++      hardcode_libdir_flag_spec='-R$libdir'
++      hardcode_direct=yes
++      ;;
++    hpux9*)
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_libdir_separator=:
++      hardcode_direct=yes
++      # hardcode_minus_L: Not really in the search PATH,
++      # but as the default location of the library.
++      hardcode_minus_L=yes
++      ;;
++    hpux10* | hpux11*)
++      if test "$with_gnu_ld" = no; then
++        hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++        hardcode_libdir_separator=:
++
++        case "$host_cpu" in
++          hppa*64*|ia64*)
++            hardcode_direct=no
++            ;;
++          *)
++            hardcode_direct=yes
++            # hardcode_minus_L: Not really in the search PATH,
++            # but as the default location of the library.
++            hardcode_minus_L=yes
++            ;;
++        esac
++      fi
++      ;;
++    irix5* | irix6* | nonstopux*)
++      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
++      hardcode_libdir_separator=:
++      ;;
++    netbsd*)
++      hardcode_libdir_flag_spec='-R$libdir'
++      hardcode_direct=yes
++      ;;
++    newsos6)
++      hardcode_direct=yes
++      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
++      hardcode_libdir_separator=:
++      ;;
++    openbsd*)
++      hardcode_direct=yes
++      if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
++        hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
++      else
++        case "$host_os" in
++          openbsd[01].* | openbsd2.[0-7] | openbsd2.[0-7].*)
++            hardcode_libdir_flag_spec='-R$libdir'
++            ;;
++          *)
++            hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
++            ;;
++        esac
++      fi
++      ;;
++    os2*)
++      hardcode_libdir_flag_spec='-L$libdir'
++      hardcode_minus_L=yes
++      ;;
++    osf3*)
++      hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
++      hardcode_libdir_separator=:
++      ;;
++    osf4* | osf5*)
++      if test "$GCC" = yes; then
++        hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
++      else
++        # Both cc and cxx compiler support -rpath directly
++        hardcode_libdir_flag_spec='-rpath $libdir'
++      fi
++      hardcode_libdir_separator=:
++      ;;
++    sco3.2v5*)
++      ;;
++    solaris*)
++      hardcode_libdir_flag_spec='-R$libdir'
++      ;;
++    sunos4*)
++      hardcode_libdir_flag_spec='-L$libdir'
++      hardcode_direct=yes
++      hardcode_minus_L=yes
++      ;;
++    sysv4)
++      case $host_vendor in
++        sni)
++          hardcode_direct=yes # is this really true???
++          ;;
++        siemens)
++          hardcode_direct=no
++          ;;
++        motorola)
++          hardcode_direct=no #Motorola manual says yes, but my tests say they lie
++          ;;
++      esac
++      ;;
++    sysv4.3*)
++      ;;
++    sysv4*MP*)
++      if test -d /usr/nec; then
++        ld_shlibs=yes
++      fi
++      ;;
++    sysv4.2uw2*)
++      hardcode_direct=yes
++      hardcode_minus_L=no
++      ;;
++    sysv5OpenUNIX8* | sysv5UnixWare7* |  sysv5uw[78]* | unixware7*)
++      ;;
++    sysv5*)
++      hardcode_libdir_flag_spec=
++      ;;
++    uts4*)
++      hardcode_libdir_flag_spec='-L$libdir'
++      ;;
++    *)
++      ld_shlibs=no
++      ;;
++  esac
++fi
++
++# Check dynamic linker characteristics
++# Code taken from libtool.m4's AC_LIBTOOL_SYS_DYNAMIC_LINKER.
++libname_spec='lib$name'
++case "$host_os" in
++  aix3*)
++    ;;
++  aix4* | aix5*)
++    ;;
++  amigaos*)
++    ;;
++  beos*)
++    ;;
++  bsdi[45]*)
++    ;;
++  cygwin* | mingw* | pw32*)
++    shrext=.dll
++    ;;
++  darwin* | rhapsody*)
++    shrext=.dylib
++    ;;
++  dgux*)
++    ;;
++  freebsd1*)
++    ;;
++  kfreebsd*-gnu)
++    ;;
++  freebsd*)
++    ;;
++  gnu*)
++    ;;
++  hpux9* | hpux10* | hpux11*)
++    case "$host_cpu" in
++      ia64*)
++        shrext=.so
++        ;;
++      hppa*64*)
++        shrext=.sl
++        ;;
++      *)
++        shrext=.sl
++        ;;
++    esac
++    ;;
++  irix5* | irix6* | nonstopux*)
++    case "$host_os" in
++      irix5* | nonstopux*)
++        libsuff= shlibsuff=
++        ;;
++      *)
++        case $LD in
++          *-32|*"-32 "|*-melf32bsmip|*"-melf32bsmip ") libsuff= shlibsuff= ;;
++          *-n32|*"-n32 "|*-melf32bmipn32|*"-melf32bmipn32 ") libsuff=32 shlibsuff=N32 ;;
++          *-64|*"-64 "|*-melf64bmip|*"-melf64bmip ") libsuff=64 shlibsuff=64 ;;
++          *) libsuff= shlibsuff= ;;
++        esac
++        ;;
++    esac
++    ;;
++  linux*oldld* | linux*aout* | linux*coff*)
++    ;;
++  linux*)
++    ;;
++  knetbsd*-gnu)
++    ;;
++  netbsd*)
++    ;;
++  newsos6)
++    ;;
++  nto-qnx*)
++    ;;
++  openbsd*)
++    ;;
++  os2*)
++    libname_spec='$name'
++    shrext=.dll
++    ;;
++  osf3* | osf4* | osf5*)
++    ;;
++  sco3.2v5*)
++    ;;
++  solaris*)
++    ;;
++  sunos4*)
++    ;;
++  sysv4 | sysv4.2uw2* | sysv4.3* | sysv5*)
++    ;;
++  sysv4*MP*)
++    ;;
++  uts4*)
++    ;;
++esac
++
++sed_quote_subst='s/\(["`$\\]\)/\\\1/g'
++escaped_wl=`echo "X$wl" | sed -e 's/^X//' -e "$sed_quote_subst"`
++shlibext=`echo "$shrext" | sed -e 's,^\.,,'`
++escaped_hardcode_libdir_flag_spec=`echo "X$hardcode_libdir_flag_spec" | sed -e 's/^X//' -e "$sed_quote_subst"`
++
++LC_ALL=C sed -e 's/^\([a-zA-Z0-9_]*\)=/acl_cv_\1=/' <<EOF
++
++# How to pass a linker flag through the compiler.
++wl="$escaped_wl"
++
++# Static library suffix (normally "a").
++libext="$libext"
++
++# Shared library suffix (normally "so").
++shlibext="$shlibext"
++
++# Flag to hardcode \$libdir into a binary during linking.
++# This must work even if \$libdir does not exist.
++hardcode_libdir_flag_spec="$escaped_hardcode_libdir_flag_spec"
++
++# Whether we need a single -rpath flag with a separated argument.
++hardcode_libdir_separator="$hardcode_libdir_separator"
++
++# Set to yes if using DIR/libNAME.so during linking hardcodes DIR into the
++# resulting binary.
++hardcode_direct="$hardcode_direct"
++
++# Set to yes if using the -LDIR flag during linking hardcodes DIR into the
++# resulting binary.
++hardcode_minus_L="$hardcode_minus_L"
++
++EOF
+Index: configure.in
+===================================================================
+--- configure.in.orig	2005-11-19 08:58:29.962928000 -0600
++++ configure.in	2005-11-19 08:58:55.460280000 -0600
+@@ -42,7 +42,7 @@
+ AC_CHECK_HEADERS(wctype.h wchar.h)
+ AC_HEADER_DIRENT
+ AC_HEADER_STAT
+-AC_MBSTATE_T
++AC_TYPE_MBSTATE_T
+ 
+ dnl Checks for functions.
+ AC_FUNC_ALLOCA
+@@ -134,11 +134,25 @@
+ 
+ # support for pcre
+ if test x"$testpcre" = x"yes"; then
+-	if pcre-config --cflags >/dev/null 2>&1; then
+-		CFLAGS="$CFLAGS `pcre-config --cflags`"
+-		LIBS="$LIBS `pcre-config --libs`"
++	AC_PATH_PROG(PCRE_CONFIG, pcre-config)
++	if ($PCRE_CONFIG --cflags) >/dev/null 2>&1; then
++		CFLAGS="$CFLAGS `$PCRE_CONFIG --cflags`"
++		LIBS="$LIBS `$PCRE_CONFIG --libs`"
+ 	fi
+ 	AC_CHECK_LIB(pcre, pcre_exec)
+ fi
+ 
+-AC_OUTPUT(Makefile lib/Makefile lib/posix/Makefile src/Makefile tests/Makefile po/Makefile.in intl/Makefile doc/Makefile m4/Makefile vms/Makefile bootstrap/Makefile, [sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile; echo timestamp > stamp-h])
++AC_CONFIG_FILES([
++  Makefile		\
++  lib/Makefile		\
++  lib/posix/Makefile	\
++  src/Makefile		\
++  tests/Makefile	\
++  po/Makefile.in	\
++  intl/Makefile		\
++  doc/Makefile		\
++  m4/Makefile		\
++  vms/Makefile		\
++  bootstrap/Makefile	\
++])
++AC_OUTPUT
+Index: lib/getopt.c
+===================================================================
+--- lib/getopt.c.orig	2005-11-19 08:58:29.166040000 -0600
++++ lib/getopt.c	2005-11-19 08:58:45.051783000 -0600
+@@ -74,7 +74,7 @@
+ # endif
+ #endif
+ 
+-#ifndef _
++#ifdef ENABLE_NLS
+ /* This is for other GNU distributions with internationalized messages.
+    When compiling libc, the _ macro is predefined.  */
+ # ifdef HAVE_LIBINTL_H
+@@ -83,6 +83,8 @@
+ # else
+ #  define _(msgid)	(msgid)
+ # endif
++#else
++# define _(msgid)	(msgid)
+ #endif
+ 
+ /* This version of `getopt' appears to the caller like standard Unix `getopt'
+Index: lib/obstack.c
+===================================================================
+--- lib/obstack.c.orig	2005-11-19 08:58:29.190145000 -0600
++++ lib/obstack.c	2005-11-19 08:58:45.104793000 -0600
+@@ -450,7 +450,8 @@
+ }
+ 
+ /* Define the error handler.  */
+-#ifndef _
++
++#ifdef ENABLE_NLS
+ # ifdef HAVE_LIBINTL_H
+ #  include <libintl.h>
+ #  ifndef _
+@@ -459,6 +460,8 @@
+ # else
+ #  define _(Str) (Str)
+ # endif
++#else
++# define _(Str) (Str)
+ #endif
+ #if defined _LIBC && defined USE_IN_LIBIO
+ # include <libio/iolibio.h>
+Index: lib/regex.c
+===================================================================
+--- lib/regex.c.orig	2005-11-19 08:58:29.214398000 -0600
++++ lib/regex.c	2005-11-19 08:58:45.173043000 -0600
+@@ -52,6 +52,7 @@
+    support user defined character classes.  */
+ #if defined _LIBC || WIDE_CHAR_SUPPORT
+ /* Solaris 2.5 has a bug: <wchar.h> must be included before <wctype.h>.  */
++# include <stdio.h>
+ # include <wchar.h>
+ # include <wctype.h>
+ #endif
+@@ -112,7 +113,7 @@
+ #endif
+ 
+ /* This is for other GNU distributions with internationalized messages.  */
+-#if HAVE_LIBINTL_H || defined _LIBC
++#if defined ENABLE_NLS || defined _LIBC
+ # include <libintl.h>
+ # ifdef _LIBC
+ #  undef gettext
+Index: m4/strerror_r.m4
+===================================================================
+--- m4/strerror_r.m4.orig	2005-11-19 08:58:29.238512000 -0600
++++ m4/strerror_r.m4	2005-11-19 08:58:45.379525000 -0600
+@@ -9,10 +9,7 @@
+ # AC_FUNC_STRERROR_R
+ # ------------------
+ AC_DEFUN([AC_FUNC_STRERROR_R],
+-[jm_CHECK_DECLARATION(strerror_r, [#include <string.h>])
+-test $jm_cv_func_decl_strerror_r != yes
+-AC_DEFINE_UNQUOTED(HAVE_DECL_STRERROR_R, $?,
+-  [Define to 1 if strerror_r is declared.])
++[AC_CHECK_DECLS([strerror_r])
+ AC_CHECK_FUNCS([strerror_r])
+ if test $ac_cv_func_strerror_r = yes; then
+   AC_CHECK_HEADERS(string.h)
+Index: missing
+===================================================================
+--- missing.orig	2005-11-19 08:58:29.987049000 -0600
++++ missing	2005-11-19 08:58:45.410735000 -0600
+@@ -1,6 +1,10 @@
+ #! /bin/sh
+ # Common stub for a few missing GNU programs while installing.
+-# Copyright 1996, 1997, 1999, 2000 Free Software Foundation, Inc.
++
++scriptversion=2005-02-08.22
++
++# Copyright (C) 1996, 1997, 1999, 2000, 2002, 2003, 2004, 2005
++#   Free Software Foundation, Inc.
+ # Originally by Fran,cois Pinard <pinard@iro.umontreal.ca>, 1996.
+ 
+ # This program is free software; you can redistribute it and/or modify
+@@ -38,18 +42,24 @@
+   configure_ac=configure.in
+ fi
+ 
++msg="missing on your system"
++
+ case "$1" in
+ --run)
+   # Try to run requested program, and just exit if it succeeds.
+   run=
+   shift
+   "$@" && exit 0
++  # Exit code 63 means version mismatch.  This often happens
++  # when the user try to use an ancient version of a tool on
++  # a file that requires a minimum version.  In this case we
++  # we should proceed has if the program had been absent, or
++  # if --run hadn't been passed.
++  if test $? = 63; then
++    run=:
++    msg="probably too old"
++  fi
+   ;;
+-esac
+-
+-# If it does not exist, or fails to run (possibly an outdated version),
+-# try to emulate it.
+-case "$1" in
+ 
+   -h|--h|--he|--hel|--help)
+     echo "\
+@@ -74,11 +84,15 @@
+   lex          create \`lex.yy.c', if possible, from existing .c
+   makeinfo     touch the output file
+   tar          try tar, gnutar, gtar, then tar without non-portable flags
+-  yacc         create \`y.tab.[ch]', if possible, from existing .[ch]"
++  yacc         create \`y.tab.[ch]', if possible, from existing .[ch]
++
++Send bug reports to <bug-automake@gnu.org>."
++    exit $?
+     ;;
+ 
+   -v|--v|--ve|--ver|--vers|--versi|--versio|--version)
+-    echo "missing 0.3 - GNU automake"
++    echo "missing $scriptversion (GNU Automake)"
++    exit $?
+     ;;
+ 
+   -*)
+@@ -87,9 +101,44 @@
+     exit 1
+     ;;
+ 
+-  aclocal)
++esac
++
++# Now exit if we have it, but it failed.  Also exit now if we
++# don't have it and --version was passed (most likely to detect
++# the program).
++case "$1" in
++  lex|yacc)
++    # Not GNU programs, they don't have --version.
++    ;;
++
++  tar)
++    if test -n "$run"; then
++       echo 1>&2 "ERROR: \`tar' requires --run"
++       exit 1
++    elif test "x$2" = "x--version" || test "x$2" = "x--help"; then
++       exit 1
++    fi
++    ;;
++
++  *)
++    if test -z "$run" && ($1 --version) > /dev/null 2>&1; then
++       # We have it, but it failed.
++       exit 1
++    elif test "x$2" = "x--version" || test "x$2" = "x--help"; then
++       # Could not run --version or --help.  This is probably someone
++       # running `$TOOL --version' or `$TOOL --help' to check whether
++       # $TOOL exists and not knowing $TOOL uses missing.
++       exit 1
++    fi
++    ;;
++esac
++
++# If it does not exist, or fails to run (possibly an outdated version),
++# try to emulate it.
++case "$1" in
++  aclocal*)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+          you modified \`acinclude.m4' or \`${configure_ac}'.  You might want
+          to install the \`Automake' and \`Perl' packages.  Grab them from
+          any GNU archive site."
+@@ -98,7 +147,7 @@
+ 
+   autoconf)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+          you modified \`${configure_ac}'.  You might want to install the
+          \`Autoconf' and \`GNU m4' packages.  Grab them from any GNU
+          archive site."
+@@ -107,7 +156,7 @@
+ 
+   autoheader)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+          you modified \`acconfig.h' or \`${configure_ac}'.  You might want
+          to install the \`Autoconf' and \`GNU m4' packages.  Grab them
+          from any GNU archive site."
+@@ -124,9 +173,9 @@
+     touch $touch_files
+     ;;
+ 
+-  automake)
++  automake*)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+          you modified \`Makefile.am', \`acinclude.m4' or \`${configure_ac}'.
+          You might want to install the \`Automake' and \`Perl' packages.
+          Grab them from any GNU archive site."
+@@ -135,9 +184,32 @@
+ 	   while read f; do touch "$f"; done
+     ;;
+ 
++  autom4te)
++    echo 1>&2 "\
++WARNING: \`$1' is needed, but is $msg.
++         You might have modified some files without having the
++         proper tools for further handling them.
++         You can get \`$1' as part of \`Autoconf' from any GNU
++         archive site."
++
++    file=`echo "$*" | sed -n 's/.*--output[ =]*\([^ ]*\).*/\1/p'`
++    test -z "$file" && file=`echo "$*" | sed -n 's/.*-o[ ]*\([^ ]*\).*/\1/p'`
++    if test -f "$file"; then
++	touch $file
++    else
++	test -z "$file" || exec >$file
++	echo "#! /bin/sh"
++	echo "# Created by GNU Automake missing as a replacement of"
++	echo "#  $ $@"
++	echo "exit 0"
++	chmod +x $file
++	exit 1
++    fi
++    ;;
++
+   bison|yacc)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' $msg.  You should only need it if
+          you modified a \`.y' file.  You may need the \`Bison' package
+          in order for those modifications to take effect.  You can get
+          \`Bison' from any GNU archive site."
+@@ -167,7 +239,7 @@
+ 
+   lex|flex)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+          you modified a \`.l' file.  You may need the \`Flex' package
+          in order for those modifications to take effect.  You can get
+          \`Flex' from any GNU archive site."
+@@ -190,7 +262,7 @@
+ 
+   help2man)
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+ 	 you modified a dependency of a manual page.  You may need the
+ 	 \`Help2man' package in order for those modifications to take
+ 	 effect.  You can get \`Help2man' from any GNU archive site."
+@@ -209,54 +281,49 @@
+     ;;
+ 
+   makeinfo)
+-    if test -z "$run" && (makeinfo --version) > /dev/null 2>&1; then
+-       # We have makeinfo, but it failed.
+-       exit 1
+-    fi
+-
+     echo 1>&2 "\
+-WARNING: \`$1' is missing on your system.  You should only need it if
++WARNING: \`$1' is $msg.  You should only need it if
+          you modified a \`.texi' or \`.texinfo' file, or any other file
+          indirectly affecting the aspect of the manual.  The spurious
+          call might also be the consequence of using a buggy \`make' (AIX,
+          DU, IRIX).  You might want to install the \`Texinfo' package or
+          the \`GNU make' package.  Grab either from any GNU archive site."
++    # The file to touch is that specified with -o ...
+     file=`echo "$*" | sed -n 's/.*-o \([^ ]*\).*/\1/p'`
+     if test -z "$file"; then
+-      file=`echo "$*" | sed 's/.* \([^ ]*\) *$/\1/'`
+-      file=`sed -n '/^@setfilename/ { s/.* \([^ ]*\) *$/\1/; p; q; }' $file`
++      # ... or it is the one specified with @setfilename ...
++      infile=`echo "$*" | sed 's/.* \([^ ]*\) *$/\1/'`
++      file=`sed -n '/^@setfilename/ { s/.* \([^ ]*\) *$/\1/; p; q; }' $infile`
++      # ... or it is derived from the source name (dir/f.texi becomes f.info)
++      test -z "$file" && file=`echo "$infile" | sed 's,.*/,,;s,.[^.]*$,,'`.info
+     fi
+     touch $file
+     ;;
+ 
+   tar)
+     shift
+-    if test -n "$run"; then
+-      echo 1>&2 "ERROR: \`tar' requires --run"
+-      exit 1
+-    fi
+ 
+     # We have already tried tar in the generic part.
+     # Look for gnutar/gtar before invocation to avoid ugly error
+     # messages.
+     if (gnutar --version > /dev/null 2>&1); then
+-       gnutar ${1+"$@"} && exit 0
++       gnutar "$@" && exit 0
+     fi
+     if (gtar --version > /dev/null 2>&1); then
+-       gtar ${1+"$@"} && exit 0
++       gtar "$@" && exit 0
+     fi
+     firstarg="$1"
+     if shift; then
+ 	case "$firstarg" in
+ 	*o*)
+ 	    firstarg=`echo "$firstarg" | sed s/o//`
+-	    tar "$firstarg" ${1+"$@"} && exit 0
++	    tar "$firstarg" "$@" && exit 0
+ 	    ;;
+ 	esac
+ 	case "$firstarg" in
+ 	*h*)
+ 	    firstarg=`echo "$firstarg" | sed s/h//`
+-	    tar "$firstarg" ${1+"$@"} && exit 0
++	    tar "$firstarg" "$@" && exit 0
+ 	    ;;
+ 	esac
+     fi
+@@ -270,10 +337,10 @@
+ 
+   *)
+     echo 1>&2 "\
+-WARNING: \`$1' is needed, and you do not seem to have it handy on your
+-         system.  You might have modified some files without having the
++WARNING: \`$1' is needed, and is $msg.
++         You might have modified some files without having the
+          proper tools for further handling them.  Check the \`README' file,
+-         it often tells you about the needed prerequirements for installing
++         it often tells you about the needed prerequisites for installing
+          this package.  You may also peek at any GNU archive site, in case
+          some other package would contain this missing \`$1' program."
+     exit 1
+@@ -281,3 +348,10 @@
+ esac
+ 
+ exit 0
++
++# Local variables:
++# eval: (add-hook 'write-file-hooks 'time-stamp)
++# time-stamp-start: "scriptversion="
++# time-stamp-format: "%:y-%02m-%02d.%02H"
++# time-stamp-end: "$"
++# End:
+Index: po/Makefile.in.in
+===================================================================
+--- po/Makefile.in.in.orig	2005-11-19 08:58:29.756144000 -0600
++++ po/Makefile.in.in	2005-11-19 08:58:45.447001000 -0600
+@@ -1,10 +1,14 @@
+-# Makefile for program source directory in GNU NLS utilities package.
+-# Copyright (C) 1995, 1996, 1997 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
++# Makefile for PO directory in any package using GNU gettext.
++# Copyright (C) 1995-1997, 2000-2004 by Ulrich Drepper <drepper@gnu.ai.mit.edu>
+ #
+-# This file file be copied and used freely without restrictions.  It can
+-# be used in projects which are not available under the GNU Public License
+-# but which still want to provide support for the GNU gettext functionality.
+-# Please note that the actual code is *not* freely available.
++# This file can be copied and used freely without restrictions.  It can
++# be used in projects which are not available under the GNU General Public
++# License but which still want to provide support for the GNU gettext
++# functionality.
++# Please note that the actual code of GNU gettext is covered by the GNU
++# General Public License and is *not* in the public domain.
++#
++# Origin: gettext-0.14
+ 
+ PACKAGE = @PACKAGE@
+ VERSION = @VERSION@
+@@ -18,231 +22,345 @@
+ 
+ prefix = @prefix@
+ exec_prefix = @exec_prefix@
+-datadir = $(prefix)/@DATADIRNAME@
++datadir = @datadir@
+ localedir = $(datadir)/locale
+-gnulocaledir = $(prefix)/share/locale
+-gettextsrcdir = $(prefix)/share/gettext/po
+-subdir = po
++gettextsrcdir = $(datadir)/gettext/po
+ 
+ INSTALL = @INSTALL@
+ INSTALL_DATA = @INSTALL_DATA@
+-MKINSTALLDIRS = $(top_srcdir)/@MKINSTALLDIRS@
++MKINSTALLDIRS = @MKINSTALLDIRS@
++mkinstalldirs = $(SHELL) $(MKINSTALLDIRS)
+ 
+-CC = @CC@
+-GENCAT = @GENCAT@
+-GMSGFMT = PATH=../src:$$PATH @GMSGFMT@
++GMSGFMT = @GMSGFMT@
+ MSGFMT = @MSGFMT@
+-XGETTEXT = PATH=../src:$$PATH @XGETTEXT@
+-MSGMERGE = PATH=../src:$$PATH msgmerge
+-
+-DEFS = @DEFS@
+-CFLAGS = @CFLAGS@
+-CPPFLAGS = @CPPFLAGS@
+-
+-INCLUDES = -I.. -I$(top_srcdir)/intl
+-
+-COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
++XGETTEXT = @XGETTEXT@
++MSGMERGE = msgmerge
++MSGMERGE_UPDATE = @MSGMERGE@ --update
++MSGINIT = msginit
++MSGCONV = msgconv
++MSGFILTER = msgfilter
+ 
+-SOURCES = cat-id-tbl.c
+ POFILES = @POFILES@
+ GMOFILES = @GMOFILES@
+-DISTFILES = ChangeLog Makefile.in.in POTFILES.in $(PACKAGE).pot \
+-stamp-cat-id $(POFILES) $(GMOFILES) $(SOURCES)
++UPDATEPOFILES = @UPDATEPOFILES@
++DUMMYPOFILES = @DUMMYPOFILES@
++DISTFILES.common = Makefile.in.in remove-potcdate.sin \
++$(DISTFILES.common.extra1) $(DISTFILES.common.extra2) $(DISTFILES.common.extra3)
++DISTFILES = $(DISTFILES.common) Makevars POTFILES.in $(DOMAIN).pot stamp-po \
++$(POFILES) $(GMOFILES) \
++$(DISTFILES.extra1) $(DISTFILES.extra2) $(DISTFILES.extra3)
+ 
+ POTFILES = \
+ 
+ CATALOGS = @CATALOGS@
+-CATOBJEXT = @CATOBJEXT@
+-INSTOBJEXT = @INSTOBJEXT@
+ 
+-.SUFFIXES:
+-.SUFFIXES: .c .o .po .pox .gmo .mo .msg .cat
+-
+-.c.o:
+-	$(COMPILE) $<
++# Makevars gets inserted here. (Don't remove this line!)
+ 
+-.po.pox:
+-	$(MAKE) $(PACKAGE).pot
+-	$(MSGMERGE) $< $(srcdir)/$(PACKAGE).pot -o $*.pox
++.SUFFIXES:
++.SUFFIXES: .po .gmo .mo .sed .sin .nop .po-create .po-update
+ 
+ .po.mo:
+-	$(MSGFMT) -o $@ $<
++	@echo "$(MSGFMT) -c -o $@ $<"; \
++	$(MSGFMT) -c -o t-$@ $< && mv t-$@ $@
+ 
+ .po.gmo:
+-	file=$(srcdir)/`echo $* | sed 's,.*/,,'`.gmo \
+-	  && rm -f $$file && $(GMSGFMT) -o $$file $<
+-
+-.po.cat:
+-	sed -f ../intl/po2msg.sed < $< > $*.msg \
+-	  && rm -f $@ && $(GENCAT) $@ $*.msg
++	@lang=`echo $* | sed -e 's,.*/,,'`; \
++	test "$(srcdir)" = . && cdcmd="" || cdcmd="cd $(srcdir) && "; \
++	echo "$${cdcmd}rm -f $${lang}.gmo && $(GMSGFMT) -c --statistics -o $${lang}.gmo $${lang}.po"; \
++	cd $(srcdir) && rm -f $${lang}.gmo && $(GMSGFMT) -c --statistics -o t-$${lang}.gmo $${lang}.po && mv t-$${lang}.gmo $${lang}.gmo
++
++.sin.sed:
++	sed -e '/^#/d' $< > t-$@
++	mv t-$@ $@
+ 
+ 
+ all: all-@USE_NLS@
+ 
+-all-yes: cat-id-tbl.c $(CATALOGS)
++all-yes: stamp-po
+ all-no:
+ 
+-$(srcdir)/$(PACKAGE).pot: $(POTFILES)
+-	$(XGETTEXT) --default-domain=$(PACKAGE) --directory=$(top_srcdir) \
+-	  --add-comments --keyword=_ --keyword=N_ \
++# stamp-po is a timestamp denoting the last time at which the CATALOGS have
++# been loosely updated. Its purpose is that when a developer or translator
++# checks out the package via CVS, and the $(DOMAIN).pot file is not in CVS,
++# "make" will update the $(DOMAIN).pot and the $(CATALOGS), but subsequent
++# invocations of "make" will do nothing. This timestamp would not be necessary
++# if updating the $(CATALOGS) would always touch them; however, the rule for
++# $(POFILES) has been designed to not touch files that don't need to be
++# changed.
++stamp-po: $(srcdir)/$(DOMAIN).pot
++	test -z "$(GMOFILES)" || $(MAKE) $(GMOFILES)
++	@echo "touch stamp-po"
++	@echo timestamp > stamp-poT
++	@mv stamp-poT stamp-po
++
++# Note: Target 'all' must not depend on target '$(DOMAIN).pot-update',
++# otherwise packages like GCC can not be built if only parts of the source
++# have been downloaded.
++
++# This target rebuilds $(DOMAIN).pot; it is an expensive operation.
++# Note that $(DOMAIN).pot is not touched if it doesn't need to be changed.
++$(DOMAIN).pot-update: $(POTFILES) $(srcdir)/POTFILES.in remove-potcdate.sed
++	$(XGETTEXT) --default-domain=$(DOMAIN) --directory=$(top_srcdir) \
++	  --add-comments=TRANSLATORS: $(XGETTEXT_OPTIONS) \
+ 	  --files-from=$(srcdir)/POTFILES.in \
+-	&& test ! -f $(PACKAGE).po \
+-	   || ( rm -f $(srcdir)/$(PACKAGE).pot \
+-		&& mv $(PACKAGE).po $(srcdir)/$(PACKAGE).pot )
+-
+-$(srcdir)/cat-id-tbl.c: stamp-cat-id; @:
+-$(srcdir)/stamp-cat-id: $(PACKAGE).pot
+-	rm -f cat-id-tbl.tmp
+-	sed -f ../intl/po2tbl.sed $(srcdir)/$(PACKAGE).pot \
+-		| sed -e "s/@PACKAGE NAME@/$(PACKAGE)/" > cat-id-tbl.tmp
+-	if cmp -s cat-id-tbl.tmp $(srcdir)/cat-id-tbl.c; then \
+-	  rm cat-id-tbl.tmp; \
++	  --copyright-holder='$(COPYRIGHT_HOLDER)' \
++	  --msgid-bugs-address='$(MSGID_BUGS_ADDRESS)'
++	test ! -f $(DOMAIN).po || { \
++	  if test -f $(srcdir)/$(DOMAIN).pot; then \
++	    sed -f remove-potcdate.sed < $(srcdir)/$(DOMAIN).pot > $(DOMAIN).1po && \
++	    sed -f remove-potcdate.sed < $(DOMAIN).po > $(DOMAIN).2po && \
++	    if cmp $(DOMAIN).1po $(DOMAIN).2po >/dev/null 2>&1; then \
++	      rm -f $(DOMAIN).1po $(DOMAIN).2po $(DOMAIN).po; \
++	    else \
++	      rm -f $(DOMAIN).1po $(DOMAIN).2po $(srcdir)/$(DOMAIN).pot && \
++	      mv $(DOMAIN).po $(srcdir)/$(DOMAIN).pot; \
++	    fi; \
++	  else \
++	    mv $(DOMAIN).po $(srcdir)/$(DOMAIN).pot; \
++	  fi; \
++	}
++
++# This rule has no dependencies: we don't need to update $(DOMAIN).pot at
++# every "make" invocation, only create it when it is missing.
++# Only "make $(DOMAIN).pot-update" or "make dist" will force an update.
++$(srcdir)/$(DOMAIN).pot:
++	$(MAKE) $(DOMAIN).pot-update
++
++# This target rebuilds a PO file if $(DOMAIN).pot has changed.
++# Note that a PO file is not touched if it doesn't need to be changed.
++$(POFILES): $(srcdir)/$(DOMAIN).pot
++	@lang=`echo $@ | sed -e 's,.*/,,' -e 's/\.po$$//'`; \
++	if test -f "$(srcdir)/$${lang}.po"; then \
++	  test "$(srcdir)" = . && cdcmd="" || cdcmd="cd $(srcdir) && "; \
++	  echo "$${cdcmd}$(MSGMERGE_UPDATE) $${lang}.po $(DOMAIN).pot"; \
++	  cd $(srcdir) && $(MSGMERGE_UPDATE) $${lang}.po $(DOMAIN).pot; \
+ 	else \
+-	  echo cat-id-tbl.c changed; \
+-	  rm -f $(srcdir)/cat-id-tbl.c; \
+-	  mv cat-id-tbl.tmp $(srcdir)/cat-id-tbl.c; \
++	  $(MAKE) $${lang}.po-create; \
+ 	fi
+-	cd $(srcdir) && rm -f stamp-cat-id && echo timestamp > stamp-cat-id
+ 
+ 
+ install: install-exec install-data
+ install-exec:
+ install-data: install-data-@USE_NLS@
+-install-data-no: all
+-install-data-yes: all
+-	if test -r "$(MKINSTALLDIRS)"; then \
+-	  $(MKINSTALLDIRS) $(DESTDIR)/$(datadir); \
++	if test "$(PACKAGE)" = "gettext-tools"; then \
++	  $(mkinstalldirs) $(DESTDIR)$(gettextsrcdir); \
++	  for file in $(DISTFILES.common) Makevars.template; do \
++	    $(INSTALL_DATA) $(srcdir)/$$file \
++			    $(DESTDIR)$(gettextsrcdir)/$$file; \
++	  done; \
++	  for file in Makevars; do \
++	    rm -f $(DESTDIR)$(gettextsrcdir)/$$file; \
++	  done; \
+ 	else \
+-	  $(SHELL) $(top_srcdir)/mkinstalldirs $(DESTDIR)/$(datadir); \
++	  : ; \
+ 	fi
++install-data-no: all
++install-data-yes: all
++	$(mkinstalldirs) $(DESTDIR)$(datadir)
+ 	@catalogs='$(CATALOGS)'; \
+ 	for cat in $$catalogs; do \
+ 	  cat=`basename $$cat`; \
+-	  case "$$cat" in \
+-	    *.gmo) destdir=$(gnulocaledir);; \
+-	    *)     destdir=$(localedir);; \
+-	  esac; \
+-	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
+-	  dir=$$destdir/$$lang/LC_MESSAGES; \
+-	  if test -r "$(MKINSTALLDIRS)"; then \
+-	    $(MKINSTALLDIRS) $(DESTDIR)/$$dir; \
+-	  else \
+-	    $(SHELL) $(top_srcdir)/mkinstalldirs $(DESTDIR)/$$dir; \
+-	  fi; \
+-	  if test -r $$cat; then \
+-	    $(INSTALL_DATA) $$cat $(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT); \
+-	    echo "installing $$cat as $(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT)"; \
+-	  else \
+-	    $(INSTALL_DATA) $(srcdir)/$$cat $(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT); \
+-	    echo "installing $(srcdir)/$$cat as" \
+-		 "$$dir/$(PACKAGE)$(INSTOBJEXT)"; \
+-	  fi; \
+-	  if test -r $$cat.m; then \
+-	    $(INSTALL_DATA) $$cat.m $(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT).m; \
+-	    echo "installing $$cat.m as $(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT).m"; \
+-	  else \
+-	    if test -r $(srcdir)/$$cat.m ; then \
+-	      $(INSTALL_DATA) $(srcdir)/$$cat.m \
+-		$(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT).m; \
+-	      echo "installing $(srcdir)/$$cat as" \
+-		   "$(DESTDIR)/$$dir/$(PACKAGE)$(INSTOBJEXT).m"; \
+-	    else \
+-	      true; \
++	  lang=`echo $$cat | sed -e 's/\.gmo$$//'`; \
++	  dir=$(localedir)/$$lang/LC_MESSAGES; \
++	  $(mkinstalldirs) $(DESTDIR)$$dir; \
++	  if test -r $$cat; then realcat=$$cat; else realcat=$(srcdir)/$$cat; fi; \
++	  $(INSTALL_DATA) $$realcat $(DESTDIR)$$dir/$(DOMAIN).mo; \
++	  echo "installing $$realcat as $(DESTDIR)$$dir/$(DOMAIN).mo"; \
++	  for lc in '' $(EXTRA_LOCALE_CATEGORIES); do \
++	    if test -n "$$lc"; then \
++	      if (cd $(DESTDIR)$(localedir)/$$lang && LC_ALL=C ls -l -d $$lc 2>/dev/null) | grep ' -> ' >/dev/null; then \
++	        link=`cd $(DESTDIR)$(localedir)/$$lang && LC_ALL=C ls -l -d $$lc | sed -e 's/^.* -> //'`; \
++	        mv $(DESTDIR)$(localedir)/$$lang/$$lc $(DESTDIR)$(localedir)/$$lang/$$lc.old; \
++	        mkdir $(DESTDIR)$(localedir)/$$lang/$$lc; \
++	        (cd $(DESTDIR)$(localedir)/$$lang/$$lc.old && \
++	         for file in *; do \
++	           if test -f $$file; then \
++	             ln -s ../$$link/$$file $(DESTDIR)$(localedir)/$$lang/$$lc/$$file; \
++	           fi; \
++	         done); \
++	        rm -f $(DESTDIR)$(localedir)/$$lang/$$lc.old; \
++	      else \
++	        if test -d $(DESTDIR)$(localedir)/$$lang/$$lc; then \
++	          :; \
++	        else \
++	          rm -f $(DESTDIR)$(localedir)/$$lang/$$lc; \
++	          mkdir $(DESTDIR)$(localedir)/$$lang/$$lc; \
++	        fi; \
++	      fi; \
++	      rm -f $(DESTDIR)$(localedir)/$$lang/$$lc/$(DOMAIN).mo; \
++	      ln -s ../LC_MESSAGES/$(DOMAIN).mo $(DESTDIR)$(localedir)/$$lang/$$lc/$(DOMAIN).mo 2>/dev/null || \
++	      ln $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(DOMAIN).mo $(DESTDIR)$(localedir)/$$lang/$$lc/$(DOMAIN).mo 2>/dev/null || \
++	      cp -p $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(DOMAIN).mo $(DESTDIR)$(localedir)/$$lang/$$lc/$(DOMAIN).mo; \
++	      echo "installing $$realcat link as $(DESTDIR)$(localedir)/$$lang/$$lc/$(DOMAIN).mo"; \
+ 	    fi; \
+-	  fi; \
++	  done; \
+ 	done
+-	if test "$(PACKAGE)" = "gettext"; then \
+-	  if test -r "$(MKINSTALLDIRS)"; then \
+-	    $(MKINSTALLDIRS) $(DESTDIR)/$(gettextsrcdir); \
+-	  else \
+-	    $(SHELL) $(top_srcdir)/mkinstalldirs $(DESTDIR)/$(gettextsrcdir); \
+-	  fi; \
+-	  $(INSTALL_DATA) $(srcdir)/Makefile.in.in \
+-			  $(DESTDIR)/$(gettextsrcdir)/Makefile.in.in; \
++
++install-strip: install
++
++installdirs: installdirs-exec installdirs-data
++installdirs-exec:
++installdirs-data: installdirs-data-@USE_NLS@
++	if test "$(PACKAGE)" = "gettext-tools"; then \
++	  $(mkinstalldirs) $(DESTDIR)$(gettextsrcdir); \
+ 	else \
+ 	  : ; \
+ 	fi
++installdirs-data-no:
++installdirs-data-yes:
++	$(mkinstalldirs) $(DESTDIR)$(datadir)
++	@catalogs='$(CATALOGS)'; \
++	for cat in $$catalogs; do \
++	  cat=`basename $$cat`; \
++	  lang=`echo $$cat | sed -e 's/\.gmo$$//'`; \
++	  dir=$(localedir)/$$lang/LC_MESSAGES; \
++	  $(mkinstalldirs) $(DESTDIR)$$dir; \
++	  for lc in '' $(EXTRA_LOCALE_CATEGORIES); do \
++	    if test -n "$$lc"; then \
++	      if (cd $(DESTDIR)$(localedir)/$$lang && LC_ALL=C ls -l -d $$lc 2>/dev/null) | grep ' -> ' >/dev/null; then \
++	        link=`cd $(DESTDIR)$(localedir)/$$lang && LC_ALL=C ls -l -d $$lc | sed -e 's/^.* -> //'`; \
++	        mv $(DESTDIR)$(localedir)/$$lang/$$lc $(DESTDIR)$(localedir)/$$lang/$$lc.old; \
++	        mkdir $(DESTDIR)$(localedir)/$$lang/$$lc; \
++	        (cd $(DESTDIR)$(localedir)/$$lang/$$lc.old && \
++	         for file in *; do \
++	           if test -f $$file; then \
++	             ln -s ../$$link/$$file $(DESTDIR)$(localedir)/$$lang/$$lc/$$file; \
++	           fi; \
++	         done); \
++	        rm -f $(DESTDIR)$(localedir)/$$lang/$$lc.old; \
++	      else \
++	        if test -d $(DESTDIR)$(localedir)/$$lang/$$lc; then \
++	          :; \
++	        else \
++	          rm -f $(DESTDIR)$(localedir)/$$lang/$$lc; \
++	          mkdir $(DESTDIR)$(localedir)/$$lang/$$lc; \
++	        fi; \
++	      fi; \
++	    fi; \
++	  done; \
++	done
+ 
+ # Define this as empty until I found a useful application.
+ installcheck:
+ 
+-uninstall:
++uninstall: uninstall-exec uninstall-data
++uninstall-exec:
++uninstall-data: uninstall-data-@USE_NLS@
++	if test "$(PACKAGE)" = "gettext-tools"; then \
++	  for file in $(DISTFILES.common) Makevars.template; do \
++	    rm -f $(DESTDIR)$(gettextsrcdir)/$$file; \
++	  done; \
++	else \
++	  : ; \
++	fi
++uninstall-data-no:
++uninstall-data-yes:
+ 	catalogs='$(CATALOGS)'; \
+ 	for cat in $$catalogs; do \
+ 	  cat=`basename $$cat`; \
+-	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
+-	  rm -f $(localedir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT); \
+-	  rm -f $(localedir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT).m; \
+-	  rm -f $(gnulocaledir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT); \
+-	  rm -f $(gnulocaledir)/$$lang/LC_MESSAGES/$(PACKAGE)$(INSTOBJEXT).m; \
++	  lang=`echo $$cat | sed -e 's/\.gmo$$//'`; \
++	  for lc in LC_MESSAGES $(EXTRA_LOCALE_CATEGORIES); do \
++	    rm -f $(DESTDIR)$(localedir)/$$lang/$$lc/$(DOMAIN).mo; \
++	  done; \
+ 	done
+-	rm -f $(gettextsrcdir)/po-Makefile.in.in
+ 
+ check: all
+ 
+-cat-id-tbl.o: ../intl/libgettext.h
+-
+-dvi info tags TAGS ID:
++info dvi ps pdf html tags TAGS ctags CTAGS ID:
+ 
+ mostlyclean:
+-	rm -f core core.* *.pox $(PACKAGE).po *.old.po cat-id-tbl.tmp
++	rm -f remove-potcdate.sed
++	rm -f stamp-poT
++	rm -f core core.* $(DOMAIN).po $(DOMAIN).1po $(DOMAIN).2po *.new.po
+ 	rm -fr *.o
+ 
+ clean: mostlyclean
+ 
+ distclean: clean
+-	rm -f Makefile Makefile.in POTFILES *.mo *.msg *.cat *.cat.m
++	rm -f Makefile Makefile.in POTFILES *.mo
+ 
+ maintainer-clean: distclean
+ 	@echo "This command is intended for maintainers to use;"
+ 	@echo "it deletes files that may require special tools to rebuild."
+-	rm -f $(GMOFILES)
++	rm -f stamp-po $(GMOFILES)
+ 
+-distdir = ../$(PACKAGE)-$(VERSION)/$(subdir)
+-dist distdir: update-po $(DISTFILES)
++distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
++dist distdir:
++	$(MAKE) update-po
++	@$(MAKE) dist2
++# This is a separate target because 'update-po' must be executed before.
++dist2: $(DISTFILES)
+ 	dists="$(DISTFILES)"; \
++	if test "$(PACKAGE)" = "gettext-tools"; then \
++	  dists="$$dists Makevars.template"; \
++	fi; \
++	if test -f $(srcdir)/ChangeLog; then \
++	  dists="$$dists ChangeLog"; \
++	fi; \
++	for i in 0 1 2 3 4 5 6 7 8 9; do \
++	  if test -f $(srcdir)/ChangeLog.$$i; then \
++	    dists="$$dists ChangeLog.$$i"; \
++	  fi; \
++	done; \
++	if test -f $(srcdir)/LINGUAS; then dists="$$dists LINGUAS"; fi; \
+ 	for file in $$dists; do \
+-	  ln $(srcdir)/$$file $(distdir) 2> /dev/null \
+-	    || cp -p $(srcdir)/$$file $(distdir); \
++	  if test -f $$file; then \
++	    cp -p $$file $(distdir); \
++	  else \
++	    cp -p $(srcdir)/$$file $(distdir); \
++	  fi; \
+ 	done
+ 
+ update-po: Makefile
+-	$(MAKE) $(PACKAGE).pot
+-	PATH=`pwd`/../src:$$PATH; \
++	$(MAKE) $(DOMAIN).pot-update
++	test -z "$(UPDATEPOFILES)" || $(MAKE) $(UPDATEPOFILES)
++	$(MAKE) update-gmo
++
++# General rule for creating PO files.
++
++.nop.po-create:
++	@lang=`echo $@ | sed -e 's/\.po-create$$//'`; \
++	echo "File $$lang.po does not exist. If you are a translator, you can create it through 'msginit'." 1>&2; \
++	exit 1
++
++# General rule for updating PO files.
++
++.nop.po-update:
++	@lang=`echo $@ | sed -e 's/\.po-update$$//'`; \
++	if test "$(PACKAGE)" = "gettext-tools"; then PATH=`pwd`/../src:$$PATH; fi; \
++	tmpdir=`pwd`; \
++	echo "$$lang:"; \
++	test "$(srcdir)" = . && cdcmd="" || cdcmd="cd $(srcdir) && "; \
++	echo "$${cdcmd}$(MSGMERGE) $$lang.po $(DOMAIN).pot -o $$lang.new.po"; \
+ 	cd $(srcdir); \
+-	catalogs='$(CATALOGS)'; \
+-	for cat in $$catalogs; do \
+-	  cat=`basename $$cat`; \
+-	  lang=`echo $$cat | sed 's/\$(CATOBJEXT)$$//'`; \
+-	  mv $$lang.po $$lang.old.po; \
+-	  echo "$$lang:"; \
+-	  if $(MSGMERGE) $$lang.old.po $(PACKAGE).pot -o $$lang.po; then \
+-	    rm -f $$lang.old.po; \
++	if $(MSGMERGE) $$lang.po $(DOMAIN).pot -o $$tmpdir/$$lang.new.po; then \
++	  if cmp $$lang.po $$tmpdir/$$lang.new.po >/dev/null 2>&1; then \
++	    rm -f $$tmpdir/$$lang.new.po; \
+ 	  else \
+-	    echo "msgmerge for $$cat failed!"; \
+-	    rm -f $$lang.po; \
+-	    mv $$lang.old.po $$lang.po; \
++	    if mv -f $$tmpdir/$$lang.new.po $$lang.po; then \
++	      :; \
++	    else \
++	      echo "msgmerge for $$lang.po failed: cannot move $$tmpdir/$$lang.new.po to $$lang.po" 1>&2; \
++	      exit 1; \
++	    fi; \
+ 	  fi; \
+-	done
++	else \
++	  echo "msgmerge for $$lang.po failed!" 1>&2; \
++	  rm -f $$tmpdir/$$lang.new.po; \
++	fi
+ 
+-POTFILES: POTFILES.in
+-	( if test 'x$(srcdir)' != 'x.'; then \
+-	    posrcprefix='$(top_srcdir)/'; \
+-	  else \
+-	    posrcprefix="../"; \
+-	  fi; \
+-	  rm -f $@-t $@ \
+-	    && (sed -e '/^#/d' -e '/^[ 	]*$$/d' \
+-		    -e "s@.*@	$$posrcprefix& \\\\@" < $(srcdir)/$@.in \
+-		| sed -e '$$s/\\$$//') > $@-t \
+-	    && chmod a-w $@-t \
+-	    && mv $@-t $@ )
++$(DUMMYPOFILES):
++
++update-gmo: Makefile $(GMOFILES)
++	@:
+ 
+-Makefile: Makefile.in.in ../config.status POTFILES
+-	cd .. \
++Makefile: Makefile.in.in $(top_builddir)/config.status @POMAKEFILEDEPS@
++	cd $(top_builddir) \
+ 	  && CONFIG_FILES=$(subdir)/$@.in CONFIG_HEADERS= \
+ 	       $(SHELL) ./config.status
+ 
++force:
++
+ # Tell versions [3.59,3.63) of GNU make not to export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
+Index: po/Makevars
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ po/Makevars	2005-11-19 08:58:45.482262000 -0600
+@@ -0,0 +1,41 @@
++# Makefile variables for PO directory in any package using GNU gettext.
++
++# Usually the message domain is the same as the package name.
++DOMAIN = $(PACKAGE)
++
++# These two variables depend on the location of this directory.
++subdir = po
++top_builddir = ..
++
++# These options get passed to xgettext.
++XGETTEXT_OPTIONS = --keyword=_ --keyword=N_
++
++# This is the copyright holder that gets inserted into the header of the
++# $(DOMAIN).pot file.  Set this to the copyright holder of the surrounding
++# package.  (Note that the msgstr strings, extracted from the package's
++# sources, belong to the copyright holder of the package.)  Translators are
++# expected to transfer the copyright for their translations to this person
++# or entity, or to disclaim their copyright.  The empty string stands for
++# the public domain; in this case the translators are expected to disclaim
++# their copyright.
++COPYRIGHT_HOLDER = Free Software Foundation, Inc.
++
++# This is the email address or URL to which the translators shall report
++# bugs in the untranslated strings:
++# - Strings which are not entire sentences, see the maintainer guidelines
++#   in the GNU gettext documentation, section 'Preparing Strings'.
++# - Strings which use unclear terms or require additional context to be
++#   understood.
++# - Strings which make invalid assumptions about notation of date, time or
++#   money.
++# - Pluralisation problems.
++# - Incorrect English spelling.
++# - Incorrect formatting.
++# It can be your email address, or a mailing list address where translators
++# can write to without being subscribed, or the URL of a web page through
++# which the translators can contact you.
++MSGID_BUGS_ADDRESS =
++
++# This is the list of locale categories, beyond LC_MESSAGES, for which the
++# message catalogs shall be used.  It is usually empty.
++EXTRA_LOCALE_CATEGORIES =
+Index: po/insert-header.sin
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ po/insert-header.sin	2005-11-19 08:58:45.506383000 -0600
+@@ -0,0 +1,23 @@
++# Sed script that inserts the file called HEADER before the header entry.
++#
++# At each occurrence of a line starting with "msgid ", we execute the following
++# commands. At the first occurrence, insert the file. At the following
++# occurrences, do nothing. The distinction between the first and the following
++# occurrences is achieved by looking at the hold space.
++/^msgid /{
++x
++# Test if the hold space is empty.
++s/m/m/
++ta
++# Yes it was empty. First occurrence. Read the file.
++r HEADER
++# Output the file's contents by reading the next line. But don't lose the
++# current line while doing this.
++g
++N
++bb
++:a
++# The hold space was nonempty. Following occurrences. Do nothing.
++x
++:b
++}
+Index: po/quot.sed
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ po/quot.sed	2005-11-19 08:58:45.536397000 -0600
+@@ -0,0 +1,6 @@
++s/"\([^"]*\)"/“\1”/g
++s/`\([^`']*\)'/‘\1’/g
++s/ '\([^`']*\)' / ‘\1’ /g
++s/ '\([^`']*\)'$/ ‘\1’/g
++s/^'\([^`']*\)' /‘\1’ /g
++s/“”/""/g
+Index: po/remove-potcdate.sin
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ po/remove-potcdate.sin	2005-11-19 08:58:45.560665000 -0600
+@@ -0,0 +1,19 @@
++# Sed script that remove the POT-Creation-Date line in the header entry
++# from a POT file.
++#
++# The distinction between the first and the following occurrences of the
++# pattern is achieved by looking at the hold space.
++/^"POT-Creation-Date: .*"$/{
++x
++# Test if the hold space is empty.
++s/P/P/
++ta
++# Yes it was empty. First occurrence. Remove the line.
++g
++d
++bb
++:a
++# The hold space was nonempty. Following occurrences. Do nothing.
++x
++:b
++}
+Index: src/Makefile.am
+===================================================================
+--- src/Makefile.am.orig	2005-11-19 08:58:29.829233000 -0600
++++ src/Makefile.am	2005-11-19 08:58:45.584927000 -0600
+@@ -9,10 +9,9 @@
+                grepmat.c
+ noinst_HEADERS = grep.h dfa.h kwset.h getpagesize.h system.h
+ 
+-LDADD = @INTLLIBS@ ../lib/libgreputils.a
+-datadir = $(prefix)/@DATADIRNAME@
++LDADD = ../lib/libgreputils.a @INTLLIBS@
+ localedir = $(datadir)/locale
+-INCLUDES = -I../intl -I$(top_srcdir)/lib -DLOCALEDIR=\"$(localedir)\"
++INCLUDES = -I$(top_srcdir)/lib -DLOCALEDIR=\"$(localedir)\"
+ 
+ EXTRA_DIST = \
+              dosbuf.c \
+@@ -20,11 +19,11 @@
+ 
+ egrep:
+ 	echo '#!/bin/sh' >$@
+-	echo 'exec grep -E $${1+"$$@"}' >>$@
++	echo 'exec $(bindir)/'`echo grep|sed '$(transform)'`' -E $${1+"$$@"}' >>$@
+ 	chmod a+x $@
+ 
+ fgrep:
+ 	echo '#!/bin/sh' >$@
+-	echo 'exec grep -F $${1+"$$@"}' >>$@
++	echo 'exec $(bindir)/'`echo grep|sed '$(transform)'`' -F $${1+"$$@"}' >>$@
+ 	chmod a+x $@
+ 
+Index: src/dfa.c
+===================================================================
+--- src/dfa.c.orig	2005-11-19 08:58:29.853934000 -0600
++++ src/dfa.c	2005-11-19 08:58:45.623815000 -0600
+@@ -101,7 +101,7 @@
+ 
+ /* If we (don't) have I18N.  */
+ /* glibc defines _ */
+-#ifndef _
++#ifdef ENABLE_NLS
+ # ifdef HAVE_LIBINTL_H
+ #  include <libintl.h>
+ #  ifndef _
+@@ -110,6 +110,8 @@
+ # else
+ #  define _(Str) (Str)
+ # endif
++#else
++#  define _(Str) (Str)
+ #endif
+ 
+ #include "regex.h"
+@@ -1052,12 +1054,19 @@
+ 			  setbit_case_fold (c, ccl);
+ 		      } else {
+ 			/* POSIX locales are painful - leave the decision to libc */
+-			char expr[6] = { '[', c, '-', c2, ']', '\0' };
++			char expr[6] = { '[', '\0', '-', '\0', ']', '\0' };
+ 			regex_t re;
++
++			expr[1] = c;
++			expr[3] = c2;
++
+ 			if (regcomp (&re, expr, case_fold ? REG_ICASE : 0) == REG_NOERROR) {
+ 			  for (c = 0; c < NOTCHAR; ++c) {
+-			    char buf[2] = { c, '\0' };
++			    char buf[2] = { '\0', '\0' };
+ 			    regmatch_t mat;
++
++			    buf[0] = c;
++
+ 			    if (regexec (&re, buf, 1, &mat, 0) == REG_NOERROR
+                                && mat.rm_so == 0 && mat.rm_eo == 1)
+                               setbit_case_fold (c, ccl);
+Index: src/grep.c
+===================================================================
+--- src/grep.c.orig	2005-11-19 08:58:29.878050000 -0600
++++ src/grep.c	2005-11-19 08:58:45.721521000 -0600
+@@ -1294,11 +1294,6 @@
+   if (program_name && strrchr (program_name, '/'))
+     program_name = strrchr (program_name, '/') + 1;
+ 
+-  if (!strcmp(program_name, "egrep"))
+-    setmatcher ("egrep");
+-  if (!strcmp(program_name, "fgrep"))
+-    setmatcher ("fgrep");
+-
+ #if defined(__MSDOS__) || defined(_WIN32)
+   /* DOS and MS-Windows use backslashes as directory separators, and usually
+      have an .exe suffix.  They also have case-insensitive filesystems.  */
+Index: src/search.c
+===================================================================
+--- src/search.c.orig	2005-11-19 08:58:29.902190000 -0600
++++ src/search.c	2005-11-19 08:58:45.780048000 -0600
+@@ -25,6 +25,7 @@
+ #if defined HAVE_WCTYPE_H && defined HAVE_WCHAR_H && defined HAVE_MBRTOWC
+ /* We can handle multibyte string.  */
+ # define MBS_SUPPORT
++# include <stdio.h>
+ # include <wchar.h>
+ # include <wctype.h>
+ #endif
+Index: m4/decl.m4
+===================================================================
+--- m4/decl.m4.orig	2005-11-19 08:58:29.262646000 -0600
++++ m4/decl.m4	2005-11-19 08:58:45.820381000 -0600
+@@ -1,6 +1,6 @@
+ #serial 5
+ 
+-AC_DEFUN(jm_CHECK_DECLARATION,
++AC_DEFUN([jm_CHECK_DECLARATION],
+ [
+   AC_MSG_CHECKING([whether $1 is declared])
+   AC_CACHE_VAL(jm_cv_func_decl_$1,
+@@ -25,7 +25,7 @@
+ 
+ dnl jm_CHECK_DECLARATIONS(INCLUDES, FUNCTION... [, ACTION-IF-DECLARED
+ dnl                       [, ACTION-IF-NOT-DECLARED]])
+-AC_DEFUN(jm_CHECK_DECLARATIONS,
++AC_DEFUN([jm_CHECK_DECLARATIONS],
+ [
+   for jm_func in $2
+   do
+Index: m4/djgpp.m4
+===================================================================
+--- m4/djgpp.m4.orig	2005-11-19 08:58:29.286771000 -0600
++++ m4/djgpp.m4	2005-11-19 08:58:45.850472000 -0600
+@@ -1,6 +1,6 @@
+ dnl Check for DJGPP. we use DJ_GPP as the variable
+ dnl EXEEXXT
+-AC_DEFUN(AC_DJGPP,
++AC_DEFUN([AC_DJGPP],
+ [AC_CACHE_CHECK(for DJGPP environment, ac_cv_djgpp,
+ [AC_TRY_COMPILE(,[ return __DJGPP__;],
+ ac_cv_djgpp=yes, ac_cv_djgpp=no)
+Index: m4/dosfile.m4
+===================================================================
+--- m4/dosfile.m4.orig	2005-11-19 08:58:29.310905000 -0600
++++ m4/dosfile.m4	2005-11-19 08:58:45.880755000 -0600
+@@ -3,7 +3,7 @@
+ # Also set the macro HAVE_DOS_FILE_CONTENTS for now,
+ # since don't know of a good way to independently check this.
+ dnl AC_DOSFILE()
+-AC_DEFUN(AC_DOSFILE,
++AC_DEFUN([AC_DOSFILE],
+ [
+   AC_CACHE_CHECK([for dos file convention], ac_cv_dosfile,
+     [if test -d ".\."; then
+Index: m4/envsep.m4
+===================================================================
+--- m4/envsep.m4.orig	2005-11-19 08:58:29.335010000 -0600
++++ m4/envsep.m4	2005-11-19 08:58:45.916956000 -0600
+@@ -3,7 +3,7 @@
+ 
+ dnl AM_SEP()
+ dnl SEP
+-AC_DEFUN(AM_SEP,
++AC_DEFUN([AM_SEP],
+ [AC_REQUIRE([AC_CYGWIN])
+ AC_REQUIRE([AC_MINGW32])
+ AC_REQUIRE([AC_DJGPP])
+Index: m4/error.m4
+===================================================================
+--- m4/error.m4.orig	2005-11-19 08:58:29.359212000 -0600
++++ m4/error.m4	2005-11-19 08:58:45.947105000 -0600
+@@ -4,7 +4,7 @@
+ dnl directory -- otherwise, they'll conflict with existing files.
+ 
+ dnl These are the prerequisite macros for GNU's error.c file.
+-AC_DEFUN(jm_PREREQ_ERROR,
++AC_DEFUN([jm_PREREQ_ERROR],
+ [
+   AC_CHECK_FUNCS(strerror strerror_r vprintf doprnt)
+   AC_HEADER_STDC
+Index: m4/glibc.m4
+===================================================================
+--- m4/glibc.m4.orig	2005-11-19 08:58:29.377175000 -0600
++++ m4/glibc.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,33 +0,0 @@
+-dnl From Gordon Matzigkeit.
+-dnl Test for the GNU C Library.
+-dnl FIXME: this should migrate into libit.
+-
+-AC_DEFUN(AM_GLIBC,
+-  [
+-    AC_CACHE_CHECK(whether we are using the GNU C Library,
+-      ac_cv_gnu_library,
+-      [AC_EGREP_CPP([Thanks for using GNU],
+-	[
+-#include <features.h>
+-#ifdef __GNU_LIBRARY__
+-  Thanks for using GNU
+-#endif
+-	],
+-	ac_cv_gnu_library=yes,
+-	ac_cv_gnu_library=no)
+-      ]
+-    )
+-    AC_CACHE_CHECK(for version 2 of the GNU C Library,
+-      ac_cv_glibc,
+-      [AC_EGREP_CPP([Thanks for using GNU too],
+-	[
+-#include <features.h>
+-#ifdef __GLIBC__
+-  Thanks for using GNU too
+-#endif
+-	],
+-	ac_cv_glibc=yes, ac_cv_glibc=no)
+-      ]
+-    )
+-  ]
+-)
+Index: m4/inttypes_h.m4
+===================================================================
+--- m4/inttypes_h.m4.orig	2005-11-19 08:58:29.395183000 -0600
++++ m4/inttypes_h.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,22 +0,0 @@
+-#serial 3
+-
+-dnl From Paul Eggert.
+-
+-# Define HAVE_INTTYPES_H if <inttypes.h> exists,
+-# doesn't clash with <sys/types.h>, and declares uintmax_t.
+-
+-AC_DEFUN(jm_AC_HEADER_INTTYPES_H,
+-[
+-  AC_CACHE_CHECK([for inttypes.h], jm_ac_cv_header_inttypes_h,
+-  [AC_TRY_COMPILE(
+-    [#include <sys/types.h>
+-#include <inttypes.h>],
+-    [uintmax_t i = (uintmax_t) -1;],
+-    jm_ac_cv_header_inttypes_h=yes,
+-    jm_ac_cv_header_inttypes_h=no)])
+-  if test $jm_ac_cv_header_inttypes_h = yes; then
+-    AC_DEFINE_UNQUOTED(HAVE_INTTYPES_H, 1,
+-[Define if <inttypes.h> exists, doesn't clash with <sys/types.h>,
+-   and declares uintmax_t. ])
+-  fi
+-])
+Index: m4/largefile.m4
+===================================================================
+--- m4/largefile.m4.orig	2005-11-19 08:58:29.413218000 -0600
++++ m4/largefile.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,129 +0,0 @@
+-#serial 6
+-
+-dnl By default, many hosts won't let programs access large files;
+-dnl one must use special compiler options to get large-file access to work.
+-dnl For more details about this brain damage please see:
+-dnl http://www.sas.com/standards/large.file/x_open.20Mar96.html
+-
+-dnl Written by Paul Eggert <eggert@twinsun.com>.
+-
+-dnl Internal subroutine of AC_SYS_LARGEFILE.
+-dnl AC_SYS_LARGEFILE_FLAGS(FLAGSNAME)
+-AC_DEFUN([AC_SYS_LARGEFILE_FLAGS],
+-  [AC_CACHE_CHECK([for $1 value to request large file support],
+-     ac_cv_sys_largefile_$1,
+-     [if ($GETCONF LFS_$1) >conftest.1 2>conftest.2 && test ! -s conftest.2
+-      then
+-        ac_cv_sys_largefile_$1=`cat conftest.1`
+-      else
+-	ac_cv_sys_largefile_$1=no
+-	ifelse($1, CFLAGS,
+-	  [case "$host_os" in
+-	   # HP-UX 10.20 requires -D__STDC_EXT__ with gcc 2.95.1.
+-changequote(, )dnl
+-	   hpux10.[2-9][0-9]* | hpux1[1-9]* | hpux[2-9][0-9]*)
+-changequote([, ])dnl
+-	     if test "$GCC" = yes; then
+-	       ac_cv_sys_largefile_CFLAGS=-D__STDC_EXT__
+-	     fi
+-	     ;;
+-	   # IRIX 6.2 and later require cc -n32.
+-changequote(, )dnl
+-	   irix6.[2-9]* | irix6.1[0-9]* | irix[7-9].* | irix[1-9][0-9]*)
+-changequote([, ])dnl
+-	     if test "$GCC" != yes; then
+-	       ac_cv_sys_largefile_CFLAGS=-n32
+-	     fi
+-	   esac
+-	   if test "$ac_cv_sys_largefile_CFLAGS" != no; then
+-	     ac_save_CC="$CC"
+-	     CC="$CC $ac_cv_sys_largefile_CFLAGS"
+-	     AC_TRY_LINK(, , , ac_cv_sys_largefile_CFLAGS=no)
+-	     CC="$ac_save_CC"
+-	   fi])
+-      fi
+-      rm -f conftest*])])
+-
+-dnl Internal subroutine of AC_SYS_LARGEFILE.
+-dnl AC_SYS_LARGEFILE_SPACE_APPEND(VAR, VAL)
+-AC_DEFUN([AC_SYS_LARGEFILE_SPACE_APPEND],
+-  [case $2 in
+-   no) ;;
+-   ?*)
+-     case "[$]$1" in
+-     '') $1=$2 ;;
+-     *) $1=[$]$1' '$2 ;;
+-     esac ;;
+-   esac])
+-
+-dnl Internal subroutine of AC_SYS_LARGEFILE.
+-dnl AC_SYS_LARGEFILE_MACRO_VALUE(C-MACRO, CACHE-VAR, COMMENT, CODE-TO-SET-DEFAULT)
+-AC_DEFUN([AC_SYS_LARGEFILE_MACRO_VALUE],
+-  [AC_CACHE_CHECK([for $1], $2,
+-     [$2=no
+-changequote(, )dnl
+-      $4
+-      for ac_flag in $ac_cv_sys_largefile_CFLAGS no; do
+-	case "$ac_flag" in
+-	-D$1)
+-	  $2=1 ;;
+-	-D$1=*)
+-	  $2=`expr " $ac_flag" : '[^=]*=\(.*\)'` ;;
+-	esac
+-      done
+-changequote([, ])dnl
+-      ])
+-   if test "[$]$2" != no; then
+-     AC_DEFINE_UNQUOTED([$1], [$]$2, [$3])
+-   fi])
+-
+-AC_DEFUN([AC_SYS_LARGEFILE],
+-  [AC_REQUIRE([AC_CANONICAL_HOST])
+-   AC_ARG_ENABLE(largefile,
+-     [  --disable-largefile     omit support for large files])
+-   if test "$enable_largefile" != no; then
+-     AC_CHECK_TOOL(GETCONF, getconf)
+-     AC_SYS_LARGEFILE_FLAGS(CFLAGS)
+-     AC_SYS_LARGEFILE_FLAGS(LDFLAGS)
+-     AC_SYS_LARGEFILE_FLAGS(LIBS)
+-
+-     for ac_flag in $ac_cv_sys_largefile_CFLAGS no; do
+-       case "$ac_flag" in
+-       no) ;;
+-       -D_FILE_OFFSET_BITS=*) ;;
+-       -D_LARGEFILE_SOURCE | -D_LARGEFILE_SOURCE=*) ;;
+-       -D_LARGE_FILES | -D_LARGE_FILES=*) ;;
+-       -D?* | -I?*)
+-	 AC_SYS_LARGEFILE_SPACE_APPEND(CPPFLAGS, "$ac_flag") ;;
+-       *)
+-	 AC_SYS_LARGEFILE_SPACE_APPEND(CFLAGS, "$ac_flag") ;;
+-       esac
+-     done
+-     AC_SYS_LARGEFILE_SPACE_APPEND(LDFLAGS, "$ac_cv_sys_largefile_LDFLAGS")
+-     AC_SYS_LARGEFILE_SPACE_APPEND(LIBS, "$ac_cv_sys_largefile_LIBS")
+-     AC_SYS_LARGEFILE_MACRO_VALUE(_FILE_OFFSET_BITS,
+-       ac_cv_sys_file_offset_bits,
+-       [Number of bits in a file offset, on hosts where this is settable.],
+-       [case "$host_os" in
+-	# HP-UX 10.20 and later
+-	hpux10.[2-9][0-9]* | hpux1[1-9]* | hpux[2-9][0-9]*)
+-	  ac_cv_sys_file_offset_bits=64 ;;
+-	esac])
+-     AC_SYS_LARGEFILE_MACRO_VALUE(_LARGEFILE_SOURCE,
+-       ac_cv_sys_largefile_source,
+-       [Define to make fseeko etc. visible, on some hosts.],
+-       [case "$host_os" in
+-	# HP-UX 10.20 and later
+-	hpux10.[2-9][0-9]* | hpux1[1-9]* | hpux[2-9][0-9]*)
+-	  ac_cv_sys_largefile_source=1 ;;
+-	esac])
+-     AC_SYS_LARGEFILE_MACRO_VALUE(_LARGE_FILES,
+-       ac_cv_sys_large_files,
+-       [Define for large files, on AIX-style hosts.],
+-       [case "$host_os" in
+-	# AIX 4.2 and later
+-	aix4.[2-9]* | aix4.1[0-9]* | aix[5-9].* | aix[1-9][0-9]*)
+-	  ac_cv_sys_large_files=1 ;;
+-	esac])
+-   fi
+-  ])
+Index: m4/malloc.m4
+===================================================================
+--- m4/malloc.m4.orig	2005-11-19 08:58:29.437325000 -0600
++++ m4/malloc.m4	2005-11-19 08:58:45.995534000 -0600
+@@ -5,7 +5,7 @@
+ dnl If it doesn't, arrange to use the replacement function.
+ dnl
+ 
+-AC_DEFUN(jm_FUNC_MALLOC,
++AC_DEFUN([jm_FUNC_MALLOC],
+ [
+  dnl xmalloc.c requires that this symbol be defined so it doesn't
+  dnl mistakenly use a broken malloc -- as it might if this test were omitted.
+Index: m4/mbstate_t.m4
+===================================================================
+--- m4/mbstate_t.m4.orig	2005-11-19 08:58:29.461467000 -0600
++++ m4/mbstate_t.m4	2005-11-19 08:58:46.025728000 -0600
+@@ -10,7 +10,7 @@
+ # (at least glibc-2.1.3) because the "_XOPEN_SOURCE 500" definition elicits
+ # a syntax error in wchar.h due to the use of undefined __int32_t.
+ 
+-AC_DEFUN(AC_MBSTATE_T,
++AC_DEFUN([AC_MBSTATE_T],
+   [
+    AC_CHECK_HEADERS(stdlib.h)
+ 
+Index: m4/realloc.m4
+===================================================================
+--- m4/realloc.m4.orig	2005-11-19 08:58:29.485593000 -0600
++++ m4/realloc.m4	2005-11-19 08:58:46.055967000 -0600
+@@ -5,7 +5,7 @@
+ dnl If it doesn't, arrange to use the replacement function.
+ dnl
+ 
+-AC_DEFUN(jm_FUNC_REALLOC,
++AC_DEFUN([jm_FUNC_REALLOC],
+ [
+  dnl xmalloc.c requires that this symbol be defined so it doesn't
+  dnl mistakenly use a broken realloc -- as it might if this test were omitted.
+Index: m4/regex.m4
+===================================================================
+--- m4/regex.m4.orig	2005-11-19 08:58:29.509751000 -0600
++++ m4/regex.m4	2005-11-19 08:58:46.086309000 -0600
+@@ -5,7 +5,7 @@
+ 
+ dnl Usage: jm_INCLUDED_REGEX([lib/regex.c])
+ dnl
+-AC_DEFUN(jm_INCLUDED_REGEX,
++AC_DEFUN([jm_INCLUDED_REGEX],
+   [
+     dnl Even packages that don't use regex.c can use this macro.
+     dnl Of course, for them it doesn't do anything.
+Index: m4/uintmax_t.m4
+===================================================================
+--- m4/uintmax_t.m4.orig	2005-11-19 08:58:29.527717000 -0600
++++ m4/uintmax_t.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,22 +0,0 @@
+-#serial 5
+-
+-dnl From Paul Eggert.
+-
+-AC_PREREQ(2.13)
+-
+-# Define uintmax_t to `unsigned long' or `unsigned long long'
+-# if <inttypes.h> does not exist.
+-
+-AC_DEFUN(jm_AC_TYPE_UINTMAX_T,
+-[
+-  AC_REQUIRE([jm_AC_HEADER_INTTYPES_H])
+-  if test $jm_ac_cv_header_inttypes_h = no; then
+-    AC_REQUIRE([jm_AC_TYPE_UNSIGNED_LONG_LONG])
+-    test $ac_cv_type_unsigned_long_long = yes \
+-      && ac_type='unsigned long long' \
+-      || ac_type='unsigned long'
+-    AC_DEFINE_UNQUOTED(uintmax_t, $ac_type,
+-[  Define to unsigned long or unsigned long long
+-   if <inttypes.h> doesn't define.])
+-  fi
+-])
+Index: m4/ulonglong.m4
+===================================================================
+--- m4/ulonglong.m4.orig	2005-11-19 08:58:29.545742000 -0600
++++ m4/ulonglong.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,17 +0,0 @@
+-#serial 2
+-
+-dnl From Paul Eggert.
+-
+-AC_DEFUN(jm_AC_TYPE_UNSIGNED_LONG_LONG,
+-[
+-  AC_CACHE_CHECK([for unsigned long long], ac_cv_type_unsigned_long_long,
+-  [AC_TRY_LINK([unsigned long long ull = 1; int i = 63;],
+-    [unsigned long long ullmax = (unsigned long long) -1;
+-     return ull << i | ull >> i | ullmax / ull | ullmax % ull;],
+-    ac_cv_type_unsigned_long_long=yes,
+-    ac_cv_type_unsigned_long_long=no)])
+-  if test $ac_cv_type_unsigned_long_long = yes; then
+-    AC_DEFINE(HAVE_UNSIGNED_LONG_LONG, 1,
+-      [Define if you have the unsigned long long type.])
+-  fi
+-])
+Index: m4/xstrtoumax.m4
+===================================================================
+--- m4/xstrtoumax.m4.orig	2005-11-19 08:58:29.569884000 -0600
++++ m4/xstrtoumax.m4	2005-11-19 08:58:46.128430000 -0600
+@@ -2,7 +2,7 @@
+ 
+ # autoconf tests required for use of xstrtoumax.c
+ 
+-AC_DEFUN(jm_AC_PREREQ_XSTRTOUMAX,
++AC_DEFUN([jm_AC_PREREQ_XSTRTOUMAX],
+ [
+   AC_REQUIRE([jm_AC_HEADER_INTTYPES_H])
+   AC_REQUIRE([jm_AC_TYPE_UNSIGNED_LONG_LONG])
+Index: depcomp
+===================================================================
+--- depcomp.orig	2005-11-19 08:58:30.011523000 -0600
++++ depcomp	2005-11-19 08:58:46.160134000 -0600
+@@ -1,7 +1,9 @@
+ #! /bin/sh
+-
+ # depcomp - compile a program generating dependencies as side-effects
+-# Copyright 1999, 2000 Free Software Foundation, Inc.
++
++scriptversion=2005-02-09.22
++
++# Copyright (C) 1999, 2000, 2003, 2004, 2005 Free Software Foundation, Inc.
+ 
+ # This program is free software; you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -25,13 +27,45 @@
+ 
+ # Originally written by Alexandre Oliva <oliva@dcc.unicamp.br>.
+ 
++case $1 in
++  '')
++     echo "$0: No command.  Try \`$0 --help' for more information." 1>&2
++     exit 1;
++     ;;
++  -h | --h*)
++    cat <<\EOF
++Usage: depcomp [--help] [--version] PROGRAM [ARGS]
++
++Run PROGRAMS ARGS to compile a file, generating dependencies
++as side-effects.
++
++Environment variables:
++  depmode     Dependency tracking mode.
++  source      Source file read by `PROGRAMS ARGS'.
++  object      Object file output by `PROGRAMS ARGS'.
++  DEPDIR      directory where to store dependencies.
++  depfile     Dependency file to output.
++  tmpdepfile  Temporary file to use when outputing dependencies.
++  libtool     Whether libtool is used (yes/no).
++
++Report bugs to <bug-automake@gnu.org>.
++EOF
++    exit $?
++    ;;
++  -v | --v*)
++    echo "depcomp $scriptversion"
++    exit $?
++    ;;
++esac
++
+ if test -z "$depmode" || test -z "$source" || test -z "$object"; then
+   echo "depcomp: Variables source, object and depmode must be set" 1>&2
+   exit 1
+ fi
+-# `libtool' can also be set to `yes' or `no'.
+ 
+-depfile=${depfile-`echo "$object" | sed 's,\([^/]*\)$,.deps/\1,;s/\.\([^.]*\)$/.P\1/'`}
++# Dependencies for sub/bar.o or sub/bar.obj go into sub/.deps/bar.Po.
++depfile=${depfile-`echo "$object" |
++  sed 's|[^\\/]*$|'${DEPDIR-.deps}'/&|;s|\.\([^.]*\)$|.P\1|;s|Pobj$|Po|'`}
+ tmpdepfile=${tmpdepfile-`echo "$depfile" | sed 's/\.\([^.]*\)$/.T\1/'`}
+ 
+ rm -f "$tmpdepfile"
+@@ -163,19 +197,25 @@
+ 
+ aix)
+   # The C for AIX Compiler uses -M and outputs the dependencies
+-  # in a .u file.  This file always lives in the current directory.
+-  # Also, the AIX compiler puts `$object:' at the start of each line;
+-  # $object doesn't have directory information.
+-  stripped=`echo "$object" | sed -e 's,^.*/,,' -e 's/\(.*\)\..*$/\1/'`
++  # in a .u file.  In older versions, this file always lives in the
++  # current directory.  Also, the AIX compiler puts `$object:' at the
++  # start of each line; $object doesn't have directory information.
++  # Version 6 uses the directory in both cases.
++  stripped=`echo "$object" | sed 's/\(.*\)\..*$/\1/'`
+   tmpdepfile="$stripped.u"
+-  outname="$stripped.o"
+   if test "$libtool" = yes; then
+     "$@" -Wc,-M
+   else
+     "$@" -M
+   fi
+-
+   stat=$?
++
++  if test -f "$tmpdepfile"; then :
++  else
++    stripped=`echo "$stripped" | sed 's,^.*/,,'`
++    tmpdepfile="$stripped.u"
++  fi
++
+   if test $stat -eq 0; then :
+   else
+     rm -f "$tmpdepfile"
+@@ -183,6 +223,7 @@
+   fi
+ 
+   if test -f "$tmpdepfile"; then
++    outname="$stripped.o"
+     # Each line is of the form `foo.o: dependent.h'.
+     # Do two passes, one to just change these to
+     # `$object: dependent.h' and one to simply `dependent.h:'.
+@@ -197,37 +238,96 @@
+   rm -f "$tmpdepfile"
+   ;;
+ 
++icc)
++  # Intel's C compiler understands `-MD -MF file'.  However on
++  #    icc -MD -MF foo.d -c -o sub/foo.o sub/foo.c
++  # ICC 7.0 will fill foo.d with something like
++  #    foo.o: sub/foo.c
++  #    foo.o: sub/foo.h
++  # which is wrong.  We want:
++  #    sub/foo.o: sub/foo.c
++  #    sub/foo.o: sub/foo.h
++  #    sub/foo.c:
++  #    sub/foo.h:
++  # ICC 7.1 will output
++  #    foo.o: sub/foo.c sub/foo.h
++  # and will wrap long lines using \ :
++  #    foo.o: sub/foo.c ... \
++  #     sub/foo.h ... \
++  #     ...
++
++  "$@" -MD -MF "$tmpdepfile"
++  stat=$?
++  if test $stat -eq 0; then :
++  else
++    rm -f "$tmpdepfile"
++    exit $stat
++  fi
++  rm -f "$depfile"
++  # Each line is of the form `foo.o: dependent.h',
++  # or `foo.o: dep1.h dep2.h \', or ` dep3.h dep4.h \'.
++  # Do two passes, one to just change these to
++  # `$object: dependent.h' and one to simply `dependent.h:'.
++  sed "s,^[^:]*:,$object :," < "$tmpdepfile" > "$depfile"
++  # Some versions of the HPUX 10.20 sed can't process this invocation
++  # correctly.  Breaking it into two sed invocations is a workaround.
++  sed 's,^[^:]*: \(.*\)$,\1,;s/^\\$//;/^$/d;/:$/d' < "$tmpdepfile" |
++    sed -e 's/$/ :/' >> "$depfile"
++  rm -f "$tmpdepfile"
++  ;;
++
+ tru64)
+-   # The Tru64 AIX compiler uses -MD to generate dependencies as a side
++   # The Tru64 compiler uses -MD to generate dependencies as a side
+    # effect.  `cc -MD -o foo.o ...' puts the dependencies into `foo.o.d'.
+-   # At least on Alpha/Redhat 6.1, Compaq CCC V6.2-504 seems to put 
++   # At least on Alpha/Redhat 6.1, Compaq CCC V6.2-504 seems to put
+    # dependencies in `foo.d' instead, so we check for that too.
+    # Subdirectories are respected.
++   dir=`echo "$object" | sed -e 's|/[^/]*$|/|'`
++   test "x$dir" = "x$object" && dir=
++   base=`echo "$object" | sed -e 's|^.*/||' -e 's/\.o$//' -e 's/\.lo$//'`
+ 
+-   tmpdepfile1="$object.d"
+-   tmpdepfile2=`echo "$object" | sed -e 's/.o$/.d/'` 
+    if test "$libtool" = yes; then
++      # With Tru64 cc, shared objects can also be used to make a
++      # static library.  This mecanism is used in libtool 1.4 series to
++      # handle both shared and static libraries in a single compilation.
++      # With libtool 1.4, dependencies were output in $dir.libs/$base.lo.d.
++      #
++      # With libtool 1.5 this exception was removed, and libtool now
++      # generates 2 separate objects for the 2 libraries.  These two
++      # compilations output dependencies in in $dir.libs/$base.o.d and
++      # in $dir$base.o.d.  We have to check for both files, because
++      # one of the two compilations can be disabled.  We should prefer
++      # $dir$base.o.d over $dir.libs/$base.o.d because the latter is
++      # automatically cleaned when .libs/ is deleted, while ignoring
++      # the former would cause a distcleancheck panic.
++      tmpdepfile1=$dir.libs/$base.lo.d   # libtool 1.4
++      tmpdepfile2=$dir$base.o.d          # libtool 1.5
++      tmpdepfile3=$dir.libs/$base.o.d    # libtool 1.5
++      tmpdepfile4=$dir.libs/$base.d      # Compaq CCC V6.2-504
+       "$@" -Wc,-MD
+    else
++      tmpdepfile1=$dir$base.o.d
++      tmpdepfile2=$dir$base.d
++      tmpdepfile3=$dir$base.d
++      tmpdepfile4=$dir$base.d
+       "$@" -MD
+    fi
+ 
+    stat=$?
+    if test $stat -eq 0; then :
+    else
+-      rm -f "$tmpdepfile1" "$tmpdepfile2"
++      rm -f "$tmpdepfile1" "$tmpdepfile2" "$tmpdepfile3" "$tmpdepfile4"
+       exit $stat
+    fi
+ 
+-   if test -f "$tmpdepfile1"; then
+-      tmpdepfile="$tmpdepfile1"
+-   else
+-      tmpdepfile="$tmpdepfile2"
+-   fi
++   for tmpdepfile in "$tmpdepfile1" "$tmpdepfile2" "$tmpdepfile3" "$tmpdepfile4"
++   do
++     test -f "$tmpdepfile" && break
++   done
+    if test -f "$tmpdepfile"; then
+       sed -e "s,^.*\.[a-z]*:,$object:," < "$tmpdepfile" > "$depfile"
+-      # That's a space and a tab in the [].
+-      sed -e 's,^.*\.[a-z]*:[ 	]*,,' -e 's,$,:,' < "$tmpdepfile" >> "$depfile"
++      # That's a tab and a space in the [].
++      sed -e 's,^.*\.[a-z]*:[	 ]*,,' -e 's,$,:,' < "$tmpdepfile" >> "$depfile"
+    else
+       echo "#dummy" > "$depfile"
+    fi
+@@ -240,34 +340,42 @@
+ 
+ dashmstdout)
+   # Important note: in order to support this mode, a compiler *must*
+-  # always write the proprocessed file to stdout, regardless of -o,
+-  # because we must use -o when running libtool.
+-  test -z "$dashmflag" && dashmflag=-M
+-  ( IFS=" "
+-    case " $* " in
+-    *" --mode=compile "*) # this is libtool, let us make it quiet
+-      for arg
+-      do # cycle over the arguments
+-        case "$arg" in
+-	"--mode=compile")
+-	  # insert --quiet before "--mode=compile"
+-	  set fnord "$@" --quiet
+-	  shift # fnord
+-	  ;;
+-	esac
+-	set fnord "$@" "$arg"
+-	shift # fnord
+-	shift # "$arg"
+-      done
++  # always write the preprocessed file to stdout, regardless of -o.
++  "$@" || exit $?
++
++  # Remove the call to Libtool.
++  if test "$libtool" = yes; then
++    while test $1 != '--mode=compile'; do
++      shift
++    done
++    shift
++  fi
++
++  # Remove `-o $object'.
++  IFS=" "
++  for arg
++  do
++    case $arg in
++    -o)
++      shift
++      ;;
++    $object)
++      shift
++      ;;
++    *)
++      set fnord "$@" "$arg"
++      shift # fnord
++      shift # $arg
+       ;;
+     esac
+-    "$@" $dashmflag | sed 's:^[^:]*\:[ 	]*:'"$object"'\: :' > "$tmpdepfile"
+-  ) &
+-  proc=$!
+-  "$@"
+-  stat=$?
+-  wait "$proc"
+-  if test "$stat" != 0; then exit $stat; fi
++  done
++
++  test -z "$dashmflag" && dashmflag=-M
++  # Require at least two characters before searching for `:'
++  # in the target name.  This is to cope with DOS-style filenames:
++  # a dependency such as `c:/foo/bar' could be seen as target `c' otherwise.
++  "$@" $dashmflag |
++    sed 's:^[  ]*[^: ][^:][^:]*\:[    ]*:'"$object"'\: :' > "$tmpdepfile"
+   rm -f "$depfile"
+   cat < "$tmpdepfile" > "$depfile"
+   tr ' ' '
+@@ -285,36 +393,40 @@
+   ;;
+ 
+ makedepend)
+-  # X makedepend
+-  (
+-    shift
+-    cleared=no
+-    for arg in "$@"; do
+-      case $cleared in no)
+-        set ""; shift
+-	cleared=yes
+-      esac
+-      case "$arg" in
+-        -D*|-I*)
+-	  set fnord "$@" "$arg"; shift;;
+-	-*)
+-	  ;;
+-	*)
+-	  set fnord "$@" "$arg"; shift;;
+-      esac
++  "$@" || exit $?
++  # Remove any Libtool call
++  if test "$libtool" = yes; then
++    while test $1 != '--mode=compile'; do
++      shift
+     done
+-    obj_suffix="`echo $object | sed 's/^.*\././'`"
+-    touch "$tmpdepfile"
+-    ${MAKEDEPEND-makedepend} 2>/dev/null -o"$obj_suffix" -f"$tmpdepfile" "$@"
+-  ) &
+-  proc=$!
+-  "$@"
+-  stat=$?
+-  wait "$proc"
+-  if test "$stat" != 0; then exit $stat; fi
++    shift
++  fi
++  # X makedepend
++  shift
++  cleared=no
++  for arg in "$@"; do
++    case $cleared in
++    no)
++      set ""; shift
++      cleared=yes ;;
++    esac
++    case "$arg" in
++    -D*|-I*)
++      set fnord "$@" "$arg"; shift ;;
++    # Strip any option that makedepend may not understand.  Remove
++    # the object too, otherwise makedepend will parse it as a source file.
++    -*|$object)
++      ;;
++    *)
++      set fnord "$@" "$arg"; shift ;;
++    esac
++  done
++  obj_suffix="`echo $object | sed 's/^.*\././'`"
++  touch "$tmpdepfile"
++  ${MAKEDEPEND-makedepend} -o"$obj_suffix" -f"$tmpdepfile" "$@"
+   rm -f "$depfile"
+   cat < "$tmpdepfile" > "$depfile"
+-  tail +3 "$tmpdepfile" | tr ' ' '
++  sed '1,2d' "$tmpdepfile" | tr ' ' '
+ ' | \
+ ## Some versions of the HPUX 10.20 sed can't process this invocation
+ ## correctly.  Breaking it into two sed invocations is a workaround.
+@@ -324,35 +436,39 @@
+ 
+ cpp)
+   # Important note: in order to support this mode, a compiler *must*
+-  # always write the proprocessed file to stdout, regardless of -o,
+-  # because we must use -o when running libtool.
+-  ( IFS=" "
+-    case " $* " in
+-    *" --mode=compile "*)
+-      for arg
+-      do # cycle over the arguments
+-        case $arg in
+-	"--mode=compile")
+-	  # insert --quiet before "--mode=compile"
+-	  set fnord "$@" --quiet
+-	  shift # fnord
+-	  ;;
+-	esac
+-	set fnord "$@" "$arg"
+-	shift # fnord
+-	shift # "$arg"
+-      done
++  # always write the preprocessed file to stdout.
++  "$@" || exit $?
++
++  # Remove the call to Libtool.
++  if test "$libtool" = yes; then
++    while test $1 != '--mode=compile'; do
++      shift
++    done
++    shift
++  fi
++
++  # Remove `-o $object'.
++  IFS=" "
++  for arg
++  do
++    case $arg in
++    -o)
++      shift
++      ;;
++    $object)
++      shift
++      ;;
++    *)
++      set fnord "$@" "$arg"
++      shift # fnord
++      shift # $arg
+       ;;
+     esac
+-    "$@" -E |
++  done
++
++  "$@" -E |
+     sed -n '/^# [0-9][0-9]* "\([^"]*\)".*/ s:: \1 \\:p' |
+     sed '$ s: \\$::' > "$tmpdepfile"
+-  ) &
+-  proc=$!
+-  "$@"
+-  stat=$?
+-  wait "$proc"
+-  if test "$stat" != 0; then exit $stat; fi
+   rm -f "$depfile"
+   echo "$object : \\" > "$depfile"
+   cat < "$tmpdepfile" >> "$depfile"
+@@ -362,34 +478,27 @@
+ 
+ msvisualcpp)
+   # Important note: in order to support this mode, a compiler *must*
+-  # always write the proprocessed file to stdout, regardless of -o,
++  # always write the preprocessed file to stdout, regardless of -o,
+   # because we must use -o when running libtool.
+-  ( IFS=" "
+-    case " $* " in
+-    *" --mode=compile "*)
+-      for arg
+-      do # cycle over the arguments
+-        case $arg in
+-	"--mode=compile")
+-	  # insert --quiet before "--mode=compile"
+-	  set fnord "$@" --quiet
+-	  shift # fnord
+-	  ;;
+-	esac
++  "$@" || exit $?
++  IFS=" "
++  for arg
++  do
++    case "$arg" in
++    "-Gm"|"/Gm"|"-Gi"|"/Gi"|"-ZI"|"/ZI")
++	set fnord "$@"
++	shift
++	shift
++	;;
++    *)
+ 	set fnord "$@" "$arg"
+-	shift # fnord
+-	shift # "$arg"
+-      done
+-      ;;
++	shift
++	shift
++	;;
+     esac
+-    "$@" -E |
+-    sed -n '/^#line [0-9][0-9]* "\([^"]*\)"/ s::echo "`cygpath -u \\"\1\\"`":p' | sort | uniq > "$tmpdepfile"
+-  ) &
+-  proc=$!
+-  "$@"
+-  stat=$?
+-  wait "$proc"
+-  if test "$stat" != 0; then exit $stat; fi
++  done
++  "$@" -E |
++  sed -n '/^#line [0-9][0-9]* "\([^"]*\)"/ s::echo "`cygpath -u \\"\1\\"`":p' | sort | uniq > "$tmpdepfile"
+   rm -f "$depfile"
+   echo "$object : \\" > "$depfile"
+   . "$tmpdepfile" | sed 's% %\\ %g' | sed -n '/^\(.*\)$/ s::	\1 \\:p' >> "$depfile"
+@@ -409,3 +518,12 @@
+ esac
+ 
+ exit 0
++
++# Local Variables:
++# mode: shell-script
++# sh-indentation: 2
++# eval: (add-hook 'write-file-hooks 'time-stamp)
++# time-stamp-start: "scriptversion="
++# time-stamp-format: "%:y-%02m-%02d.%02H"
++# time-stamp-end: "$"
++# End:
+Index: install-sh
+===================================================================
+--- install-sh.orig	2005-11-19 08:58:30.035298000 -0600
++++ install-sh	2005-11-19 08:58:46.201684000 -0600
+@@ -1,19 +1,38 @@
+ #!/bin/sh
+-#
+ # install - install a program, script, or datafile
+-# This comes from X11R5 (mit/util/scripts/install.sh).
++
++scriptversion=2005-02-02.21
++
++# This originates from X11R5 (mit/util/scripts/install.sh), which was
++# later released in X11R6 (xc/config/util/install.sh) with the
++# following copyright and license.
++#
++# Copyright (C) 1994 X Consortium
++#
++# Permission is hereby granted, free of charge, to any person obtaining a copy
++# of this software and associated documentation files (the "Software"), to
++# deal in the Software without restriction, including without limitation the
++# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
++# sell copies of the Software, and to permit persons to whom the Software is
++# furnished to do so, subject to the following conditions:
++#
++# The above copyright notice and this permission notice shall be included in
++# all copies or substantial portions of the Software.
+ #
+-# Copyright 1991 by the Massachusetts Institute of Technology
++# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
++# X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
++# AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNEC-
++# TION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ #
+-# Permission to use, copy, modify, distribute, and sell this software and its
+-# documentation for any purpose is hereby granted without fee, provided that
+-# the above copyright notice appear in all copies and that both that
+-# copyright notice and this permission notice appear in supporting
+-# documentation, and that the name of M.I.T. not be used in advertising or
+-# publicity pertaining to distribution of the software without specific,
+-# written prior permission.  M.I.T. makes no representations about the
+-# suitability of this software for any purpose.  It is provided "as is"
+-# without express or implied warranty.
++# Except as contained in this notice, the name of the X Consortium shall not
++# be used in advertising or otherwise to promote the sale, use or other deal-
++# ings in this Software without prior written authorization from the X Consor-
++# tium.
++#
++#
++# FSF changes to this file are in the public domain.
+ #
+ # Calling this script install-sh is preferred over install.sh, to prevent
+ # `make' implicit rules from creating a file called install from it
+@@ -23,13 +42,11 @@
+ # from scratch.  It can only install one file at a time, a restriction
+ # shared with many OS's install programs.
+ 
+-
+ # set DOITPROG to echo to test this script
+ 
+ # Don't use :- since 4.3BSD and earlier shells don't like it.
+ doit="${DOITPROG-}"
+ 
+-
+ # put in absolute paths if you don't have them in your path; or use env. vars.
+ 
+ mvprog="${MVPROG-mv}"
+@@ -41,211 +58,266 @@
+ rmprog="${RMPROG-rm}"
+ mkdirprog="${MKDIRPROG-mkdir}"
+ 
+-transformbasename=""
+-transform_arg=""
+-instcmd="$mvprog"
+ chmodcmd="$chmodprog 0755"
+-chowncmd=""
+-chgrpcmd=""
+-stripcmd=""
++chowncmd=
++chgrpcmd=
++stripcmd=
+ rmcmd="$rmprog -f"
+ mvcmd="$mvprog"
+-src=""
+-dst=""
+-dir_arg=""
+-
+-while [ x"$1" != x ]; do
+-    case $1 in
+-	-c) instcmd="$cpprog"
+-	    shift
+-	    continue;;
+-
+-	-d) dir_arg=true
+-	    shift
+-	    continue;;
+-
+-	-m) chmodcmd="$chmodprog $2"
+-	    shift
+-	    shift
+-	    continue;;
+-
+-	-o) chowncmd="$chownprog $2"
+-	    shift
+-	    shift
+-	    continue;;
+-
+-	-g) chgrpcmd="$chgrpprog $2"
+-	    shift
+-	    shift
+-	    continue;;
+-
+-	-s) stripcmd="$stripprog"
+-	    shift
+-	    continue;;
+-
+-	-t=*) transformarg=`echo $1 | sed 's/-t=//'`
+-	    shift
+-	    continue;;
+-
+-	-b=*) transformbasename=`echo $1 | sed 's/-b=//'`
+-	    shift
+-	    continue;;
+-
+-	*)  if [ x"$src" = x ]
+-	    then
+-		src=$1
+-	    else
+-		# this colon is to work around a 386BSD /bin/sh bug
+-		:
+-		dst=$1
+-	    fi
+-	    shift
+-	    continue;;
+-    esac
+-done
+-
+-if [ x"$src" = x ]
+-then
+-	echo "install:	no input file specified"
+-	exit 1
+-else
+-	true
+-fi
+-
+-if [ x"$dir_arg" != x ]; then
+-	dst=$src
+-	src=""
+-	
+-	if [ -d $dst ]; then
+-		instcmd=:
+-		chmodcmd=""
+-	else
+-		instcmd=mkdir
+-	fi
+-else
+-
+-# Waiting for this to be detected by the "$instcmd $src $dsttmp" command
+-# might cause directories to be created, which would be especially bad 
+-# if $src (and thus $dsttmp) contains '*'.
+-
+-	if [ -f $src -o -d $src ]
+-	then
+-		true
+-	else
+-		echo "install:  $src does not exist"
+-		exit 1
+-	fi
+-	
+-	if [ x"$dst" = x ]
+-	then
+-		echo "install:	no destination specified"
+-		exit 1
+-	else
+-		true
+-	fi
+-
+-# If destination is a directory, append the input filename; if your system
+-# does not like double slashes in filenames, you may need to add some logic
+-
+-	if [ -d $dst ]
+-	then
+-		dst="$dst"/`basename $src`
+-	else
+-		true
+-	fi
+-fi
+-
+-## this sed command emulates the dirname command
+-dstdir=`echo $dst | sed -e 's,[^/]*$,,;s,/$,,;s,^$,.,'`
+-
+-# Make sure that the destination directory exists.
+-#  this part is taken from Noah Friedman's mkinstalldirs script
++src=
++dst=
++dir_arg=
++dstarg=
++no_target_directory=
++
++usage="Usage: $0 [OPTION]... [-T] SRCFILE DSTFILE
++   or: $0 [OPTION]... SRCFILES... DIRECTORY
++   or: $0 [OPTION]... -t DIRECTORY SRCFILES...
++   or: $0 [OPTION]... -d DIRECTORIES...
++
++In the 1st form, copy SRCFILE to DSTFILE.
++In the 2nd and 3rd, copy all SRCFILES to DIRECTORY.
++In the 4th, create DIRECTORIES.
++
++Options:
++-c         (ignored)
++-d         create directories instead of installing files.
++-g GROUP   $chgrpprog installed files to GROUP.
++-m MODE    $chmodprog installed files to MODE.
++-o USER    $chownprog installed files to USER.
++-s         $stripprog installed files.
++-t DIRECTORY  install into DIRECTORY.
++-T         report an error if DSTFILE is a directory.
++--help     display this help and exit.
++--version  display version info and exit.
++
++Environment variables override the default commands:
++  CHGRPPROG CHMODPROG CHOWNPROG CPPROG MKDIRPROG MVPROG RMPROG STRIPPROG
++"
++
++while test -n "$1"; do
++  case $1 in
++    -c) shift
++        continue;;
++
++    -d) dir_arg=true
++        shift
++        continue;;
++
++    -g) chgrpcmd="$chgrpprog $2"
++        shift
++        shift
++        continue;;
++
++    --help) echo "$usage"; exit $?;;
++
++    -m) chmodcmd="$chmodprog $2"
++        shift
++        shift
++        continue;;
++
++    -o) chowncmd="$chownprog $2"
++        shift
++        shift
++        continue;;
++
++    -s) stripcmd=$stripprog
++        shift
++        continue;;
+ 
+-# Skip lots of stat calls in the usual case.
+-if [ ! -d "$dstdir" ]; then
+-defaultIFS='	
+-'
+-IFS="${IFS-${defaultIFS}}"
+-
+-oIFS="${IFS}"
+-# Some sh's can't handle IFS=/ for some reason.
+-IFS='%'
+-set - `echo ${dstdir} | sed -e 's@/@%@g' -e 's@^%@/@'`
+-IFS="${oIFS}"
+-
+-pathcomp=''
++    -t) dstarg=$2
++	shift
++	shift
++	continue;;
+ 
+-while [ $# -ne 0 ] ; do
+-	pathcomp="${pathcomp}${1}"
++    -T) no_target_directory=true
+ 	shift
++	continue;;
+ 
+-	if [ ! -d "${pathcomp}" ] ;
+-        then
+-		$mkdirprog "${pathcomp}"
+-	else
+-		true
+-	fi
++    --version) echo "$0 $scriptversion"; exit $?;;
+ 
+-	pathcomp="${pathcomp}/"
++    *)  # When -d is used, all remaining arguments are directories to create.
++	# When -t is used, the destination is already specified.
++	test -n "$dir_arg$dstarg" && break
++        # Otherwise, the last argument is the destination.  Remove it from $@.
++	for arg
++	do
++          if test -n "$dstarg"; then
++	    # $@ is not empty: it contains at least $arg.
++	    set fnord "$@" "$dstarg"
++	    shift # fnord
++	  fi
++	  shift # arg
++	  dstarg=$arg
++	done
++	break;;
++  esac
+ done
+-fi
+-
+-if [ x"$dir_arg" != x ]
+-then
+-	$doit $instcmd $dst &&
+-
+-	if [ x"$chowncmd" != x ]; then $doit $chowncmd $dst; else true ; fi &&
+-	if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd $dst; else true ; fi &&
+-	if [ x"$stripcmd" != x ]; then $doit $stripcmd $dst; else true ; fi &&
+-	if [ x"$chmodcmd" != x ]; then $doit $chmodcmd $dst; else true ; fi
+-else
+-
+-# If we're going to rename the final executable, determine the name now.
+-
+-	if [ x"$transformarg" = x ] 
+-	then
+-		dstfile=`basename $dst`
+-	else
+-		dstfile=`basename $dst $transformbasename | 
+-			sed $transformarg`$transformbasename
+-	fi
+-
+-# don't allow the sed command to completely eliminate the filename
+-
+-	if [ x"$dstfile" = x ] 
+-	then
+-		dstfile=`basename $dst`
+-	else
+-		true
+-	fi
+-
+-# Make a temp file name in the proper directory.
+-
+-	dsttmp=$dstdir/#inst.$$#
+-
+-# Move or copy the file name to the temp name
+ 
+-	$doit $instcmd $src $dsttmp &&
+-
+-	trap "rm -f ${dsttmp}" 0 &&
+-
+-# and set any options; do chmod last to preserve setuid bits
+-
+-# If any of these fail, we abort the whole thing.  If we want to
+-# ignore errors from any of these, just make sure not to ignore
+-# errors from the above "$doit $instcmd $src $dsttmp" command.
+-
+-	if [ x"$chowncmd" != x ]; then $doit $chowncmd $dsttmp; else true;fi &&
+-	if [ x"$chgrpcmd" != x ]; then $doit $chgrpcmd $dsttmp; else true;fi &&
+-	if [ x"$stripcmd" != x ]; then $doit $stripcmd $dsttmp; else true;fi &&
+-	if [ x"$chmodcmd" != x ]; then $doit $chmodcmd $dsttmp; else true;fi &&
+-
+-# Now rename the file to the real destination.
+-
+-	$doit $rmcmd -f $dstdir/$dstfile &&
+-	$doit $mvcmd $dsttmp $dstdir/$dstfile 
++if test -z "$1"; then
++  if test -z "$dir_arg"; then
++    echo "$0: no input file specified." >&2
++    exit 1
++  fi
++  # It's OK to call `install-sh -d' without argument.
++  # This can happen when creating conditional directories.
++  exit 0
++fi
+ 
+-fi &&
++for src
++do
++  # Protect names starting with `-'.
++  case $src in
++    -*) src=./$src ;;
++  esac
++
++  if test -n "$dir_arg"; then
++    dst=$src
++    src=
++
++    if test -d "$dst"; then
++      mkdircmd=:
++      chmodcmd=
++    else
++      mkdircmd=$mkdirprog
++    fi
++  else
++    # Waiting for this to be detected by the "$cpprog $src $dsttmp" command
++    # might cause directories to be created, which would be especially bad
++    # if $src (and thus $dsttmp) contains '*'.
++    if test ! -f "$src" && test ! -d "$src"; then
++      echo "$0: $src does not exist." >&2
++      exit 1
++    fi
++
++    if test -z "$dstarg"; then
++      echo "$0: no destination specified." >&2
++      exit 1
++    fi
++
++    dst=$dstarg
++    # Protect names starting with `-'.
++    case $dst in
++      -*) dst=./$dst ;;
++    esac
+ 
++    # If destination is a directory, append the input filename; won't work
++    # if double slashes aren't ignored.
++    if test -d "$dst"; then
++      if test -n "$no_target_directory"; then
++	echo "$0: $dstarg: Is a directory" >&2
++	exit 1
++      fi
++      dst=$dst/`basename "$src"`
++    fi
++  fi
++
++  # This sed command emulates the dirname command.
++  dstdir=`echo "$dst" | sed -e 's,/*$,,;s,[^/]*$,,;s,/*$,,;s,^$,.,'`
++
++  # Make sure that the destination directory exists.
++
++  # Skip lots of stat calls in the usual case.
++  if test ! -d "$dstdir"; then
++    defaultIFS='
++	 '
++    IFS="${IFS-$defaultIFS}"
++
++    oIFS=$IFS
++    # Some sh's can't handle IFS=/ for some reason.
++    IFS='%'
++    set x `echo "$dstdir" | sed -e 's@/@%@g' -e 's@^%@/@'`
++    shift
++    IFS=$oIFS
++
++    pathcomp=
++
++    while test $# -ne 0 ; do
++      pathcomp=$pathcomp$1
++      shift
++      if test ! -d "$pathcomp"; then
++        $mkdirprog "$pathcomp"
++	# mkdir can fail with a `File exist' error in case several
++	# install-sh are creating the directory concurrently.  This
++	# is OK.
++	test -d "$pathcomp" || exit
++      fi
++      pathcomp=$pathcomp/
++    done
++  fi
++
++  if test -n "$dir_arg"; then
++    $doit $mkdircmd "$dst" \
++      && { test -z "$chowncmd" || $doit $chowncmd "$dst"; } \
++      && { test -z "$chgrpcmd" || $doit $chgrpcmd "$dst"; } \
++      && { test -z "$stripcmd" || $doit $stripcmd "$dst"; } \
++      && { test -z "$chmodcmd" || $doit $chmodcmd "$dst"; }
++
++  else
++    dstfile=`basename "$dst"`
++
++    # Make a couple of temp file names in the proper directory.
++    dsttmp=$dstdir/_inst.$$_
++    rmtmp=$dstdir/_rm.$$_
++
++    # Trap to clean up those temp files at exit.
++    trap 'ret=$?; rm -f "$dsttmp" "$rmtmp" && exit $ret' 0
++    trap '(exit $?); exit' 1 2 13 15
++
++    # Copy the file name to the temp name.
++    $doit $cpprog "$src" "$dsttmp" &&
++
++    # and set any options; do chmod last to preserve setuid bits.
++    #
++    # If any of these fail, we abort the whole thing.  If we want to
++    # ignore errors from any of these, just make sure not to ignore
++    # errors from the above "$doit $cpprog $src $dsttmp" command.
++    #
++    { test -z "$chowncmd" || $doit $chowncmd "$dsttmp"; } \
++      && { test -z "$chgrpcmd" || $doit $chgrpcmd "$dsttmp"; } \
++      && { test -z "$stripcmd" || $doit $stripcmd "$dsttmp"; } \
++      && { test -z "$chmodcmd" || $doit $chmodcmd "$dsttmp"; } &&
++
++    # Now rename the file to the real destination.
++    { $doit $mvcmd -f "$dsttmp" "$dstdir/$dstfile" 2>/dev/null \
++      || {
++	   # The rename failed, perhaps because mv can't rename something else
++	   # to itself, or perhaps because mv is so ancient that it does not
++	   # support -f.
++
++	   # Now remove or move aside any old file at destination location.
++	   # We try this two ways since rm can't unlink itself on some
++	   # systems and the destination file might be busy for other
++	   # reasons.  In this case, the final cleanup might fail but the new
++	   # file should still install successfully.
++	   {
++	     if test -f "$dstdir/$dstfile"; then
++	       $doit $rmcmd -f "$dstdir/$dstfile" 2>/dev/null \
++	       || $doit $mvcmd -f "$dstdir/$dstfile" "$rmtmp" 2>/dev/null \
++	       || {
++		 echo "$0: cannot unlink or rename $dstdir/$dstfile" >&2
++		 (exit 1); exit 1
++	       }
++	     else
++	       :
++	     fi
++	   } &&
++
++	   # Now rename the file to the real destination.
++	   $doit $mvcmd "$dsttmp" "$dstdir/$dstfile"
++	 }
++    }
++  fi || { (exit 1); exit 1; }
++done
+ 
+-exit 0
++# The final little trick to "correctly" pass the exit status to the exit trap.
++{
++  (exit 0); exit 0
++}
++
++# Local variables:
++# eval: (add-hook 'write-file-hooks 'time-stamp)
++# time-stamp-start: "scriptversion="
++# time-stamp-format: "%:y-%02m-%02d.%02H"
++# time-stamp-end: "$"
++# End:
+Index: mkinstalldirs
+===================================================================
+--- mkinstalldirs.orig	2005-11-19 08:58:30.059551000 -0600
++++ mkinstalldirs	2005-11-19 08:58:46.243332000 -0600
+@@ -1,40 +1,150 @@
+ #! /bin/sh
+ # mkinstalldirs --- make directory hierarchy
+-# Author: Noah Friedman <friedman@prep.ai.mit.edu>
+-# Created: 1993-05-16
+-# Public domain
+ 
+-# $Id: mkinstalldirs,v 1.13 1999/01/05 03:18:55 bje Exp $
++scriptversion=2005-02-02.21
++
++# Original author: Noah Friedman <friedman@prep.ai.mit.edu>
++# Created: 1993-05-16
++# Public domain.
++#
++# This file is maintained in Automake, please report
++# bugs to <bug-automake@gnu.org> or send patches to
++# <automake-patches@gnu.org>.
+ 
+ errstatus=0
++dirmode=""
++
++usage="\
++Usage: mkinstalldirs [-h] [--help] [--version] [-m MODE] DIR ...
++
++Create each directory DIR (with mode MODE, if specified), including all
++leading file name components.
++
++Report bugs to <bug-automake@gnu.org>."
++
++# process command line arguments
++while test $# -gt 0 ; do
++  case $1 in
++    -h | --help | --h*)         # -h for help
++      echo "$usage"
++      exit $?
++      ;;
++    -m)                         # -m PERM arg
++      shift
++      test $# -eq 0 && { echo "$usage" 1>&2; exit 1; }
++      dirmode=$1
++      shift
++      ;;
++    --version)
++      echo "$0 $scriptversion"
++      exit $?
++      ;;
++    --)                         # stop option processing
++      shift
++      break
++      ;;
++    -*)                         # unknown option
++      echo "$usage" 1>&2
++      exit 1
++      ;;
++    *)                          # first non-opt arg
++      break
++      ;;
++  esac
++done
++
++for file
++do
++  if test -d "$file"; then
++    shift
++  else
++    break
++  fi
++done
++
++case $# in
++  0) exit 0 ;;
++esac
++
++# Solaris 8's mkdir -p isn't thread-safe.  If you mkdir -p a/b and
++# mkdir -p a/c at the same time, both will detect that a is missing,
++# one will create a, then the other will try to create a and die with
++# a "File exists" error.  This is a problem when calling mkinstalldirs
++# from a parallel make.  We use --version in the probe to restrict
++# ourselves to GNU mkdir, which is thread-safe.
++case $dirmode in
++  '')
++    if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
++      echo "mkdir -p -- $*"
++      exec mkdir -p -- "$@"
++    else
++      # On NextStep and OpenStep, the `mkdir' command does not
++      # recognize any option.  It will interpret all options as
++      # directories to create, and then abort because `.' already
++      # exists.
++      test -d ./-p && rmdir ./-p
++      test -d ./--version && rmdir ./--version
++    fi
++    ;;
++  *)
++    if mkdir -m "$dirmode" -p --version . >/dev/null 2>&1 &&
++       test ! -d ./--version; then
++      echo "mkdir -m $dirmode -p -- $*"
++      exec mkdir -m "$dirmode" -p -- "$@"
++    else
++      # Clean up after NextStep and OpenStep mkdir.
++      for d in ./-m ./-p ./--version "./$dirmode";
++      do
++        test -d $d && rmdir $d
++      done
++    fi
++    ;;
++esac
+ 
+ for file
+ do
+-   set fnord `echo ":$file" | sed -ne 's/^:\//#/;s/^://;s/\// /g;s/^#/\//;p'`
+-   shift
++  set fnord `echo ":$file" | sed -ne 's/^:\//#/;s/^://;s/\// /g;s/^#/\//;p'`
++  shift
+ 
+-   pathcomp=
+-   for d
+-   do
+-     pathcomp="$pathcomp$d"
+-     case "$pathcomp" in
+-       -* ) pathcomp=./$pathcomp ;;
+-     esac
+-
+-     if test ! -d "$pathcomp"; then
+-        echo "mkdir $pathcomp"
+-
+-        mkdir "$pathcomp" || lasterr=$?
+-
+-        if test ! -d "$pathcomp"; then
+-  	  errstatus=$lasterr
+-        fi
+-     fi
++  pathcomp=
++  for d
++  do
++    pathcomp="$pathcomp$d"
++    case $pathcomp in
++      -*) pathcomp=./$pathcomp ;;
++    esac
++
++    if test ! -d "$pathcomp"; then
++      echo "mkdir $pathcomp"
++
++      mkdir "$pathcomp" || lasterr=$?
++
++      if test ! -d "$pathcomp"; then
++	errstatus=$lasterr
++      else
++	if test ! -z "$dirmode"; then
++	  echo "chmod $dirmode $pathcomp"
++	  lasterr=""
++	  chmod "$dirmode" "$pathcomp" || lasterr=$?
++
++	  if test ! -z "$lasterr"; then
++	    errstatus=$lasterr
++	  fi
++	fi
++      fi
++    fi
+ 
+-     pathcomp="$pathcomp/"
+-   done
++    pathcomp="$pathcomp/"
++  done
+ done
+ 
+ exit $errstatus
+ 
+-# mkinstalldirs ends here
++# Local Variables:
++# mode: shell-script
++# sh-indentation: 2
++# eval: (add-hook 'write-file-hooks 'time-stamp)
++# time-stamp-start: "scriptversion="
++# time-stamp-format: "%:y-%02m-%02d.%02H"
++# time-stamp-end: "$"
++# End:
+Index: m4/init.m4
+===================================================================
+--- m4/init.m4.orig	2005-11-19 08:58:29.587881000 -0600
++++ m4/init.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,89 +0,0 @@
+-# Do all the work for Automake.  This macro actually does too much --
+-# some checks are only needed if your package does certain things.
+-# But this isn't really a big deal.
+-
+-# serial 5
+-
+-# There are a few dirty hacks below to avoid letting `AC_PROG_CC' be
+-# written in clear, in which case automake, when reading aclocal.m4,
+-# will think it sees a *use*, and therefore will trigger all it's
+-# C support machinery.  Also note that it means that autoscan, seeing
+-# CC etc. in the Makefile, will ask for an AC_PROG_CC use...
+-
+-
+-# We require 2.13 because we rely on SHELL being computed by configure.
+-AC_PREREQ([2.13])
+-
+-# AC_PROVIDE_IFELSE(MACRO-NAME, IF-PROVIDED, IF-NOT-PROVIDED)
+-# -----------------------------------------------------------
+-# If MACRO-NAME is provided do IF-PROVIDED, else IF-NOT-PROVIDED.
+-# The purpose of this macro is to provide the user with a means to
+-# check macros which are provided without letting her know how the
+-# information is coded.
+-# If this macro is not defined by Autoconf, define it here.
+-ifdef([AC_PROVIDE_IFELSE],
+-      [],
+-      [define([AC_PROVIDE_IFELSE],
+-              [ifdef([AC_PROVIDE_$1],
+-                     [$2], [$3])])])
+-
+-
+-# AM_INIT_AUTOMAKE(PACKAGE,VERSION, [NO-DEFINE])
+-# ----------------------------------------------
+-AC_DEFUN([AM_INIT_AUTOMAKE],
+-[AC_REQUIRE([AC_PROG_INSTALL])dnl
+-# test to see if srcdir already configured
+-if test "`CDPATH=:; cd $srcdir && pwd`" != "`pwd`" &&
+-   test -f $srcdir/config.status; then
+-  AC_MSG_ERROR([source directory already configured; run \"make distclean\" there first])
+-fi
+-
+-# Define the identity of the package.
+-PACKAGE=$1
+-AC_SUBST(PACKAGE)dnl
+-VERSION=$2
+-AC_SUBST(VERSION)dnl
+-ifelse([$3],,
+-[AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
+-AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])])
+-
+-# Autoconf 2.50 wants to disallow AM_ names.  We explicitly allow
+-# the ones we care about.
+-ifdef([m4_pattern_allow],
+-      [m4_pattern_allow([^AM_[A-Z]+FLAGS])])dnl
+-
+-# Autoconf 2.50 always computes EXEEXT.  However we need to be
+-# compatible with 2.13, for now.  So we always define EXEEXT, but we
+-# don't compute it.
+-AC_SUBST(EXEEXT)
+-# Similar for OBJEXT -- only we only use OBJEXT if the user actually
+-# requests that it be used.  This is a bit dumb.
+-: ${OBJEXT=o}
+-AC_SUBST(OBJEXT)
+-
+-# Some tools Automake needs.
+-AC_REQUIRE([AM_SANITY_CHECK])dnl
+-AC_REQUIRE([AC_ARG_PROGRAM])dnl
+-AM_MISSING_PROG(ACLOCAL, aclocal)
+-AM_MISSING_PROG(AUTOCONF, autoconf)
+-AM_MISSING_PROG(AUTOMAKE, automake)
+-AM_MISSING_PROG(AUTOHEADER, autoheader)
+-AM_MISSING_PROG(MAKEINFO, makeinfo)
+-AM_MISSING_PROG(AMTAR, tar)
+-AM_PROG_INSTALL_SH
+-AM_PROG_INSTALL_STRIP
+-# We need awk for the "check" target.  The system "awk" is bad on
+-# some platforms.
+-AC_REQUIRE([AC_PROG_AWK])dnl
+-AC_REQUIRE([AC_PROG_MAKE_SET])dnl
+-AC_REQUIRE([AM_DEP_TRACK])dnl
+-AC_REQUIRE([AM_SET_DEPDIR])dnl
+-AC_PROVIDE_IFELSE([AC_PROG_][CC],
+-                  [_AM_DEPENDENCIES(CC)],
+-                  [define([AC_PROG_][CC],
+-                          defn([AC_PROG_][CC])[_AM_DEPENDENCIES(CC)])])dnl
+-AC_PROVIDE_IFELSE([AC_PROG_][CXX],
+-                  [_AM_DEPENDENCIES(CXX)],
+-                  [define([AC_PROG_][CXX],
+-                          defn([AC_PROG_][CXX])[_AM_DEPENDENCIES(CXX)])])dnl
+-])
+Index: m4/header.m4
+===================================================================
+--- m4/header.m4.orig	2005-11-19 08:58:29.605920000 -0600
++++ m4/header.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,66 +0,0 @@
+-# Like AC_CONFIG_HEADER, but automatically create stamp file.
+-
+-# serial 3
+-
+-# When config.status generates a header, we must update the stamp-h file.
+-# This file resides in the same directory as the config header
+-# that is generated.  We must strip everything past the first ":",
+-# and everything past the last "/".
+-
+-AC_PREREQ([2.12])
+-
+-AC_DEFUN([AM_CONFIG_HEADER],
+-[ifdef([AC_FOREACH],dnl
+-	 [dnl init our file count if it isn't already
+-	 m4_ifndef([_AM_Config_Header_Index], m4_define([_AM_Config_Header_Index], [0]))
+-	 dnl prepare to store our destination file list for use in config.status
+-	 AC_FOREACH([_AM_File], [$1],
+-		    [m4_pushdef([_AM_Dest], m4_patsubst(_AM_File, [:.*]))
+-		    m4_define([_AM_Config_Header_Index], m4_incr(_AM_Config_Header_Index))
+-		    dnl and add it to the list of files AC keeps track of, along
+-		    dnl with our hook
+-		    AC_CONFIG_HEADERS(_AM_File,
+-dnl COMMANDS, [, INIT-CMDS]
+-[# update the timestamp
+-echo timestamp >"AS_ESCAPE(_AM_DIRNAME(]_AM_Dest[))/stamp-h]_AM_Config_Header_Index["
+-][$2]m4_ifval([$3], [, [$3]]))dnl AC_CONFIG_HEADERS
+-		    m4_popdef([_AM_Dest])])],dnl
+-[AC_CONFIG_HEADER([$1])
+-  AC_OUTPUT_COMMANDS(
+-   ifelse(patsubst([$1], [[^ ]], []),
+-	  [],
+-	  [test -z "$CONFIG_HEADERS" || echo timestamp >dnl
+-	   patsubst([$1], [^\([^:]*/\)?.*], [\1])stamp-h]),dnl
+-[am_indx=1
+-for am_file in $1; do
+-  case " \$CONFIG_HEADERS " in
+-  *" \$am_file "*)
+-    am_dir=\`echo \$am_file |sed 's%:.*%%;s%[^/]*\$%%'\`
+-    if test -n "\$am_dir"; then
+-      am_tmpdir=\`echo \$am_dir |sed 's%^\(/*\).*\$%\1%'\`
+-      for am_subdir in \`echo \$am_dir |sed 's%/% %'\`; do
+-        am_tmpdir=\$am_tmpdir\$am_subdir/
+-        if test ! -d \$am_tmpdir; then
+-          mkdir \$am_tmpdir
+-        fi
+-      done
+-    fi
+-    echo timestamp > "\$am_dir"stamp-h\$am_indx
+-    ;;
+-  esac
+-  am_indx=\`expr \$am_indx + 1\`
+-done])
+-])]) # AM_CONFIG_HEADER
+-
+-# _AM_DIRNAME(PATH)
+-# -----------------
+-# Like AS_DIRNAME, only do it during macro expansion
+-AC_DEFUN([_AM_DIRNAME],
+-       [m4_if(m4_regexp([$1], [^.*[^/]//*[^/][^/]*/*$]), -1,
+-	      m4_if(m4_regexp([$1], [^//\([^/]\|$\)]), -1,
+-		    m4_if(m4_regexp([$1], [^/.*]), -1,
+-			  [.],
+-			  m4_patsubst([$1], [^\(/\).*], [\1])),
+-		    m4_patsubst([$1], [^\(//\)\([^/].*\|$\)], [\1])),
+-	      m4_patsubst([$1], [^\(.*[^/]\)//*[^/][^/]*/*$], [\1]))[]dnl
+-]) # _AM_DIRNAME
+Index: m4/codeset.m4
+===================================================================
+--- m4/codeset.m4.orig	2005-11-19 08:58:29.623933000 -0600
++++ m4/codeset.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,17 +0,0 @@
+-#serial AM1
+-
+-dnl From Bruno Haible.
+-
+-AC_DEFUN([AM_LANGINFO_CODESET],
+-[
+-  AC_CACHE_CHECK([for nl_langinfo and CODESET], am_cv_langinfo_codeset,
+-    [AC_TRY_LINK([#include <langinfo.h>],
+-      [char* cs = nl_langinfo(CODESET);],
+-      am_cv_langinfo_codeset=yes,
+-      am_cv_langinfo_codeset=no)
+-    ])
+-  if test $am_cv_langinfo_codeset = yes; then
+-    AC_DEFINE(HAVE_LANGINFO_CODESET, 1,
+-      [Define if you have <langinfo.h> and nl_langinfo(CODESET).])
+-  fi
+-])
+Index: m4/gettext.m4
+===================================================================
+--- m4/gettext.m4.orig	2005-11-19 08:58:29.641954000 -0600
++++ m4/gettext.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,370 +0,0 @@
+-# Macro to add for using GNU gettext.
+-# Ulrich Drepper <drepper@cygnus.com>, 1995.
+-#
+-# This file can be copied and used freely without restrictions.  It can
+-# be used in projects which are not available under the GNU General Public
+-# License or the GNU Library General Public License but which still want
+-# to provide support for the GNU gettext functionality.
+-# Please note that the actual code of the GNU gettext library is covered
+-# by the GNU Library General Public License, and the rest of the GNU
+-# gettext package package is covered by the GNU General Public License.
+-# They are *not* in the public domain.
+-
+-# serial 10
+-
+-dnl Usage: AM_WITH_NLS([TOOLSYMBOL], [NEEDSYMBOL], [LIBDIR]).
+-dnl If TOOLSYMBOL is specified and is 'use-libtool', then a libtool library
+-dnl    $(top_builddir)/intl/libintl.la will be created (shared and/or static,
+-dnl    depending on --{enable,disable}-{shared,static} and on the presence of
+-dnl    AM-DISABLE-SHARED). Otherwise, a static library
+-dnl    $(top_builddir)/intl/libintl.a will be created.
+-dnl If NEEDSYMBOL is specified and is 'need-ngettext', then GNU gettext
+-dnl    implementations (in libc or libintl) without the ngettext() function
+-dnl    will be ignored.
+-dnl LIBDIR is used to find the intl libraries.  If empty,
+-dnl    the value `$(top_builddir)/intl/' is used.
+-dnl
+-dnl The result of the configuration is one of three cases:
+-dnl 1) GNU gettext, as included in the intl subdirectory, will be compiled
+-dnl    and used.
+-dnl    Catalog format: GNU --> install in $(datadir)
+-dnl    Catalog extension: .mo after installation, .gmo in source tree
+-dnl 2) GNU gettext has been found in the system's C library.
+-dnl    Catalog format: GNU --> install in $(datadir)
+-dnl    Catalog extension: .mo after installation, .gmo in source tree
+-dnl 3) No internationalization, always use English msgid.
+-dnl    Catalog format: none
+-dnl    Catalog extension: none
+-dnl The use of .gmo is historical (it was needed to avoid overwriting the
+-dnl GNU format catalogs when building on a platform with an X/Open gettext),
+-dnl but we keep it in order not to force irrelevant filename changes on the
+-dnl maintainers.
+-dnl
+-AC_DEFUN([AM_WITH_NLS],
+-  [AC_MSG_CHECKING([whether NLS is requested])
+-    dnl Default is enabled NLS
+-    AC_ARG_ENABLE(nls,
+-      [  --disable-nls           do not use Native Language Support],
+-      USE_NLS=$enableval, USE_NLS=yes)
+-    AC_MSG_RESULT($USE_NLS)
+-    AC_SUBST(USE_NLS)
+-
+-    BUILD_INCLUDED_LIBINTL=no
+-    USE_INCLUDED_LIBINTL=no
+-    INTLLIBS=
+-
+-    dnl If we use NLS figure out what method
+-    if test "$USE_NLS" = "yes"; then
+-      AC_DEFINE(ENABLE_NLS, 1,
+-        [Define to 1 if translation of program messages to the user's native language
+-   is requested.])
+-      AC_MSG_CHECKING([whether included gettext is requested])
+-      AC_ARG_WITH(included-gettext,
+-        [  --with-included-gettext use the GNU gettext library included here],
+-        nls_cv_force_use_gnu_gettext=$withval,
+-        nls_cv_force_use_gnu_gettext=no)
+-      AC_MSG_RESULT($nls_cv_force_use_gnu_gettext)
+-
+-      nls_cv_use_gnu_gettext="$nls_cv_force_use_gnu_gettext"
+-      if test "$nls_cv_force_use_gnu_gettext" != "yes"; then
+-        dnl User does not insist on using GNU NLS library.  Figure out what
+-        dnl to use.  If GNU gettext is available we use this.  Else we have
+-        dnl to fall back to GNU NLS library.
+-	CATOBJEXT=NONE
+-
+-        dnl Add a version number to the cache macros.
+-        define(gt_cv_func_gnugettext_libc, [gt_cv_func_gnugettext]ifelse([$2], need-ngettext, 2, 1)[_libc])
+-        define(gt_cv_func_gnugettext_libintl, [gt_cv_func_gnugettext]ifelse([$2], need-ngettext, 2, 1)[_libintl])
+-
+-	AC_CHECK_HEADER(libintl.h,
+-	  [AC_CACHE_CHECK([for GNU gettext in libc], gt_cv_func_gnugettext_libc,
+-	    [AC_TRY_LINK([#include <libintl.h>
+-extern int _nl_msg_cat_cntr;],
+-	       [bindtextdomain ("", "");
+-return (int) gettext ("")]ifelse([$2], need-ngettext, [ + (int) ngettext ("", "", 0)], [])[ + _nl_msg_cat_cntr],
+-	       gt_cv_func_gnugettext_libc=yes,
+-	       gt_cv_func_gnugettext_libc=no)])
+-
+-	   if test "$gt_cv_func_gnugettext_libc" != "yes"; then
+-	     AC_CACHE_CHECK([for GNU gettext in libintl],
+-	       gt_cv_func_gnugettext_libintl,
+-	       [gt_save_LIBS="$LIBS"
+-		LIBS="$LIBS -lintl $LIBICONV"
+-		AC_TRY_LINK([#include <libintl.h>
+-extern int _nl_msg_cat_cntr;],
+-		  [bindtextdomain ("", "");
+-return (int) gettext ("")]ifelse([$2], need-ngettext, [ + (int) ngettext ("", "", 0)], [])[ + _nl_msg_cat_cntr],
+-		  gt_cv_func_gnugettext_libintl=yes,
+-		  gt_cv_func_gnugettext_libintl=no)
+-		LIBS="$gt_save_LIBS"])
+-	   fi
+-
+-	   dnl If an already present or preinstalled GNU gettext() is found,
+-	   dnl use it.  But if this macro is used in GNU gettext, and GNU
+-	   dnl gettext is already preinstalled in libintl, we update this
+-	   dnl libintl.  (Cf. the install rule in intl/Makefile.in.)
+-	   if test "$gt_cv_func_gnugettext_libc" = "yes" \
+-	      || { test "$gt_cv_func_gnugettext_libintl" = "yes" \
+-		   && test "$PACKAGE" != gettext; }; then
+-	     AC_DEFINE(HAVE_GETTEXT, 1,
+-               [Define if the GNU gettext() function is already present or preinstalled.])
+-
+-	     if test "$gt_cv_func_gnugettext_libintl" = "yes"; then
+-	       dnl If iconv() is in a separate libiconv library, then anyone
+-	       dnl linking with libintl{.a,.so} also needs to link with
+-	       dnl libiconv.
+-	       INTLLIBS="-lintl $LIBICONV"
+-	     fi
+-
+-	     gt_save_LIBS="$LIBS"
+-	     LIBS="$LIBS $INTLLIBS"
+-	     AC_CHECK_FUNCS(dcgettext)
+-	     LIBS="$gt_save_LIBS"
+-
+-	     dnl Search for GNU msgfmt in the PATH.
+-	     AM_PATH_PROG_WITH_TEST(MSGFMT, msgfmt,
+-	       [$ac_dir/$ac_word --statistics /dev/null >/dev/null 2>&1], :)
+-	     AC_PATH_PROG(GMSGFMT, gmsgfmt, $MSGFMT)
+-
+-	     dnl Search for GNU xgettext in the PATH.
+-	     AM_PATH_PROG_WITH_TEST(XGETTEXT, xgettext,
+-	       [$ac_dir/$ac_word --omit-header /dev/null >/dev/null 2>&1], :)
+-
+-	     CATOBJEXT=.gmo
+-	   fi
+-	])
+-
+-        if test "$CATOBJEXT" = "NONE"; then
+-	  dnl GNU gettext is not found in the C library.
+-	  dnl Fall back on GNU gettext library.
+-	  nls_cv_use_gnu_gettext=yes
+-        fi
+-      fi
+-
+-      if test "$nls_cv_use_gnu_gettext" = "yes"; then
+-        dnl Mark actions used to generate GNU NLS library.
+-        INTLOBJS="\$(GETTOBJS)"
+-        AM_PATH_PROG_WITH_TEST(MSGFMT, msgfmt,
+-	  [$ac_dir/$ac_word --statistics /dev/null >/dev/null 2>&1], :)
+-        AC_PATH_PROG(GMSGFMT, gmsgfmt, $MSGFMT)
+-        AM_PATH_PROG_WITH_TEST(XGETTEXT, xgettext,
+-	  [$ac_dir/$ac_word --omit-header /dev/null >/dev/null 2>&1], :)
+-        AC_SUBST(MSGFMT)
+-	BUILD_INCLUDED_LIBINTL=yes
+-	USE_INCLUDED_LIBINTL=yes
+-        CATOBJEXT=.gmo
+-	INTLLIBS="ifelse([$3],[],\$(top_builddir)/intl,[$3])/libintl.ifelse([$1], use-libtool, [l], [])a $LIBICONV"
+-	LIBS=`echo " $LIBS " | sed -e 's/ -lintl / /' -e 's/^ //' -e 's/ $//'`
+-      fi
+-
+-      dnl This could go away some day; the PATH_PROG_WITH_TEST already does it.
+-      dnl Test whether we really found GNU msgfmt.
+-      if test "$GMSGFMT" != ":"; then
+-	dnl If it is no GNU msgfmt we define it as : so that the
+-	dnl Makefiles still can work.
+-	if $GMSGFMT --statistics /dev/null >/dev/null 2>&1; then
+-	  : ;
+-	else
+-	  AC_MSG_RESULT(
+-	    [found msgfmt program is not GNU msgfmt; ignore it])
+-	  GMSGFMT=":"
+-	fi
+-      fi
+-
+-      dnl This could go away some day; the PATH_PROG_WITH_TEST already does it.
+-      dnl Test whether we really found GNU xgettext.
+-      if test "$XGETTEXT" != ":"; then
+-	dnl If it is no GNU xgettext we define it as : so that the
+-	dnl Makefiles still can work.
+-	if $XGETTEXT --omit-header /dev/null >/dev/null 2>&1; then
+-	  : ;
+-	else
+-	  AC_MSG_RESULT(
+-	    [found xgettext program is not GNU xgettext; ignore it])
+-	  XGETTEXT=":"
+-	fi
+-      fi
+-
+-      dnl We need to process the po/ directory.
+-      POSUB=po
+-    fi
+-    AC_OUTPUT_COMMANDS(
+-     [for ac_file in $CONFIG_FILES; do
+-        # Support "outfile[:infile[:infile...]]"
+-        case "$ac_file" in
+-          *:*) ac_file=`echo "$ac_file"|sed 's%:.*%%'` ;;
+-        esac
+-        # PO directories have a Makefile.in generated from Makefile.in.in.
+-        case "$ac_file" in */Makefile.in)
+-          # Adjust a relative srcdir.
+-          ac_dir=`echo "$ac_file"|sed 's%/[^/][^/]*$%%'`
+-          ac_dir_suffix="/`echo "$ac_dir"|sed 's%^\./%%'`"
+-          ac_dots=`echo "$ac_dir_suffix"|sed 's%/[^/]*%../%g'`
+-          # In autoconf-2.13 it is called $ac_given_srcdir.
+-          # In autoconf-2.50 it is called $srcdir.
+-          test -n "$ac_given_srcdir" || ac_given_srcdir="$srcdir"
+-          case "$ac_given_srcdir" in
+-            .)  top_srcdir=`echo $ac_dots|sed 's%/$%%'` ;;
+-            /*) top_srcdir="$ac_given_srcdir" ;;
+-            *)  top_srcdir="$ac_dots$ac_given_srcdir" ;;
+-          esac
+-          if test -f "$ac_given_srcdir/$ac_dir/POTFILES.in"; then
+-            rm -f "$ac_dir/POTFILES"
+-            test -n "$as_me" && echo "$as_me: creating $ac_dir/POTFILES" || echo "creating $ac_dir/POTFILES"
+-            sed -e "/^#/d" -e "/^[ 	]*\$/d" -e "s,.*,     $top_srcdir/& \\\\," -e "\$s/\(.*\) \\\\/\1/" < "$ac_given_srcdir/$ac_dir/POTFILES.in" > "$ac_dir/POTFILES"
+-            test -n "$as_me" && echo "$as_me: creating $ac_dir/Makefile" || echo "creating $ac_dir/Makefile"
+-            sed -e "/POTFILES =/r $ac_dir/POTFILES" "$ac_dir/Makefile.in" > "$ac_dir/Makefile"
+-          fi
+-          ;;
+-        esac
+-      done])
+-
+-
+-    dnl If this is used in GNU gettext we have to set BUILD_INCLUDED_LIBINTL
+-    dnl to 'yes' because some of the testsuite requires it.
+-    if test "$PACKAGE" = gettext; then
+-      BUILD_INCLUDED_LIBINTL=yes
+-    fi
+-
+-    dnl intl/plural.c is generated from intl/plural.y. It requires bison,
+-    dnl because plural.y uses bison specific features. It requires at least
+-    dnl bison-1.26 because earlier versions generate a plural.c that doesn't
+-    dnl compile.
+-    dnl bison is only needed for the maintainer (who touches plural.y). But in
+-    dnl order to avoid separate Makefiles or --enable-maintainer-mode, we put
+-    dnl the rule in general Makefile. Now, some people carelessly touch the
+-    dnl files or have a broken "make" program, hence the plural.c rule will
+-    dnl sometimes fire. To avoid an error, defines BISON to ":" if it is not
+-    dnl present or too old.
+-    AC_CHECK_PROGS([INTLBISON], [bison])
+-    if test -z "$INTLBISON"; then
+-      ac_verc_fail=yes
+-    else
+-      dnl Found it, now check the version.
+-      AC_MSG_CHECKING([version of bison])
+-changequote(<<,>>)dnl
+-      ac_prog_version=`$INTLBISON --version 2>&1 | sed -n 's/^.*GNU Bison.* \([0-9]*\.[0-9.]*\).*$/\1/p'`
+-      case $ac_prog_version in
+-        '') ac_prog_version="v. ?.??, bad"; ac_verc_fail=yes;;
+-        1.2[6-9]* | 1.[3-9][0-9]* | [2-9].*)
+-changequote([,])dnl
+-           ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
+-        *) ac_prog_version="$ac_prog_version, bad"; ac_verc_fail=yes;;
+-      esac
+-      AC_MSG_RESULT([$ac_prog_version])
+-    fi
+-    if test $ac_verc_fail = yes; then
+-      INTLBISON=:
+-    fi
+-
+-    dnl These rules are solely for the distribution goal.  While doing this
+-    dnl we only have to keep exactly one list of the available catalogs
+-    dnl in configure.in.
+-    for lang in $ALL_LINGUAS; do
+-      GMOFILES="$GMOFILES $lang.gmo"
+-      POFILES="$POFILES $lang.po"
+-    done
+-
+-    dnl Make all variables we use known to autoconf.
+-    AC_SUBST(BUILD_INCLUDED_LIBINTL)
+-    AC_SUBST(USE_INCLUDED_LIBINTL)
+-    AC_SUBST(CATALOGS)
+-    AC_SUBST(CATOBJEXT)
+-    AC_SUBST(GMOFILES)
+-    AC_SUBST(INTLLIBS)
+-    AC_SUBST(INTLOBJS)
+-    AC_SUBST(POFILES)
+-    AC_SUBST(POSUB)
+-
+-    dnl For backward compatibility. Some configure.ins may be using this.
+-    nls_cv_header_intl=
+-    nls_cv_header_libgt=
+-
+-    dnl For backward compatibility. Some Makefiles may be using this.
+-    DATADIRNAME=share
+-    AC_SUBST(DATADIRNAME)
+-
+-    dnl For backward compatibility. Some Makefiles may be using this.
+-    INSTOBJEXT=.mo
+-    AC_SUBST(INSTOBJEXT)
+-
+-    dnl For backward compatibility. Some Makefiles may be using this.
+-    GENCAT=gencat
+-    AC_SUBST(GENCAT)
+-  ])
+-
+-dnl Usage: Just like AM_WITH_NLS, which see.
+-AC_DEFUN([AM_GNU_GETTEXT],
+-  [AC_REQUIRE([AC_PROG_MAKE_SET])dnl
+-   AC_REQUIRE([AC_PROG_CC])dnl
+-   AC_REQUIRE([AC_CANONICAL_HOST])dnl
+-   AC_REQUIRE([AC_PROG_RANLIB])dnl
+-   AC_REQUIRE([AC_ISC_POSIX])dnl
+-   AC_REQUIRE([AC_HEADER_STDC])dnl
+-   AC_REQUIRE([AC_C_CONST])dnl
+-   AC_REQUIRE([AC_C_INLINE])dnl
+-   AC_REQUIRE([AC_TYPE_OFF_T])dnl
+-   AC_REQUIRE([AC_TYPE_SIZE_T])dnl
+-   AC_REQUIRE([AC_FUNC_ALLOCA])dnl
+-   AC_REQUIRE([AC_FUNC_MMAP])dnl
+-   AC_REQUIRE([jm_GLIBC21])dnl
+-
+-   AC_CHECK_HEADERS([argz.h limits.h locale.h nl_types.h malloc.h stddef.h \
+-stdlib.h string.h unistd.h sys/param.h])
+-   AC_CHECK_FUNCS([feof_unlocked fgets_unlocked getcwd getegid geteuid \
+-getgid getuid mempcpy munmap putenv setenv setlocale stpcpy strchr strcasecmp \
+-strdup strtoul tsearch __argz_count __argz_stringify __argz_next])
+-
+-   AM_ICONV
+-   AM_LANGINFO_CODESET
+-   AM_LC_MESSAGES
+-   AM_WITH_NLS([$1],[$2],[$3])
+-
+-   if test "x$CATOBJEXT" != "x"; then
+-     if test "x$ALL_LINGUAS" = "x"; then
+-       LINGUAS=
+-     else
+-       AC_MSG_CHECKING(for catalogs to be installed)
+-       NEW_LINGUAS=
+-       for presentlang in $ALL_LINGUAS; do
+-         useit=no
+-         for desiredlang in ${LINGUAS-$ALL_LINGUAS}; do
+-           # Use the presentlang catalog if desiredlang is
+-           #   a. equal to presentlang, or
+-           #   b. a variant of presentlang (because in this case,
+-           #      presentlang can be used as a fallback for messages
+-           #      which are not translated in the desiredlang catalog).
+-           case "$desiredlang" in
+-             "$presentlang"*) useit=yes;;
+-           esac
+-         done
+-         if test $useit = yes; then
+-           NEW_LINGUAS="$NEW_LINGUAS $presentlang"
+-         fi
+-       done
+-       LINGUAS=$NEW_LINGUAS
+-       AC_MSG_RESULT($LINGUAS)
+-     fi
+-
+-     dnl Construct list of names of catalog files to be constructed.
+-     if test -n "$LINGUAS"; then
+-       for lang in $LINGUAS; do CATALOGS="$CATALOGS $lang$CATOBJEXT"; done
+-     fi
+-   fi
+-
+-   dnl If the AC_CONFIG_AUX_DIR macro for autoconf is used we possibly
+-   dnl find the mkinstalldirs script in another subdir but $(top_srcdir).
+-   dnl Try to locate is.
+-   MKINSTALLDIRS=
+-   if test -n "$ac_aux_dir"; then
+-     MKINSTALLDIRS="$ac_aux_dir/mkinstalldirs"
+-   fi
+-   if test -z "$MKINSTALLDIRS"; then
+-     MKINSTALLDIRS="\$(top_srcdir)/mkinstalldirs"
+-   fi
+-   AC_SUBST(MKINSTALLDIRS)
+-
+-   dnl Enable libtool support if the surrounding package wishes it.
+-   INTL_LIBTOOL_SUFFIX_PREFIX=ifelse([$1], use-libtool, [l], [])
+-   AC_SUBST(INTL_LIBTOOL_SUFFIX_PREFIX)
+-  ])
+Index: m4/glibc21.m4
+===================================================================
+--- m4/glibc21.m4.orig	2005-11-19 08:58:29.659962000 -0600
++++ m4/glibc21.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,26 +0,0 @@
+-#serial 2
+-
+-# Test for the GNU C Library, version 2.1 or newer.
+-# From Bruno Haible.
+-
+-AC_DEFUN([jm_GLIBC21],
+-  [
+-    AC_CACHE_CHECK(whether we are using the GNU C Library 2.1 or newer,
+-      ac_cv_gnu_library_2_1,
+-      [AC_EGREP_CPP([Lucky GNU user],
+-	[
+-#include <features.h>
+-#ifdef __GNU_LIBRARY__
+- #if (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 1) || (__GLIBC__ > 2)
+-  Lucky GNU user
+- #endif
+-#endif
+-	],
+-	ac_cv_gnu_library_2_1=yes,
+-	ac_cv_gnu_library_2_1=no)
+-      ]
+-    )
+-    AC_SUBST(GLIBC21)
+-    GLIBC21="$ac_cv_gnu_library_2_1"
+-  ]
+-)
+Index: m4/iconv.m4
+===================================================================
+--- m4/iconv.m4.orig	2005-11-19 08:58:29.677982000 -0600
++++ m4/iconv.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,69 +0,0 @@
+-#serial AM2
+-
+-dnl From Bruno Haible.
+-
+-AC_DEFUN([AM_ICONV],
+-[
+-  dnl Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+-  dnl those with the standalone portable GNU libiconv installed).
+-
+-  AC_ARG_WITH([libiconv-prefix],
+-[  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib], [
+-    for dir in `echo "$withval" | tr : ' '`; do
+-      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+-      if test -d $dir/lib; then LDFLAGS="$LDFLAGS -L$dir/lib"; fi
+-    done
+-   ])
+-
+-  AC_CACHE_CHECK(for iconv, am_cv_func_iconv, [
+-    am_cv_func_iconv="no, consider installing GNU libiconv"
+-    am_cv_lib_iconv=no
+-    AC_TRY_LINK([#include <stdlib.h>
+-#include <iconv.h>],
+-      [iconv_t cd = iconv_open("","");
+-       iconv(cd,NULL,NULL,NULL,NULL);
+-       iconv_close(cd);],
+-      am_cv_func_iconv=yes)
+-    if test "$am_cv_func_iconv" != yes; then
+-      am_save_LIBS="$LIBS"
+-      LIBS="$LIBS -liconv"
+-      AC_TRY_LINK([#include <stdlib.h>
+-#include <iconv.h>],
+-        [iconv_t cd = iconv_open("","");
+-         iconv(cd,NULL,NULL,NULL,NULL);
+-         iconv_close(cd);],
+-        am_cv_lib_iconv=yes
+-        am_cv_func_iconv=yes)
+-      LIBS="$am_save_LIBS"
+-    fi
+-  ])
+-  if test "$am_cv_func_iconv" = yes; then
+-    AC_DEFINE(HAVE_ICONV, 1, [Define if you have the iconv() function.])
+-    AC_MSG_CHECKING([for iconv declaration])
+-    AC_CACHE_VAL(am_cv_proto_iconv, [
+-      AC_TRY_COMPILE([
+-#include <stdlib.h>
+-#include <iconv.h>
+-extern
+-#ifdef __cplusplus
+-"C"
+-#endif
+-#if defined(__STDC__) || defined(__cplusplus)
+-size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);
+-#else
+-size_t iconv();
+-#endif
+-], [], am_cv_proto_iconv_arg1="", am_cv_proto_iconv_arg1="const")
+-      am_cv_proto_iconv="extern size_t iconv (iconv_t cd, $am_cv_proto_iconv_arg1 char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);"])
+-    am_cv_proto_iconv=`echo "[$]am_cv_proto_iconv" | tr -s ' ' | sed -e 's/( /(/'`
+-    AC_MSG_RESULT([$]{ac_t:-
+-         }[$]am_cv_proto_iconv)
+-    AC_DEFINE_UNQUOTED(ICONV_CONST, $am_cv_proto_iconv_arg1,
+-      [Define as const if the declaration of iconv() needs const.])
+-  fi
+-  LIBICONV=
+-  if test "$am_cv_lib_iconv" = yes; then
+-    LIBICONV="-liconv"
+-  fi
+-  AC_SUBST(LIBICONV)
+-])
+Index: m4/isc-posix.m4
+===================================================================
+--- m4/isc-posix.m4.orig	2005-11-19 08:58:29.695983000 -0600
++++ m4/isc-posix.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,17 +0,0 @@
+-#serial 1
+-# This test replaces the one in autoconf.
+-# Currently this macro should have the same name as the autoconf macro
+-# because gettext's gettext.m4 (distributed in the automake package)
+-# still uses it.  Otherwise, the use in gettext.m4 makes autoheader
+-# give these diagnostics:
+-#   configure.in:556: AC_TRY_COMPILE was called before AC_ISC_POSIX
+-#   configure.in:556: AC_TRY_RUN was called before AC_ISC_POSIX
+-
+-undefine([AC_ISC_POSIX])
+-
+-AC_DEFUN([AC_ISC_POSIX],
+-  [
+-    dnl This test replaces the obsolescent AC_ISC_POSIX kludge.
+-    AC_CHECK_LIB(cposix, strerror, [LIBS="$LIBS -lcposix"])
+-  ]
+-)
+Index: m4/lcmessage.m4
+===================================================================
+--- m4/lcmessage.m4.orig	2005-11-19 08:58:29.714016000 -0600
++++ m4/lcmessage.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,24 +0,0 @@
+-# Check whether LC_MESSAGES is available in <locale.h>.
+-# Ulrich Drepper <drepper@cygnus.com>, 1995.
+-#
+-# This file can be copied and used freely without restrictions.  It can
+-# be used in projects which are not available under the GNU General Public
+-# License or the GNU Library General Public License but which still want
+-# to provide support for the GNU gettext functionality.
+-# Please note that the actual code of the GNU gettext library is covered
+-# by the GNU Library General Public License, and the rest of the GNU
+-# gettext package package is covered by the GNU General Public License.
+-# They are *not* in the public domain.
+-
+-# serial 2
+-
+-AC_DEFUN([AM_LC_MESSAGES],
+-  [if test $ac_cv_header_locale_h = yes; then
+-    AC_CACHE_CHECK([for LC_MESSAGES], am_cv_val_LC_MESSAGES,
+-      [AC_TRY_LINK([#include <locale.h>], [return LC_MESSAGES],
+-       am_cv_val_LC_MESSAGES=yes, am_cv_val_LC_MESSAGES=no)])
+-    if test $am_cv_val_LC_MESSAGES = yes; then
+-      AC_DEFINE(HAVE_LC_MESSAGES, 1,
+-        [Define if your <locale.h> file defines LC_MESSAGES.])
+-    fi
+-  fi])
+Index: m4/progtest.m4
+===================================================================
+--- m4/progtest.m4.orig	2005-11-19 08:58:29.732031000 -0600
++++ m4/progtest.m4	1970-01-01 00:00:00.000000000 +0000
+@@ -1,51 +0,0 @@
+-# Search path for a program which passes the given test.
+-# Ulrich Drepper <drepper@cygnus.com>, 1996.
+-#
+-# This file can be copied and used freely without restrictions.  It can
+-# be used in projects which are not available under the GNU General Public
+-# License or the GNU Library General Public License but which still want
+-# to provide support for the GNU gettext functionality.
+-# Please note that the actual code of the GNU gettext library is covered
+-# by the GNU Library General Public License, and the rest of the GNU
+-# gettext package package is covered by the GNU General Public License.
+-# They are *not* in the public domain.
+-
+-# serial 2
+-
+-dnl AM_PATH_PROG_WITH_TEST(VARIABLE, PROG-TO-CHECK-FOR,
+-dnl   TEST-PERFORMED-ON-FOUND_PROGRAM [, VALUE-IF-NOT-FOUND [, PATH]])
+-AC_DEFUN([AM_PATH_PROG_WITH_TEST],
+-[# Extract the first word of "$2", so it can be a program name with args.
+-set dummy $2; ac_word=[$]2
+-AC_MSG_CHECKING([for $ac_word])
+-AC_CACHE_VAL(ac_cv_path_$1,
+-[case "[$]$1" in
+-  /*)
+-  ac_cv_path_$1="[$]$1" # Let the user override the test with a path.
+-  ;;
+-  *)
+-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}:"
+-  for ac_dir in ifelse([$5], , $PATH, [$5]); do
+-    test -z "$ac_dir" && ac_dir=.
+-    if test -f $ac_dir/$ac_word; then
+-      if [$3]; then
+-	ac_cv_path_$1="$ac_dir/$ac_word"
+-	break
+-      fi
+-    fi
+-  done
+-  IFS="$ac_save_ifs"
+-dnl If no 4th arg is given, leave the cache variable unset,
+-dnl so AC_PATH_PROGS will keep looking.
+-ifelse([$4], , , [  test -z "[$]ac_cv_path_$1" && ac_cv_path_$1="$4"
+-])dnl
+-  ;;
+-esac])dnl
+-$1="$ac_cv_path_$1"
+-if test ifelse([$4], , [-n "[$]$1"], ["[$]$1" != "$4"]); then
+-  AC_MSG_RESULT([$]$1)
+-else
+-  AC_MSG_RESULT(no)
+-fi
+-AC_SUBST($1)dnl
+-])
+Index: config.guess
+===================================================================
+--- config.guess.orig	2005-11-19 08:58:30.107678000 -0600
++++ config.guess	2005-11-19 08:58:46.331956000 -0600
+@@ -1,9 +1,9 @@
+ #! /bin/sh
+ # Attempt to guess a canonical system name.
+-#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+-#   Free Software Foundation, Inc.
++#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
++#   2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+ 
+-timestamp='2001-08-21'
++timestamp='2005-02-10'
+ 
+ # This file is free software; you can redistribute it and/or modify it
+ # under the terms of the GNU General Public License as published by
+@@ -24,8 +24,9 @@
+ # configuration script generated by Autoconf, you may include it under
+ # the same distribution terms that you use for the rest of that program.
+ 
+-# Written by Per Bothner <bothner@cygnus.com>.
+-# Please send patches to <config-patches@gnu.org>.
++# Originally written by Per Bothner <per@bothner.com>.
++# Please send patches to <config-patches@gnu.org>.  Submit a context
++# diff and a properly formatted ChangeLog entry.
+ #
+ # This script attempts to guess a canonical system name similar to
+ # config.sub.  If it succeeds, it prints the system name on stdout, and
+@@ -52,7 +53,7 @@
+ GNU config.guess ($timestamp)
+ 
+ Originally written by Per Bothner.
+-Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
++Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+ Free Software Foundation, Inc.
+ 
+ This is free software; see the source for copying conditions.  There is NO
+@@ -87,30 +88,42 @@
+   exit 1
+ fi
+ 
++trap 'exit 1' 1 2 15
+ 
+-dummy=dummy-$$
+-trap 'rm -f $dummy.c $dummy.o $dummy.rel $dummy; exit 1' 1 2 15
++# CC_FOR_BUILD -- compiler used by this script. Note that the use of a
++# compiler to aid in system detection is discouraged as it requires
++# temporary files to be created and, as you can see below, it is a
++# headache to deal with in a portable fashion.
+ 
+-# CC_FOR_BUILD -- compiler used by this script.
+ # Historically, `CC_FOR_BUILD' used to be named `HOST_CC'. We still
+ # use `HOST_CC' if defined, but it is deprecated.
+ 
+-set_cc_for_build='case $CC_FOR_BUILD,$HOST_CC,$CC in
+- ,,)    echo "int dummy(){}" > $dummy.c ;
+-	for c in cc gcc c89 ; do
+-	  ($c $dummy.c -c -o $dummy.o) >/dev/null 2>&1 ;
+-	  if test $? = 0 ; then
++# Portable tmp directory creation inspired by the Autoconf team.
++
++set_cc_for_build='
++trap "exitcode=\$?; (rm -f \$tmpfiles 2>/dev/null; rmdir \$tmp 2>/dev/null) && exit \$exitcode" 0 ;
++trap "rm -f \$tmpfiles 2>/dev/null; rmdir \$tmp 2>/dev/null; exit 1" 1 2 13 15 ;
++: ${TMPDIR=/tmp} ;
++ { tmp=`(umask 077 && mktemp -d -q "$TMPDIR/cgXXXXXX") 2>/dev/null` && test -n "$tmp" && test -d "$tmp" ; } ||
++ { test -n "$RANDOM" && tmp=$TMPDIR/cg$$-$RANDOM && (umask 077 && mkdir $tmp) ; } ||
++ { tmp=$TMPDIR/cg-$$ && (umask 077 && mkdir $tmp) && echo "Warning: creating insecure temp directory" >&2 ; } ||
++ { echo "$me: cannot create a temporary directory in $TMPDIR" >&2 ; exit 1 ; } ;
++dummy=$tmp/dummy ;
++tmpfiles="$dummy.c $dummy.o $dummy.rel $dummy" ;
++case $CC_FOR_BUILD,$HOST_CC,$CC in
++ ,,)    echo "int x;" > $dummy.c ;
++	for c in cc gcc c89 c99 ; do
++	  if ($c -c -o $dummy.o $dummy.c) >/dev/null 2>&1 ; then
+ 	     CC_FOR_BUILD="$c"; break ;
+ 	  fi ;
+ 	done ;
+-	rm -f $dummy.c $dummy.o $dummy.rel ;
+ 	if test x"$CC_FOR_BUILD" = x ; then
+ 	  CC_FOR_BUILD=no_compiler_found ;
+ 	fi
+ 	;;
+  ,,*)   CC_FOR_BUILD=$CC ;;
+  ,*,*)  CC_FOR_BUILD=$HOST_CC ;;
+-esac'
++esac ;'
+ 
+ # This is needed to find uname on a Pyramid OSx when run in the BSD universe.
+ # (ghazi@noc.rutgers.edu 1994-08-24)
+@@ -127,29 +140,30 @@
+ 
+ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
+     *:NetBSD:*:*)
+-	# Netbsd (nbsd) targets should (where applicable) match one or
++	# NetBSD (nbsd) targets should (where applicable) match one or
+ 	# more of the tupples: *-*-netbsdelf*, *-*-netbsdaout*,
+ 	# *-*-netbsdecoff* and *-*-netbsd*.  For targets that recently
+ 	# switched to ELF, *-*-netbsd* would select the old
+ 	# object file format.  This provides both forward
+ 	# compatibility and a consistent mechanism for selecting the
+ 	# object file format.
+-	# Determine the machine/vendor (is the vendor relevant).
+-	case "${UNAME_MACHINE}" in
+-	    amiga) machine=m68k-unknown ;;
+-	    arm32) machine=arm-unknown ;;
+-	    atari*) machine=m68k-atari ;;
+-	    sun3*) machine=m68k-sun ;;
+-	    mac68k) machine=m68k-apple ;;
+-	    macppc) machine=powerpc-apple ;;
+-	    hp3[0-9][05]) machine=m68k-hp ;;
+-	    ibmrt|romp-ibm) machine=romp-ibm ;;
+-	    *) machine=${UNAME_MACHINE}-unknown ;;
++	#
++	# Note: NetBSD doesn't particularly care about the vendor
++	# portion of the name.  We always set it to "unknown".
++	sysctl="sysctl -n hw.machine_arch"
++	UNAME_MACHINE_ARCH=`(/sbin/$sysctl 2>/dev/null || \
++	    /usr/sbin/$sysctl 2>/dev/null || echo unknown)`
++	case "${UNAME_MACHINE_ARCH}" in
++	    armeb) machine=armeb-unknown ;;
++	    arm*) machine=arm-unknown ;;
++	    sh3el) machine=shl-unknown ;;
++	    sh3eb) machine=sh-unknown ;;
++	    *) machine=${UNAME_MACHINE_ARCH}-unknown ;;
+ 	esac
+ 	# The Operating System including object format, if it has switched
+ 	# to ELF recently, or will in the future.
+-	case "${UNAME_MACHINE}" in
+-	    i386|sparc|amiga|arm*|hp300|mvme68k|vax|atari|luna68k|mac68k|news68k|next68k|pc532|sun3*|x68k)
++	case "${UNAME_MACHINE_ARCH}" in
++	    arm*|i386|m68k|ns32k|sh3*|sparc|vax)
+ 		eval $set_cc_for_build
+ 		if echo __ELF__ | $CC_FOR_BUILD -E - 2>/dev/null \
+ 			| grep __ELF__ >/dev/null
+@@ -166,74 +180,123 @@
+ 		;;
+ 	esac
+ 	# The OS release
+-	release=`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
++	# Debian GNU/NetBSD machines have a different userland, and
++	# thus, need a distinct triplet. However, they do not need
++	# kernel version information, so it can be replaced with a
++	# suitable tag, in the style of linux-gnu.
++	case "${UNAME_VERSION}" in
++	    Debian*)
++		release='-gnu'
++		;;
++	    *)
++		release=`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
++		;;
++	esac
+ 	# Since CPU_TYPE-MANUFACTURER-KERNEL-OPERATING_SYSTEM:
+ 	# contains redundant information, the shorter form:
+ 	# CPU_TYPE-MANUFACTURER-OPERATING_SYSTEM is used.
+ 	echo "${machine}-${os}${release}"
+ 	exit 0 ;;
++    amd64:OpenBSD:*:*)
++	echo x86_64-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    amiga:OpenBSD:*:*)
++	echo m68k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    cats:OpenBSD:*:*)
++	echo arm-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    hp300:OpenBSD:*:*)
++	echo m68k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    luna88k:OpenBSD:*:*)
++    	echo m88k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    mac68k:OpenBSD:*:*)
++	echo m68k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    macppc:OpenBSD:*:*)
++	echo powerpc-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    mvme68k:OpenBSD:*:*)
++	echo m68k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    mvme88k:OpenBSD:*:*)
++	echo m88k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    mvmeppc:OpenBSD:*:*)
++	echo powerpc-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    sgi:OpenBSD:*:*)
++	echo mips64-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    sun3:OpenBSD:*:*)
++	echo m68k-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    *:OpenBSD:*:*)
++	echo ${UNAME_MACHINE}-unknown-openbsd${UNAME_RELEASE}
++	exit 0 ;;
++    *:ekkoBSD:*:*)
++	echo ${UNAME_MACHINE}-unknown-ekkobsd${UNAME_RELEASE}
++	exit 0 ;;
++    macppc:MirBSD:*:*)
++	echo powerppc-unknown-mirbsd${UNAME_RELEASE}
++	exit 0 ;;
++    *:MirBSD:*:*)
++	echo ${UNAME_MACHINE}-unknown-mirbsd${UNAME_RELEASE}
++	exit 0 ;;
+     alpha:OSF1:*:*)
+-	if test $UNAME_RELEASE = "V4.0"; then
++	case $UNAME_RELEASE in
++	*4.0)
+ 		UNAME_RELEASE=`/usr/sbin/sizer -v | awk '{print $3}'`
+-	fi
++		;;
++	*5.*)
++	        UNAME_RELEASE=`/usr/sbin/sizer -v | awk '{print $4}'`
++		;;
++	esac
++	# According to Compaq, /usr/sbin/psrinfo has been available on
++	# OSF/1 and Tru64 systems produced since 1995.  I hope that
++	# covers most systems running today.  This code pipes the CPU
++	# types through head -n 1, so we only detect the type of CPU 0.
++	ALPHA_CPU_TYPE=`/usr/sbin/psrinfo -v | sed -n -e 's/^  The alpha \(.*\) processor.*$/\1/p' | head -n 1`
++	case "$ALPHA_CPU_TYPE" in
++	    "EV4 (21064)")
++		UNAME_MACHINE="alpha" ;;
++	    "EV4.5 (21064)")
++		UNAME_MACHINE="alpha" ;;
++	    "LCA4 (21066/21068)")
++		UNAME_MACHINE="alpha" ;;
++	    "EV5 (21164)")
++		UNAME_MACHINE="alphaev5" ;;
++	    "EV5.6 (21164A)")
++		UNAME_MACHINE="alphaev56" ;;
++	    "EV5.6 (21164PC)")
++		UNAME_MACHINE="alphapca56" ;;
++	    "EV5.7 (21164PC)")
++		UNAME_MACHINE="alphapca57" ;;
++	    "EV6 (21264)")
++		UNAME_MACHINE="alphaev6" ;;
++	    "EV6.7 (21264A)")
++		UNAME_MACHINE="alphaev67" ;;
++	    "EV6.8CB (21264C)")
++		UNAME_MACHINE="alphaev68" ;;
++	    "EV6.8AL (21264B)")
++		UNAME_MACHINE="alphaev68" ;;
++	    "EV6.8CX (21264D)")
++		UNAME_MACHINE="alphaev68" ;;
++	    "EV6.9A (21264/EV69A)")
++		UNAME_MACHINE="alphaev69" ;;
++	    "EV7 (21364)")
++		UNAME_MACHINE="alphaev7" ;;
++	    "EV7.9 (21364A)")
++		UNAME_MACHINE="alphaev79" ;;
++	esac
++	# A Pn.n version is a patched version.
+ 	# A Vn.n version is a released version.
+ 	# A Tn.n version is a released field test version.
+ 	# A Xn.n version is an unreleased experimental baselevel.
+ 	# 1.2 uses "1.2" for uname -r.
+-	cat <<EOF >$dummy.s
+-	.data
+-\$Lformat:
+-	.byte 37,100,45,37,120,10,0	# "%d-%x\n"
+-
+-	.text
+-	.globl main
+-	.align 4
+-	.ent main
+-main:
+-	.frame \$30,16,\$26,0
+-	ldgp \$29,0(\$27)
+-	.prologue 1
+-	.long 0x47e03d80 # implver \$0
+-	lda \$2,-1
+-	.long 0x47e20c21 # amask \$2,\$1
+-	lda \$16,\$Lformat
+-	mov \$0,\$17
+-	not \$1,\$18
+-	jsr \$26,printf
+-	ldgp \$29,0(\$26)
+-	mov 0,\$16
+-	jsr \$26,exit
+-	.end main
+-EOF
+-	eval $set_cc_for_build
+-	$CC_FOR_BUILD $dummy.s -o $dummy 2>/dev/null
+-	if test "$?" = 0 ; then
+-		case `./$dummy` in
+-			0-0)
+-				UNAME_MACHINE="alpha"
+-				;;
+-			1-0)
+-				UNAME_MACHINE="alphaev5"
+-				;;
+-			1-1)
+-				UNAME_MACHINE="alphaev56"
+-				;;
+-			1-101)
+-				UNAME_MACHINE="alphapca56"
+-				;;
+-			2-303)
+-				UNAME_MACHINE="alphaev6"
+-				;;
+-			2-307)
+-				UNAME_MACHINE="alphaev67"
+-				;;
+-			2-1307)
+-				UNAME_MACHINE="alphaev68"
+-				;;
+-		esac
+-	fi
+-	rm -f $dummy.s $dummy
+-	echo ${UNAME_MACHINE}-dec-osf`echo ${UNAME_RELEASE} | sed -e 's/^[VTX]//' | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
++	echo ${UNAME_MACHINE}-dec-osf`echo ${UNAME_RELEASE} | sed -e 's/^[PVTX]//' | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+ 	exit 0 ;;
+     Alpha\ *:Windows_NT*:*)
+ 	# How do we know it's Interix rather than the generic POSIX subsystem?
+@@ -247,33 +310,21 @@
+     Amiga*:UNIX_System_V:4.0:*)
+ 	echo m68k-unknown-sysv4
+ 	exit 0;;
+-    amiga:OpenBSD:*:*)
+-	echo m68k-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+     *:[Aa]miga[Oo][Ss]:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-amigaos
+ 	exit 0 ;;
+-    arc64:OpenBSD:*:*)
+-	echo mips64el-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    arc:OpenBSD:*:*)
+-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    hkmips:OpenBSD:*:*)
+-	echo mips-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    pmax:OpenBSD:*:*)
+-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    sgi:OpenBSD:*:*)
+-	echo mips-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    wgrisc:OpenBSD:*:*)
+-	echo mipsel-unknown-openbsd${UNAME_RELEASE}
++    *:[Mm]orph[Oo][Ss]:*:*)
++	echo ${UNAME_MACHINE}-unknown-morphos
+ 	exit 0 ;;
+     *:OS/390:*:*)
+ 	echo i370-ibm-openedition
+ 	exit 0 ;;
++    *:z/VM:*:*)
++	echo s390-ibm-zvmoe
++	exit 0 ;;
++    *:OS400:*:*)
++        echo powerpc-ibm-os400
++	exit 0 ;;
+     arm:RISC*:1.[012]*:*|arm:riscix:1.[012]*:*)
+ 	echo arm-acorn-riscix${UNAME_RELEASE}
+ 	exit 0;;
+@@ -291,6 +342,13 @@
+     NILE*:*:*:dcosx)
+ 	echo pyramid-pyramid-svr4
+ 	exit 0 ;;
++    DRS?6000:unix:4.0:6*)
++	echo sparc-icl-nx6
++	exit 0 ;;
++    DRS?6000:UNIX_SV:4.2*:7* | DRS?6000:isis:4.2*:7*)
++	case `/usr/bin/uname -p` in
++	    sparc) echo sparc-icl-nx7 && exit 0 ;;
++	esac ;;
+     sun4H:SunOS:5.*:*)
+ 	echo sparc-hal-solaris2`echo ${UNAME_RELEASE}|sed -e 's/[^.]*//'`
+ 	exit 0 ;;
+@@ -319,7 +377,7 @@
+ 	echo m68k-sun-sunos${UNAME_RELEASE}
+ 	exit 0 ;;
+     sun*:*:4.2BSD:*)
+-	UNAME_RELEASE=`(head -1 /etc/motd | awk '{print substr($5,1,3)}') 2>/dev/null`
++	UNAME_RELEASE=`(sed 1q /etc/motd | awk '{print substr($5,1,3)}') 2>/dev/null`
+ 	test "x${UNAME_RELEASE}" = "x" && UNAME_RELEASE=3
+ 	case "`/bin/arch`" in
+ 	    sun3)
+@@ -333,12 +391,6 @@
+     aushp:SunOS:*:*)
+ 	echo sparc-auspex-sunos${UNAME_RELEASE}
+ 	exit 0 ;;
+-    sparc*:NetBSD:*)
+-	echo `uname -p`-unknown-netbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    atari*:OpenBSD:*:*)
+-	echo m68k-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+     # The situation for MiNT is a little confusing.  The machine name
+     # can be virtually everything (everything which is not
+     # "atarist" or "atariste" at least should have a processor
+@@ -365,17 +417,8 @@
+     *:*MiNT:*:* | *:*mint:*:* | *:*TOS:*:*)
+         echo m68k-unknown-mint${UNAME_RELEASE}
+         exit 0 ;;
+-    sun3*:OpenBSD:*:*)
+-	echo m68k-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    mac68k:OpenBSD:*:*)
+-	echo m68k-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    mvme68k:OpenBSD:*:*)
+-	echo m68k-unknown-openbsd${UNAME_RELEASE}
+-	exit 0 ;;
+-    mvme88k:OpenBSD:*:*)
+-	echo m88k-unknown-openbsd${UNAME_RELEASE}
++    m68k:machten:*:*)
++	echo m68k-apple-machten${UNAME_RELEASE}
+ 	exit 0 ;;
+     powerpc:machten:*:*)
+ 	echo powerpc-apple-machten${UNAME_RELEASE}
+@@ -393,6 +436,7 @@
+ 	echo clipper-intergraph-clix${UNAME_RELEASE}
+ 	exit 0 ;;
+     mips:*:*:UMIPS | mips:*:*:RISCos)
++	eval $set_cc_for_build
+ 	sed 's/^	//' << EOF >$dummy.c
+ #ifdef __cplusplus
+ #include <stdio.h>  /* for printf() prototype */
+@@ -414,16 +458,20 @@
+ 	  exit (-1);
+ 	}
+ EOF
+-	eval $set_cc_for_build
+-	$CC_FOR_BUILD $dummy.c -o $dummy \
+-	  && ./$dummy `echo "${UNAME_RELEASE}" | sed -n 's/\([0-9]*\).*/\1/p'` \
+-	  && rm -f $dummy.c $dummy && exit 0
+-	rm -f $dummy.c $dummy
++	$CC_FOR_BUILD -o $dummy $dummy.c \
++	  && $dummy `echo "${UNAME_RELEASE}" | sed -n 's/\([0-9]*\).*/\1/p'` \
++	  && exit 0
+ 	echo mips-mips-riscos${UNAME_RELEASE}
+ 	exit 0 ;;
+     Motorola:PowerMAX_OS:*:*)
+ 	echo powerpc-motorola-powermax
+ 	exit 0 ;;
++    Motorola:*:4.3:PL8-*)
++	echo powerpc-harris-powermax
++	exit 0 ;;
++    Night_Hawk:*:*:PowerMAX_OS | Synergy:PowerMAX_OS:*:*)
++	echo powerpc-harris-powermax
++	exit 0 ;;
+     Night_Hawk:Power_UNIX:*:*)
+ 	echo powerpc-harris-powerunix
+ 	exit 0 ;;
+@@ -484,6 +532,7 @@
+ 	exit 0 ;;
+     *:AIX:2:3)
+ 	if grep bos325 /usr/include/stdio.h >/dev/null 2>&1; then
++		eval $set_cc_for_build
+ 		sed 's/^		//' << EOF >$dummy.c
+ 		#include <sys/systemcfg.h>
+ 
+@@ -495,9 +544,7 @@
+ 			exit(0);
+ 			}
+ EOF
+-		eval $set_cc_for_build
+-		$CC_FOR_BUILD $dummy.c -o $dummy && ./$dummy && rm -f $dummy.c $dummy && exit 0
+-		rm -f $dummy.c $dummy
++		$CC_FOR_BUILD -o $dummy $dummy.c && $dummy && exit 0
+ 		echo rs6000-ibm-aix3.2.5
+ 	elif grep bos324 /usr/include/stdio.h >/dev/null 2>&1; then
+ 		echo rs6000-ibm-aix3.2.4
+@@ -506,7 +553,7 @@
+ 	fi
+ 	exit 0 ;;
+     *:AIX:*:[45])
+-	IBM_CPU_ID=`/usr/sbin/lsdev -C -c processor -S available | head -1 | awk '{ print $1 }'`
++	IBM_CPU_ID=`/usr/sbin/lsdev -C -c processor -S available | sed 1q | awk '{ print $1 }'`
+ 	if /usr/sbin/lsattr -El ${IBM_CPU_ID} | grep ' POWER' >/dev/null 2>&1; then
+ 		IBM_ARCH=rs6000
+ 	else
+@@ -546,10 +593,8 @@
+ 	    9000/31? )            HP_ARCH=m68000 ;;
+ 	    9000/[34]?? )         HP_ARCH=m68k ;;
+ 	    9000/[678][0-9][0-9])
+-              case "${HPUX_REV}" in
+-                11.[0-9][0-9])
+-                  if [ -x /usr/bin/getconf ]; then
+-                    sc_cpu_version=`/usr/bin/getconf SC_CPU_VERSION 2>/dev/null`
++		if [ -x /usr/bin/getconf ]; then
++		    sc_cpu_version=`/usr/bin/getconf SC_CPU_VERSION 2>/dev/null`
+                     sc_kernel_bits=`/usr/bin/getconf SC_KERNEL_BITS 2>/dev/null`
+                     case "${sc_cpu_version}" in
+                       523) HP_ARCH="hppa1.0" ;; # CPU_PA_RISC1_0
+@@ -558,12 +603,13 @@
+                         case "${sc_kernel_bits}" in
+                           32) HP_ARCH="hppa2.0n" ;;
+                           64) HP_ARCH="hppa2.0w" ;;
++			  '') HP_ARCH="hppa2.0" ;;   # HP-UX 10.20
+                         esac ;;
+                     esac
+-                  fi ;;
+-              esac
+-              if [ "${HP_ARCH}" = "" ]; then
+-              sed 's/^              //' << EOF >$dummy.c
++		fi
++		if [ "${HP_ARCH}" = "" ]; then
++		    eval $set_cc_for_build
++		    sed 's/^              //' << EOF >$dummy.c
+ 
+               #define _HPUX_SOURCE
+               #include <stdlib.h>
+@@ -596,12 +642,21 @@
+                   exit (0);
+               }
+ EOF
+-	eval $set_cc_for_build
+-	(CCOPTS= $CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null ) && HP_ARCH=`./$dummy`
+-	if test -z "$HP_ARCH"; then HP_ARCH=hppa; fi
+-	rm -f $dummy.c $dummy
+-	fi ;;
++		    (CCOPTS= $CC_FOR_BUILD -o $dummy $dummy.c 2>/dev/null) && HP_ARCH=`$dummy`
++		    test -z "$HP_ARCH" && HP_ARCH=hppa
++		fi ;;
+ 	esac
++	if [ ${HP_ARCH} = "hppa2.0w" ]
++	then
++	    # avoid double evaluation of $set_cc_for_build
++	    test -n "$CC_FOR_BUILD" || eval $set_cc_for_build
++	    if echo __LP64__ | (CCOPTS= $CC_FOR_BUILD -E -) | grep __LP64__ >/dev/null
++	    then
++		HP_ARCH="hppa2.0w"
++	    else
++		HP_ARCH="hppa64"
++	    fi
++	fi
+ 	echo ${HP_ARCH}-hp-hpux${HPUX_REV}
+ 	exit 0 ;;
+     ia64:HP-UX:*:*)
+@@ -609,6 +664,7 @@
+ 	echo ia64-hp-hpux${HPUX_REV}
+ 	exit 0 ;;
+     3050*:HI-UX:*:*)
++	eval $set_cc_for_build
+ 	sed 's/^	//' << EOF >$dummy.c
+ 	#include <unistd.h>
+ 	int
+@@ -634,9 +690,7 @@
+ 	  exit (0);
+ 	}
+ EOF
+-	eval $set_cc_for_build
+-	$CC_FOR_BUILD $dummy.c -o $dummy && ./$dummy && rm -f $dummy.c $dummy && exit 0
+-	rm -f $dummy.c $dummy
++	$CC_FOR_BUILD -o $dummy $dummy.c && $dummy && exit 0
+ 	echo unknown-hitachi-hiuxwe2
+ 	exit 0 ;;
+     9000/7??:4.3bsd:*:* | 9000/8?[79]:4.3bsd:*:* )
+@@ -664,9 +718,6 @@
+     parisc*:Lites*:*:*)
+ 	echo hppa1.1-hp-lites
+ 	exit 0 ;;
+-    hppa*:OpenBSD:*:*)
+-	echo hppa-unknown-openbsd
+-	exit 0 ;;
+     C1*:ConvexOS:*:* | convex:ConvexOS:C1*:*)
+ 	echo c1-convex-bsd
+         exit 0 ;;
+@@ -685,9 +736,6 @@
+     C4*:ConvexOS:*:* | convex:ConvexOS:C4*:*)
+ 	echo c4-convex-bsd
+         exit 0 ;;
+-    CRAY*X-MP:*:*:*)
+-	echo xmp-cray-unicos
+-        exit 0 ;;
+     CRAY*Y-MP:*:*:*)
+ 	echo ymp-cray-unicos${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
+ 	exit 0 ;;
+@@ -700,26 +748,25 @@
+     CRAY*TS:*:*:*)
+ 	echo t90-cray-unicos${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
+ 	exit 0 ;;
+-    CRAY*T3D:*:*:*)
+-	echo alpha-cray-unicosmk${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
+-	exit 0 ;;
+     CRAY*T3E:*:*:*)
+ 	echo alphaev5-cray-unicosmk${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
+ 	exit 0 ;;
+     CRAY*SV1:*:*:*)
+ 	echo sv1-cray-unicos${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
+ 	exit 0 ;;
+-    CRAY-2:*:*:*)
+-	echo cray2-cray-unicos
+-        exit 0 ;;
++    *:UNICOS/mp:*:*)
++	echo craynv-cray-unicosmp${UNAME_RELEASE} | sed -e 's/\.[^.]*$/.X/'
++	exit 0 ;;
+     F30[01]:UNIX_System_V:*:* | F700:UNIX_System_V:*:*)
+ 	FUJITSU_PROC=`uname -m | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+         FUJITSU_SYS=`uname -p | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/\///'`
+         FUJITSU_REL=`echo ${UNAME_RELEASE} | sed -e 's/ /_/'`
+         echo "${FUJITSU_PROC}-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
+         exit 0 ;;
+-    hp300:OpenBSD:*:*)
+-	echo m68k-unknown-openbsd${UNAME_RELEASE}
++    5000:UNIX_System_V:4.*:*)
++        FUJITSU_SYS=`uname -p | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/\///'`
++        FUJITSU_REL=`echo ${UNAME_RELEASE} | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz' | sed -e 's/ /_/'`
++        echo "sparc-fujitsu-${FUJITSU_SYS}${FUJITSU_REL}"
+ 	exit 0 ;;
+     i*86:BSD/386:*:* | i*86:BSD/OS:*:* | *:Ascend\ Embedded/OS:*:*)
+ 	echo ${UNAME_MACHINE}-pc-bsdi${UNAME_RELEASE}
+@@ -733,9 +780,6 @@
+     *:FreeBSD:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-freebsd`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
+ 	exit 0 ;;
+-    *:OpenBSD:*:*)
+-	echo ${UNAME_MACHINE}-unknown-openbsd`echo ${UNAME_RELEASE}|sed -e 's/[-_].*/\./'`
+-	exit 0 ;;
+     i*:CYGWIN*:*)
+ 	echo ${UNAME_MACHINE}-pc-cygwin
+ 	exit 0 ;;
+@@ -745,15 +789,24 @@
+     i*:PW*:*)
+ 	echo ${UNAME_MACHINE}-pc-pw32
+ 	exit 0 ;;
++    x86:Interix*:[34]*)
++	echo i586-pc-interix${UNAME_RELEASE}|sed -e 's/\..*//'
++	exit 0 ;;
++    [345]86:Windows_95:* | [345]86:Windows_98:* | [345]86:Windows_NT:*)
++	echo i${UNAME_MACHINE}-pc-mks
++	exit 0 ;;
+     i*:Windows_NT*:* | Pentium*:Windows_NT*:*)
+ 	# How do we know it's Interix rather than the generic POSIX subsystem?
+ 	# It also conflicts with pre-2.0 versions of AT&T UWIN. Should we
+ 	# UNAME_MACHINE based on the output of uname instead of i386?
+-	echo i386-pc-interix
++	echo i586-pc-interix
+ 	exit 0 ;;
+     i*:UWIN*:*)
+ 	echo ${UNAME_MACHINE}-pc-uwin
+ 	exit 0 ;;
++    amd64:CYGWIN*:*:*)
++	echo x86_64-unknown-cygwin
++	exit 0 ;;
+     p*:CYGWIN*:*)
+ 	echo powerpcle-unknown-cygwin
+ 	exit 0 ;;
+@@ -761,25 +814,74 @@
+ 	echo powerpcle-unknown-solaris2`echo ${UNAME_RELEASE}|sed -e 's/[^.]*//'`
+ 	exit 0 ;;
+     *:GNU:*:*)
++	# the GNU system
+ 	echo `echo ${UNAME_MACHINE}|sed -e 's,[-/].*$,,'`-unknown-gnu`echo ${UNAME_RELEASE}|sed -e 's,/.*$,,'`
+ 	exit 0 ;;
++    *:GNU/*:*:*)
++	# other systems with GNU libc and userland
++	echo ${UNAME_MACHINE}-unknown-`echo ${UNAME_SYSTEM} | sed 's,^[^/]*/,,' | tr '[A-Z]' '[a-z]'``echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`-gnu
++	exit 0 ;;
+     i*86:Minix:*:*)
+ 	echo ${UNAME_MACHINE}-pc-minix
+ 	exit 0 ;;
+     arm*:Linux:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-linux-gnu
+ 	exit 0 ;;
++    cris:Linux:*:*)
++	echo cris-axis-linux-gnu
++	exit 0 ;;
++    crisv32:Linux:*:*)
++	echo crisv32-axis-linux-gnu
++	exit 0 ;;
++    frv:Linux:*:*)
++    	echo frv-unknown-linux-gnu
++	exit 0 ;;
+     ia64:Linux:*:*)
+-	echo ${UNAME_MACHINE}-unknown-linux
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit 0 ;;
++    m32r*:Linux:*:*)
++	echo ${UNAME_MACHINE}-unknown-linux-gnu
+ 	exit 0 ;;
+     m68*:Linux:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-linux-gnu
+ 	exit 0 ;;
+     mips:Linux:*:*)
+-	case `sed -n '/^byte/s/^.*: \(.*\) endian/\1/p' < /proc/cpuinfo` in
+-	  big)    echo mips-unknown-linux-gnu && exit 0 ;;
+-	  little) echo mipsel-unknown-linux-gnu && exit 0 ;;
+-	esac
++	eval $set_cc_for_build
++	sed 's/^	//' << EOF >$dummy.c
++	#undef CPU
++	#undef mips
++	#undef mipsel
++	#if defined(__MIPSEL__) || defined(__MIPSEL) || defined(_MIPSEL) || defined(MIPSEL)
++	CPU=mipsel
++	#else
++	#if defined(__MIPSEB__) || defined(__MIPSEB) || defined(_MIPSEB) || defined(MIPSEB)
++	CPU=mips
++	#else
++	CPU=
++	#endif
++	#endif
++EOF
++	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep ^CPU=`
++	test x"${CPU}" != x && echo "${CPU}-unknown-linux-gnu" && exit 0
++	;;
++    mips64:Linux:*:*)
++	eval $set_cc_for_build
++	sed 's/^	//' << EOF >$dummy.c
++	#undef CPU
++	#undef mips64
++	#undef mips64el
++	#if defined(__MIPSEL__) || defined(__MIPSEL) || defined(_MIPSEL) || defined(MIPSEL)
++	CPU=mips64el
++	#else
++	#if defined(__MIPSEB__) || defined(__MIPSEB) || defined(_MIPSEB) || defined(MIPSEB)
++	CPU=mips64
++	#else
++	CPU=
++	#endif
++	#endif
++EOF
++	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep ^CPU=`
++	test x"${CPU}" != x && echo "${CPU}-unknown-linux-gnu" && exit 0
+ 	;;
+     ppc:Linux:*:*)
+ 	echo powerpc-unknown-linux-gnu
+@@ -815,6 +917,9 @@
+     s390:Linux:*:* | s390x:Linux:*:*)
+ 	echo ${UNAME_MACHINE}-ibm-linux
+ 	exit 0 ;;
++    sh64*:Linux:*:*)
++    	echo ${UNAME_MACHINE}-unknown-linux-gnu
++	exit 0 ;;
+     sh*:Linux:*:*)
+ 	echo ${UNAME_MACHINE}-unknown-linux-gnu
+ 	exit 0 ;;
+@@ -828,7 +933,8 @@
+ 	# The BFD linker knows what the default object file format is, so
+ 	# first see if it will tell us. cd to the root directory to prevent
+ 	# problems with other programs or directories called `ld' in the path.
+-	ld_supported_targets=`cd /; ld --help 2>&1 \
++	# Set LC_ALL=C to ensure ld outputs messages in English.
++	ld_supported_targets=`cd /; LC_ALL=C ld --help 2>&1 \
+ 			 | sed -ne '/supported targets:/!d
+ 				    s/[ 	][ 	]*/ /g
+ 				    s/.*supported targets: *//
+@@ -840,7 +946,7 @@
+ 		;;
+ 	  a.out-i386-linux)
+ 		echo "${UNAME_MACHINE}-pc-linux-gnuaout"
+-		exit 0 ;;		
++		exit 0 ;;
+ 	  coff-i386)
+ 		echo "${UNAME_MACHINE}-pc-linux-gnucoff"
+ 		exit 0 ;;
+@@ -851,33 +957,32 @@
+ 		exit 0 ;;
+ 	esac
+ 	# Determine whether the default compiler is a.out or elf
+-	cat >$dummy.c <<EOF
+-#include <features.h>
+-#ifdef __cplusplus
+-#include <stdio.h>  /* for printf() prototype */
+-	int main (int argc, char *argv[]) {
+-#else
+-	int main (argc, argv) int argc; char *argv[]; {
+-#endif
+-#ifdef __ELF__
+-# ifdef __GLIBC__
+-#  if __GLIBC__ >= 2
+-    printf ("%s-pc-linux-gnu\n", argv[1]);
+-#  else
+-    printf ("%s-pc-linux-gnulibc1\n", argv[1]);
+-#  endif
+-# else
+-   printf ("%s-pc-linux-gnulibc1\n", argv[1]);
+-# endif
+-#else
+-  printf ("%s-pc-linux-gnuaout\n", argv[1]);
+-#endif
+-  return 0;
+-}
+-EOF
+ 	eval $set_cc_for_build
+-	$CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null && ./$dummy "${UNAME_MACHINE}" && rm -f $dummy.c $dummy && exit 0
+-	rm -f $dummy.c $dummy
++	sed 's/^	//' << EOF >$dummy.c
++	#include <features.h>
++	#ifdef __ELF__
++	# ifdef __GLIBC__
++	#  if __GLIBC__ >= 2
++	LIBC=gnu
++	#  else
++	LIBC=gnulibc1
++	#  endif
++	# else
++	LIBC=gnulibc1
++	# endif
++	#else
++	#ifdef __INTEL_COMPILER
++	LIBC=gnu
++	#else
++	LIBC=gnuaout
++	#endif
++	#endif
++	#ifdef __dietlibc__
++	LIBC=dietlibc
++	#endif
++EOF
++	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep ^LIBC=`
++	test x"${LIBC}" != x && echo "${UNAME_MACHINE}-pc-linux-${LIBC}" && exit 0
+ 	test x"${TENTATIVE}" != x && echo "${TENTATIVE}" && exit 0
+ 	;;
+     i*86:DYNIX/ptx:4*:*)
+@@ -894,6 +999,26 @@
+         # Use sysv4.2uw... so that sysv4* matches it.
+ 	echo ${UNAME_MACHINE}-pc-sysv4.2uw${UNAME_VERSION}
+ 	exit 0 ;;
++    i*86:OS/2:*:*)
++	# If we were able to find `uname', then EMX Unix compatibility
++	# is probably installed.
++	echo ${UNAME_MACHINE}-pc-os2-emx
++	exit 0 ;;
++    i*86:XTS-300:*:STOP)
++	echo ${UNAME_MACHINE}-unknown-stop
++	exit 0 ;;
++    i*86:atheos:*:*)
++	echo ${UNAME_MACHINE}-unknown-atheos
++	exit 0 ;;
++	i*86:syllable:*:*)
++	echo ${UNAME_MACHINE}-pc-syllable
++	exit 0 ;;
++    i*86:LynxOS:2.*:* | i*86:LynxOS:3.[01]*:* | i*86:LynxOS:4.0*:*)
++	echo i386-unknown-lynxos${UNAME_RELEASE}
++	exit 0 ;;
++    i*86:*DOS:*:*)
++	echo ${UNAME_MACHINE}-pc-msdosdjgpp
++	exit 0 ;;
+     i*86:*:4.*:* | i*86:SYSTEM_V:4.*:*)
+ 	UNAME_REL=`echo ${UNAME_RELEASE} | sed 's/\/MP$//'`
+ 	if grep Novell /usr/include/link.h >/dev/null 2>/dev/null; then
+@@ -915,22 +1040,19 @@
+ 		UNAME_REL=`sed -n 's/.*Version //p' </usr/options/cb.name`
+ 		echo ${UNAME_MACHINE}-pc-isc$UNAME_REL
+ 	elif /bin/uname -X 2>/dev/null >/dev/null ; then
+-		UNAME_REL=`(/bin/uname -X|egrep Release|sed -e 's/.*= //')`
+-		(/bin/uname -X|egrep i80486 >/dev/null) && UNAME_MACHINE=i486
+-		(/bin/uname -X|egrep '^Machine.*Pentium' >/dev/null) \
++		UNAME_REL=`(/bin/uname -X|grep Release|sed -e 's/.*= //')`
++		(/bin/uname -X|grep i80486 >/dev/null) && UNAME_MACHINE=i486
++		(/bin/uname -X|grep '^Machine.*Pentium' >/dev/null) \
+ 			&& UNAME_MACHINE=i586
+-		(/bin/uname -X|egrep '^Machine.*Pent ?II' >/dev/null) \
++		(/bin/uname -X|grep '^Machine.*Pent *II' >/dev/null) \
+ 			&& UNAME_MACHINE=i686
+-		(/bin/uname -X|egrep '^Machine.*Pentium Pro' >/dev/null) \
++		(/bin/uname -X|grep '^Machine.*Pentium Pro' >/dev/null) \
+ 			&& UNAME_MACHINE=i686
+ 		echo ${UNAME_MACHINE}-pc-sco$UNAME_REL
+ 	else
+ 		echo ${UNAME_MACHINE}-pc-sysv32
+ 	fi
+ 	exit 0 ;;
+-    i*86:*DOS:*:*)
+-	echo ${UNAME_MACHINE}-pc-msdosdjgpp
+-	exit 0 ;;
+     pc:*:*:*)
+ 	# Left here for compatibility:
+         # uname -m prints for DJGPP always 'pc', but it prints nothing about
+@@ -954,9 +1076,15 @@
+ 	# "miniframe"
+ 	echo m68010-convergent-sysv
+ 	exit 0 ;;
+-    M68*:*:R3V[567]*:*)
++    mc68k:UNIX:SYSTEM5:3.51m)
++	echo m68k-convergent-sysv
++	exit 0 ;;
++    M680?0:D-NIX:5.3:*)
++	echo m68k-diab-dnix
++	exit 0 ;;
++    M68*:*:R3V[5678]*:*)
+ 	test -r /sysV68 && echo 'm68k-motorola-sysv' && exit 0 ;;
+-    3[34]??:*:4.0:3.0 | 3[34]??A:*:4.0:3.0 | 3[34]??,*:*:4.0:3.0 | 4850:*:4.0:3.0)
++    3[345]??:*:4.0:3.0 | 3[34]??A:*:4.0:3.0 | 3[34]??,*:*:4.0:3.0 | 3[34]??/*:*:4.0:3.0 | 4400:*:4.0:3.0 | 4850:*:4.0:3.0 | SKA40:*:4.0:3.0 | SDS2:*:4.0:3.0 | SHG2:*:4.0:3.0 | S7501*:*:4.0:3.0)
+ 	OS_REL=''
+ 	test -r /etc/.relid \
+ 	&& OS_REL=.`sed -n 's/[^ ]* [^ ]* \([0-9][0-9]\).*/\1/p' < /etc/.relid`
+@@ -973,9 +1101,6 @@
+     mc68030:UNIX_System_V:4.*:*)
+ 	echo m68k-atari-sysv4
+ 	exit 0 ;;
+-    i*86:LynxOS:2.*:* | i*86:LynxOS:3.[01]*:* | i*86:LynxOS:4.0*:*)
+-	echo i386-unknown-lynxos${UNAME_RELEASE}
+-	exit 0 ;;
+     TSUNAMI:LynxOS:2.*:*)
+ 	echo sparc-unknown-lynxos${UNAME_RELEASE}
+ 	exit 0 ;;
+@@ -1047,6 +1172,9 @@
+     SX-5:SUPER-UX:*:*)
+ 	echo sx5-nec-superux${UNAME_RELEASE}
+ 	exit 0 ;;
++    SX-6:SUPER-UX:*:*)
++	echo sx6-nec-superux${UNAME_RELEASE}
++	exit 0 ;;
+     Power*:Rhapsody:*:*)
+ 	echo powerpc-apple-rhapsody${UNAME_RELEASE}
+ 	exit 0 ;;
+@@ -1054,18 +1182,28 @@
+ 	echo ${UNAME_MACHINE}-apple-rhapsody${UNAME_RELEASE}
+ 	exit 0 ;;
+     *:Darwin:*:*)
+-	echo `uname -p`-apple-darwin${UNAME_RELEASE}
++	UNAME_PROCESSOR=`uname -p` || UNAME_PROCESSOR=unknown
++	case $UNAME_PROCESSOR in
++	    *86) UNAME_PROCESSOR=i686 ;;
++	    unknown) UNAME_PROCESSOR=powerpc ;;
++	esac
++	echo ${UNAME_PROCESSOR}-apple-darwin${UNAME_RELEASE}
+ 	exit 0 ;;
+     *:procnto*:*:* | *:QNX:[0123456789]*:*)
+-	if test "${UNAME_MACHINE}" = "x86pc"; then
++	UNAME_PROCESSOR=`uname -p`
++	if test "$UNAME_PROCESSOR" = "x86"; then
++		UNAME_PROCESSOR=i386
+ 		UNAME_MACHINE=pc
+ 	fi
+-	echo `uname -p`-${UNAME_MACHINE}-nto-qnx
++	echo ${UNAME_PROCESSOR}-${UNAME_MACHINE}-nto-qnx${UNAME_RELEASE}
+ 	exit 0 ;;
+     *:QNX:*:4*)
+ 	echo i386-pc-qnx
+ 	exit 0 ;;
+-    NSR-[KW]:NONSTOP_KERNEL:*:*)
++    NSE-?:NONSTOP_KERNEL:*:*)
++	echo nse-tandem-nsk${UNAME_RELEASE}
++	exit 0 ;;
++    NSR-?:NONSTOP_KERNEL:*:*)
+ 	echo nsr-tandem-nsk${UNAME_RELEASE}
+ 	exit 0 ;;
+     *:NonStop-UX:*:*)
+@@ -1088,11 +1226,6 @@
+ 	fi
+ 	echo ${UNAME_MACHINE}-unknown-plan9
+ 	exit 0 ;;
+-    i*86:OS/2:*:*)
+-	# If we were able to find `uname', then EMX Unix compatibility
+-	# is probably installed.
+-	echo ${UNAME_MACHINE}-pc-os2-emx
+-	exit 0 ;;
+     *:TOPS-10:*:*)
+ 	echo pdp10-unknown-tops10
+ 	exit 0 ;;
+@@ -1111,14 +1244,28 @@
+     *:ITS:*:*)
+ 	echo pdp10-unknown-its
+ 	exit 0 ;;
+-    i*86:XTS-300:*:STOP)
+-	echo ${UNAME_MACHINE}-unknown-stop
++    SEI:*:*:SEIUX)
++        echo mips-sei-seiux${UNAME_RELEASE}
++	exit 0 ;;
++    *:DragonFly:*:*)
++	echo ${UNAME_MACHINE}-unknown-dragonfly`echo ${UNAME_RELEASE}|sed -e 's/[-(].*//'`
++	exit 0 ;;
++    *:*VMS:*:*)
++    	UNAME_MACHINE=`(uname -p) 2>/dev/null`
++	case "${UNAME_MACHINE}" in
++	    A*) echo alpha-dec-vms && exit 0 ;;
++	    I*) echo ia64-dec-vms && exit 0 ;;
++	    V*) echo vax-dec-vms && exit 0 ;;
++	esac ;;
++    *:XENIX:*:SysV)
++	echo i386-pc-xenix
+ 	exit 0 ;;
+ esac
+ 
+ #echo '(No uname command or uname output not recognized.)' 1>&2
+ #echo "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" 1>&2
+ 
++eval $set_cc_for_build
+ cat >$dummy.c <<EOF
+ #ifdef _SEQUENT_
+ # include <sys/types.h>
+@@ -1233,9 +1380,7 @@
+ }
+ EOF
+ 
+-eval $set_cc_for_build
+-$CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null && ./$dummy && rm -f $dummy.c $dummy && exit 0
+-rm -f $dummy.c $dummy
++$CC_FOR_BUILD -o $dummy $dummy.c 2>/dev/null && $dummy && exit 0
+ 
+ # Apollos put the system type in the environment.
+ 
+Index: config.sub
+===================================================================
+--- config.sub.orig	2005-11-19 08:58:30.083573000 -0600
++++ config.sub	2005-11-19 08:58:46.390680000 -0600
+@@ -1,9 +1,9 @@
+ #! /bin/sh
+ # Configuration validation subroutine script.
+-#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+-#   Free Software Foundation, Inc.
++#   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
++#   2000, 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
+ 
+-timestamp='2001-08-13'
++timestamp='2005-02-10'
+ 
+ # This file is (in principle) common to ALL GNU software.
+ # The presence of a machine in this file suggests that SOME GNU software
+@@ -29,7 +29,8 @@
+ # configuration script generated by Autoconf, you may include it under
+ # the same distribution terms that you use for the rest of that program.
+ 
+-# Please send patches to <config-patches@gnu.org>.
++# Please send patches to <config-patches@gnu.org>.  Submit a context
++# diff and a properly formatted ChangeLog entry.
+ #
+ # Configuration subroutine to validate and canonicalize a configuration type.
+ # Supply the specified configuration type as an argument.
+@@ -69,7 +70,7 @@
+ version="\
+ GNU config.sub ($timestamp)
+ 
+-Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
++Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+ Free Software Foundation, Inc.
+ 
+ This is free software; see the source for copying conditions.  There is NO
+@@ -117,7 +118,8 @@
+ # Here we must recognize all the valid KERNEL-OS combinations.
+ maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
+ case $maybe_os in
+-  nto-qnx* | linux-gnu* | storm-chaos* | os2-emx* | windows32-*)
++  nto-qnx* | linux-gnu* | linux-dietlibc | linux-uclibc* | uclinux-uclibc* | uclinux-gnu* | \
++  kfreebsd*-gnu* | knetbsd*-gnu* | netbsd*-gnu* | storm-chaos* | os2-emx* | rtmk-nova*)
+     os=-$maybe_os
+     basic_machine=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\1/'`
+     ;;
+@@ -143,7 +145,7 @@
+ 	-convergent* | -ncr* | -news | -32* | -3600* | -3100* | -hitachi* |\
+ 	-c[123]* | -convex* | -sun | -crds | -omron* | -dg | -ultra | -tti* | \
+ 	-harris | -dolphin | -highlevel | -gould | -cbm | -ns | -masscomp | \
+-	-apple | -axis)
++	-apple | -axis | -knuth | -cray)
+ 		os=
+ 		basic_machine=$1
+ 		;;
+@@ -226,31 +228,46 @@
+ 	1750a | 580 \
+ 	| a29k \
+ 	| alpha | alphaev[4-8] | alphaev56 | alphaev6[78] | alphapca5[67] \
++	| alpha64 | alpha64ev[4-8] | alpha64ev56 | alpha64ev6[78] | alpha64pca5[67] \
++	| am33_2.0 \
+ 	| arc | arm | arm[bl]e | arme[lb] | armv[2345] | armv[345][lb] | avr \
+ 	| c4x | clipper \
+-	| d10v | d30v | dsp16xx \
+-	| fr30 \
++	| d10v | d30v | dlx | dsp16xx \
++	| fr30 | frv \
+ 	| h8300 | h8500 | hppa | hppa1.[01] | hppa2.0 | hppa2.0[nw] | hppa64 \
+ 	| i370 | i860 | i960 | ia64 \
+-	| m32r | m68000 | m68k | m88k | mcore \
+-	| mips16 | mips64 | mips64el | mips64orion | mips64orionel \
+-	| mips64vr4100 | mips64vr4100el | mips64vr4300 \
+-	| mips64vr4300el | mips64vr5000 | mips64vr5000el \
+-	| mipsbe | mipsel | mipsle | mipstx39 | mipstx39el \
++	| ip2k | iq2000 \
++	| m32r | m32rle | m68000 | m68k | m88k | maxq | mcore \
++	| mips | mipsbe | mipseb | mipsel | mipsle \
++	| mips16 \
++	| mips64 | mips64el \
++	| mips64vr | mips64vrel \
++	| mips64orion | mips64orionel \
++	| mips64vr4100 | mips64vr4100el \
++	| mips64vr4300 | mips64vr4300el \
++	| mips64vr5000 | mips64vr5000el \
++	| mipsisa32 | mipsisa32el \
++	| mipsisa32r2 | mipsisa32r2el \
++	| mipsisa64 | mipsisa64el \
++	| mipsisa64r2 | mipsisa64r2el \
++	| mipsisa64sb1 | mipsisa64sb1el \
++	| mipsisa64sr71k | mipsisa64sr71kel \
++	| mipstx39 | mipstx39el \
+ 	| mn10200 | mn10300 \
++	| msp430 \
+ 	| ns16k | ns32k \
+-	| openrisc \
++	| openrisc | or32 \
+ 	| pdp10 | pdp11 | pj | pjl \
+ 	| powerpc | powerpc64 | powerpc64le | powerpcle | ppcbe \
+ 	| pyramid \
+-	| s390 | s390x \
+-	| sh | sh[34] | sh[34]eb | shbe | shle \
+-	| sparc | sparc64 | sparclet | sparclite | sparcv9 | sparcv9b \
++	| sh | sh[1234] | sh[23]e | sh[34]eb | shbe | shle | sh[1234]le | sh3ele \
++	| sh64 | sh64le \
++	| sparc | sparc64 | sparc86x | sparclet | sparclite | sparcv8 | sparcv9 | sparcv9b \
+ 	| strongarm \
+-	| tahoe | thumb | tic80 | tron \
+-	| v850 \
++	| tahoe | thumb | tic4x | tic80 | tron \
++	| v850 | v850e \
+ 	| we32k \
+-	| x86 | xscale \
++	| x86 | xscale | xscalee[bl] | xstormy16 | xtensa \
+ 	| z8k)
+ 		basic_machine=$basic_machine-unknown
+ 		;;
+@@ -277,38 +294,57 @@
+ 	580-* \
+ 	| a29k-* \
+ 	| alpha-* | alphaev[4-8]-* | alphaev56-* | alphaev6[78]-* \
+-	| alphapca5[67]-* | arc-* \
+-	| arm-*  | armbe-* | armle-* | armv*-* \
++	| alpha64-* | alpha64ev[4-8]-* | alpha64ev56-* | alpha64ev6[78]-* \
++	| alphapca5[67]-* | alpha64pca5[67]-* | arc-* \
++	| arm-*  | armbe-* | armle-* | armeb-* | armv*-* \
++	| avr-* \
+ 	| bs2000-* \
+-	| c[123]* | c30-* | [cjt]90-* | c54x-* \
+-	| clipper-* | cray2-* | cydra-* \
+-	| d10v-* | d30v-* \
++	| c[123]* | c30-* | [cjt]90-* | c4x-* | c54x-* | c55x-* | c6x-* \
++	| clipper-* | craynv-* | cydra-* \
++	| d10v-* | d30v-* | dlx-* \
+ 	| elxsi-* \
+-	| f30[01]-* | f700-* | fr30-* | fx80-* \
++	| f30[01]-* | f700-* | fr30-* | frv-* | fx80-* \
+ 	| h8300-* | h8500-* \
+ 	| hppa-* | hppa1.[01]-* | hppa2.0-* | hppa2.0[nw]-* | hppa64-* \
+ 	| i*86-* | i860-* | i960-* | ia64-* \
+-	| m32r-* \
+-	| m68000-* | m680[01234]0-* | m68360-* | m683?2-* | m68k-* \
+-	| m88110-* | m88k-* | mcore-* \
+-	| mips-* | mips16-* | mips64-* | mips64el-* | mips64orion-* \
+-	| mips64orionel-* | mips64vr4100-* | mips64vr4100el-* \
+-	| mips64vr4300-* | mips64vr4300el-* | mipsbe-* | mipsel-* \
+-	| mipsle-* | mipstx39-* | mipstx39el-* \
++	| ip2k-* | iq2000-* \
++	| m32r-* | m32rle-* \
++	| m68000-* | m680[012346]0-* | m68360-* | m683?2-* | m68k-* \
++	| m88110-* | m88k-* | maxq-* | mcore-* \
++	| mips-* | mipsbe-* | mipseb-* | mipsel-* | mipsle-* \
++	| mips16-* \
++	| mips64-* | mips64el-* \
++	| mips64vr-* | mips64vrel-* \
++	| mips64orion-* | mips64orionel-* \
++	| mips64vr4100-* | mips64vr4100el-* \
++	| mips64vr4300-* | mips64vr4300el-* \
++	| mips64vr5000-* | mips64vr5000el-* \
++	| mipsisa32-* | mipsisa32el-* \
++	| mipsisa32r2-* | mipsisa32r2el-* \
++	| mipsisa64-* | mipsisa64el-* \
++	| mipsisa64r2-* | mipsisa64r2el-* \
++	| mipsisa64sb1-* | mipsisa64sb1el-* \
++	| mipsisa64sr71k-* | mipsisa64sr71kel-* \
++	| mipstx39-* | mipstx39el-* \
++	| mmix-* \
++	| msp430-* \
+ 	| none-* | np1-* | ns16k-* | ns32k-* \
+ 	| orion-* \
+ 	| pdp10-* | pdp11-* | pj-* | pjl-* | pn-* | power-* \
+ 	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* | ppcbe-* \
+ 	| pyramid-* \
+ 	| romp-* | rs6000-* \
+-	| s390-* | s390x-* \
+-	| sh-* | sh[34]-* | sh[34]eb-* | shbe-* | shle-* \
+-	| sparc-* | sparc64-* | sparc86x-* | sparclite-* \
+-	| sparcv9-* | sparcv9b-* | strongarm-* | sv1-* \
+-	| t3e-* | tahoe-* | thumb-* | tic30-* | tic54x-* | tic80-* | tron-* \
+-	| v850-* | vax-* \
++	| sh-* | sh[1234]-* | sh[23]e-* | sh[34]eb-* | shbe-* \
++	| shle-* | sh[1234]le-* | sh3ele-* | sh64-* | sh64le-* \
++	| sparc-* | sparc64-* | sparc86x-* | sparclet-* | sparclite-* \
++	| sparcv8-* | sparcv9-* | sparcv9b-* | strongarm-* | sv1-* | sx?-* \
++	| tahoe-* | thumb-* \
++	| tic30-* | tic4x-* | tic54x-* | tic55x-* | tic6x-* | tic80-* \
++	| tron-* \
++	| v850-* | v850e-* | vax-* \
+ 	| we32k-* \
+-	| x86-* | x86_64-* | xmp-* | xps100-* | xscale-* \
++	| x86-* | x86_64-* | xps100-* | xscale-* | xscalee[bl]-* \
++	| xstormy16-* | xtensa-* \
+ 	| ymp-* \
+ 	| z8k-*)
+ 		;;
+@@ -328,6 +364,9 @@
+ 		basic_machine=a29k-amd
+ 		os=-udi
+ 		;;
++    	abacus)
++		basic_machine=abacus-unknown
++		;;
+ 	adobe68k)
+ 		basic_machine=m68010-adobe
+ 		os=-scout
+@@ -342,6 +381,12 @@
+ 		basic_machine=a29k-none
+ 		os=-bsd
+ 		;;
++	amd64)
++		basic_machine=x86_64-pc
++		;;
++	amd64-*)
++		basic_machine=x86_64-`echo $basic_machine | sed 's/^[^-]*-//'`
++		;;
+ 	amdahl)
+ 		basic_machine=580-amdahl
+ 		os=-sysv
+@@ -373,6 +418,10 @@
+ 		basic_machine=ns32k-sequent
+ 		os=-dynix
+ 		;;
++	c90)
++		basic_machine=c90-cray
++		os=-unicos
++		;;
+ 	convex-c1)
+ 		basic_machine=c1-convex
+ 		os=-bsd
+@@ -393,30 +442,45 @@
+ 		basic_machine=c38-convex
+ 		os=-bsd
+ 		;;
+-	cray | ymp)
+-		basic_machine=ymp-cray
++	cray | j90)
++		basic_machine=j90-cray
+ 		os=-unicos
+ 		;;
+-	cray2)
+-		basic_machine=cray2-cray
+-		os=-unicos
++	craynv)
++		basic_machine=craynv-cray
++		os=-unicosmp
+ 		;;
+-	[cjt]90)
+-		basic_machine=${basic_machine}-cray
+-		os=-unicos
++	cr16c)
++		basic_machine=cr16c-unknown
++		os=-elf
+ 		;;
+ 	crds | unos)
+ 		basic_machine=m68k-crds
+ 		;;
++	crisv32 | crisv32-* | etraxfs*)
++		basic_machine=crisv32-axis
++		;;
+ 	cris | cris-* | etrax*)
+ 		basic_machine=cris-axis
+ 		;;
++	crx)
++		basic_machine=crx-unknown
++		os=-elf
++		;;
+ 	da30 | da30-*)
+ 		basic_machine=m68k-da30
+ 		;;
+ 	decstation | decstation-3100 | pmax | pmax-* | pmin | dec3100 | decstatn)
+ 		basic_machine=mips-dec
+ 		;;
++	decsystem10* | dec10*)
++		basic_machine=pdp10-dec
++		os=-tops10
++		;;
++	decsystem20* | dec20*)
++		basic_machine=pdp10-dec
++		os=-tops20
++		;;
+ 	delta | 3300 | motorola-3300 | motorola-delta \
+ 	      | 3300-motorola | delta-motorola)
+ 		basic_machine=m68k-motorola
+@@ -425,6 +489,10 @@
+ 		basic_machine=m88k-motorola
+ 		os=-sysv3
+ 		;;
++	djgpp)
++		basic_machine=i586-pc
++		os=-msdosdjgpp
++		;;
+ 	dpx20 | dpx20-*)
+ 		basic_machine=rs6000-bull
+ 		os=-bosx
+@@ -597,28 +665,20 @@
+ 		basic_machine=m68k-atari
+ 		os=-mint
+ 		;;
+-	mipsel*-linux*)
+-		basic_machine=mipsel-unknown
+-		os=-linux-gnu
+-		;;
+-	mips*-linux*)
+-		basic_machine=mips-unknown
+-		os=-linux-gnu
+-		;;
+ 	mips3*-*)
+ 		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`
+ 		;;
+ 	mips3*)
+ 		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`-unknown
+ 		;;
+-	mmix*)
+-		basic_machine=mmix-knuth
+-		os=-mmixware
+-		;;
+ 	monitor)
+ 		basic_machine=m68k-rom68k
+ 		os=-coff
+ 		;;
++	morphos)
++		basic_machine=powerpc-unknown
++		os=-morphos
++		;;
+ 	msdos)
+ 		basic_machine=i386-pc
+ 		os=-msdos
+@@ -698,6 +758,14 @@
+ 		basic_machine=hppa1.1-oki
+ 		os=-proelf
+ 		;;
++	or32 | or32-*)
++		basic_machine=or32-unknown
++		os=-coff
++		;;
++	os400)
++		basic_machine=powerpc-ibm
++		os=-os400
++		;;
+ 	OSE68000 | ose68000)
+ 		basic_machine=m68000-ericsson
+ 		os=-ose
+@@ -720,49 +788,55 @@
+ 	pbb)
+ 		basic_machine=m68k-tti
+ 		;;
+-        pc532 | pc532-*)
++	pc532 | pc532-*)
+ 		basic_machine=ns32k-pc532
+ 		;;
+-	pentium | p5 | k5 | k6 | nexgen)
++	pentium | p5 | k5 | k6 | nexgen | viac3)
+ 		basic_machine=i586-pc
+ 		;;
+-	pentiumpro | p6 | 6x86 | athlon)
++	pentiumpro | p6 | 6x86 | athlon | athlon_*)
+ 		basic_machine=i686-pc
+ 		;;
+-	pentiumii | pentium2)
++	pentiumii | pentium2 | pentiumiii | pentium3)
+ 		basic_machine=i686-pc
+ 		;;
+-	pentium-* | p5-* | k5-* | k6-* | nexgen-*)
++	pentium4)
++		basic_machine=i786-pc
++		;;
++	pentium-* | p5-* | k5-* | k6-* | nexgen-* | viac3-*)
+ 		basic_machine=i586-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
+ 	pentiumpro-* | p6-* | 6x86-* | athlon-*)
+ 		basic_machine=i686-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
+-	pentiumii-* | pentium2-*)
++	pentiumii-* | pentium2-* | pentiumiii-* | pentium3-*)
+ 		basic_machine=i686-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
++	pentium4-*)
++		basic_machine=i786-`echo $basic_machine | sed 's/^[^-]*-//'`
++		;;
+ 	pn)
+ 		basic_machine=pn-gould
+ 		;;
+ 	power)	basic_machine=power-ibm
+ 		;;
+ 	ppc)	basic_machine=powerpc-unknown
+-	        ;;
++		;;
+ 	ppc-*)	basic_machine=powerpc-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
+ 	ppcle | powerpclittle | ppc-le | powerpc-little)
+ 		basic_machine=powerpcle-unknown
+-	        ;;
++		;;
+ 	ppcle-* | powerpclittle-*)
+ 		basic_machine=powerpcle-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
+ 	ppc64)	basic_machine=powerpc64-unknown
+-	        ;;
++		;;
+ 	ppc64-*) basic_machine=powerpc64-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
+ 	ppc64le | powerpc64little | ppc64-le | powerpc64-little)
+ 		basic_machine=powerpc64le-unknown
+-	        ;;
++		;;
+ 	ppc64le-* | powerpc64little-*)
+ 		basic_machine=powerpc64le-`echo $basic_machine | sed 's/^[^-]*-//'`
+ 		;;
+@@ -783,10 +857,26 @@
+ 	rtpc | rtpc-*)
+ 		basic_machine=romp-ibm
+ 		;;
++	s390 | s390-*)
++		basic_machine=s390-ibm
++		;;
++	s390x | s390x-*)
++		basic_machine=s390x-ibm
++		;;
+ 	sa29200)
+ 		basic_machine=a29k-amd
+ 		os=-udi
+ 		;;
++	sb1)
++		basic_machine=mipsisa64sb1-unknown
++		;;
++	sb1el)
++		basic_machine=mipsisa64sb1el-unknown
++		;;
++	sei)
++		basic_machine=mips-sei
++		os=-seiux
++		;;
+ 	sequent)
+ 		basic_machine=i386-sequent
+ 		;;
+@@ -794,7 +884,10 @@
+ 		basic_machine=sh-hitachi
+ 		os=-hms
+ 		;;
+-	sparclite-wrs)
++	sh64)
++		basic_machine=sh64-unknown
++		;;
++	sparclite-wrs | simso-wrs)
+ 		basic_machine=sparclite-wrs
+ 		os=-vxworks
+ 		;;
+@@ -861,22 +954,42 @@
+ 		os=-dynix
+ 		;;
+ 	t3e)
+-		basic_machine=t3e-cray
++		basic_machine=alphaev5-cray
++		os=-unicos
++		;;
++	t90)
++		basic_machine=t90-cray
+ 		os=-unicos
+ 		;;
+ 	tic54x | c54x*)
+ 		basic_machine=tic54x-unknown
+ 		os=-coff
+ 		;;
++	tic55x | c55x*)
++		basic_machine=tic55x-unknown
++		os=-coff
++		;;
++	tic6x | c6x*)
++		basic_machine=tic6x-unknown
++		os=-coff
++		;;
+ 	tx39)
+ 		basic_machine=mipstx39-unknown
+ 		;;
+ 	tx39el)
+ 		basic_machine=mipstx39el-unknown
+ 		;;
++	toad1)
++		basic_machine=pdp10-xkl
++		os=-tops20
++		;;
+ 	tower | tower-32)
+ 		basic_machine=m68k-ncr
+ 		;;
++	tpf)
++		basic_machine=s390x-ibm
++		os=-tpf
++		;;
+ 	udi29k)
+ 		basic_machine=a29k-amd
+ 		os=-udi
+@@ -898,8 +1011,8 @@
+ 		os=-vms
+ 		;;
+ 	vpp*|vx|vx-*)
+-               basic_machine=f301-fujitsu
+-               ;;
++		basic_machine=f301-fujitsu
++		;;
+ 	vxworks960)
+ 		basic_machine=i960-wrs
+ 		os=-vxworks
+@@ -920,17 +1033,17 @@
+ 		basic_machine=hppa1.1-winbond
+ 		os=-proelf
+ 		;;
+-	windows32)
+-		basic_machine=i386-pc
+-		os=-windows32-msvcrt
+-		;;
+-	xmp)
+-		basic_machine=xmp-cray
+-		os=-unicos
++	xbox)
++		basic_machine=i686-pc
++		os=-mingw32
+ 		;;
+-        xps | xps100)
++	xps | xps100)
+ 		basic_machine=xps100-honeywell
+ 		;;
++	ymp)
++		basic_machine=ymp-cray
++		os=-unicos
++		;;
+ 	z8k-*-coff)
+ 		basic_machine=z8k-unknown
+ 		os=-sim
+@@ -951,16 +1064,12 @@
+ 	op60c)
+ 		basic_machine=hppa1.1-oki
+ 		;;
+-	mips)
+-		if [ x$os = x-linux-gnu ]; then
+-			basic_machine=mips-unknown
+-		else
+-			basic_machine=mips-mips
+-		fi
+-		;;
+ 	romp)
+ 		basic_machine=romp-ibm
+ 		;;
++	mmix)
++		basic_machine=mmix-knuth
++		;;
+ 	rs6000)
+ 		basic_machine=rs6000-ibm
+ 		;;
+@@ -977,13 +1086,16 @@
+ 	we32k)
+ 		basic_machine=we32k-att
+ 		;;
+-	sh3 | sh4 | sh3eb | sh4eb)
++	sh3 | sh4 | sh[34]eb | sh[1234]le | sh[23]ele)
+ 		basic_machine=sh-unknown
+ 		;;
+-	sparc | sparcv9 | sparcv9b)
++	sh64)
++		basic_machine=sh64-unknown
++		;;
++	sparc | sparcv8 | sparcv9 | sparcv9b)
+ 		basic_machine=sparc-sun
+ 		;;
+-        cydra)
++	cydra)
+ 		basic_machine=cydra-cydrome
+ 		;;
+ 	orion)
+@@ -998,10 +1110,6 @@
+ 	pmac | pmac-mpw)
+ 		basic_machine=powerpc-apple
+ 		;;
+-	c4x*)
+-		basic_machine=c4x-none
+-		os=-coff
+-		;;
+ 	*-unknown)
+ 		# Make sure to match an already-canonicalized machine name.
+ 		;;
+@@ -1057,17 +1165,20 @@
+ 	      | -aos* \
+ 	      | -nindy* | -vxsim* | -vxworks* | -ebmon* | -hms* | -mvs* \
+ 	      | -clix* | -riscos* | -uniplus* | -iris* | -rtu* | -xenix* \
+-	      | -hiux* | -386bsd* | -netbsd* | -openbsd* | -freebsd* | -riscix* \
+-	      | -lynxos* | -bosx* | -nextstep* | -cxux* | -aout* | -elf* | -oabi* \
++	      | -hiux* | -386bsd* | -knetbsd* | -mirbsd* | -netbsd* | -openbsd* \
++	      | -ekkobsd* | -kfreebsd* | -freebsd* | -riscix* | -lynxos* \
++	      | -bosx* | -nextstep* | -cxux* | -aout* | -elf* | -oabi* \
+ 	      | -ptx* | -coff* | -ecoff* | -winnt* | -domain* | -vsta* \
+ 	      | -udi* | -eabi* | -lites* | -ieee* | -go32* | -aux* \
+ 	      | -chorusos* | -chorusrdb* \
+ 	      | -cygwin* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
+-	      | -mingw32* | -linux-gnu* | -uxpv* | -beos* | -mpeix* | -udk* \
+-	      | -interix* | -uwin* | -rhapsody* | -darwin* | -opened* \
++	      | -mingw32* | -linux-gnu* | -linux-uclibc* | -uxpv* | -beos* | -mpeix* | -udk* \
++	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
+ 	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
+ 	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
+-	      | -os2* | -vos*)
++	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
++	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
++	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly*)
+ 	# Remember, each alternative MUST END IN *, to match a version number.
+ 		;;
+ 	-qnx*)
+@@ -1079,8 +1190,10 @@
+ 			;;
+ 		esac
+ 		;;
++	-nto-qnx*)
++		;;
+ 	-nto*)
+-		os=-nto-qnx
++		os=`echo $os | sed -e 's|nto|nto-qnx|'`
+ 		;;
+ 	-sim | -es1800* | -hms* | -xray | -os68k* | -none* | -v88r* \
+ 	      | -windows* | -osx | -abug | -netware* | -os9* | -beos* \
+@@ -1089,6 +1202,9 @@
+ 	-mac*)
+ 		os=`echo $os | sed -e 's|mac|macos|'`
+ 		;;
++	-linux-dietlibc)
++		os=-linux-dietlibc
++		;;
+ 	-linux*)
+ 		os=`echo $os | sed -e 's|linux|linux-gnu|'`
+ 		;;
+@@ -1101,6 +1217,9 @@
+ 	-opened*)
+ 		os=-openedition
+ 		;;
++        -os400*)
++		os=-os400
++		;;
+ 	-wince*)
+ 		os=-wince
+ 		;;
+@@ -1119,14 +1238,23 @@
+ 	-acis*)
+ 		os=-aos
+ 		;;
++	-atheos*)
++		os=-atheos
++		;;
++	-syllable*)
++		os=-syllable
++		;;
+ 	-386bsd)
+ 		os=-bsd
+ 		;;
+ 	-ctix* | -uts*)
+ 		os=-sysv
+ 		;;
++	-nova*)
++		os=-rtmk-nova
++		;;
+ 	-ns2 )
+-	        os=-nextstep2
++		os=-nextstep2
+ 		;;
+ 	-nsk*)
+ 		os=-nsk
+@@ -1138,6 +1266,9 @@
+ 	-sinix*)
+ 		os=-sysv4
+ 		;;
++        -tpf*)
++		os=-tpf
++		;;
+ 	-triton*)
+ 		os=-sysv3
+ 		;;
+@@ -1165,8 +1296,17 @@
+ 	-xenix)
+ 		os=-xenix
+ 		;;
+-        -*mint | -mint[0-9]* | -*MiNT | -MiNT[0-9]*)
+-	        os=-mint
++	-*mint | -mint[0-9]* | -*MiNT | -MiNT[0-9]*)
++		os=-mint
++		;;
++	-aros*)
++		os=-aros
++		;;
++	-kaos*)
++		os=-kaos
++		;;
++	-zvmoe)
++		os=-zvmoe
+ 		;;
+ 	-none)
+ 		;;
+@@ -1199,10 +1339,14 @@
+ 	arm*-semi)
+ 		os=-aout
+ 		;;
++    c4x-* | tic4x-*)
++        os=-coff
++        ;;
++	# This must come before the *-dec entry.
+ 	pdp10-*)
+ 		os=-tops20
+ 		;;
+-        pdp11-*)
++	pdp11-*)
+ 		os=-none
+ 		;;
+ 	*-dec | vax-*)
+@@ -1229,6 +1373,9 @@
+ 	mips*-*)
+ 		os=-elf
+ 		;;
++	or32-*)
++		os=-coff
++		;;
+ 	*-tti)	# must be before sparc entry or we get the wrong os.
+ 		os=-sysv3
+ 		;;
+@@ -1241,6 +1388,9 @@
+ 	*-ibm)
+ 		os=-aix
+ 		;;
++    	*-knuth)
++		os=-mmixware
++		;;
+ 	*-wec)
+ 		os=-proelf
+ 		;;
+@@ -1292,19 +1442,19 @@
+ 	*-next)
+ 		os=-nextstep3
+ 		;;
+-        *-gould)
++	*-gould)
+ 		os=-sysv
+ 		;;
+-        *-highlevel)
++	*-highlevel)
+ 		os=-bsd
+ 		;;
+ 	*-encore)
+ 		os=-bsd
+ 		;;
+-        *-sgi)
++	*-sgi)
+ 		os=-irix
+ 		;;
+-        *-siemens)
++	*-siemens)
+ 		os=-sysv4
+ 		;;
+ 	*-masscomp)
+@@ -1373,10 +1523,16 @@
+ 			-mvs* | -opened*)
+ 				vendor=ibm
+ 				;;
++			-os400*)
++				vendor=ibm
++				;;
+ 			-ptx*)
+ 				vendor=sequent
+ 				;;
+-			-vxsim* | -vxworks*)
++			-tpf*)
++				vendor=ibm
++				;;
++			-vxsim* | -vxworks* | -windiss*)
+ 				vendor=wrs
+ 				;;
+ 			-aux*)

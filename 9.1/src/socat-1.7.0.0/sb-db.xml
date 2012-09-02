@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="socat" version="1.7.0.0" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}17</install-name>
+
+    <sources>
+      <source checksum="be5f942c44dafefa58365e9dc3ada81f"
+        checksum-type="md5" size="418842"
+        path="src/socat-1.7.0.0.tar.bz2"/>
+      <patch checksum="08fa973f26ad584e94f76f4823d0ed0c"
+        checksum-type="md5" size="1893"
+        path="src/socat-1.7.0.0.CVE-2012-0219.patch"/>
+      <patch checksum="0dc142651a94377fe666188bd6e6ba46"
+        checksum-type="md5" size="14945"
+        path="src/socat-1.7.0.0.tww.patch"/>
+      <patch checksum="a43b75a03bcfc59267d86d04215b6263"
+        checksum-type="md5" size="692951"
+        path="src/socat-1.7.0.0.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcp_wrappers" var="LIBWRAP"
+        install-name="tcpwrap">v&gt;=7.6</depend>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses57">v&gt;=5.7</depend>
+      <depend program="readline" var="READLINE"
+        install-name="libreadline62">v&gt;=6.2</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5.2*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  ARGS="--disable-ip6 --disable-pty" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  ARGS="--disable-pty" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # getnameinfo and getaddrinfo are broken
+  export ac_cv_func_getnameinfo=no
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # getnameinfo and getaddrinfo are broken
+  export ac_cv_func_getnameinfo=no
+  export ac_cv_func_getaddrinfo=no
+
+  ARGS="--disable-ip6" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ip6" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  export sc_cv_termios_ispeed=no ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  export sc_cv_struct_cmsghdr=no
+  ARGS="--disable-ip6" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC} \
+-I${SB_VAR_NCURSES_INC}/ncurses} \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_LIBWRAP+-I${SB_VAR_LIBWRAP_INC}}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_LIBOPENSSL+-L${SB_VAR_LIBOPENSSL_LIB}} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB}} \
+${SB_VAR_LIBWRAP+-L${SB_VAR_LIBWRAP_LIB}} \
+${SB_VAR_LIBOPENSSL+${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_READLINE+${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --mandir="${SB_INSTALL_PREFIX}/man" \
+--disable-fips ${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test auto-include="0">
+      <dependencies>
+        <depend program="bash" var="BASH"
+          add-path="prepend">v==4.2</depend>
+        <depend program="openssl" install-name="libopenssl10"
+          add-path="prepend">v&gt;=1.0.0e</depend>
+      </dependencies>
+<![CDATA[
+test -f "./bashed" || \
+${SB_PATH_SED} -i -e "s!/bin/bash!${SB_VAR_BASH}/bin/bash!g" *.sh
+
+touch ./bashed
+bash ./test.sh
+]]>
+    </test>
+
+    <changelog>
+      <change date="2012 August 15" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2012-0219 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-0219">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-0219</ulink>).
+Heap-based buffer overflow in the <command>xioscan_readline</command>
+function in <command>xio-readline.c</command> allows local users to
+execute arbitrary code via the READLINE address.</para></item>
+      </change>
+
+      <change date="2012 Januaru 17" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update openssl dependency from 0.9.8h to
+1.0.0e</para></item>
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+        <item><para>Update readling dependency from 5.2 to
+6.2</para></item>
+        <item><para>Update bash dependency from 3.2 to
+4.2</para></item>
+      </change>
+
+      <change date="2010 November 11" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,2657 @@
+--- build/ltmain.sh.orig	Tue Mar 23 11:37:43 2004
++++ build/ltmain.sh	Thu May 13 10:16:10 2004
+@@ -55,8 +55,8 @@
+ # Constants.
+ PROGRAM=ltmain.sh
+ PACKAGE=libtool
+-VERSION=1.4.3
+-TIMESTAMP=" (1.922.2.110 2002/10/23 01:39:54)"
++VERSION=1.4.2a
++TIMESTAMP=" (1.922.2.104 2002/10/11 16:06:06)"
+ 
+ default_mode=
+ help="Try \`$progname --help' for more information."
+@@ -498,7 +498,7 @@
+     # Lock this critical section if it is needed
+     # We use this script file to make the link, it avoids creating a new file
+     if test "$need_locks" = yes; then
+-      until $run ln "$0" "$lockfile" 2>/dev/null; do
++      until $run ln -s "$0" "$lockfile" 2>/dev/null; do
+ 	$show "Waiting for $lockfile to be removed"
+ 	sleep 2
+       done
+@@ -2801,7 +2801,11 @@
+ 	  if test -n "$hardcode_libdir_separator" &&
+ 	     test -n "$hardcode_libdirs"; then
+ 	    libdir="$hardcode_libdirs"
+-	    eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    if test -n "$hardcode_libdir_flag_spec_ld"; then
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec_ld\"
++	    else
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    fi
+ 	  fi
+ 	  if test -n "$runpath_var" && test -n "$perm_rpath"; then
+ 	    # We should set the runpath_var.
+--- modules/ssl/ssl_engine_kernel.c.orig	Wed Jun 30 21:14:30 2004
++++ modules/ssl/ssl_engine_kernel.c	Wed Jun 30 21:14:32 2004
+@@ -793,7 +793,6 @@
+     SSLConnRec *sslconn = myConnConfig(r->connection);
+     SSLSrvConfigRec *sc = mySrvConfig(r->server);
+     SSLDirConfigRec *dc = myDirConfig(r);
+-    char buf1[MAX_STRING_LEN], buf2[MAX_STRING_LEN];
+     char *clientdn;
+     const char *auth_line, *username, *password;
+ 
+@@ -872,14 +871,16 @@
+      * adding the string "xxj31ZMTZzkVA" as the password in the user file.
+      * This is just the crypted variant of the word "password" ;-)
+      */
+-    apr_snprintf(buf1, sizeof(buf1), "%s:password", clientdn);
+-    ssl_util_uuencode(buf2, buf1, FALSE);
+-
+-    apr_snprintf(buf1, sizeof(buf1), "Basic %s", buf2);
+-    apr_table_set(r->headers_in, "Authorization", buf1);
++    auth_line = apr_pstrcat(r->pool, "Basic ", 
++                            ap_pbase64encode(r->pool, 
++                                             apr_pstrcat(r->pool, clientdn, 
++                                                         ":password", NULL)),
++                            NULL);
++    apr_table_set(r->headers_in, "Authorization", auth_line);
+ 
+     ap_log_error(APLOG_MARK, APLOG_INFO, 0, r->server,
+-                 "Faking HTTP Basic Auth header: \"Authorization: %s\"", buf1);
++                 "Faking HTTP Basic Auth header: \"Authorization: %s\"",
++                 auth_line);
+ 
+     return DECLINED;
+ }
+--- server/listen.c.orig	Tue Mar 23 11:35:00 2004
++++ server/listen.c	Tue Mar 23 11:35:13 2004
+@@ -335,7 +335,7 @@
+      * is already forgotten about by the time we call accept, we won't
+      * be hung until another connection arrives on that port
+      */
+-    if (ap_listeners->next) {
++    if (ap_listeners && ap_listeners->next) {
+         for (lr = ap_listeners; lr; lr = lr->next) {
+             apr_status_t status;
+ 
+--- srclib/pcre/ltmain.sh.orig	Tue Mar 23 11:38:03 2004
++++ srclib/pcre/ltmain.sh	Thu May 13 10:16:13 2004
+@@ -49,14 +49,14 @@
+ fi
+ 
+ # The name of this program.
+-progname=`$echo "$0" | sed 's%^.*/%%'`
++progname=`$echo "$0" | ${SED} 's%^.*/%%'`
+ modename="$progname"
+ 
+ # Constants.
+ PROGRAM=ltmain.sh
+ PACKAGE=libtool
+-VERSION=1.4
+-TIMESTAMP=" (1.920 2001/04/24 23:26:18)"
++VERSION=1.4.2a
++TIMESTAMP=" (1.922.2.104 2002/10/11 16:06:06)"
+ 
+ default_mode=
+ help="Try \`$progname --help' for more information."
+@@ -67,10 +67,19 @@
+ 
+ # Sed substitution that helps us do robust quoting.  It backslashifies
+ # metacharacters that are still active within double-quoted strings.
+-Xsed='sed -e 1s/^X//'
++Xsed="${SED}"' -e 1s/^X//'
+ sed_quote_subst='s/\([\\`\\"$\\\\]\)/\\\1/g'
+-SP2NL='tr \040 \012'
+-NL2SP='tr \015\012 \040\040'
++# test EBCDIC or ASCII                                                         
++case `echo A|od -x` in                                                         
++ *[Cc]1*) # EBCDIC based system                                                
++  SP2NL="tr '\100' '\n'"                                                       
++  NL2SP="tr '\r\n' '\100\100'"                                                 
++  ;;                                                                           
++ *) # Assume ASCII based system                                                
++  SP2NL="tr '\040' '\012'"                                                     
++  NL2SP="tr '\015\012' '\040\040'"                                             
++  ;;                                                                           
++esac                                                                           
+ 
+ # NLS nuisances.
+ # Only set LANG and LC_ALL to C if already set.
+@@ -84,6 +93,9 @@
+   save_LANG="$LANG"; LANG=C; export LANG
+ fi
+ 
++# Make sure IFS has a sensible default
++: ${IFS=" 	"}
++
+ if test "$build_libtool_libs" != yes && test "$build_old_libs" != yes; then
+   echo "$modename: not configured to build any kind of library" 1>&2
+   echo "Fatal configuration error.  See the $PACKAGE docs for more information." 1>&2
+@@ -141,7 +153,7 @@
+     ;;
+ 
+   --config)
+-    sed -e '1,/^# ### BEGIN LIBTOOL CONFIG/d' -e '/^# ### END LIBTOOL CONFIG/,$d' $0
++    ${SED} -e '1,/^# ### BEGIN LIBTOOL CONFIG/d' -e '/^# ### END LIBTOOL CONFIG/,$d' $0
+     exit 0
+     ;;
+ 
+@@ -174,6 +186,8 @@
+   --mode) prevopt="--mode" prev=mode ;;
+   --mode=*) mode="$optarg" ;;
+ 
++  --preserve-dup-deps) duplicate_deps="yes" ;;
++
+   --quiet | --silent)
+     show=:
+     ;;
+@@ -202,12 +216,17 @@
+   exit 1
+ fi
+ 
++# If this variable is set in any of the actions, the command in it
++# will be execed at the end.  This prevents here-documents from being
++# left over by shells.
++exec_cmd=
++
+ if test -z "$show_help"; then
+ 
+   # Infer the operation mode.
+   if test -z "$mode"; then
+     case $nonopt in
+-    *cc | *++ | gcc* | *-gcc*)
++    *cc | *++ | gcc* | *-gcc* | xlc*)
+       mode=link
+       for arg
+       do
+@@ -329,7 +348,7 @@
+       -Wc,*)
+ 	args=`$echo "X$arg" | $Xsed -e "s/^-Wc,//"`
+ 	lastarg=
+-	IFS="${IFS= 	}"; save_ifs="$IFS"; IFS=','
++	save_ifs="$IFS"; IFS=','
+ 	for arg in $args; do
+ 	  IFS="$save_ifs"
+ 
+@@ -459,7 +478,7 @@
+       pic_mode=default
+       ;;
+     esac
+-    if test $pic_mode = no && test "$deplibs_check_method" != pass_all; then
++    if test "$pic_mode" = no && test "$deplibs_check_method" != pass_all; then
+       # non-PIC code in shared libraries is not supported
+       pic_mode=default
+     fi
+@@ -479,7 +498,7 @@
+     # Lock this critical section if it is needed
+     # We use this script file to make the link, it avoids creating a new file
+     if test "$need_locks" = yes; then
+-      until $run ln "$0" "$lockfile" 2>/dev/null; do
++      until $run ln -s "$0" "$lockfile" 2>/dev/null; do
+ 	$show "Waiting for $lockfile to be removed"
+ 	sleep 2
+       done
+@@ -615,6 +634,10 @@
+ 	# Now arrange that obj and lo_libobj become the same file
+ 	$show "(cd $xdir && $LN_S $baseobj $libobj)"
+ 	if $run eval '(cd $xdir && $LN_S $baseobj $libobj)'; then
++	  # Unlock the critical section if it was locked
++	  if test "$need_locks" != no; then
++	    $run $rm "$lockfile"
++	  fi
+ 	  exit 0
+ 	else
+ 	  error=$?
+@@ -980,7 +1003,7 @@
+       # so, if we see these flags be careful not to treat them like -L
+       -L[A-Z][A-Z]*:*)
+ 	case $with_gcc/$host in
+-	no/*-*-irix*)
++	no/*-*-irix* | no/*-*-nonstopux*)
+ 	  compile_command="$compile_command $arg"
+ 	  finalize_command="$finalize_command $arg"
+ 	  ;;
+@@ -1031,6 +1054,17 @@
+ 	    # These systems don't actually have a C library (as such)
+ 	    test "X$arg" = "X-lc" && continue
+ 	    ;;
++	  *-*-openbsd* | *-*-freebsd*)
++	    # Do not include libc due to us having libc/libc_r.
++	    test "X$arg" = "X-lc" && continue
++	    ;;
++	  esac
++	 elif test "X$arg" = "X-lc_r"; then
++	  case $host in
++	 *-*-openbsd* | *-*-freebsd*)
++	    # Do not include libc_r directly, use -pthread flag.
++	    continue
++	    ;;
+ 	  esac
+ 	fi
+ 	deplibs="$deplibs $arg"
+@@ -1122,7 +1156,7 @@
+       -Wc,*)
+ 	args=`$echo "X$arg" | $Xsed -e "$sed_quote_subst" -e 's/^-Wc,//'`
+ 	arg=
+-	IFS="${IFS= 	}"; save_ifs="$IFS"; IFS=','
++	save_ifs="$IFS"; IFS=','
+ 	for flag in $args; do
+ 	  IFS="$save_ifs"
+ 	  case $flag in
+@@ -1140,7 +1174,7 @@
+       -Wl,*)
+ 	args=`$echo "X$arg" | $Xsed -e "$sed_quote_subst" -e 's/^-Wl,//'`
+ 	arg=
+-	IFS="${IFS= 	}"; save_ifs="$IFS"; IFS=','
++	save_ifs="$IFS"; IFS=','
+ 	for flag in $args; do
+ 	  IFS="$save_ifs"
+ 	  case $flag in
+@@ -1307,9 +1341,11 @@
+     # Find all interdependent deplibs by searching for libraries
+     # that are linked more than once (e.g. -la -lb -la)
+     for deplib in $deplibs; do
+-      case "$libs " in
+-      *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
+-      esac
++      if test "X$duplicate_deps" = "Xyes" ; then
++	case "$libs " in
++	*" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
++	esac
++      fi
+       libs="$libs $deplib"
+     done
+     deplibs=
+@@ -1438,10 +1474,12 @@
+ 	  lib)
+ 	    if test "$deplibs_check_method" != pass_all; then
+ 	      echo
+-	      echo "*** Warning: This library needs some functionality provided by $deplib."
++	      echo "*** Warning: Trying to link with static lib archive $deplib."
+ 	      echo "*** I have the capability to make that library automatically link in when"
+ 	      echo "*** you link to this library.  But I can only do this if you have a"
+-	      echo "*** shared version of the library, which you do not appear to have."
++	      echo "*** shared version of the library, which you do not appear to have"
++	      echo "*** because the file extensions .$libext of this argument makes me believe"
++	      echo "*** that it is just a static archive that I should not used here."
+ 	    else
+ 	      echo
+ 	      echo "*** Warning: Linking the shared library $output against the"
+@@ -1485,7 +1523,7 @@
+ 	fi
+ 
+ 	# Check to see that this really is a libtool archive.
+-	if (sed -e '2q' $lib | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then :
++	if (${SED} -e '2q' $lib | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then :
+ 	else
+ 	  $echo "$modename: \`$lib' is not a valid libtool archive" 1>&2
+ 	  exit 1
+@@ -1532,9 +1570,11 @@
+ 	    tmp_libs=
+ 	    for deplib in $dependency_libs; do
+ 	      deplibs="$deplib $deplibs"
+-	      case "$tmp_libs " in
+-	      *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
+-	      esac
++              if test "X$duplicate_deps" = "Xyes" ; then
++	        case "$tmp_libs " in
++	        *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
++	        esac
++              fi
+ 	      tmp_libs="$tmp_libs $deplib"
+ 	    done
+ 	  elif test $linkmode != prog && test $linkmode != lib; then
+@@ -1657,9 +1697,11 @@
+ 	      # or/and link against static libraries
+ 	      newdependency_libs="$deplib $newdependency_libs"
+ 	    fi
+-	    case "$tmp_libs " in
+-	    *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
+-	    esac
++	    if test "X$duplicate_deps" = "Xyes" ; then
++	      case "$tmp_libs " in
++	      *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
++	      esac
++	    fi
+ 	    tmp_libs="$tmp_libs $deplib"
+ 	  done # for deplib
+ 	  continue
+@@ -1743,14 +1785,14 @@
+ 
+ 	    # Make a new name for the extract_expsyms_cmds to use
+ 	    soroot="$soname"
+-	    soname=`echo $soroot | sed -e 's/^.*\///'`
+-	    newlib="libimp-`echo $soname | sed 's/^lib//;s/\.dll$//'`.a"
++	    soname=`echo $soroot | ${SED} -e 's/^.*\///'`
++	    newlib="libimp-`echo $soname | ${SED} 's/^lib//;s/\.dll$//'`.a"
+ 
+ 	    # If the library has no export list, then create one now
+ 	    if test -f "$output_objdir/$soname-def"; then :
+ 	    else
+ 	      $show "extracting exported symbol list from \`$soname'"
+-	      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	      save_ifs="$IFS"; IFS='~'
+ 	      eval cmds=\"$extract_expsyms_cmds\"
+ 	      for cmd in $cmds; do
+ 		IFS="$save_ifs"
+@@ -1763,7 +1805,7 @@
+ 	    # Create $newlib
+ 	    if test -f "$output_objdir/$newlib"; then :; else
+ 	      $show "generating import library for \`$soname'"
+-	      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	      save_ifs="$IFS"; IFS='~'
+ 	      eval cmds=\"$old_archive_from_expsyms_cmds\"
+ 	      for cmd in $cmds; do
+ 		IFS="$save_ifs"
+@@ -1903,25 +1945,26 @@
+ 	    # Just print a warning and add the library to dependency_libs so
+ 	    # that the program can be linked against the static library.
+ 	    echo
+-	    echo "*** Warning: This library needs some functionality provided by $lib."
++	    echo "*** Warning: This system can not link to static lib archive $lib."
+ 	    echo "*** I have the capability to make that library automatically link in when"
+ 	    echo "*** you link to this library.  But I can only do this if you have a"
+ 	    echo "*** shared version of the library, which you do not appear to have."
+ 	    if test "$module" = yes; then
+-	      echo "*** Therefore, libtool will create a static module, that should work "
+-	      echo "*** as long as the dlopening application is linked with the -dlopen flag."
++	      echo "*** But as you try to build a module library, libtool will still create "
++	      echo "*** a static module, that should work as long as the dlopening application"
++	      echo "*** is linked with the -dlopen flag to resolve symbols at runtime."
+ 	      if test -z "$global_symbol_pipe"; then
+-	        echo
+-	        echo "*** However, this would only work if libtool was able to extract symbol"
+-	        echo "*** lists from a program, using \`nm' or equivalent, but libtool could"
+-	        echo "*** not find such a program.  So, this module is probably useless."
+-	        echo "*** \`nm' from GNU binutils and a full rebuild may help."
++		echo
++		echo "*** However, this would only work if libtool was able to extract symbol"
++		echo "*** lists from a program, using \`nm' or equivalent, but libtool could"
++		echo "*** not find such a program.  So, this module is probably useless."
++		echo "*** \`nm' from GNU binutils and a full rebuild may help."
+ 	      fi
+ 	      if test "$build_old_libs" = no; then
+-	        build_libtool_libs=module
+-	        build_old_libs=yes
++		build_libtool_libs=module
++		build_old_libs=yes
+ 	      else
+-	        build_libtool_libs=no
++		build_libtool_libs=no
+ 	      fi
+ 	    fi
+ 	  else
+@@ -1958,9 +2001,11 @@
+ 	  tmp_libs=
+ 	  for deplib in $dependency_libs; do
+ 	    newdependency_libs="$deplib $newdependency_libs"
+-	    case "$tmp_libs " in
+-	    *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
+-	    esac
++	    if test "X$duplicate_deps" = "Xyes" ; then
++	      case "$tmp_libs " in
++	      *" $deplib "*) specialdeplibs="$specialdeplibs $deplib" ;;
++	      esac
++	    fi
+ 	    tmp_libs="$tmp_libs $deplib"
+ 	  done
+ 
+@@ -1986,7 +2031,7 @@
+ 		if grep "^installed=no" $deplib > /dev/null; then
+ 		  path="-L$absdir/$objdir"
+ 		else
+-		  eval libdir=`sed -n -e 's/^libdir=\(.*\)$/\1/p' $deplib`
++		  eval libdir=`${SED} -n -e 's/^libdir=\(.*\)$/\1/p' $deplib`
+ 		  if test -z "$libdir"; then
+ 		    $echo "$modename: \`$deplib' is not a valid libtool archive" 1>&2
+ 		    exit 1
+@@ -2175,7 +2220,7 @@
+       else
+ 
+ 	# Parse the version information argument.
+-	IFS="${IFS= 	}"; save_ifs="$IFS"; IFS=':'
++	save_ifs="$IFS"; IFS=':'
+ 	set dummy $vinfo 0 0 0
+ 	IFS="$save_ifs"
+ 
+@@ -2250,16 +2295,21 @@
+ 	  versuffix=".$current";
+ 	  ;;
+ 
+-	irix)
++	irix | nonstopux)
+ 	  major=`expr $current - $age + 1`
+-	  verstring="sgi$major.$revision"
++
++	  case $version_type in
++	    nonstopux) verstring_prefix=nonstopux ;;
++	    *)         verstring_prefix=sgi ;;
++	  esac
++	  verstring="$verstring_prefix$major.$revision"
+ 
+ 	  # Add in all the interfaces that we are compatible with.
+ 	  loop=$revision
+ 	  while test $loop != 0; do
+ 	    iface=`expr $revision - $loop`
+ 	    loop=`expr $loop - 1`
+-	    verstring="sgi$major.$iface:$verstring"
++	    verstring="$verstring_prefix$major.$iface:$verstring"
+ 	  done
+ 
+ 	  # Before this point, $major must not contain `.'.
+@@ -2273,7 +2323,7 @@
+ 	  ;;
+ 
+ 	osf)
+-	  major=`expr $current - $age`
++	  major=.`expr $current - $age`
+ 	  versuffix=".$current.$age.$revision"
+ 	  verstring="$current.$age.$revision"
+ 
+@@ -2312,6 +2362,16 @@
+ 	if test -z "$vinfo" && test -n "$release"; then
+ 	  major=
+ 	  verstring="0.0"
++	  case $version_type in
++	  darwin)
++	    # we can't check for "0.0" in archive_cmds due to quoting
++	    # problems, so we reset it completely
++	    verstring=""
++	    ;;
++	  *)
++	    verstring="0.0"
++	    ;;
++	  esac
+ 	  if test "$need_version" = no; then
+ 	    versuffix=
+ 	  else
+@@ -2355,9 +2415,9 @@
+ 
+       # Eliminate all temporary directories.
+       for path in $notinst_path; do
+-	lib_search_path=`echo "$lib_search_path " | sed -e 's% $path % %g'`
+-	deplibs=`echo "$deplibs " | sed -e 's% -L$path % %g'`
+-	dependency_libs=`echo "$dependency_libs " | sed -e 's% -L$path % %g'`
++	lib_search_path=`echo "$lib_search_path " | ${SED} -e 's% $path % %g'`
++	deplibs=`echo "$deplibs " | ${SED} -e 's% -L$path % %g'`
++	dependency_libs=`echo "$dependency_libs " | ${SED} -e 's% -L$path % %g'`
+       done
+ 
+       if test -n "$xrpath"; then
+@@ -2408,6 +2468,9 @@
+ 	  *-*-netbsd*)
+ 	    # Don't link with libc until the a.out ld.so is fixed.
+ 	    ;;
++	  *-*-openbsd* | *-*-freebsd*)
++	    # Do not include libc due to us having libc/libc_r.
++	    ;;
+ 	  *)
+ 	    # Add libc to deplibs on all other systems if necessary.
+ 	    if test $build_libtool_need_lc = "yes"; then
+@@ -2466,18 +2529,20 @@
+ 		else
+ 		  droppeddeps=yes
+ 		  echo
+-		  echo "*** Warning: This library needs some functionality provided by $i."
++		  echo "*** Warning: dynamic linker does not accept needed library $i."
+ 		  echo "*** I have the capability to make that library automatically link in when"
+ 		  echo "*** you link to this library.  But I can only do this if you have a"
+-		  echo "*** shared version of the library, which you do not appear to have."
++		  echo "*** shared version of the library, which I believe you do not have"
++		  echo "*** because a test_compile did reveal that the linker did not use it for"
++		  echo "*** its dynamic dependency list that programs get resolved with at runtime."
+ 		fi
+ 	      else
+ 		newdeplibs="$newdeplibs $i"
+ 	      fi
+ 	    done
+ 	  else
+-	    # Error occured in the first compile.  Let's try to salvage the situation:
+-	    # Compile a seperate program for each library.
++	    # Error occured in the first compile.  Let's try to salvage
++	    # the situation: Compile a separate program for each library.
+ 	    for i in $deplibs; do
+ 	      name="`expr $i : '-l\(.*\)'`"
+ 	     # If $name is empty we are operating on a -L argument.
+@@ -2496,10 +2561,12 @@
+ 		  else
+ 		    droppeddeps=yes
+ 		    echo
+-		    echo "*** Warning: This library needs some functionality provided by $i."
++		    echo "*** Warning: dynamic linker does not accept needed library $i."
+ 		    echo "*** I have the capability to make that library automatically link in when"
+ 		    echo "*** you link to this library.  But I can only do this if you have a"
+-		    echo "*** shared version of the library, which you do not appear to have."
++		    echo "*** shared version of the library, which you do not appear to have"
++		    echo "*** because a test_compile did reveal that the linker did not use this one"
++		    echo "*** as a dynamic dependency that programs can get resolved with at runtime."
+ 		  fi
+ 		else
+ 		  droppeddeps=yes
+@@ -2538,14 +2605,14 @@
+ 		      # but so what?
+ 		      potlib="$potent_lib"
+ 		      while test -h "$potlib" 2>/dev/null; do
+-			potliblink=`ls -ld $potlib | sed 's/.* -> //'`
++			potliblink=`ls -ld $potlib | ${SED} 's/.* -> //'`
+ 			case $potliblink in
+ 			[\\/]* | [A-Za-z]:[\\/]*) potlib="$potliblink";;
+ 			*) potlib=`$echo "X$potlib" | $Xsed -e 's,[^/]*$,,'`"$potliblink";;
+ 			esac
+ 		      done
+ 		      if eval $file_magic_cmd \"\$potlib\" 2>/dev/null \
+-			 | sed 10q \
++			 | ${SED} 10q \
+ 			 | egrep "$file_magic_regex" > /dev/null; then
+ 			newdeplibs="$newdeplibs $a_deplib"
+ 			a_deplib=""
+@@ -2556,10 +2623,17 @@
+ 	      if test -n "$a_deplib" ; then
+ 		droppeddeps=yes
+ 		echo
+-		echo "*** Warning: This library needs some functionality provided by $a_deplib."
++		echo "*** Warning: linker path does not have real file for library $a_deplib."
+ 		echo "*** I have the capability to make that library automatically link in when"
+ 		echo "*** you link to this library.  But I can only do this if you have a"
+-		echo "*** shared version of the library, which you do not appear to have."
++		echo "*** shared version of the library, which you do not appear to have"
++		echo "*** because I did check the linker path looking for a file starting"
++		if test -z "$potlib" ; then
++		  echo "*** with $libname but no candidates were found. (...for file magic test)"
++		else
++		  echo "*** with $libname and none of the candidates passed a file format test"
++		  echo "*** using a file magic. Last file checked: $potlib"
++		fi
+ 	      fi
+ 	    else
+ 	      # Add a -L argument.
+@@ -2578,8 +2652,9 @@
+ 	      for i in $lib_search_path $sys_lib_search_path $shlib_search_path; do
+ 		potential_libs=`ls $i/$libname[.-]* 2>/dev/null`
+ 		for potent_lib in $potential_libs; do
++		  potlib="$potent_lib" # see symlink-check below in file_magic test
+ 		  if eval echo \"$potent_lib\" 2>/dev/null \
+-		      | sed 10q \
++		      | ${SED} 10q \
+ 		      | egrep "$match_pattern_regex" > /dev/null; then
+ 		    newdeplibs="$newdeplibs $a_deplib"
+ 		    a_deplib=""
+@@ -2590,10 +2665,17 @@
+ 	      if test -n "$a_deplib" ; then
+ 		droppeddeps=yes
+ 		echo
+-		echo "*** Warning: This library needs some functionality provided by $a_deplib."
++		echo "*** Warning: linker path does not have real file for library $a_deplib."
+ 		echo "*** I have the capability to make that library automatically link in when"
+ 		echo "*** you link to this library.  But I can only do this if you have a"
+-		echo "*** shared version of the library, which you do not appear to have."
++		echo "*** shared version of the library, which you do not appear to have"
++		echo "*** because I did check the linker path looking for a file starting"
++		if test -z "$potlib" ; then
++		  echo "*** with $libname but no candidates were found. (...for regex pattern test)"
++		else
++		  echo "*** with $libname and none of the candidates passed a file format test"
++		  echo "*** using a regex pattern. Last file checked: $potlib"
++		fi
+ 	      fi
+ 	    else
+ 	      # Add a -L argument.
+@@ -2719,7 +2801,11 @@
+ 	  if test -n "$hardcode_libdir_separator" &&
+ 	     test -n "$hardcode_libdirs"; then
+ 	    libdir="$hardcode_libdirs"
+-	    eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    if test -n "$hardcode_libdir_flag_spec_ld"; then
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec_ld\"
++	    else
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    fi
+ 	  fi
+ 	  if test -n "$runpath_var" && test -n "$perm_rpath"; then
+ 	    # We should set the runpath_var.
+@@ -2784,7 +2870,7 @@
+ 	    export_symbols="$output_objdir/$libname.exp"
+ 	    $run $rm $export_symbols
+ 	    eval cmds=\"$export_symbols_cmds\"
+-	    IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	    save_ifs="$IFS"; IFS='~'
+ 	    for cmd in $cmds; do
+ 	      IFS="$save_ifs"
+ 	      $show "$cmd"
+@@ -2858,9 +2944,20 @@
+ 	if test -n "$export_symbols" && test -n "$archive_expsym_cmds"; then
+ 	  eval cmds=\"$archive_expsym_cmds\"
+ 	else
++	  save_deplibs="$deplibs"
++	  for conv in $convenience; do
++	    tmp_deplibs=
++	    for test_deplib in $deplibs; do
++	      if test "$test_deplib" != "$conv"; then
++		tmp_deplibs="$tmp_deplibs $test_deplib"
++	      fi
++	    done
++	    deplibs="$tmp_deplibs"
++	  done
+ 	  eval cmds=\"$archive_cmds\"
++	  deplibs="$save_deplibs"
+ 	fi
+-	IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	save_ifs="$IFS"; IFS='~'
+ 	for cmd in $cmds; do
+ 	  IFS="$save_ifs"
+ 	  $show "$cmd"
+@@ -2988,7 +3085,7 @@
+ 
+       output="$obj"
+       eval cmds=\"$reload_cmds\"
+-      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++      save_ifs="$IFS"; IFS='~'
+       for cmd in $cmds; do
+ 	IFS="$save_ifs"
+ 	$show "$cmd"
+@@ -3024,7 +3121,7 @@
+ 	reload_objs="$libobjs $reload_conv_objs"
+ 	output="$libobj"
+ 	eval cmds=\"$reload_cmds\"
+-	IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	save_ifs="$IFS"; IFS='~'
+ 	for cmd in $cmds; do
+ 	  IFS="$save_ifs"
+ 	  $show "$cmd"
+@@ -3057,7 +3154,7 @@
+ 
+     prog)
+       case $host in
+-	*cygwin*) output=`echo $output | sed -e 's,.exe$,,;s,$,.exe,'` ;;
++	*cygwin*) output=`echo $output | ${SED} -e 's,.exe$,,;s,$,.exe,'` ;;
+       esac
+       if test -n "$vinfo"; then
+ 	$echo "$modename: warning: \`-version-info' is ignored for programs" 1>&2
+@@ -3079,6 +3176,13 @@
+ 	# On Rhapsody replace the C library is the System framework
+ 	compile_deplibs=`$echo "X $compile_deplibs" | $Xsed -e 's/ -lc / -framework System /'`
+ 	finalize_deplibs=`$echo "X $finalize_deplibs" | $Xsed -e 's/ -lc / -framework System /'`
++	case $host in
++	*darwin*)
++	  # Don't allow lazy linking, it breaks C++ global constructors
++	  compile_command="$compile_command ${wl}-bind_at_load"
++	  finalize_command="$finalize_command ${wl}-bind_at_load"
++	  ;;
++	esac
+ 	;;
+       esac
+ 
+@@ -3245,9 +3349,9 @@
+ 	    if test -z "$export_symbols"; then
+ 	      export_symbols="$output_objdir/$output.exp"
+ 	      $run $rm $export_symbols
+-	      $run eval "sed -n -e '/^: @PROGRAM@$/d' -e 's/^.* \(.*\)$/\1/p' "'< "$nlist" > "$export_symbols"'
++	      $run eval "${SED} -n -e '/^: @PROGRAM@$/d' -e 's/^.* \(.*\)$/\1/p' "'< "$nlist" > "$export_symbols"'
+ 	    else
+-	      $run eval "sed -e 's/\([][.*^$]\)/\\\1/g' -e 's/^/ /' -e 's/$/$/'"' < "$export_symbols" > "$output_objdir/$output.exp"'
++	      $run eval "${SED} -e 's/\([][.*^$]\)/\\\1/g' -e 's/^/ /' -e 's/$/$/'"' < "$export_symbols" > "$output_objdir/$output.exp"'
+ 	      $run eval 'grep -f "$output_objdir/$output.exp" < "$nlist" > "$nlist"T'
+ 	      $run eval 'mv "$nlist"T "$nlist"'
+ 	    fi
+@@ -3255,7 +3359,7 @@
+ 
+ 	  for arg in $dlprefiles; do
+ 	    $show "extracting global C symbols from \`$arg'"
+-	    name=`echo "$arg" | sed -e 's%^.*/%%'`
++	    name=`echo "$arg" | ${SED} -e 's%^.*/%%'`
+ 	    $run eval 'echo ": $name " >> "$nlist"'
+ 	    $run eval "$NM $arg | $global_symbol_pipe >> '$nlist'"
+ 	  done
+@@ -3270,7 +3374,13 @@
+ 	    fi
+ 
+ 	    # Try sorting and uniquifying the output.
+-	    if grep -v "^: " < "$nlist" | sort +2 | uniq > "$nlist"S; then
++	    if grep -v "^: " < "$nlist" |
++		if sort -k 3 </dev/null >/dev/null 2>&1; then
++		  sort -k 3
++		else
++		  sort +2
++		fi |
++		uniq > "$nlist"S; then
+ 	      :
+ 	    else
+ 	      grep -v "^: " < "$nlist" > "$nlist"S
+@@ -3287,27 +3397,25 @@
+ #undef lt_preloaded_symbols
+ 
+ #if defined (__STDC__) && __STDC__
+-# define lt_ptr_t void *
++# define lt_ptr void *
+ #else
+-# define lt_ptr_t char *
++# define lt_ptr char *
+ # define const
+ #endif
+ 
+ /* The mapping between symbol names and symbols. */
+ const struct {
+   const char *name;
+-  lt_ptr_t address;
++  lt_ptr address;
+ }
+ lt_preloaded_symbols[] =
+ {\
+ "
+ 
+-	    sed -n -e 's/^: \([^ ]*\) $/  {\"\1\", (lt_ptr_t) 0},/p' \
+-		-e 's/^. \([^ ]*\) \([^ ]*\)$/  {"\2", (lt_ptr_t) \&\2},/p' \
+-		  < "$nlist" >> "$output_objdir/$dlsyms"
++	    eval "$global_symbol_to_c_name_address" < "$nlist" >> "$output_objdir/$dlsyms"
+ 
+ 	    $echo >> "$output_objdir/$dlsyms" "\
+-  {0, (lt_ptr_t) 0}
++  {0, (lt_ptr) 0}
+ };
+ 
+ /* This works around a problem in FreeBSD linker */
+@@ -3494,7 +3602,7 @@
+ 	    relink_command="$var=\"$var_value\"; export $var; $relink_command"
+ 	  fi
+ 	done
+-	relink_command="cd `pwd`; $relink_command"
++	relink_command="(cd `pwd`; $relink_command)"
+ 	relink_command=`$echo "X$relink_command" | $Xsed -e "$sed_quote_subst"`
+       fi
+ 
+@@ -3514,7 +3622,7 @@
+ 	# win32 will think the script is a binary if it has
+ 	# a .exe suffix, so we strip it off here.
+ 	case $output in
+-	  *.exe) output=`echo $output|sed 's,.exe$,,'` ;;
++	  *.exe) output=`echo $output|${SED} 's,.exe$,,'` ;;
+ 	esac
+ 	# test for cygwin because mv fails w/o .exe extensions
+ 	case $host in
+@@ -3538,7 +3646,7 @@
+ 
+ # Sed substitution that helps us do robust quoting.  It backslashifies
+ # metacharacters that are still active within double-quoted strings.
+-Xsed='sed -e 1s/^X//'
++Xsed="${SED}"' -e 1s/^X//'
+ sed_quote_subst='$sed_quote_subst'
+ 
+ # The HP-UX ksh and POSIX shell print the target directory to stdout
+@@ -3576,7 +3684,7 @@
+   test \"x\$thisdir\" = \"x\$file\" && thisdir=.
+ 
+   # Follow symbolic links until we get to the real thisdir.
+-  file=\`ls -ld \"\$file\" | sed -n 's/.*-> //p'\`
++  file=\`ls -ld \"\$file\" | ${SED} -n 's/.*-> //p'\`
+   while test -n \"\$file\"; do
+     destdir=\`\$echo \"X\$file\" | \$Xsed -e 's%/[^/]*\$%%'\`
+ 
+@@ -3589,7 +3697,7 @@
+     fi
+ 
+     file=\`\$echo \"X\$file\" | \$Xsed -e 's%^.*/%%'\`
+-    file=\`ls -ld \"\$thisdir/\$file\" | sed -n 's/.*-> //p'\`
++    file=\`ls -ld \"\$thisdir/\$file\" | ${SED} -n 's/.*-> //p'\`
+   done
+ 
+   # Try to get the absolute directory name.
+@@ -3603,7 +3711,7 @@
+   progdir=\"\$thisdir/$objdir\"
+ 
+   if test ! -f \"\$progdir/\$program\" || \\
+-     { file=\`ls -1dt \"\$progdir/\$program\" \"\$progdir/../\$program\" 2>/dev/null | sed 1q\`; \\
++     { file=\`ls -1dt \"\$progdir/\$program\" \"\$progdir/../\$program\" 2>/dev/null | ${SED} 1q\`; \\
+        test \"X\$file\" != \"X\$progdir/\$program\"; }; then
+ 
+     file=\"\$\$-\$program\"
+@@ -3618,8 +3726,9 @@
+ 
+     # relink executable if necessary
+     if test -n \"\$relink_command\"; then
+-      if (eval \$relink_command); then :
++      if relink_command_output=\`eval \$relink_command 2>&1\`; then :
+       else
++	$echo \"\$relink_command_output\" >&2
+ 	$rm \"\$progdir/\$file\"
+ 	exit 1
+       fi
+@@ -3648,7 +3757,7 @@
+     $shlibpath_var=\"$temp_rpath\$$shlibpath_var\"
+ 
+     # Some systems cannot cope with colon-terminated $shlibpath_var
+-    # The second colon is a workaround for a bug in BeOS R4 sed
++    # The second colon is a workaround for a bug in BeOS R4 ${SED}
+     $shlibpath_var=\`\$echo \"X\$$shlibpath_var\" | \$Xsed -e 's/::*\$//'\`
+ 
+     export $shlibpath_var
+@@ -3790,7 +3899,7 @@
+ 
+ 	eval cmds=\"$old_archive_cmds\"
+       fi
+-      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++      save_ifs="$IFS"; IFS='~'
+       for cmd in $cmds; do
+ 	IFS="$save_ifs"
+ 	$show "$cmd"
+@@ -3823,7 +3932,7 @@
+ 	fi
+       done
+       # Quote the link command for shipping.
+-      relink_command="cd `pwd`; $SHELL $0 --mode=relink $libtool_args"
++      relink_command="(cd `pwd`; $SHELL $0 --mode=relink $libtool_args)"
+       relink_command=`$echo "X$relink_command" | $Xsed -e "$sed_quote_subst"`
+ 
+       # Only create the output if not a dry run.
+@@ -3840,7 +3949,7 @@
+ 	      case $deplib in
+ 	      *.la)
+ 		name=`$echo "X$deplib" | $Xsed -e 's%^.*/%%'`
+-		eval libdir=`sed -n -e 's/^libdir=\(.*\)$/\1/p' $deplib`
++		eval libdir=`${SED} -n -e 's/^libdir=\(.*\)$/\1/p' $deplib`
+ 		if test -z "$libdir"; then
+ 		  $echo "$modename: \`$deplib' is not a valid libtool archive" 1>&2
+ 		  exit 1
+@@ -3854,7 +3963,7 @@
+ 	    newdlfiles=
+ 	    for lib in $dlfiles; do
+ 	      name=`$echo "X$lib" | $Xsed -e 's%^.*/%%'`
+-	      eval libdir=`sed -n -e 's/^libdir=\(.*\)$/\1/p' $lib`
++	      eval libdir=`${SED} -n -e 's/^libdir=\(.*\)$/\1/p' $lib`
+ 	      if test -z "$libdir"; then
+ 		$echo "$modename: \`$lib' is not a valid libtool archive" 1>&2
+ 		exit 1
+@@ -3865,7 +3974,7 @@
+ 	    newdlprefiles=
+ 	    for lib in $dlprefiles; do
+ 	      name=`$echo "X$lib" | $Xsed -e 's%^.*/%%'`
+-	      eval libdir=`sed -n -e 's/^libdir=\(.*\)$/\1/p' $lib`
++	      eval libdir=`${SED} -n -e 's/^libdir=\(.*\)$/\1/p' $lib`
+ 	      if test -z "$libdir"; then
+ 		$echo "$modename: \`$lib' is not a valid libtool archive" 1>&2
+ 		exit 1
+@@ -4089,7 +4198,7 @@
+ 
+       *.la)
+ 	# Check to see that this really is a libtool archive.
+-	if (sed -e '2q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then :
++	if (${SED} -e '2q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then :
+ 	else
+ 	  $echo "$modename: \`$file' is not a valid libtool archive" 1>&2
+ 	  $echo "$help" 1>&2
+@@ -4165,7 +4274,7 @@
+ 	  # Do each command in the postinstall commands.
+ 	  lib="$destdir/$realname"
+ 	  eval cmds=\"$postinstall_cmds\"
+-	  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	  save_ifs="$IFS"; IFS='~'
+ 	  for cmd in $cmds; do
+ 	    IFS="$save_ifs"
+ 	    $show "$cmd"
+@@ -4238,19 +4347,27 @@
+ 	fi
+ 
+ 	# Do a test to see if this is really a libtool program.
+-	if (sed -e '4q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
++	case $host in
++	*cygwin*|*mingw*)
++	    wrapper=`echo $file | ${SED} -e 's,.exe$,,'`
++	    ;;
++	*)
++	    wrapper=$file
++	    ;;
++	esac
++	if (${SED} -e '4q' $wrapper | egrep "^# Generated by .*$PACKAGE")>/dev/null 2>&1; then
+ 	  notinst_deplibs=
+ 	  relink_command=
+ 
+ 	  # If there is no directory component, then add one.
+ 	  case $file in
+-	  */* | *\\*) . $file ;;
+-	  *) . ./$file ;;
++	  */* | *\\*) . $wrapper ;;
++	  *) . ./$wrapper ;;
+ 	  esac
+ 
+ 	  # Check the variables that should have been set.
+ 	  if test -z "$notinst_deplibs"; then
+-	    $echo "$modename: invalid libtool wrapper script \`$file'" 1>&2
++	    $echo "$modename: invalid libtool wrapper script \`$wrapper'" 1>&2
+ 	    exit 1
+ 	  fi
+ 
+@@ -4275,8 +4392,8 @@
+ 	  relink_command=
+ 	  # If there is no directory component, then add one.
+ 	  case $file in
+-	  */* | *\\*) . $file ;;
+-	  *) . ./$file ;;
++	  */* | *\\*) . $wrapper ;;
++	  *) . ./$wrapper ;;
+ 	  esac
+ 
+ 	  outputname=
+@@ -4324,7 +4441,7 @@
+ 	    destfile=$destfile.exe
+ 	    ;;
+ 	  *:*.exe)
+-	    destfile=`echo $destfile | sed -e 's,.exe$,,'`
++	    destfile=`echo $destfile | ${SED} -e 's,.exe$,,'`
+ 	    ;;
+ 	  esac
+ 	  ;;
+@@ -4352,7 +4469,7 @@
+ 
+       # Do each command in the postinstall commands.
+       eval cmds=\"$old_postinstall_cmds\"
+-      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++      save_ifs="$IFS"; IFS='~'
+       for cmd in $cmds; do
+ 	IFS="$save_ifs"
+ 	$show "$cmd"
+@@ -4368,11 +4485,10 @@
+     if test -n "$current_libdirs"; then
+       # Maybe just do a dry run.
+       test -n "$run" && current_libdirs=" -n$current_libdirs"
+-      exec $SHELL $0 --finish$current_libdirs
+-      exit 1
++      exec_cmd='$SHELL $0 --finish$current_libdirs'
++    else
++      exit 0
+     fi
+-
+-    exit 0
+     ;;
+ 
+   # libtool finish mode
+@@ -4391,7 +4507,7 @@
+ 	if test -n "$finish_cmds"; then
+ 	  # Do each command in the finish commands.
+ 	  eval cmds=\"$finish_cmds\"
+-	  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	  save_ifs="$IFS"; IFS='~'
+ 	  for cmd in $cmds; do
+ 	    IFS="$save_ifs"
+ 	    $show "$cmd"
+@@ -4473,7 +4589,7 @@
+       case $file in
+       *.la)
+ 	# Check to see that this really is a libtool archive.
+-	if (sed -e '2q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then :
++	if (${SED} -e '2q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then :
+ 	else
+ 	  $echo "$modename: \`$lib' is not a valid libtool archive" 1>&2
+ 	  $echo "$help" 1>&2
+@@ -4544,7 +4660,7 @@
+       -*) ;;
+       *)
+ 	# Do a test to see if this is really a libtool program.
+-	if (sed -e '4q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
++	if (${SED} -e '4q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
+ 	  # If there is no directory component, then add one.
+ 	  case $file in
+ 	  */* | *\\*) . $file ;;
+@@ -4575,11 +4691,8 @@
+ 	LANG="$save_LANG"; export LANG
+       fi
+ 
+-      # Now actually exec the command.
+-      eval "exec \$cmd$args"
+-
+-      $echo "$modename: cannot exec \$cmd$args"
+-      exit 1
++      # Now prepare to actually exec the command.
++      exec_cmd="\$cmd$args"
+     else
+       # Display what would be done.
+       if test -n "$shlibpath_var"; then
+@@ -4641,14 +4754,14 @@
+ 
+       # Don't error if the file doesn't exist and rm -f was used.
+       if (test -L "$file") >/dev/null 2>&1 \
+-        || (test -h "$file") >/dev/null 2>&1 \
++	|| (test -h "$file") >/dev/null 2>&1 \
+ 	|| test -f "$file"; then
+-        :
++	:
+       elif test -d "$file"; then
+-        exit_status=1
++	exit_status=1
+ 	continue
+       elif test "$rmforce" = yes; then
+-        continue
++	continue
+       fi
+ 
+       rmfiles="$file"
+@@ -4656,7 +4769,7 @@
+       case $name in
+       *.la)
+ 	# Possibly a libtool archive, so verify it.
+-	if (sed -e '2q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
++	if (${SED} -e '2q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
+ 	  . $dir/$name
+ 
+ 	  # Delete the libtool libraries and symlinks.
+@@ -4670,7 +4783,7 @@
+ 	    if test -n "$library_names"; then
+ 	      # Do each command in the postuninstall commands.
+ 	      eval cmds=\"$postuninstall_cmds\"
+-	      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	      save_ifs="$IFS"; IFS='~'
+ 	      for cmd in $cmds; do
+ 		IFS="$save_ifs"
+ 		$show "$cmd"
+@@ -4685,7 +4798,7 @@
+ 	    if test -n "$old_library"; then
+ 	      # Do each command in the old_postuninstall commands.
+ 	      eval cmds=\"$old_postuninstall_cmds\"
+-	      IFS="${IFS= 	}"; save_ifs="$IFS"; IFS='~'
++	      save_ifs="$IFS"; IFS='~'
+ 	      for cmd in $cmds; do
+ 		IFS="$save_ifs"
+ 		$show "$cmd"
+@@ -4711,7 +4824,7 @@
+       *)
+ 	# Do a test to see if this is a libtool program.
+ 	if test $mode = clean &&
+-	   (sed -e '4q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
++	   (${SED} -e '4q' $file | egrep "^# Generated by .*$PACKAGE") >/dev/null 2>&1; then
+ 	  relink_command=
+ 	  . $dir/$file
+ 
+@@ -4744,10 +4857,17 @@
+     ;;
+   esac
+ 
+-  $echo "$modename: invalid operation mode \`$mode'" 1>&2
+-  $echo "$generic_help" 1>&2
+-  exit 1
++  if test -z "$exec_cmd"; then
++    $echo "$modename: invalid operation mode \`$mode'" 1>&2
++    $echo "$generic_help" 1>&2
++    exit 1
++  fi
+ fi # test -z "$show_help"
++
++if test -n "$exec_cmd"; then
++  eval exec $exec_cmd
++  exit 1
++fi
+ 
+ # We need to display help for each of the modes.
+ case $mode in
+--- srclib/pcre/configure.orig	Tue Mar 23 11:45:37 2004
++++ srclib/pcre/configure	Thu May 13 10:10:13 2004
+@@ -2220,7 +2220,7 @@
+ done
+ rm -f conftest*
+ if test -n "$ac_declaration"; then
+-  echo '#ifdef __cplusplus' >>confdefs.h
++  echo '#if defined(__cplusplus) && defined(__GLIBC__)' >>confdefs.h
+   echo $ac_declaration      >>confdefs.h
+   echo '#endif'             >>confdefs.h
+ fi
+@@ -3948,7 +3948,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.
+--- srclib/apr/build/apr_common.m4.orig	Sun Nov  2 16:06:11 2003
++++ srclib/apr/build/apr_common.m4	Thu May 13 10:08:00 2004
+@@ -786,7 +786,7 @@
+         ;;
+     esac
+     val=`echo $val | sed -e 's:\(.\)/*$:\1:'`
+-    val=`echo $val | sed -e 's:[\$]\([a-z_]*\):${\1}:g'`
++    val=`echo $val | sed -e 's:[[\$]]\([[a-z_]]*\):$[\1]:g'`
+     if test "$autosuffix" = "yes"; then
+       if echo $val | grep apache >/dev/null; then
+         addtarget=no
+--- srclib/apr/build/apr_hints.m4.orig	Fri May 14 15:03:19 2004
++++ srclib/apr/build/apr_hints.m4	Fri Jun  4 12:52:17 2004
+@@ -59,7 +59,6 @@
+         dnl If using xlc, remember it, and give it the right options.
+         if $CC 2>&1 | grep 'xlc' > /dev/null; then
+           APR_SETIFNULL(AIX_XLC, [yes])
+-          APR_ADDTO(CFLAGS, [-qHALT=E])
+         fi
+ 	APR_SETIFNULL(apr_sysvsem_is_global, [yes])
+ 	APR_SETIFNULL(apr_lock_method, [USE_SYSVSEM_SERIALIZE])
+--- srclib/apr/build/ltmain.sh.orig	Tue Mar 23 11:38:06 2004
++++ srclib/apr/build/ltmain.sh	Thu May 13 10:16:16 2004
+@@ -55,8 +55,8 @@
+ # Constants.
+ PROGRAM=ltmain.sh
+ PACKAGE=libtool
+-VERSION=1.4.3
+-TIMESTAMP=" (1.922.2.110 2002/10/23 01:39:54)"
++VERSION=1.4.2a
++TIMESTAMP=" (1.922.2.104 2002/10/11 16:06:06)"
+ 
+ default_mode=
+ help="Try \`$progname --help' for more information."
+@@ -498,7 +498,7 @@
+     # Lock this critical section if it is needed
+     # We use this script file to make the link, it avoids creating a new file
+     if test "$need_locks" = yes; then
+-      until $run ln "$0" "$lockfile" 2>/dev/null; do
++      until $run ln -s "$0" "$lockfile" 2>/dev/null; do
+ 	$show "Waiting for $lockfile to be removed"
+ 	sleep 2
+       done
+@@ -2801,7 +2801,11 @@
+ 	  if test -n "$hardcode_libdir_separator" &&
+ 	     test -n "$hardcode_libdirs"; then
+ 	    libdir="$hardcode_libdirs"
+-	    eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    if test -n "$hardcode_libdir_flag_spec_ld"; then
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec_ld\"
++	    else
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    fi
+ 	  fi
+ 	  if test -n "$runpath_var" && test -n "$perm_rpath"; then
+ 	    # We should set the runpath_var.
+--- srclib/apr/build/libtool.m4.orig	Tue Mar 23 11:38:29 2004
++++ srclib/apr/build/libtool.m4	Thu May 13 10:16:54 2004
+@@ -320,7 +320,7 @@
+ 	  save_CFLAGS="$CFLAGS"
+ 	  LIBS="conftstm.$ac_objext"
+ 	  CFLAGS="$CFLAGS$no_builtin_flag"
+-	  if AC_TRY_EVAL(ac_link) && test -s conftest$ac_exeext; then
++	  if AC_TRY_EVAL(ac_link) && test -s conftest; then
+ 	    pipe_works=yes
+ 	  fi
+ 	  LIBS="$save_LIBS"
+@@ -910,7 +910,14 @@
+       # Is there a better lt_cv_prog_cc_static that works with the bundled CC?
+       lt_cv_prog_cc_wl='-Wl,'
+       lt_cv_prog_cc_static="${lt_cv_prog_cc_wl}-a ${lt_cv_prog_cc_wl}archive"
+-      lt_cv_prog_cc_pic='+Z'
++      case "$host_cpu" in
++      hppa*64*)
++	# +Z the default
++	;;
++      *)
++	lt_cv_prog_cc_pic='+Z'
++	;;
++      esac
+       ;;
+ 
+     irix5* | irix6* | nonstopux*)
+@@ -1627,14 +1634,34 @@
+   hpux9* | hpux10* | hpux11*)
+     case $host_os in
+     hpux9*) archive_cmds='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib' ;;
+-    *) archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags' ;;
++    *)
++      case "$host_cpu" in
++      hppa*64*)
++	archive_cmds='$LD -b +h $soname -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      *)
++	archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      esac
++      ;;
++    esac
++    case "$host_cpu" in
++    hppa*64*)
++      hardcode_direct=no
++      hardcode_into_libs=yes
++      hardcode_libdir_flag_spec_ld='+b $libdir'
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_shlibpath_var=no
++      ;;
++    *)
++      export_dynamic_flag_spec='${wl}-E'
++      hardcode_direct=yes
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_minus_L=yes # Not in the search PATH, but as the default
++			   # location of the library
++      ;;
+     esac
+-    hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
+     hardcode_libdir_separator=:
+-    hardcode_direct=yes
+-    hardcode_minus_L=yes # Not in the search PATH, but as the default
+-			 # location of the library.
+-    export_dynamic_flag_spec='${wl}-E'
+     ;;
+ 
+   irix5* | irix6* | nonstopux*)
+@@ -1672,7 +1699,7 @@
+     hardcode_direct=yes
+     hardcode_shlibpath_var=no
+     if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+-      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+       hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+       export_dynamic_flag_spec='${wl}-E'
+     else
+@@ -1682,7 +1709,7 @@
+ 	hardcode_libdir_flag_spec='-R$libdir'
+         ;;
+       *)
+-        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+         hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+         ;;
+       esac
+@@ -1964,8 +1991,6 @@
+ aix4* | aix5*)
+   version_type=linux
+   need_lib_prefix=no
+-  need_version=no
+-  hardcode_into_libs=yes
+   if test "$host_cpu" = ia64; then
+     # AIX 5 supports IA64
+     library_names_spec='${libname}${release}.so$major ${libname}${release}.so$versuffix $libname.so'
+@@ -2127,12 +2152,21 @@
+   version_type=sunos
+   need_lib_prefix=no
+   need_version=no
+-  shlibpath_var=SHLIB_PATH
+-  shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
+   library_names_spec='${libname}${release}.sl$versuffix ${libname}${release}.sl$major $libname.sl'
+   soname_spec='${libname}${release}.sl$major'
+   # HP-UX runs *really* slowly unless shared libraries are mode 555.
+   postinstall_cmds='chmod 555 $lib'
++  case "$host_cpu" in
++  hppa*64*)
++    shlibpath_var=LD_LIBRARY_PATH
++    shlibpath_overrides_runpath=yes
++    sys_lib_search_path_spec="/usr/lib/pa20_64 /usr/ccs/lib/pa20_64"
++    sys_lib_dlsearch_path_spec=$sys_lib_search_path_spec
++    ;;
++  *)
++    shlibpath_var=SHLIB_PATH
++    shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+@@ -2161,6 +2195,7 @@
+   shlibpath_overrides_runpath=no
+   sys_lib_search_path_spec="/usr/lib${libsuff} /lib${libsuff} /usr/local/lib${libsuff}"
+   sys_lib_dlsearch_path_spec="/usr/lib${libsuff} /lib${libsuff}"
++  hardcode_into_libs=yes
+   ;;
+ 
+ # No shared lib support for Linux oldld, aout, or coff.
+@@ -2248,6 +2283,7 @@
+ 
+ osf3* | osf4* | osf5*)
+   version_type=osf
++  need_lib_prefix=no
+   need_version=no
+   soname_spec='${libname}${release}.so$major'
+   library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'
+@@ -2489,8 +2525,8 @@
+     old_striplib striplib file_magic_cmd export_symbols_cmds \
+     deplibs_check_method allow_undefined_flag no_undefined_flag \
+     finish_cmds finish_eval global_symbol_pipe global_symbol_to_cdecl \
+-    global_symbol_to_c_name_address \
+-    hardcode_libdir_flag_spec hardcode_libdir_separator  \
++    global_symbol_to_c_name_address hardcode_libdir_flag_spec \
++    hardcode_libdir_flag_spec_ld hardcode_libdir_separator \
+     sys_lib_search_path_spec sys_lib_dlsearch_path_spec \
+     compiler_c_o compiler_o_lo need_locks exclude_expsyms include_expsyms; do
+ 
+@@ -2752,6 +2788,11 @@
+ # This must work even if \$libdir does not exist.
+ hardcode_libdir_flag_spec=$lt_hardcode_libdir_flag_spec
+ 
++# If ld is used when linking, flag to hardcode \$libdir into
++# a binary during linking. This must work even if \$libdir does
++# not exist.
++hardcode_libdir_flag_spec_ld=$lt_hardcode_libdir_flag_spec_ld
++
+ # Whether we need a single -rpath flag with a separated argument.
+ hardcode_libdir_separator=$lt_hardcode_libdir_separator
+ 
+@@ -3376,9 +3417,17 @@
+   ;;
+ 
+ hpux10.20*|hpux11*)
+-  lt_cv_deplibs_check_method='file_magic (s[[0-9]][[0-9]][[0-9]]|PA-RISC[[0-9]].[[0-9]]) shared library'
+   lt_cv_file_magic_cmd=/usr/bin/file
+-  lt_cv_file_magic_test_file=/usr/lib/libc.sl
++  case "$host_cpu" in
++  hppa*64*)
++    [lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|ELF-[0-9][0-9]) shared object file - PA-RISC [0-9].[0-9]']
++    lt_cv_file_magic_test_file=/usr/lib/pa20_64/libc.sl
++    ;;
++  *)
++    [lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library']
++    lt_cv_file_magic_test_file=/usr/lib/libc.sl
++    ;;
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+--- srclib/apr/include/apr_atomic.h.orig	Fri Feb 13 03:33:44 2004
++++ srclib/apr/include/apr_atomic.h	Tue Mar 23 11:37:01 2004
+@@ -27,7 +27,7 @@
+ /* Platform includes for atomics */
+ #if defined(NETWARE) || defined(__MVS__) /* OS/390 */
+ #include <stdlib.h>
+-#elif defined(__FreeBSD__)
++#elif defined(__FreeBSD__) && !defined(__i386__)
+ #include <machine/atomic.h>
+ #endif
+ 
+@@ -159,7 +159,7 @@
+     return (void*)atomic_cmpxchg((unsigned long *)mem,(unsigned long)cmp,(unsigned long)with);
+ }
+ 
+-#elif defined(__FreeBSD__)
++#elif defined(__FreeBSD__) && !defined(__i386__)
+ 
+ #define apr_atomic_t apr_uint32_t
+ #define apr_atomic_add(mem, val)     atomic_add_int(mem,val)
+@@ -168,7 +168,8 @@
+ #define apr_atomic_set(mem, val)     atomic_set_int(mem, val)
+ #define apr_atomic_read(mem)         (*mem)
+ 
+-#elif (defined(__linux__) || defined(__EMX__)) && defined(__i386__) && !APR_FORCE_ATOMIC_GENERIC
++#elif (defined(__linux__) || defined(__EMX__) || defined(__FreeBSD__)) \
++	&& defined(__i386__) && !APR_FORCE_ATOMIC_GENERIC
+ 
+ #define apr_atomic_t apr_uint32_t
+ #define apr_atomic_cas(mem,with,cmp) \
+--- srclib/apr/configure.in.orig	Sun Mar  7 14:31:31 2004
++++ srclib/apr/configure.in	Tue Mar 23 11:37:00 2004
+@@ -140,9 +140,6 @@
+     gcc $CFLAGS $CPPFLAGS -o $LIBTOOL.exe $LIBTOOL.c
+     ;;
+ *)
+-    if test "x$LTFLAGS" = "x"; then
+-        LTFLAGS='--silent'
+-    fi
+     if test "$experimental_libtool" = "yes"; then
+         # Use a custom-made libtool replacement
+         echo "using jlibtool"
+--- srclib/apr/configure.orig	Tue Mar 23 11:43:04 2004
++++ srclib/apr/configure	Fri Jun  4 12:52:32 2004
+@@ -2095,7 +2095,7 @@
+         ;;
+     esac
+     val=`echo $val | sed -e 's:\(.\)/*$:\1:'`
+-    val=`echo $val | sed -e 's:[\$]\([a-z_]*\):$\1:g'`
++    val=`echo $val | sed -e 's:[[\$]]\([[a-z_]]*\):$[\1]:g'`
+     if test "$autosuffix" = "yes"; then
+       if echo $val | grep apache >/dev/null; then
+         addtarget=no
+@@ -3241,7 +3241,7 @@
+ done
+ rm -f conftest*
+ if test -n "$ac_declaration"; then
+-  echo '#ifdef __cplusplus' >>confdefs.h
++  echo '#if defined(__cplusplus) && defined(__GLIBC__)' >>confdefs.h
+   echo $ac_declaration      >>confdefs.h
+   echo '#endif'             >>confdefs.h
+ fi
+@@ -3545,27 +3545,6 @@
+     AIX_XLC="yes"
+   fi
+ 
+-
+-  if test "x$CFLAGS" = "x"; then
+-    echo "  setting CFLAGS to \"-qHALT=E\""
+-    CFLAGS="-qHALT=E"
+-  else
+-    apr_addto_bugger="-qHALT=E"
+-    for i in $apr_addto_bugger; do
+-      apr_addto_duplicate="0"
+-      for j in $CFLAGS; do
+-        if test "x$i" = "x$j"; then
+-          apr_addto_duplicate="1"
+-          break
+-        fi
+-      done
+-      if test $apr_addto_duplicate = "0"; then
+-        echo "  adding \"$i\" to CFLAGS"
+-        CFLAGS="$CFLAGS $i"
+-      fi
+-    done
+-  fi
+-
+         fi
+ 
+   if test -z "$apr_sysvsem_is_global"; then
+@@ -7707,9 +7686,6 @@
+     gcc $CFLAGS $CPPFLAGS -o $LIBTOOL.exe $LIBTOOL.c
+     ;;
+ *)
+-    if test "x$LTFLAGS" = "x"; then
+-        LTFLAGS='--silent'
+-    fi
+     if test "$experimental_libtool" = "yes"; then
+         # Use a custom-made libtool replacement
+         echo "using jlibtool"
+@@ -8108,9 +8084,17 @@
+   ;;
+ 
+ hpux10.20*|hpux11*)
+-  lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library'
+   lt_cv_file_magic_cmd=/usr/bin/file
+-  lt_cv_file_magic_test_file=/usr/lib/libc.sl
++  case "$host_cpu" in
++  hppa*64*)
++    lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|ELF-[0-9][0-9]) shared object file - PA-RISC [0-9].[0-9]'
++    lt_cv_file_magic_test_file=/usr/lib/pa20_64/libc.sl
++    ;;
++  *)
++    lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library'
++    lt_cv_file_magic_test_file=/usr/lib/libc.sl
++    ;;
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+@@ -8378,7 +8362,7 @@
+   (eval $ac_link) 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && test -s conftest$ac_exeext; then
++  (exit $ac_status); } && test -s conftest; then
+ 	    pipe_works=yes
+ 	  fi
+ 	  LIBS="$save_LIBS"
+@@ -8895,7 +8879,7 @@
+ case $host in
+ *-*-irix6*)
+   # Find out which ABI we are using.
+-  echo '#line 8898 "configure"' > conftest.$ac_ext
++  echo '#line 8882 "configure"' > conftest.$ac_ext
+   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+   (eval $ac_compile) 2>&5
+   ac_status=$?
+@@ -9193,7 +9177,14 @@
+       # Is there a better lt_cv_prog_cc_static that works with the bundled CC?
+       lt_cv_prog_cc_wl='-Wl,'
+       lt_cv_prog_cc_static="${lt_cv_prog_cc_wl}-a ${lt_cv_prog_cc_wl}archive"
+-      lt_cv_prog_cc_pic='+Z'
++      case "$host_cpu" in
++      hppa*64*)
++	# +Z the default
++	;;
++      *)
++	lt_cv_prog_cc_pic='+Z'
++	;;
++      esac
+       ;;
+ 
+     irix5* | irix6* | nonstopux*)
+@@ -9467,7 +9458,7 @@
+ save_CFLAGS="$CFLAGS"
+ CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
+ compiler_c_o=no
+-if { (eval echo configure:9470: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
++if { (eval echo configure:9461: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+   # The compiler can only warn and ignore the option if not recognized
+   # So say no if there are warnings
+   if test -s out/conftest.err; then
+@@ -10118,14 +10109,34 @@
+   hpux9* | hpux10* | hpux11*)
+     case $host_os in
+     hpux9*) archive_cmds='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib' ;;
+-    *) archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags' ;;
++    *)
++      case "$host_cpu" in
++      hppa*64*)
++	archive_cmds='$LD -b +h $soname -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      *)
++	archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      esac
++      ;;
++    esac
++    case "$host_cpu" in
++    hppa*64*)
++      hardcode_direct=no
++      hardcode_into_libs=yes
++      hardcode_libdir_flag_spec_ld='+b $libdir'
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_shlibpath_var=no
++      ;;
++    *)
++      export_dynamic_flag_spec='${wl}-E'
++      hardcode_direct=yes
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_minus_L=yes # Not in the search PATH, but as the default
++			   # location of the library
++      ;;
+     esac
+-    hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
+     hardcode_libdir_separator=:
+-    hardcode_direct=yes
+-    hardcode_minus_L=yes # Not in the search PATH, but as the default
+-			 # location of the library.
+-    export_dynamic_flag_spec='${wl}-E'
+     ;;
+ 
+   irix5* | irix6* | nonstopux*)
+@@ -10163,7 +10174,7 @@
+     hardcode_direct=yes
+     hardcode_shlibpath_var=no
+     if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+-      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+       hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+       export_dynamic_flag_spec='${wl}-E'
+     else
+@@ -10173,7 +10184,7 @@
+ 	hardcode_libdir_flag_spec='-R$libdir'
+         ;;
+       *)
+-        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+         hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+         ;;
+       esac
+@@ -10462,8 +10473,6 @@
+ aix4* | aix5*)
+   version_type=linux
+   need_lib_prefix=no
+-  need_version=no
+-  hardcode_into_libs=yes
+   if test "$host_cpu" = ia64; then
+     # AIX 5 supports IA64
+     library_names_spec='${libname}${release}.so$major ${libname}${release}.so$versuffix $libname.so'
+@@ -10625,12 +10634,21 @@
+   version_type=sunos
+   need_lib_prefix=no
+   need_version=no
+-  shlibpath_var=SHLIB_PATH
+-  shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
+   library_names_spec='${libname}${release}.sl$versuffix ${libname}${release}.sl$major $libname.sl'
+   soname_spec='${libname}${release}.sl$major'
+   # HP-UX runs *really* slowly unless shared libraries are mode 555.
+   postinstall_cmds='chmod 555 $lib'
++  case "$host_cpu" in
++  hppa*64*)
++    shlibpath_var=LD_LIBRARY_PATH
++    shlibpath_overrides_runpath=yes
++    sys_lib_search_path_spec="/usr/lib/pa20_64 /usr/ccs/lib/pa20_64"
++    sys_lib_dlsearch_path_spec=$sys_lib_search_path_spec
++    ;;
++  *)
++    shlibpath_var=SHLIB_PATH
++    shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+@@ -10659,6 +10677,7 @@
+   shlibpath_overrides_runpath=no
+   sys_lib_search_path_spec="/usr/lib${libsuff} /lib${libsuff} /usr/local/lib${libsuff}"
+   sys_lib_dlsearch_path_spec="/usr/lib${libsuff} /lib${libsuff}"
++  hardcode_into_libs=yes
+   ;;
+ 
+ # No shared lib support for Linux oldld, aout, or coff.
+@@ -10746,6 +10765,7 @@
+ 
+ osf3* | osf4* | osf5*)
+   version_type=osf
++  need_lib_prefix=no
+   need_version=no
+   soname_spec='${libname}${release}.so$major'
+   library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'
+@@ -11431,7 +11451,7 @@
+     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 11434 "configure"
++#line 11454 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -11529,7 +11549,7 @@
+     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 11532 "configure"
++#line 11552 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -11730,8 +11750,8 @@
+     old_striplib striplib file_magic_cmd export_symbols_cmds \
+     deplibs_check_method allow_undefined_flag no_undefined_flag \
+     finish_cmds finish_eval global_symbol_pipe global_symbol_to_cdecl \
+-    global_symbol_to_c_name_address \
+-    hardcode_libdir_flag_spec hardcode_libdir_separator  \
++    global_symbol_to_c_name_address hardcode_libdir_flag_spec \
++    hardcode_libdir_flag_spec_ld hardcode_libdir_separator \
+     sys_lib_search_path_spec sys_lib_dlsearch_path_spec \
+     compiler_c_o compiler_o_lo need_locks exclude_expsyms include_expsyms; do
+ 
+@@ -11993,6 +12013,11 @@
+ # This must work even if \$libdir does not exist.
+ hardcode_libdir_flag_spec=$lt_hardcode_libdir_flag_spec
+ 
++# If ld is used when linking, flag to hardcode \$libdir into
++# a binary during linking. This must work even if \$libdir does
++# not exist.
++hardcode_libdir_flag_spec_ld=$lt_hardcode_libdir_flag_spec_ld
++
+ # Whether we need a single -rpath flag with a separated argument.
+ hardcode_libdir_separator=$lt_hardcode_libdir_separator
+ 
+@@ -32403,7 +32428,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.
+--- srclib/apr-util/build/apr_common.m4.orig	Thu Mar 18 06:32:25 2004
++++ srclib/apr-util/build/apr_common.m4	Thu May 13 10:09:29 2004
+@@ -786,7 +786,7 @@
+         ;;
+     esac
+     val=`echo $val | sed -e 's:\(.\)/*$:\1:'`
+-    val=`echo $val | sed -e 's:[\$]\([a-z_]*\):${\1}:g'`
++    val=`echo $val | sed -e 's:[[\$]]\([[a-z_]]*\):$[\1]:g'`
+     if test "$autosuffix" = "yes"; then
+       if echo $val | grep apache >/dev/null; then
+         addtarget=no
+--- srclib/apr-util/build/dbm.m4.orig	Wed May 12 22:38:09 2004
++++ srclib/apr-util/build/dbm.m4	Wed May 12 22:38:36 2004
+@@ -47,7 +47,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+--- srclib/apr-util/xml/expat/conftools/ltmain.sh.orig	Tue Mar 23 11:38:09 2004
++++ srclib/apr-util/xml/expat/conftools/ltmain.sh	Thu May 13 10:16:18 2004
+@@ -55,8 +55,8 @@
+ # Constants.
+ PROGRAM=ltmain.sh
+ PACKAGE=libtool
+-VERSION=1.4.3
+-TIMESTAMP=" (1.922.2.110 2002/10/23 01:39:54)"
++VERSION=1.4.2a
++TIMESTAMP=" (1.922.2.104 2002/10/11 16:06:06)"
+ 
+ default_mode=
+ help="Try \`$progname --help' for more information."
+@@ -498,7 +498,7 @@
+     # Lock this critical section if it is needed
+     # We use this script file to make the link, it avoids creating a new file
+     if test "$need_locks" = yes; then
+-      until $run ln "$0" "$lockfile" 2>/dev/null; do
++      until $run ln -s "$0" "$lockfile" 2>/dev/null; do
+ 	$show "Waiting for $lockfile to be removed"
+ 	sleep 2
+       done
+@@ -2801,7 +2801,11 @@
+ 	  if test -n "$hardcode_libdir_separator" &&
+ 	     test -n "$hardcode_libdirs"; then
+ 	    libdir="$hardcode_libdirs"
+-	    eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    if test -n "$hardcode_libdir_flag_spec_ld"; then
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec_ld\"
++	    else
++	      eval dep_rpath=\"$hardcode_libdir_flag_spec\"
++	    fi
+ 	  fi
+ 	  if test -n "$runpath_var" && test -n "$perm_rpath"; then
+ 	    # We should set the runpath_var.
+--- srclib/apr-util/xml/expat/configure.orig	Thu May 13 09:30:26 2004
++++ srclib/apr-util/xml/expat/configure	Thu May 13 10:17:35 2004
+@@ -2574,7 +2574,7 @@
+ done
+ rm -f conftest*
+ if test -n "$ac_declaration"; then
+-  echo '#ifdef __cplusplus' >>confdefs.h
++  echo '#if defined(__cplusplus) && defined(__GLIBC__)' >>confdefs.h
+   echo $ac_declaration      >>confdefs.h
+   echo '#endif'             >>confdefs.h
+ fi
+@@ -2922,9 +2922,17 @@
+   ;;
+ 
+ hpux10.20*|hpux11*)
+-  lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library'
+   lt_cv_file_magic_cmd=/usr/bin/file
+-  lt_cv_file_magic_test_file=/usr/lib/libc.sl
++  case "$host_cpu" in
++  hppa*64*)
++    lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|ELF-[0-9][0-9]) shared object file - PA-RISC [0-9].[0-9]'
++    lt_cv_file_magic_test_file=/usr/lib/pa20_64/libc.sl
++    ;;
++  *)
++    lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library'
++    lt_cv_file_magic_test_file=/usr/lib/libc.sl
++    ;;
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+@@ -3193,7 +3201,7 @@
+   (eval $ac_link) 2>&5
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && test -s conftest$ac_exeext; then
++  (exit $ac_status); } && test -s conftest; then
+ 	    pipe_works=yes
+ 	  fi
+ 	  LIBS="$save_LIBS"
+@@ -4198,7 +4206,7 @@
+ case $host in
+ *-*-irix6*)
+   # Find out which ABI we are using.
+-  echo '#line 4201 "configure"' > conftest.$ac_ext
++  echo '#line 4209 "configure"' > conftest.$ac_ext
+   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+   (eval $ac_compile) 2>&5
+   ac_status=$?
+@@ -4496,7 +4504,14 @@
+       # Is there a better lt_cv_prog_cc_static that works with the bundled CC?
+       lt_cv_prog_cc_wl='-Wl,'
+       lt_cv_prog_cc_static="${lt_cv_prog_cc_wl}-a ${lt_cv_prog_cc_wl}archive"
+-      lt_cv_prog_cc_pic='+Z'
++      case "$host_cpu" in
++      hppa*64*)
++	# +Z the default
++	;;
++      *)
++	lt_cv_prog_cc_pic='+Z'
++	;;
++      esac
+       ;;
+ 
+     irix5* | irix6* | nonstopux*)
+@@ -4770,7 +4785,7 @@
+ save_CFLAGS="$CFLAGS"
+ CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
+ compiler_c_o=no
+-if { (eval echo configure:4773: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
++if { (eval echo configure:4788: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+   # The compiler can only warn and ignore the option if not recognized
+   # So say no if there are warnings
+   if test -s out/conftest.err; then
+@@ -5421,14 +5436,34 @@
+   hpux9* | hpux10* | hpux11*)
+     case $host_os in
+     hpux9*) archive_cmds='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib' ;;
+-    *) archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags' ;;
++    *)
++      case "$host_cpu" in
++      hppa*64*)
++	archive_cmds='$LD -b +h $soname -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      *)
++	archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      esac
++      ;;
++    esac
++    case "$host_cpu" in
++    hppa*64*)
++      hardcode_direct=no
++      hardcode_into_libs=yes
++      hardcode_libdir_flag_spec_ld='+b $libdir'
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_shlibpath_var=no
++      ;;
++    *)
++      export_dynamic_flag_spec='${wl}-E'
++      hardcode_direct=yes
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_minus_L=yes # Not in the search PATH, but as the default
++			   # location of the library
++      ;;
+     esac
+-    hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
+     hardcode_libdir_separator=:
+-    hardcode_direct=yes
+-    hardcode_minus_L=yes # Not in the search PATH, but as the default
+-			 # location of the library.
+-    export_dynamic_flag_spec='${wl}-E'
+     ;;
+ 
+   irix5* | irix6* | nonstopux*)
+@@ -5466,7 +5501,7 @@
+     hardcode_direct=yes
+     hardcode_shlibpath_var=no
+     if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+-      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+       hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+       export_dynamic_flag_spec='${wl}-E'
+     else
+@@ -5476,7 +5511,7 @@
+ 	hardcode_libdir_flag_spec='-R$libdir'
+         ;;
+       *)
+-        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+         hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+         ;;
+       esac
+@@ -5765,8 +5800,6 @@
+ aix4* | aix5*)
+   version_type=linux
+   need_lib_prefix=no
+-  need_version=no
+-  hardcode_into_libs=yes
+   if test "$host_cpu" = ia64; then
+     # AIX 5 supports IA64
+     library_names_spec='${libname}${release}.so$major ${libname}${release}.so$versuffix $libname.so'
+@@ -5928,12 +5961,21 @@
+   version_type=sunos
+   need_lib_prefix=no
+   need_version=no
+-  shlibpath_var=SHLIB_PATH
+-  shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
+   library_names_spec='${libname}${release}.sl$versuffix ${libname}${release}.sl$major $libname.sl'
+   soname_spec='${libname}${release}.sl$major'
+   # HP-UX runs *really* slowly unless shared libraries are mode 555.
+   postinstall_cmds='chmod 555 $lib'
++  case "$host_cpu" in
++  hppa*64*)
++    shlibpath_var=LD_LIBRARY_PATH
++    shlibpath_overrides_runpath=yes
++    sys_lib_search_path_spec="/usr/lib/pa20_64 /usr/ccs/lib/pa20_64"
++    sys_lib_dlsearch_path_spec=$sys_lib_search_path_spec
++    ;;
++  *)
++    shlibpath_var=SHLIB_PATH
++    shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+@@ -5962,6 +6004,7 @@
+   shlibpath_overrides_runpath=no
+   sys_lib_search_path_spec="/usr/lib${libsuff} /lib${libsuff} /usr/local/lib${libsuff}"
+   sys_lib_dlsearch_path_spec="/usr/lib${libsuff} /lib${libsuff}"
++  hardcode_into_libs=yes
+   ;;
+ 
+ # No shared lib support for Linux oldld, aout, or coff.
+@@ -6049,6 +6092,7 @@
+ 
+ osf3* | osf4* | osf5*)
+   version_type=osf
++  need_lib_prefix=no
+   need_version=no
+   soname_spec='${libname}${release}.so$major'
+   library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'
+@@ -6734,7 +6778,7 @@
+     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 6737 "configure"
++#line 6781 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -6832,7 +6876,7 @@
+     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 6835 "configure"
++#line 6879 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -7033,8 +7077,8 @@
+     old_striplib striplib file_magic_cmd export_symbols_cmds \
+     deplibs_check_method allow_undefined_flag no_undefined_flag \
+     finish_cmds finish_eval global_symbol_pipe global_symbol_to_cdecl \
+-    global_symbol_to_c_name_address \
+-    hardcode_libdir_flag_spec hardcode_libdir_separator  \
++    global_symbol_to_c_name_address hardcode_libdir_flag_spec \
++    hardcode_libdir_flag_spec_ld hardcode_libdir_separator \
+     sys_lib_search_path_spec sys_lib_dlsearch_path_spec \
+     compiler_c_o compiler_o_lo need_locks exclude_expsyms include_expsyms; do
+ 
+@@ -7296,6 +7340,11 @@
+ # This must work even if \$libdir does not exist.
+ hardcode_libdir_flag_spec=$lt_hardcode_libdir_flag_spec
+ 
++# If ld is used when linking, flag to hardcode \$libdir into
++# a binary during linking. This must work even if \$libdir does
++# not exist.
++hardcode_libdir_flag_spec_ld=$lt_hardcode_libdir_flag_spec_ld
++
+ # Whether we need a single -rpath flag with a separated argument.
+ hardcode_libdir_separator=$lt_hardcode_libdir_separator
+ 
+@@ -8295,7 +8344,7 @@
+ done
+ rm -f conftest*
+ if test -n "$ac_declaration"; then
+-  echo '#ifdef __cplusplus' >>confdefs.h
++  echo '#if defined(__cplusplus) && defined(__GLIBC__)' >>confdefs.h
+   echo $ac_declaration      >>confdefs.h
+   echo '#endif'             >>confdefs.h
+ fi
+@@ -10475,7 +10524,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.
+--- srclib/apr-util/xml/expat/aclocal.m4.orig	Thu May 13 10:02:46 2004
++++ srclib/apr-util/xml/expat/aclocal.m4	Thu May 13 10:17:10 2004
+@@ -1,5 +1,3 @@
+-dnl THIS FILE IS AUTOMATICALLY GENERATED BY buildconf.sh
+-dnl edits here will be lost
+ # libtool.m4 - Configure libtool for the host system. -*-Shell-script-*-
+ ## Copyright 1996, 1997, 1998, 1999, 2000, 2001
+ ## Free Software Foundation, Inc.
+@@ -322,7 +320,7 @@
+ 	  save_CFLAGS="$CFLAGS"
+ 	  LIBS="conftstm.$ac_objext"
+ 	  CFLAGS="$CFLAGS$no_builtin_flag"
+-	  if AC_TRY_EVAL(ac_link) && test -s conftest$ac_exeext; then
++	  if AC_TRY_EVAL(ac_link) && test -s conftest; then
+ 	    pipe_works=yes
+ 	  fi
+ 	  LIBS="$save_LIBS"
+@@ -912,7 +910,14 @@
+       # Is there a better lt_cv_prog_cc_static that works with the bundled CC?
+       lt_cv_prog_cc_wl='-Wl,'
+       lt_cv_prog_cc_static="${lt_cv_prog_cc_wl}-a ${lt_cv_prog_cc_wl}archive"
+-      lt_cv_prog_cc_pic='+Z'
++      case "$host_cpu" in
++      hppa*64*)
++	# +Z the default
++	;;
++      *)
++	lt_cv_prog_cc_pic='+Z'
++	;;
++      esac
+       ;;
+ 
+     irix5* | irix6* | nonstopux*)
+@@ -1629,14 +1634,34 @@
+   hpux9* | hpux10* | hpux11*)
+     case $host_os in
+     hpux9*) archive_cmds='$rm $output_objdir/$soname~$LD -b +b $install_libdir -o $output_objdir/$soname $libobjs $deplibs $linker_flags~test $output_objdir/$soname = $lib || mv $output_objdir/$soname $lib' ;;
+-    *) archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags' ;;
++    *)
++      case "$host_cpu" in
++      hppa*64*)
++	archive_cmds='$LD -b +h $soname -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      *)
++	archive_cmds='$LD -b +h $soname +b $install_libdir -o $lib $libobjs $deplibs $linker_flags'
++	;;
++      esac
++      ;;
++    esac
++    case "$host_cpu" in
++    hppa*64*)
++      hardcode_direct=no
++      hardcode_into_libs=yes
++      hardcode_libdir_flag_spec_ld='+b $libdir'
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_shlibpath_var=no
++      ;;
++    *)
++      export_dynamic_flag_spec='${wl}-E'
++      hardcode_direct=yes
++      hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
++      hardcode_minus_L=yes # Not in the search PATH, but as the default
++			   # location of the library
++      ;;
+     esac
+-    hardcode_libdir_flag_spec='${wl}+b ${wl}$libdir'
+     hardcode_libdir_separator=:
+-    hardcode_direct=yes
+-    hardcode_minus_L=yes # Not in the search PATH, but as the default
+-			 # location of the library.
+-    export_dynamic_flag_spec='${wl}-E'
+     ;;
+ 
+   irix5* | irix6* | nonstopux*)
+@@ -1674,7 +1699,7 @@
+     hardcode_direct=yes
+     hardcode_shlibpath_var=no
+     if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+-      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+       hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+       export_dynamic_flag_spec='${wl}-E'
+     else
+@@ -1684,7 +1709,7 @@
+ 	hardcode_libdir_flag_spec='-R$libdir'
+         ;;
+       *)
+-        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $compiler_flags'
++        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+         hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+         ;;
+       esac
+@@ -1966,8 +1991,6 @@
+ aix4* | aix5*)
+   version_type=linux
+   need_lib_prefix=no
+-  need_version=no
+-  hardcode_into_libs=yes
+   if test "$host_cpu" = ia64; then
+     # AIX 5 supports IA64
+     library_names_spec='${libname}${release}.so$major ${libname}${release}.so$versuffix $libname.so'
+@@ -2129,12 +2152,21 @@
+   version_type=sunos
+   need_lib_prefix=no
+   need_version=no
+-  shlibpath_var=SHLIB_PATH
+-  shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
+   library_names_spec='${libname}${release}.sl$versuffix ${libname}${release}.sl$major $libname.sl'
+   soname_spec='${libname}${release}.sl$major'
+   # HP-UX runs *really* slowly unless shared libraries are mode 555.
+   postinstall_cmds='chmod 555 $lib'
++  case "$host_cpu" in
++  hppa*64*)
++    shlibpath_var=LD_LIBRARY_PATH
++    shlibpath_overrides_runpath=yes
++    sys_lib_search_path_spec="/usr/lib/pa20_64 /usr/ccs/lib/pa20_64"
++    sys_lib_dlsearch_path_spec=$sys_lib_search_path_spec
++    ;;
++  *)
++    shlibpath_var=SHLIB_PATH
++    shlibpath_overrides_runpath=no # +s is required to enable SHLIB_PATH
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+@@ -2163,6 +2195,7 @@
+   shlibpath_overrides_runpath=no
+   sys_lib_search_path_spec="/usr/lib${libsuff} /lib${libsuff} /usr/local/lib${libsuff}"
+   sys_lib_dlsearch_path_spec="/usr/lib${libsuff} /lib${libsuff}"
++  hardcode_into_libs=yes
+   ;;
+ 
+ # No shared lib support for Linux oldld, aout, or coff.
+@@ -2250,6 +2283,7 @@
+ 
+ osf3* | osf4* | osf5*)
+   version_type=osf
++  need_lib_prefix=no
+   need_version=no
+   soname_spec='${libname}${release}.so$major'
+   library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'
+@@ -2491,8 +2525,8 @@
+     old_striplib striplib file_magic_cmd export_symbols_cmds \
+     deplibs_check_method allow_undefined_flag no_undefined_flag \
+     finish_cmds finish_eval global_symbol_pipe global_symbol_to_cdecl \
+-    global_symbol_to_c_name_address \
+-    hardcode_libdir_flag_spec hardcode_libdir_separator  \
++    global_symbol_to_c_name_address hardcode_libdir_flag_spec \
++    hardcode_libdir_flag_spec_ld hardcode_libdir_separator \
+     sys_lib_search_path_spec sys_lib_dlsearch_path_spec \
+     compiler_c_o compiler_o_lo need_locks exclude_expsyms include_expsyms; do
+ 
+@@ -2754,6 +2788,11 @@
+ # This must work even if \$libdir does not exist.
+ hardcode_libdir_flag_spec=$lt_hardcode_libdir_flag_spec
+ 
++# If ld is used when linking, flag to hardcode \$libdir into
++# a binary during linking. This must work even if \$libdir does
++# not exist.
++hardcode_libdir_flag_spec_ld=$lt_hardcode_libdir_flag_spec_ld
++
+ # Whether we need a single -rpath flag with a separated argument.
+ hardcode_libdir_separator=$lt_hardcode_libdir_separator
+ 
+@@ -3378,9 +3417,17 @@
+   ;;
+ 
+ hpux10.20*|hpux11*)
+-  lt_cv_deplibs_check_method='file_magic (s[[0-9]][[0-9]][[0-9]]|PA-RISC[[0-9]].[[0-9]]) shared library'
+   lt_cv_file_magic_cmd=/usr/bin/file
+-  lt_cv_file_magic_test_file=/usr/lib/libc.sl
++  case "$host_cpu" in
++  hppa*64*)
++    [lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|ELF-[0-9][0-9]) shared object file - PA-RISC [0-9].[0-9]']
++    lt_cv_file_magic_test_file=/usr/lib/pa20_64/libc.sl
++    ;;
++  *)
++    [lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library']
++    lt_cv_file_magic_test_file=/usr/lib/libc.sl
++    ;;
++  esac
+   ;;
+ 
+ irix5* | irix6* | nonstopux*)
+--- srclib/apr-util/configure.orig	Tue Mar 23 11:43:49 2004
++++ srclib/apr-util/configure	Fri May 14 16:40:09 2004
+@@ -1738,7 +1738,7 @@
+         ;;
+     esac
+     val=`echo $val | sed -e 's:\(.\)/*$:\1:'`
+-    val=`echo $val | sed -e 's:[\$]\([a-z_]*\):$\1:g'`
++    val=`echo $val | sed -e 's:[[\$]]\([[a-z_]]*\):$[\1]:g'`
+     if test "$autosuffix" = "yes"; then
+       if echo $val | grep apache >/dev/null; then
+         addtarget=no
+@@ -3017,7 +3017,7 @@
+ done
+ rm -f conftest*
+ if test -n "$ac_declaration"; then
+-  echo '#ifdef __cplusplus' >>confdefs.h
++  echo '#if defined(__cplusplus) && defined(__GLIBC__)' >>confdefs.h
+   echo $ac_declaration      >>confdefs.h
+   echo '#endif'             >>confdefs.h
+ fi
+@@ -8811,7 +8811,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -9414,7 +9413,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -10017,7 +10015,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -10620,7 +10617,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -11223,7 +11219,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -11826,7 +11821,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -12429,7 +12423,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -13054,7 +13047,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -13663,7 +13655,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -14272,7 +14263,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -14881,7 +14871,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -15490,7 +15479,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -16099,7 +16087,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -16708,7 +16695,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -17320,7 +17306,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -17923,7 +17908,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -18526,7 +18510,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -19129,7 +19112,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -19732,7 +19714,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -20335,7 +20316,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -20938,7 +20918,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -21577,7 +21556,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -22180,7 +22158,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -22783,7 +22760,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -23386,7 +23362,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -23989,7 +23964,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -24592,7 +24566,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -25195,7 +25168,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -25820,7 +25792,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -26429,7 +26400,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -27038,7 +27008,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -27647,7 +27616,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -28256,7 +28224,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -28865,7 +28832,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -29474,7 +29440,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -30086,7 +30051,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -30689,7 +30653,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -31292,7 +31255,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -31895,7 +31857,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -32498,7 +32459,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -33101,7 +33061,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -33704,7 +33663,6 @@
+   apu_have_db=0
+ 
+   # Save the original values of the flags we tweak.
+-  apu_check_lib_save_libs="$LIBS"
+   apu_check_lib_save_ldflags="$LDFLAGS"
+   apu_check_lib_save_cppflags="$CPPFLAGS"
+ 
+@@ -37218,7 +37176,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.
+--- support/apxs.in.orig	Mon Feb  9 14:59:49 2004
++++ support/apxs.in	Tue Mar 23 11:37:00 2004
+@@ -46,7 +46,7 @@
+ my $sbindir        = get_vars("sbindir");
+ my $CFG_SBINDIR    = eval qq("$sbindir");
+ my $ltflags        = $ENV{'LTFLAGS'};
+-$ltflags or $ltflags = "--silent";
++$ltflags or $ltflags = "";
+ 
+ my %internal_vars = map {$_ => 1}
+     qw(TARGET CC CFLAGS CFLAGS_SHLIB LD_SHLIB LDFLAGS_SHLIB LIBS_SHLIB
+@@ -252,7 +252,7 @@
+         }
+     }
+     $result =~ s|;;$||;
+-    $result =~ s|:| |;
++    $result =~ s|(?<!-OPT):| |;
+     return $result;
+ }
+ 
+--- configure.in.orig	Thu Mar 18 01:36:52 2004
++++ configure.in	Thu Jul  8 10:11:29 2004
+@@ -155,9 +155,6 @@
+       LTCFLAGS=""
+       ;;
+   *)
+-      if test "x$LTFLAGS" = "x"; then
+-          LTFLAGS='--silent'
+-      fi
+       my_libtool=`$apr_config --apr-libtool`
+       LIBTOOL="$my_libtool \$(LTFLAGS)"
+       libtoolversion=`$my_libtool --version`
+@@ -210,7 +207,6 @@
+       ;;
+   *-solaris2*)
+       dnl This is a hack -- we should be using AC_TRY_RUN instead
+-      ap_platform_runtime_link_flag="-R"
+       dnl solaris 8 and above don't have a thundering herd
+       dnl not sure about rev's before this one.
+       case `uname -r` in
+@@ -474,11 +470,8 @@
+ APACHE_HELP_STRING(--with-suexec-umask,umask for suexec'd process),[
+   AC_DEFINE_UNQUOTED(AP_SUEXEC_UMASK, 0$withval, [umask for suexec'd process] ) ] )
+ 
+-dnl AP_LIBS specifies the actual libraries. note we have some required libs.
+-AP_LIBS="$abs_builddir/srclib/pcre/libpcre.la $AP_LIBS"
+-
+ dnl APR should go after the other libs, so the right symbols can be picked up
+-AP_LIBS="$AP_LIBS `$apu_config --link-libtool --libs` `$apr_config --link-libtool --libs`"
++AP_LIBS="`$apu_config --link-libtool --libs` `$apr_config --link-libtool --libs`"
+ APACHE_SUBST(AP_LIBS)
+ APACHE_SUBST(AP_BUILD_SRCLIB_DIRS)
+ APACHE_SUBST(AP_CLEAN_SRCLIB_DIRS)
+--- config.layout.orig	Sat Jul 12 07:56:17 2003
++++ config.layout	Tue Mar 23 11:37:00 2004
+@@ -322,3 +322,26 @@
+     installbuilddir: ${prefix}/etc/apache2/build
+     errordir:      ${datadir}/error
+ </Layout>
++
++<Layout TWW>
++    prefix:        /usr/local/apache2
++    exec_prefix:   ${prefix}
++    bindir:        ${exec_prefix}/bin
++    sbindir:       ${exec_prefix}/bin
++    libdir:        ${exec_prefix}/lib
++    libexecdir:    ${exec_prefix}/modules
++    mandir:        ${prefix}/man
++    sysconfdir:    /etc${prefix}
++    datadir:       ${prefix}/share
++    installbuilddir: ${datadir}/build
++    errordir:      ${datadir}/error
++    iconsdir:      ${datadir}/icons
++    htdocsdir:     ${datadir}/htdocs
++    manualdir:     ${datadir}/manual
++    cgidir:        ${prefix}/cgi-bin
++    includedir:    ${prefix}/include
++    localstatedir: /var${prefix}
++    runtimedir:    ${localstatedir}/log
++    logfiledir:    ${localstatedir}/log
++    proxycachedir: ${localstatedir}/proxy
++</Layout>
+--- Makefile.in.orig	Sat Dec 27 06:00:42 2003
++++ Makefile.in	Thu Jul  8 10:11:05 2004
+@@ -4,12 +4,13 @@
+ 
+ PROGRAM_NAME         = $(progname)
+ PROGRAM_SOURCES      = modules.c
+-PROGRAM_LDADD        = $(HTTPD_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS)
++PROGRAM_LDADD        = $(HTTPD_LDFLAGS) $(PROGRAM_DEPENDENCIES) $(EXTRA_LIBS) $(AP_LIBS) $(LIBS)
+ PROGRAM_DEPENDENCIES = \
+   $(BUILTIN_LIBS) \
+   $(MPM_LIB) \
+   server/libmain.la \
+-  os/$(OS_DIR)/libos.la
++  os/$(OS_DIR)/libos.la \
++  srclib/pcre/libpcre.la
+ 
+ PROGRAMS        = $(PROGRAM_NAME)
+ TARGETS         = $(PROGRAMS) $(shared_build) $(other_targets)
+--- configure.orig	Tue Mar 23 11:43:23 2004
++++ configure	Thu Jul  8 10:18:15 2004
+@@ -3986,7 +3986,7 @@
+ done
+ rm -f conftest*
+ if test -n "$ac_declaration"; then
+-  echo '#ifdef __cplusplus' >>confdefs.h
++  echo '#if defined(__cplusplus) && defined(__GLIBC__)' >>confdefs.h
+   echo $ac_declaration      >>confdefs.h
+   echo '#endif'             >>confdefs.h
+ fi
+@@ -4442,9 +4442,6 @@
+       LTCFLAGS=""
+       ;;
+   *)
+-      if test "x$LTFLAGS" = "x"; then
+-          LTFLAGS='--silent'
+-      fi
+       my_libtool=`$apr_config --apr-libtool`
+       LIBTOOL="$my_libtool \$(LTFLAGS)"
+       libtoolversion=`$my_libtool --version`
+@@ -4526,8 +4523,7 @@
+ 
+       ;;
+   *-solaris2*)
+-            ap_platform_runtime_link_flag="-R"
+-                  case `uname -r` in
++                        case `uname -r` in
+         5.567*)
+             ;;
+         * )
+@@ -16074,9 +16070,7 @@
+ 
+ fi;
+ 
+-AP_LIBS="$abs_builddir/srclib/pcre/libpcre.la $AP_LIBS"
+-
+-AP_LIBS="$AP_LIBS `$apu_config --link-libtool --libs` `$apr_config --link-libtool --libs`"
++AP_LIBS="`$apu_config --link-libtool --libs` `$apr_config --link-libtool --libs`"
+ 
+   APACHE_VAR_SUBST="$APACHE_VAR_SUBST AP_LIBS"
+ 
+@@ -17632,7 +17626,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.

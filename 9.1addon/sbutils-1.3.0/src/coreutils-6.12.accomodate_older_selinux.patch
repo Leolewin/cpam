@@ -1,0 +1,83 @@
+Index: THANKS
+===================================================================
+--- THANKS.orig	2008-05-06 09:28:24.000000000 +0000
++++ THANKS	2008-06-24 06:59:40.388926016 +0000
+@@ -220,6 +220,7 @@
+ Ian Lance Taylor                    ian@cygnus.com
+ Ian Turner                          vectro@pipeline.com
+ Iida Yosiaki                        iida@gnu.org
++Ilya N. Golubev                     gin@mo.msk.ru
+ Ingo Saitz                          ingo@debian.org
+ Ivo Timmermans                      ivo@debian.org
+ James                               james@albion.glarp.com
+Index: lib/se-selinux.in.h
+===================================================================
+--- lib/se-selinux.in.h.orig	2008-05-06 09:28:24.000000000 +0000
++++ lib/se-selinux.in.h	2008-06-24 15:24:51.601595708 +0000
+@@ -17,7 +17,8 @@
+ # define security_context_t char*
+ # define is_selinux_enabled() 0
+ 
+-static inline int getcon (security_context_t *con) { errno = ENOTSUP; return -1; }
++static inline int getcon (security_context_t *con)
++  { errno = ENOTSUP; return -1; }
+ static inline void freecon (security_context_t con) {}
+ 
+ 
+@@ -28,7 +29,9 @@
+ static inline int matchpathcon (char const *s, mode_t m,
+ 				security_context_t *con)
+   { errno = ENOTSUP; return -1; }
+-
++static inline int matchpathcon_init_prefix (const char *path,
++					    const char *prefix)
++  { errno = ENOTSUP; return -1; }
+ static inline int getfilecon (char const *s, security_context_t *con)
+   { errno = ENOTSUP; return -1; }
+ static inline int lgetfilecon (char const *s, security_context_t *con)
+@@ -51,7 +54,4 @@
+ 					   security_class_t tclass,
+ 					   security_context_t *newcon)
+   { errno = ENOTSUP; return -1; }
+-static inline int matchpathcon_init_prefix (char const *path,
+-					    char const *prefix)
+-  { errno = ENOTSUP; return -1; }
+ #endif
+Index: m4/jm-macros.m4
+===================================================================
+--- m4/jm-macros.m4.orig	2008-05-06 09:28:24.000000000 +0000
++++ m4/jm-macros.m4	2008-06-24 06:59:40.517731071 +0000
+@@ -2,7 +2,7 @@
+ 
+ dnl Misc type-related macros for coreutils.
+ 
+-# Copyright (C) 1998, 2000-2007 Free Software Foundation, Inc.
++# Copyright (C) 1998, 2000-2008 Free Software Foundation, Inc.
+ 
+ # This program is free software: you can redistribute it and/or modify
+ # it under the terms of the GNU General Public License as published by
+@@ -46,6 +46,9 @@
+   # used by shred
+   AC_CHECK_FUNCS_ONCE(directio)
+ 
++  # Used by install.c.
++  AC_CHECK_FUNCS_ONCE([matchpathcon_init_prefix])
++
+   AC_CHECK_FUNCS_ONCE( \
+     endgrent \
+     endpwent \
+Index: src/install.c
+===================================================================
+--- src/install.c.orig	2008-05-31 20:33:08.000000000 +0000
++++ src/install.c	2008-06-24 06:59:40.544808623 +0000
+@@ -66,6 +66,10 @@
+ # define lchown(name, uid, gid) chown (name, uid, gid)
+ #endif
+ 
++#if ! HAVE_MATCHPATHCON_INIT_PREFIX
++# define matchpathcon_init_prefix(a, p) /* empty */
++#endif
++
+ /* Initial number of entries in each hash table entry's table of inodes.  */
+ #define INITIAL_HASH_MODULE 100
+ 

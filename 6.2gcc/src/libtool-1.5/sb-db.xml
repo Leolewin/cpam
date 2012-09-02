@@ -1,0 +1,137 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libtool" version="1.5" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}15</install-name>
+
+    <sources>
+      <source checksum="14686e5e7f6d929bddd356e48dae0af8"
+        checksum-type="md5" size="3164910"
+        path="src/libtool-1.5.tar.bz2"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="grep" install-name="grep25"
+        add-path="prepend">v&gt;=2.5.1</depend>
+      <depend program="sed" install-name="gsed40"
+        add-path="prepend">v&gt;=4.0.9</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${F77+F77="${F77}"} ${FFLAGS+FFLAGS="${FFLAGS}"} \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} ${ARGS+${ARGS}} \
+--datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${F77+F77="${F77}"} ${FFLAGS+FFLAGS="${FFLAGS}"} \
+${LDFLASG+LDFLAGS="${LDFLAGS}"} MAKE=gmake check
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/libtool.texi \
+doc/version.texi doc/PLATFORMS doc/fdl.texi ${_docdir}
+]]>
+    </install>
+
+    <module name="default">
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -readonly_strings" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  F77="g77" FFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2.7)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  F77=f77 FFLAGS="-dalign -errtags=INVOKE -xO2 -xtarget=generic" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  F77=f77 FFLAGS="-dalign -xO2 -xtarget=generic" ;;
+esac
+]]>
+      </script-header>
+    </module>
+
+    <changelog>
+      <change date="2004 September 14" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Sync with 1.5 CVS branch</para></item>
+        <item><para>Disregard test failures</para></item>
+        <item><para>When calling $LTCC, add $LTCFLAGS so default
+$CFLAGS used. Without this, if $CFLAGS contains 64-bit options, and
+libtool is configured for a 64-bit build, $LTCC will generate 32-bit
+objects.</para></item>
+      </change>
+
+      <change date="2004 August 2" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Preserve -xtarget option</para></item>
+        <item><para>Set lt_cv_deplibs_check_method=pass_all for all
+Linux systems</para></item>
+      </change>
+
+      <change date="2004 July 16" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove autoconf/automake dependency</para></item>
+      </change>
+
+      <change date="2004 June 15" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Enable hardcode_into_libs on Tru64
+UNIX</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

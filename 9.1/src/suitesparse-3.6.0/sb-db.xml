@@ -1,0 +1,234 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="suitesparse" version="3.6.0" revision="1">
+    <build-name>SuiteSparse</build-name>
+
+    <install-name>${SB_PROG_NAME}36</install-name>
+
+    <sources>
+      <source checksum="8ccb9e90b478b5d55b1d9a794e8ed676"
+        checksum-type="md5" size="11631261"
+        path="src/SuiteSparse-3.6.0.tar.gz"/>
+      <patch checksum="a5b8b1960b2f53a7c1d9bbf090f7779c"
+        checksum-type="md5" size="99213"
+        path="src/SuiteSparse.tww.patch"/>
+      <patch checksum="69629855751e53257d6174aa9937693b"
+        checksum-type="md5" size="1573944"
+        path="src/SuiteSparse.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="atlas" var="LIBATLAS"
+          install-name="libatlas36" module="shared"
+          systype="*-redhat-linux*">v&gt;=3.6.0 r&gt;=3</depend>
+        <depend program="atlas" var="LIBATLAS"
+          install-name="libatlas36" module="gcc44-shared"
+          systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*">v&gt;=3.6.0 r&gt;=10</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="!*-linux*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="!*-linux*"/>
+      </dependencies>
+
+      <validate>
+        <depend program="suitesparse" module="gcc44"
+          systype="*-redhat-linux*">v==3.6.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  FFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linuxe4)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  FFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  F77=g77
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB} ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  FFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB} ;;
+*-redhat-linuxe4)
+  F77=g77
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB} ;;
+*-redhat-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB} ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  FFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  FFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  FFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+F77="${F77-gfortran}" FFLAGS="${FFLAGS--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${_libatlas_lib:-${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_GCC_RT+${SB_VAR_GCC_RT_LIB}:}\
+${_libatlas_lib:-${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}} \
+${LDFLAGS+${LDFLAGS}}" \
+--enable-static --enable-shared \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_docdir}
+
+for _dir in UMFPACK AMD LDL CAMD CHOLMOD KLU; do
+  ${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_docdir}/${_dir}
+  ${SB_PATH_INSTALL} -o root -g 0 -m 644 ${_dir}/Doc/*.pdf \
+    ${_docdir}/${_dir}
+done
+]]>
+      </install>
+    </module>
+
+    <module name="gcc44"
+    systype="*-redhat-linux*">
+      <dependencies>
+        <depend program="atlas" var="LIBATLAS"
+          install-name="libatlas36"
+          module="gcc44-shared">v&gt;=3.6.0 r&gt;=10</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  FFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-redhat-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+F77="${F77-gfortran}" FFLAGS="${FFLAGS--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${_libatlas_lib:-${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_GCC_RT+${SB_VAR_GCC_RT_LIB}:}\
+${_libatlas_lib:-${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}} \
+${LDFLAGS+${LDFLAGS}}" \
+--enable-static --enable-shared --disable-dependency-tracking \
+--libdir="${SB_INSTALL_PREFIX}/lib/${_gccsubdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license module="AMD (approximate minimum degree)" path="lgpl-2.1.license"/>
+
+      <license module="BTF (permutation to block triangular form)" path="lgpl-2.1.license"/>
+
+      <license module="CAMD (constrainted approximate minimum degree)" path="lgpl-2.1.license"/>
+
+      <license module="CCOLAMD (constrained column approximate minimum degree)" path="lgpl-2.1.license"/>
+
+      <license module="CHOLMOD (sparse supernodal Cholesky factorization and update/downdate)" path="lgpl-2.1.license"/>
+
+      <license module="CHOLMOD [modify module] (sparse supernodal Cholesky factorization and update/downdate)" path="gpl-2.license"/>
+
+      <license module="CHOLMOD [supernodal module] (sparse supernodal Cholesky factorization and update/downdate)" path="gpl-2.license"/>
+
+      <license module="COLAMD (column approximate minimum degree)" path="lgpl-2.1.license"/>
+
+      <license module="CSparse (concise sparse matrix package)" path="lgpl-2.1.license"/>
+
+      <license module="CXSparse (CSparse eXtended)" path="lgpl-2.1.license"/>
+
+      <license module="KLU (sparse LU factorization)" path="lgpl-2.1.license"/>
+
+      <license module="LDL (LDL^T factorization)" path="lgpl-2.1.license"/>
+
+      <license module="LINFACTOR (MATLAB M-file for solving Ax=b)" path="lgpl-2.1.license"/>
+
+      <license module="MESHND (creation and nested dissection of regular 2D and 3D meshes)" path="lgpl-2.1.license"/>
+
+      <license module="RBio (read/write matrices in Rutherford/Boeing format)" path="gpl-2.license"/>
+
+      <license module="SSMULT (multiplies two MATLAB sparse matrices)" path="lgpl-2.1.license"/>
+
+      <license module="UMFPACK (sparse multifrontal LU factorization)" path="lgpl-2.1.license"/>
+
+      <license module="UFconfig (common configurations)" path="lgpl-2.1.license"/>
+    </licenses>
+  </program>
+</programs>

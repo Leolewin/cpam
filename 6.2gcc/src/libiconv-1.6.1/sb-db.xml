@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libiconv" version="1.6.1" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="0117656ed71bc2929949583403cc7742"
+        checksum-type="md5" size="2312409"
+        path="src/libiconv-1.6.1.tar.gz"/>
+      <patch checksum="01c2d960e69199338a0cde6ccf192831"
+        checksum-type="md5" size="2022127"
+        path="src/libiconv-1.6.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-shared \
+--enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <changelog>
+      <change date="2004 August 23" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to autoconf-2.5x</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

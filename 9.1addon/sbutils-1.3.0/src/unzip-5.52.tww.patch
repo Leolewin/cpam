@@ -1,0 +1,60 @@
+Index: unix/unxcfg.h
+===================================================================
+--- unix/unxcfg.h.orig	2005-01-04 18:54:22.000000000 -0600
++++ unix/unxcfg.h	2005-11-24 10:22:39.427936000 -0600
+@@ -71,7 +71,6 @@
+ #  endif
+ #else
+ #  include <time.h>
+-   struct tm *gmtime(), *localtime();
+ #endif
+ 
+ #if (defined(BSD4_4) || (defined(SYSV) && defined(MODERN)))
+Index: unix/Makefile
+===================================================================
+--- unix/Makefile.orig	2005-02-26 13:58:34.000000000 -0600
++++ unix/Makefile	2005-11-24 10:22:39.510823000 -0600
+@@ -44,10 +44,12 @@
+ # UnZip flags
+ CC = cc#	try using "gcc" target rather than changing this (CC and LD
+ LD = $(CC)#	must match, else "unresolved symbol:  ___main" is possible)
++LDFLAGS =
+ AS = as
+ LOC = $(LOCAL_UNZIP)
+ AF = $(LOC)
+-CF = -O -I. -DUNIX $(LOC)
++OPT = -O
++CF = $(OPT) -I. -DUNIX $(LOC)
+ LF = -o unzip
+ LF2 = -s
+ 
+@@ -265,13 +267,13 @@
+ # make utilities if default:  change "unzip$E:" to "unzip$E:&"
+ 
+ unzip$E:	$(OBJS)			# add `&' for parallel makes
+-	$(LD) $(LF) $(LOBJS) $(LF2)
++	$(LD) $(LDFLAGS) $(LF) $(LOBJS) $(LF2)
+ 
+ unzipsfx$E:	$(OBJX)			# add `&' for parallel makes
+-	$(LD) $(SL) $(LOBJX) $(SL2)
++	$(LD) $(LDFLAGS) $(SL) $(LOBJX) $(SL2)
+ 
+ funzip$E:	$(OBJF)			# add `&' for parallel makes
+-	$(LD) $(FL) $(OBJF) $(FL2)
++	$(LD) $(LDFLAGS) $(FL) $(OBJF) $(FL2)
+ 
+ zipinfo$E:	unzip$E			# `&' is pointless here...
+ 	@echo\
+@@ -540,10 +542,10 @@
+ generic:	unzips	   # first try if unknown
+ 
+ generic2:	unix_make  # second try if unknown:  hope make is called "make"
+-	make -f unix/Makefile unzips CF="$(CF) -DBSD"
++	$(MAKE) -f unix/Makefile unzips CF="$(CF) -DBSD"
+ 
+ generic3:	unix_make  # third try if unknown:  hope make is called "make"
+-	make -f unix/Makefile unzips CF="$(CF) -DSYSV"
++	$(MAKE) -f unix/Makefile unzips CF="$(CF) -DSYSV"
+ 
+ # Generic unzip and funzip target using either shared or static zlib for
+ # inflate rather than the original UnZip version.  (libz was libgz prior

@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="zip" version="2.3" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="5206a99541f3b0ab90f1baa167392c4f"
+        checksum-type="md5" size="723283"
+        path="src/zip23.tar.gz"/>
+      <patch checksum="196c379f926c05e0124bfb51b7f74c85"
+        checksum-type="md5" size="3866"
+        path="src/zip23.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+gmake -f unix/Makefile CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2} -I. -DUNIX" prefix=${SB_INSTALL_PREFIX} generic
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake -f unix/Makefile INSTALL=ginstall prefix=${SB_INSTALL_PREFIX} install
+]]>
+    </install>
+
+    <changelog>
+      <change date="2003 July 17" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix detection of common functions like
+strchr()</para></item>
+      </change>
+
+      <change date="2003 April 23" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libwmf" version="0.2.8" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}02</install-name>
+
+    <sources>
+      <source checksum="269fb225cd44f40cc877fb6c63706112"
+        checksum-type="md5" size="1620489"
+        path="src/libwmf-0.2.8.tar.gz"/>
+      <patch checksum="7eea724656c3c062167c24715e85d268"
+        checksum-type="md5" size="1263800"
+        path="src/libwmf-0.2.8.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="ghostscript" var="GS"
+        install-name="ghostscript70">v&gt;=7.07</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="plotutils" var="PLOTUTILS"
+        install-name="plotutils24">v&gt;=2.4.1</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPP="cc -Ae -E" CC_LD_RT="-Wl,+s,+b" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -ieee -std1 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT=-R ;;
+*-solaris2.5.1*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-I/usr/openwin/include" CC_LD_RT=-R ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT=-R ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" CPP="${CPP+${CPP}}" \
+LDFLAGS="-L${XPM_LIB} ${CC_LD_RT}${XPM_LIB}:\
+${PLOTUTILS_LIB}:${LIBPNG_LIB}:${ZLIB_LIB}:${LIBEXPAT_LIB}:\
+${LIBTTF_LIB} ${LDFLAGS+${LDFLAGS}}" \
+./configure --with-expat=${LIBEXPAT} \
+--with-freetype=${SB_VAR_LIBTTF} --with-zlib=${SB_VAR_ZLIB} \
+--with-png=${SB_VAR_LIBPNG} --with-jpeg=${SB_VAR_JPEG} \
+--with-plot=${SB_VAR_PLOTUTILS} --datadir="${_datadir}" \
+--with-gsfontmap="${SB_VAR_GS}/share/lib/Fontmap" \
+--with-gsfontdir="${SB_VAR_GS}/share/fonts" \
+--with-docdir="${_docdir}" --with-fontdir="${_datadir}/fonts" \
+--with-xtrafontmap="${_datadir}/fonts/fontmap" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e \
+'s!=-L\(\${exec_prefix}/lib\)!="-L\1 '"${CC_LD_RT}"'\1"!' \
+libwmf-config
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir="${_datadir}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir="${_datadir}"
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 August 27" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 July 30" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade included trio library to latest
+release to avoid use of nan() and strtof() on Tru64 UNIX
+4.0D</para></item>
+      </change>
+
+      <change date="2004 January 14" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Upgrade Ghostscript dependency to
+7.07</para></item>
+      </change>
+
+      <change date="2003 June 23" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

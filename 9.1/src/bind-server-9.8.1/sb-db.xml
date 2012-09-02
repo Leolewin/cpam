@@ -1,0 +1,993 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="bind-server" version="9.8.1" revision="3">
+    <build-name>bind-${SB_PROG_VER}-P1</build-name>
+
+    <install-name>bindserver981</install-name>
+
+    <sources>
+      <source checksum="afa41f8203d50bedad65071f9b6f96d7"
+        checksum-type="md5" size="8451969"
+        path="src/bind-9.8.1-P1.tar.gz"/>
+      <patch checksum="26520cb1715db9d02f7bdf4358b514bc"
+        checksum-type="md5" size="6365"
+        path="src/bind-9.8.1-P1.CVE-2012-1033.patch"/>
+      <patch checksum="7e72784328ef8d22a473b9a25104c8cc"
+        checksum-type="md5" size="2201"
+        path="src/bind-9.8.1-P1.CVE-2012-1667.patch"/>
+      <patch checksum="d6c68e95e3f8340962ccc7caa085425e"
+        checksum-type="md5" size="7761"
+        path="src/bind-9.8.1-P1.rh-libidn.patch"/>
+      <patch checksum="4e160b8d9dceb3607bc62ef0e763b901"
+        checksum-type="md5" size="825"
+        path="src/bind-9.8.1-P1.rh-dlz_buildfix.patch"/>
+      <patch checksum="f765974e50b546257d4e8b82a09c48c6"
+        checksum-type="md5" size="27943"
+        path="src/bind-9.8.1-P1.tww.patch"/>
+      <patch checksum="870ac333cc9519a412fc5551eef4bda5"
+        checksum-type="md5" size="835048"
+        path="src/bind-9.8.1-P1.auto.patch"/>
+      <source checksum="d7a1cb305b7b5b72df4e574777f76723"
+        checksum-type="md5" size="3048"
+        path="src/db.cache"
+        noop="1" var="DB_CACHE"/>
+    </sources>
+
+    <dependencies>
+      <depend user="named"/>
+
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        add-path="prepend">v&gt;=2.7.8</depend>
+      <depend program="libxslt" install-name="libxslt11"
+        add-path="prepend">v&gt;=1.1.26</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+      <depend program="prngd" var="PRNGD" install-name="prngd"
+        systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir=/etc${SB_INSTALL_PREFIX}
+_localstatedir=/var${SB_INSTALL_PREFIX}
+
+if [ "${SB_VAR_PRNGD+set}" = set ]; then
+  _prngd_socket="/var${SB_VAR_PRNGD}/pool"
+fi
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-threads" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-threads" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Olit=all +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-threads" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-threads" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--disable-threads" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+
+  ARGS="${ARGS+${ARGS}} --enable-threads" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+
+  ARGS="${ARGS+${ARGS}} --enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-threads" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-threads" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-threads" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-threads" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}" \
+LDFLAGS="${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB} \
+${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+--with-libtool --enable-shared --enable-static \
+--without-gssapi --with-openssl=${SB_VAR_LIBOPENSSL} \
+--disable-openssl-version-check --with-dlz-filesystem=yes \
+--without-make-clean --disable-backtrace --disable-symtable \
+${SB_VAR_LIBICONV+--with-libiconv=${SB_VAR_LIBICONV}} \
+${SB_VAR_LIBXML+--with-libxml2=${SB_VAR_LIBXML}} \
+${SB_VAR_MYSQL+--with-dlz-mysql=${SB_VAR_MYSQL}} \
+${SB_VAR_PGSQL+--with-dlz-postgres} \
+${SB_VAR_OPENLDAP+--with-dlz-ldap=${SB_VAR_OPENLDAP}} \
+${SB_VAR_LIBDB+--with-dlz-bdb=${SB_VAR_LIBDB}} \
+${_prngd_socket+--with-randomdev=${_prngd_socket}} \
+--localstatedir=${_localstatedir} --sysconfdir=${_sysconfdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# Modify paths in man pages
+(cd ${SB_INSTALL_PREFIX}/man
+ find . -type f | while read _man; do
+   ${SB_PATH_SED} -i -e "\
+s!/etc/named.conf!${_sysconfdir}/named.conf!; \
+s!/etc/rndc.conf!${_sysconfdir}/rndc.conf!; \
+s!/etc/rndc.key!${_sysconfdir}/rndc.key!; \
+s!/var/run/lwresd.pid!${_localstatedir}/run/lwresd.pid!; \
+s!/var/run/named.pid!${_localstatedir}/run/named.pid!" ${_man}
+ done
+
+ ${SB_PATH_SED} -i -e "\
+s!/etc!${_sysconfdir}!" man8/rndc-confgen.8)
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc \
+${SB_INSTALL_PREFIX}/doc/draft ${SB_INSTALL_PREFIX}/doc/html \
+${SB_INSTALL_PREFIX}/doc/misc ${SB_INSTALL_PREFIX}/doc/rfc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/draft/* \
+${SB_INSTALL_PREFIX}/doc/draft
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/arm/*.html \
+${SB_INSTALL_PREFIX}/doc/html
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/misc/* \
+${SB_INSTALL_PREFIX}/doc/misc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/rfc/* \
+${SB_INSTALL_PREFIX}/doc/rfc
+
+${SB_PATH_INSTALL} -m 755 -o named -g 0 -d ${_sysconfdir} \
+${_localstatedir}/log ${_localstatedir}/run
+${SB_PATH_INSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/lwresd.conf
+${SB_PATH_INSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/named.conf
+${SB_PATH_INSTALL} -m 640 -o named -g 0 /dev/null ${_sysconfdir}/rndc.conf
+${SB_PATH_INSTALL} -m 640 -o named -g 0 /dev/null ${_sysconfdir}/rndc.key
+${SB_PATH_INSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/db.localhost
+${SB_PATH_INSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/db.0
+${SB_PATH_INSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/db.127
+${SB_PATH_INSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/db.255
+${SB_PATH_INSTALL} -m 644 -o named -g 0 ${SB_SRC_DB_CACHE} \
+${_sysconfdir}/db.cache
+
+cat >${_sysconfdir}/named.conf <<_EOT_
+#
+# Minimal default BIND configuration.
+#
+
+_EOT_
+
+cat >${_sysconfdir}/rndc.conf <<_EOT_
+options {
+  default-server localhost;
+  default-key "rndc-key";
+};
+
+server localhost {
+  key "rndc-key";
+};
+
+include "${_sysconfdir}/rndc.key";
+_EOT_
+
+cat >${_sysconfdir}/named.conf <<_EOT_
+include "${_sysconfdir}/rndc.key";
+
+controls {
+  inet 127.0.0.1 allow {
+    127.0.0.1;
+  };
+};
+
+logging {
+  channel log {
+    file "${_localstatedir}/log/named";
+    print-category yes;
+    print-severity no;
+    print-time yes;
+  };
+
+  category lame-servers { null; };
+  category default { log; };
+  category security { default_syslog; log; };
+};
+
+options {
+  directory "${_sysconfdir}";
+  pid-file "${_localstatedir}/run/named.pid";
+  notify-source * port 53;
+  transfer-source * port 53;
+  cleaning-interval 60;
+};
+
+zone "." IN {
+  type hint;
+  file "db.cache";
+};
+
+zone "localhost" IN {
+  type master;
+  file "db.localhost";
+  notify no;
+  allow-update { none; };
+};
+
+zone "127.in-addr.arpa" IN {
+  type master;
+  file "db.127";
+  notify no;
+  allow-update { none; };
+};
+
+zone "0.in-addr.arpa" IN {
+  type master;
+  file "db.0";
+  notify no;
+  allow-update { none; };
+};
+
+zone "255.in-addr.arpa" IN {
+  type master;
+  file "db.255";
+  notify no;
+  allow-update { none; };
+};
+_EOT_
+
+cat >${_sysconfdir}/db.localhost <<'_EOT_'
+;
+; data file for local loopback interface
+;
+
+$TTL 7D
+@	IN	SOA	localhost. root.localhost. (
+			1	; Serial
+			7D	; Refresh
+			1D	; Retry
+			28D	; Expire
+			7D )	; Negative Cache TTL
+
+@	IN	NS	localhost.
+@	IN	A	127.0.0.1
+_EOT_
+
+cat >${_sysconfdir}/db.0 <<'_EOT_'
+;
+; reverse data file for broadcast zone
+;
+
+$TTL 7D
+@	IN	SOA	localhost. root.localhost. (
+			1	; Serial
+			7D	; Refresh
+			1D	; Retry
+			28D	; Expire
+			7D )	; Negative Cache TTL
+
+@	IN	NS	localhost.
+_EOT_
+
+cat >${_sysconfdir}/db.127 <<'_EOT_'
+;
+; reverse data file for local loopback interface
+;
+
+$TTL 7D
+@	IN	SOA	localhost. root.localhost. (
+			1	; Serial
+			7D	; Refresh
+			1D	; Retry
+			28D	; Expire
+			7D )	; Negative Cache TTL
+
+@	IN	NS	localhost.
+1.0.0	IN	PTR	localhost.
+_EOT_
+
+cat >${_sysconfdir}/db.255 <<'_EOT_'
+;
+; reverse data file for broadcast zone
+;
+
+$TTL 7D
+@	IN	SOA	localhost. root.localhost. (
+			1	; Serial
+			7D	; Refresh
+			1D	; Retry
+			28D	; Expire
+			7D )	; Negative Cache TTL
+
+@	IN	NS	localhost.
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license>
+        <para skip="0">Copyright (C) 2004-2011  Internet Systems
+Consortium, Inc. ("ISC")</para>
+        <para>Copyright (C) 1996-2003  Internet Software
+Consortium.</para>
+        <para>Permission to use, copy, modify, and/or distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL
+WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL ISC BE
+LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR
+ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.</para>
+        <para>Portions Copyright (C) 1996-2001  Nominum, Inc.</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND NOMINUM DISCLAIMS
+ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL NOMINUM
+BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.</para>
+        <para>Copyright (C) 1995-2000 by Network Associates,
+Inc.</para>
+        <para>Permission to use, copy, modify, and/or distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND ISC AND NETWORK
+ASSOCIATES DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN
+NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>Copyright (C) 2002 Stichting NLnet, Netherlands,
+stichting@nlnet.nl.</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND STICHTING NLNET
+DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+STICHTING NLNET BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>The development of Dynamically Loadable Zones (DLZ) for
+Bind 9 was conceived and contributed by Rob Butler.</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND ROB BUTLER
+DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+ROB BUTLER BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>Copyright (c) 1987, 1990, 1993, 1994 The Regents of the
+University of California.  All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>All advertising materials mentioning features or
+use of this software must display the following
+acknowledgement:</para>
+          <indent>
+            <para>This product includes software developed by the
+University of California, Berkeley and its contributors.</para>
+          </indent></item>
+          <item><para>Neither the name of the University nor the names
+of its contributors may be used to endorse or promote products derived
+from this software without specific prior written
+permission.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE REGENTS AND
+CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para>Copyright (C) The Internet Society 2005.  This version
+of this module is part of RFC 4178; see the RFC itself for full legal
+notices.</para>
+        <para skip="0">Copyright (c) 2004 Masarykova
+universita</para>
+        <para skip="0">(Masaryk University, Brno, Czech
+Republic)</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of the University nor the names
+of its contributors may be used to endorse or promote products derived
+from this software without specific prior written
+permission.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+        <para skip="0">Copyright (c) 1997 - 2003 Kungliga Tekniska
+Hogskolan</para>
+        <para> skip="0"&gt;(Royal Institute of Technology, Stockholm,
+Sweden).</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of the Institute nor the names
+of its contributors may be used to endorse or promote products derived
+from this software without specific prior written
+permission.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND
+CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para skip="0">Copyright (c) 1998 Doug Rabson</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para skip="0">Copyright ((c)) 2002, Rice University</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of Rice University (RICE) nor
+the names of its contributors may be used to endorse or promote
+products derived from this software without specific prior written
+permission.</para></item>
+        </unorderedlist>
+
+        <para>This software is provided by RICE and the contributors
+on an "as is" basis, without any representations or warranties of any
+kind, express or implied including, but not limited to,
+representations or warranties of non-infringement, merchantability or
+fitness for a particular purpose. In no event shall RICE or
+contributors be liable for any direct, indirect, incidental, special,
+exemplary, or consequential damages (including, but not limited to,
+procurement of substitute goods or services; loss of use, data, or
+profits; or business interruption) however caused and on any theory of
+liability, whether in contract, strict liability, or tort (including
+negligence or otherwise) arising in any way out of the use of this
+software, even if advised of the possibility of such damage.</para>
+        <para>Copyright (c) 1993 by Digital Equipment
+Corporation.</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies, and that the name of Digital Equipment
+Corporation not be used in advertising or publicity pertaining to
+distribution of the document or software without specific, written
+prior permission.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT
+CORP. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.   IN NO EVENT
+SHALL DIGITAL EQUIPMENT CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>Copyright 2000 Aaron D. Gifford.  All rights
+reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of the copyright holder nor the
+names of contributors may be used to endorse or promote products
+derived from this software without specific prior written
+permission.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND
+CONTRIBUTOR(S) ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para skip="0">Copyright (c) 1998 Doug Rabson.</para>
+        <para skip="0">Copyright (c) 2001 Jake Burkholder.</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
+``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para skip="0">Copyright (C) 1995, 1996, 1997, and 1998 WIDE
+Project. All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of the project nor the names of
+its contributors may be used to endorse or promote products derived
+from this software without specific prior written
+permission.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE PROJECT AND
+CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para>Copyright (c) 1999-2000 by Nortel Networks
+Corporation</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND NORTEL NETWORKS
+DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+NORTEL NETWORKS BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>Copyright (c) 2000-2002 Japan Network Information
+Center.  All rights reserved.</para>
+        <para>By using this file, you agree to the terms and
+conditions set forth bellow.</para>
+        <para align="center">LICENSE TERMS AND CONDITIONS</para>
+        <para>The following License Terms and Conditions apply, unless
+a different license is obtained from Japan Network Information Center
+("JPNIC"), a Japanese association, Kokusai-Kougyou-Kanda Bldg 6F,
+2-3-4 Uchi-Kanda, Chiyoda-ku, Tokyo 101-0047, Japan.</para>
+        <orderedlist>
+          <item><para>Use, Modification and Redistribution (including
+distribution of any modified or derived work) in source and/or binary
+forms is permitted under this License Terms and
+Conditions.</para></item>
+          <item><para>Redistribution of source code must retain the
+copyright notices as they appear in each source code file, this
+License Terms and Conditions.</para></item>
+          <item><para>Redistribution in binary form must reproduce the
+Copyright Notice, this License Terms and Conditions, in the
+documentation and/or other materials provided with the distribution.
+For the purposes of binary distribution the "Copyright Notice" refers
+to the following language: "Copyright (c) 2000-2002 Japan Network
+Information Center.  All rights reserved."</para></item>
+          <item><para>The name of JPNIC may not be used to endorse or
+promote products derived from this Software without specific prior
+written approval of JPNIC.</para></item>
+          <item><para>Disclaimer/Limitation of Liability: THIS
+SOFTWARE IS PROVIDED BY JPNIC "AS IS" AND ANY EXPRESS OR IMPLIED
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL JPNIC BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</para></item>
+        </orderedlist>
+
+        <para>Copyright (C) 2004  Nominet, Ltd.</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND NOMINET DISCLAIMS
+ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN NO EVENT SHALL ISC BE
+LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR
+ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.</para>
+        <para>Portions Copyright RSA Security Inc.</para>
+        <para>License to copy and use this software is granted
+provided that it is identified as "RSA Security Inc. PKCS #11
+Cryptographic Token Interface (Cryptoki)" in all material mentioning
+or referencing this software.</para>
+        <para>License is also granted to make and use derivative works
+provided that such works are identified as "derived from the RSA
+Security Inc. PKCS #11 Cryptographic Token Interface (Cryptoki)" in
+all material mentioning or referencing the derived work.</para>
+        <para>RSA Security Inc. makes no representations concerning
+either the merchantability of this software or the suitability of this
+software for any particular purpose. It is provided "as is" without
+express or implied warranty of any kind.</para>
+        <para skip="0">Copyright (c) 1996, David Mazieres
+&lt;dm@uun.org&gt;</para>
+        <para>Copyright (c) 2008, Damien Miller
+&lt;djm@openbsd.org&gt;</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR
+DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>Copyright (c) 2000-2001 The OpenSSL Project.  All rights
+reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>All advertising materials mentioning features or
+use of this software must display the following acknowledgment: "This
+product includes software developed by the OpenSSL Project for use in
+the OpenSSL Toolkit. (http://www.OpenSSL.org/)"</para></item>
+          <item><para>The names "OpenSSL Toolkit" and "OpenSSL
+Project" must not be used to endorse or promote products derived from
+this software without prior written permission. For written
+permission, please contact licensing@OpenSSL.org.</para></item>
+          <item><para>Products derived from this software may not be
+called "OpenSSL" nor may "OpenSSL" appear in their names without prior
+written permission of the OpenSSL Project.</para></item>
+          <item><para>Redistributions of any form whatsoever must
+retain the following acknowledgment:</para>
+          <indent>
+            <para>This product includes software developed by the
+OpenSSL Project for use in the OpenSSL Toolkit
+(http://www.OpenSSL.org/)</para>
+          </indent></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS
+IS'' AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL
+PROJECT OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="9.8.0" to="9.8.1">
+        <item><para>BIND 9.8.1 includes a number of bug fixes and
+enhancements from BIND 9.8 and earlier releases. New features
+include:</para>
+        <unorderedlist>
+          <item><para>The DLZ "dlopen" driver is now built by
+default</para></item>
+          <item><para>Added a new include file with function typedefs
+for the DLZ "dlopen" driver</para></item>
+          <item><para>Made "--with-gssapi" default</para></item>
+          <item><para>More verbose error reporting from DLZ
+LDAP</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="9.7.0" to="9.8.0">
+        <item><para>BIND 9.8.0 includes a number of changes from BIND
+9.7 and earlier releases.</para></item>
+        <items name="New features include:">
+          <item><para>Built-in trust anchor for the root zone, which
+can be switched on via "dnssec-validation auto;"</para></item>
+          <item><para>Support for DNS64.</para></item>
+          <item><para>Support for response policy zones
+(RPZ).</para></item>
+          <item><para>Support for writable DLZ zones.</para></item>
+          <item><para>Improved ease of configuration of GSS/TSIG for
+interoperability with Active Directory</para></item>
+          <item><para>Support for GOST signing algorithm for
+DNSSEC.</para></item>
+          <item><para>Removed RTT Banding from server selection
+algorithm.</para></item>
+          <item><para>New "static-stub" zone type.</para></item>
+          <item><para>Allow configuration of resolver timeouts via
+"resolver-query-timeout" option.</para></item>
+        </items>
+      </change>
+
+      <change from="9.6.0" to="9.7.0">
+        <item><para>BIND 9.7.0 includes a number of changes from
+BIND 9.6 and earlier releases.  Most are intended to simplify DNSSEC
+configuration.</para></item>
+        <items name="New features include:">
+          <item><para>Fully automatic signing of zones by
+"named".</para></item>
+          <item><para>Simplified configuration of DNSSEC Lookaside
+Validation (DLV).</para></item>
+          <item><para>Simplified configuration of Dynamic DNS, using
+the "ddns-confgen" command line tool or the "local" update-policy
+option.  (As a side effect, this also makes it easier to configure
+automatic zone re-signing.)</para></item>
+          <item><para>New named option "attach-cache" that allows
+multiple views to share a single cache.</para></item>
+          <item><para>DNS rebinding attack prevention.</para></item>
+          <item><para>New default values for dnssec-keygen
+parameters.</para></item>
+          <item><para>Support for RFC 5011 automated trust anchor
+maintenance</para></item>
+          <item><para>Smart signing: simplified tools for zone signing
+and key maintenance.</para></item>
+          <item><para>The "statistics-channels" option is now
+available on Windows.</para></item>
+          <item><para>A new DNSSEC-aware libdns API for use by
+non-BIND9 applications</para></item>
+          <item><para>On some platforms, named and other binaries can
+now print out a stack backtrace on assertion failure, to aid in
+debugging.</para></item>
+          <item><para>A "tools only" installation mode on Windows,
+which only installs dig, host, nslookup and nsupdate.</para></item>
+          <item><para>Improved PKCS#11 support, including Keyper
+support and explicit OpenSSL engine selection.</para></item>
+        </items>
+
+        <items name="Known issues in this release:">
+          <item><para>In rare cases, DNSSEC validation can leak
+memory.  When this happens, it will cause an assertion failure when
+named exits, but is otherwise harmless.  A fix exists, but was too
+late for this release; it will be included in BIND
+9.7.1.</para></item>
+        </items>
+
+        <items name="Compatibility notes:">
+          <item><para>If you had built BIND 9.6 with any of
+ALLOW_NSEC3PARAM_UPDATE, ALLOW_SECURE_TO_INSECURE or
+ALLOW_INSECURE_TO_SECURE defined, then you should ensure that all
+changes that are in progress have completed prior to upgrading to BIND
+9.7.  BIND 9.7 implements those features in a way which is not
+backwards compatible.</para></item>
+          <item><para>Prior releases had a bug which caused HMAC-SHA*
+keys with long secrets to be used incorrectly.  Fixing this bug means
+that older versions of BIND 9 may fail to interoperate with this
+version when using TSIG keys.  If this occurs, the new
+"isc-hmac-fixup" tool will convert a key with a long secret into a
+form that works correctly with all versions of BIND 9.  See the
+"isc-hmac-fixup" man page for additional details.</para></item>
+          <item><para>Revoking a DNSSEC key with "dnssec-revoke"
+changes its key ID. It is possible for the new key ID to collide with
+that of a different key.  Newly generated keys will not have this
+problem, as "dnssec-keygen" looks for potential collisions before
+generating keys, but exercise caution if using key revokation with
+keys that were generated by older versions of BIND 9.  See the
+Administrator's Reference Manual, section 4.10 ("Dynamic Trust Anchor
+Management") for more details.</para></item>
+          <item><para>A bug was fixed in which a key's scheduled
+inactivity date was stored incorectly.  Users who participated in the
+9.7.0 BETA test and had DNSSEC keys with scheduled inactivity dates
+will need to reset those keys' dates using "dnssec-settime
+-I".</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 July 18" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>CVE-2012-1033 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-1033">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-1033</ulink>):
+The resolver in ISC BIND overwrites cached server names and TTL values
+in NS records during the processing of a response to an A record
+query, which allows remote attackers to trigger continued
+resolvability of revoked domain names via a "ghost domain names"
+attack.</para></item>
+        <item><para>CVE-2012-1667 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-1667">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-1667</ulink>):
+ISC BIND does not properly handle resource records with a zero-length
+RDATA section, which allows remote DNS servers to cause a denial of
+service (daemon crash or data corruption) or obtain sensitive
+information from process memory via a crafted record.</para></item>
+      </change>
+
+      <change date="2011 November 20" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update source from 9.8.1 to 9.8.1-P1 to address
+the following security vulnerability:</para>
+        <unorderedlist>
+          <item><para>CVE-2011-4313 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-4313">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2011-4313</ulink>):
+BIND incorrectly handled certain specially crafted packets allowing a
+remote attacker could to use this flaw to cause a crash, resulting in
+a denial of service.</para></item>
+        </unorderedlist></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libnet" version="1.16" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="79dbf57a7bcc0cef70209f714dd2cb4c"
+        checksum-type="md5" size="70437"
+        path="src/libnet-1.16.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${PERL}/bin/perl Configure -d
+${PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <module name="5.8.0">
+      <install-name>perl580p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.8.0</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.8.2">
+      <install-name>perl582p</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="perl" var="PERL">v==5.8.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2003 November 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Perl 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,312 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="php" version="4.3.8" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}438</install-name>
+
+    <sources>
+      <source checksum="e8ab484fcb94cd2e0d7ecfd0762cfd33"
+        checksum-type="md5" size="3963437"
+        path="src/php-4.3.8.tar.bz2"/>
+      <patch checksum="910b8ac3cf0671fd2fc3deeea180eb9b"
+        checksum-type="md5" size="650468"
+        path="src/php-4.3.8.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="append">v==3.3.2</depend>
+      <depend program="apache" var="APACHE">v==2.0.49</depend>
+      <depend program="bison" var="BISON" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="flex" var="FLEX" install-name="flex"
+        add-path="prepend" type="build">v&gt;=2.5.4a</depend>
+      <depend program="bzip2" var="LIBBZ"
+        install-name="bzip2">v&gt;=1.0.2</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb42">v&gt;=4.2.52</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="gd" var="LIBGD"
+        install-name="libgd20">v&gt;=2.0.15</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="mysql" var="MYSQL">v==4.0.20</depend>
+      <depend program="openldap" var="OPENLDAP">v==2.1.27</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="postgresql" var="PGSQL">v==7.4.3</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib13">v&gt;=1.3.1</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CPP="xlc -w -E" CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib:/lib"
+  CPPFLAGS="-w" CC_LD_RT="-Wl,-blibpath:"
+
+  # use -blibpath for runtime path
+  export php_cv_cc_blibpath=yes
+  export php_cv_cc_dashr=no
+  export php_cv_cc_plusb=no
+  export php_cv_cc_rpath=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+
+  # <arpa/nameser.h> has a comment in a comment which gives a
+  # warning from cpp and autoconf flags it as a failure
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+
+  # use -rpath for runtime path
+  export php_cv_cc_blibpath=no
+  export php_cv_cc_dashr=no
+  export php_cv_cc_plusb=no
+  export php_cv_cc_rpath=yes
+
+  # disable functions available only in newer 6.5.x releases
+  export ac_cv_func_gai_strerror=no
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_func_strlcat=no
+  export ac_cv_func_strlcpy=no
+
+  # disable IPv6 support
+  ARGS="--disable-ipv6" ;;
+*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+
+  # use -rpath for runtime path
+  export php_cv_cc_blibpath=no
+  export php_cv_cc_dashr=no
+  export php_cv_cc_plusb=no
+  export php_cv_cc_rpath=yes ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-w" LDFLAGS="-L/usr/openwin/lib" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-w" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CPP="${CPP+${CPP}}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${CC_LD_RT_LIBS+${CC_LD_RT}${CC_LD_RT_LIBS}} \
+${LDFLAGS+${LDFLAGS}}" \
+EXTENSION_DIR=${SB_INSTALL_PREFIX}/lib/extensions ./configure \
+--with-config-file-path=${_sysconfdir} \
+--with-pear="${SB_INSTALL_PREFIX}/lib" \
+--with-apxs2=${SB_VAR_APACHE}/bin/apxs --enable-sysvsem \
+--enable-sysvshm --with-zlib=shared,${SB_VAR_ZLIB} \
+--with-bz2=shared,${SB_VAR_LIBBZ} --enable-shared \
+--enable-static --enable-trans-sid --enable-ftp \
+--with-db4=${SB_VAR_LIBDB} --with-xml=shared \
+--enable-track-vars --enable-safe-mode \
+--enable-sigchild --with-expat-dir=${SB_VAR_LIBEXPAT} \
+--with-gd=shared,${SB_VAR_LIBGD} --enable-gd-native-ttf \
+--with-jpeg-dir=${SB_VAR_JPEG} --with-png-dir=${SB_VAR_LIBPNG} \
+--with-tiff-dir=${SB_VAR_LIBTIFF} --with-freetype-dir=${SB_VAR_LIBTTF} \
+--with-xpm-dir=${SB_VAR_XPM} --with-t1lib=${SB_VAR_T1LIB} \
+${SB_VAR_LIBOPENSSL+--with-openssl=${SB_VAR_LIBOPENSSL}} \
+${SB_VAR_OPENLDAP+--with-ldap=shared,${SB_VAR_OPENLDAP}} \
+${SB_VAR_MYSQL+--with-mysql=shared,${SB_VAR_MYSQL}} \
+${SB_VAR_MYSQL+--with-mysql-sock="/var${SB_VAR_MYSQL}/run/mysql.sock"} \
+${SB_VAR_PGSQL+--with-pgsql=shared,${SB_VAR_PGSQL}} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# apxs expects shared library to end with .so
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  # ld cannot grok multiple +b entries so we need to replace
+  # the earlier entry
+  rm -f libphp4.la libs/libphp4.so
+  gmake phptempdir=${SB_VAR_LIBOPENSSL_LIB}
+  [ -f ".libs/libphp4.sl" ] && cp .libs/libphp4.sl libs/libphp4.so
+  :
+  ;;
+esac
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/php.ini
+${SB_PATH_INSTALL} -m 644 -o root -g 0 php.ini-dist \
+${_sysconfdir}/php.ini.sample
+${SB_PATH_INSTALL} -m 644 -o root -g 0 php.ini-recommended \
+${_sysconfdir}/php.ini.recommended
+
+cat >${_sysconfdir}/php.ini <<_EOT_
+# Load bzip2 compression library
+#extension = "bz2.sl" (HP-UX)
+#extension = "bz2.so"
+
+# Load GD image library
+#extension = "gd.sl" (HP-UX)
+#extension = "gd.so"
+
+# Load OpenLDAP library
+#extension = "ldap.sl" (HP-UX)
+#extension = "ldap.so"
+
+# Load MySQL 4.0.20 database library
+#extension = "mysql.sl" (HP-UX)
+#extension = "mysql.so"
+
+# Load PostgreSQL 7.4.3 database library
+#extension = "pgsql.sl" (HP-UX)
+#extension = "pgsql.so"
+
+# Load zlib compression library
+#extension = "zlib.sl" (HP-UX)
+#extension = "zlib.so"
+_EOT_
+
+mv ${SB_INSTALL_PREFIX}/modules/libphp4.so \
+${SB_INSTALL_PREFIX}/modules/mod_php4.so
+${SB_PATH_CHMOD} 555 ${SB_INSTALL_PREFIX}/modules/mod_php4.so
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/include
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="4.3.7" to="4.3.8">
+        <item><para>Fixed strip_tags() to correctly handle '\0'
+characters</para></item>
+        <item><para>Fixed memory_limit during request
+startup</para></item>
+        <item><para>Replace alloca() with emalloc() for better stack
+protection</para></item>
+        <item><para>Added missing safe_mode checks inside ftok and
+itpc</para></item>
+        <item><para>Fixed bug #28963 (Missing space for \0 in address
+allocation in IMAP)</para></item>
+        <item><para>Fixed bug #28632 (Prevent open_basedir bypass via
+MySQL's LOAD DATA LOCAL)</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>Support for Bzip2, GD, MySQL, OpenLDAP, and PostgreSQL
+are available as dynamically-loadable modules. Instructions follow on
+how to edit <command>/etc${SB_INSTALL_PREFIX}/php.ini</command> depending on the
+module.</para>
+
+        <para>Bzip2 compression library: (requires bzip2-1.0.2)</para>
+        <unorderedlist>
+          <item><para><command>extension = "bz2.so"</command>
+("bz2.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>GD image library: (requires gd-2.0.15)</para>
+        <unorderedlist>
+          <item><para><command>extension = "gd.so"</command> ("gd.sl"
+on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>OpenLDAP LDAP library: (requires openldap-2.1.27)</para>
+        <unorderedlist>
+          <item><para><command>extension = "ldap.so"</command>
+("ldap.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>MySQL database library: (requires mysql-4.0.20)</para>
+        <unorderedlist>
+          <item><para><command>extension = "mysql.so"</command>
+("mysql.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>PostgreSQL database library: (requires
+postgresql-7.4.3)</para>
+        <unorderedlist>
+          <item><para><command>extension = "pgsql.so"</command>
+("pgsql.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>Zlib compression library: (requires zlib-1.1.4)</para>
+        <unorderedlist>
+          <item><para><command>extension = "zlib.so"</command>
+("zlib.sl" on HP-UX)</para></item>
+        </unorderedlist>
+
+        <para>To load multiple extensions, specify the directive
+multiple times. Installing the PHP package will not automatically
+install any of the loadable modules. The
+"<command>extension_dir</command>" directive does not need to be used
+as the loadable modules are installed in the default extension
+directory.</para>
+
+        <para>The Apache module, <command>mod_php4.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules</command>. It is
+automatically added to the default Apache configuration file,
+<command>/etc${SB_INSTALL_BASE}/apache2049/httpd.conf</command>, and all files with
+extension "<command>.php</command>" are interpreted as PHP
+scripts:</para>
+        <screen>
+LoadModule php4_module ${SB_INSTALL_PREFIX}/modules/mod_php4.so
+&lt;IfModule sapi_apache2.c&gt;
+AddType application/x-httpd-php .php
+&lt;/IfModule&gt;
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 31" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Update Postgresql dependency from 7.3.4 to
+7.4.3</para></item>
+      </change>
+
+      <change date="2004 August 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update MySQL dependency from 4.0.15 to
+4.0.20</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

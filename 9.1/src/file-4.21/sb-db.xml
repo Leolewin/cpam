@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="file" version="4.21" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}42</install-name>
+
+    <sources>
+      <source checksum="9e3503116f4269a1be70220ee2234b0e"
+        checksum-type="md5" size="549938"
+        path="src/file-4.21.tar.gz"/>
+      <patch checksum="db92b07dd81212c54ec29ec5caf7a223"
+        checksum-type="md5" size="618"
+        path="src/file-4.21.fc-debian.patch"/>
+      <patch checksum="8ba6855bf193373331707f993819efad"
+        checksum-type="md5" size="785"
+        path="src/file-4.21.fc-selinux.patch"/>
+      <patch checksum="f48b741e3db978493a9d69f25e77987c"
+        checksum-type="md5" size="4808"
+        path="src/file-4.21.fc-match.patch"/>
+      <patch checksum="983d8cd88f0458adad85d19b9699cde1"
+        checksum-type="md5" size="392"
+        path="src/file-4.21.fc-fsdump.patch"/>
+      <patch checksum="96a36ed3e3b3b0b50e173ca780ca9f57"
+        checksum-type="md5" size="503"
+        path="src/file-4.21.fc-quick.patch"/>
+      <patch checksum="3772e9ca5680b65ca3ac149f58a85845"
+        checksum-type="md5" size="504"
+        path="src/file-4.21.fc-berkeley.patch"/>
+      <patch checksum="6719a60527eec11ee797ad0fa846f805"
+        checksum-type="md5" size="605"
+        path="src/file-4.21.fc-xen.patch"/>
+      <patch checksum="5e79753befe92c81035f1cdd169b3edf"
+        checksum-type="md5" size="1149"
+        path="src/file-4.21.fc-oracle.patch"/>
+      <patch checksum="2bdaa74d6229b941ef9d4c32eba01fba"
+        checksum-type="md5" size="463"
+        path="src/file-4.21.fc-clamav.patch"/>
+      <patch checksum="bd9850ffacae68512562b9544a525249"
+        checksum-type="md5" size="592"
+        path="src/file-4.21.fc-bash.patch"/>
+      <patch checksum="9eca609f02c5c3f7a465befa921855b6"
+        checksum-type="md5" size="552"
+        path="src/file-4.21.fc-ooffice.patch"/>
+      <patch checksum="1aa0cdb34096bdbfd24ca1f09cf86759"
+        checksum-type="md5" size="1458"
+        path="src/file-4.21.fc-msoffice.patch"/>
+      <patch checksum="6b472b8e6526b737753db9fb3ad0d3de"
+        checksum-type="md5" size="5607"
+        path="src/file-4.21.tww.patch"/>
+      <patch checksum="1a2644c23404b182a092bed959ec8198"
+        checksum-type="md5" size="1821785"
+        path="src/file-4.21.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linuxe*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${SB_VAR_LIBZ+LDFLAGS="-L${SB_VAR_LIBZ_LIB} \
+${CC_LD_RT}${SB_VAR_LIBZ_LIB} ${LDFLAGS+${LDFLAGS}}" \
+CPPFLAGS="-I${SB_VAR_LIBZ_INC} ${CPPFLAGS+${CPPFLAGS}}"} \
+--disable-dependency-tracking --datadir=${_datadir} \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir=${SB_INSTALL_PREFIX}/man \
+--program-prefix=u \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+
+rm -rf ${SB_INSTALL_PREFIX}/man/man5
+
+mv ${SB_INSTALL_PREFIX}/man/man3/ulibmagic.3 \
+${SB_INSTALL_PREFIX}/man/man3/libmagic.3
+
+mv ${SB_INSTALL_PREFIX}/man/man4/umagic.4 \
+${SB_INSTALL_PREFIX}/man/man4/magic.4
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 24" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2010 November 2" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 August 10" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31</para></item>
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,241 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="texinfo" version="4.6" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}46</install-name>
+
+    <sources>
+      <source checksum="d6a771de9e05efd8c1c9152f8b8686d6"
+        checksum-type="md5" size="1348113"
+        path="src/texinfo-4.6.tar.bz2"/>
+      <patch checksum="42fb53881ef628b8283e4598cbc6254d"
+        checksum-type="md5" size="997"
+        path="src/texinfo-4.6.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_doc="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1 -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae +O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LIBICONV+--with-libiconv-prefix=${LIBICONV}} \
+--with-libintl-prefix=${GETTEXT} \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_doc} \
+${_datadir}/texmf/tex/texinfo ${_datadir}/texmf/tex/pdftex \
+${_datadir}/texmf/tex/plain/dvips
+
+# copy texinfo files
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/*.texi ${_doc}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/texinfo.txi ${_doc}/texinfo.texi
+
+# copy TeX files
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/epsf.tex \
+${_datadir}/texmf/tex/plain/dvips
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/pdfcolor.tex \
+${_datadir}/texmf/tex/pdftex
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/texinfo.tex \
+${_datadir}/texmf/tex/texinfo
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/txi-??.tex \
+${_datadir}/texmf/tex/texinfo
+]]>
+    </install>
+
+    <notes>
+      <change from="4.5" to="4.6">
+        <items name="Language">
+          <item><para>new command @/ specifies an allowable breakpoint
+within a line</para></item>
+          <item><para>new command @dofirstparagraphindent to control
+whether the first paragraph following a section heading is indented.
+Default is to omit this indentation, unlike the output up to
+now</para></item>
+          <item><para>new command @indent for explicitly indenting a
+paragraph</para></item>
+          <item><para>makeinfo writes a new construct for @image in
+Info output, so that graphical Info browsers (such as Emacs Info under
+X) can display an actual image. (Standalone Info ignores this, since
+it runs in a tty.)</para></item>
+        </items>
+
+        <items name="makeinfo (Common)">
+          <item><para>search for image files in the include file
+search path</para></item>
+          <item><para>warns if @value is used on an undefined
+variable</para></item>
+        </items>
+
+        <items name="makeinfo (Info output)">
+          <item><para>default --split-size now 300,000 bytes, up from
+50,000</para></item>
+          <item><para>with --enable-encoding and a given
+@documentencoding, output a Local Variables section specifying that
+encoding, for use with Emacs</para></item>
+        </items>
+
+        <items name="makeinfo (HTML output)">
+          <item><para>uses &lt;h3&gt; at the smallest</para></item>
+          <item><para>a few css &lt;style&gt; definitions are included to
+better implement @format, @display, @small..., etc.</para></item>
+          <item><para>new option --css-include=FILE includes FILE in
+the &lt;style&gt;</para></item>
+          <item><para>@cartouche now outputs a &lt;table&gt; with a
+border</para></item>
+        </items>
+
+        <items name="texinfo.tex">
+          <item><para>new Polish translation txi-pl.tex</para></item>
+        </items>
+
+        <items name="texi2dvi">
+          <item><para>--command=CMD replaces --texinfo=CMD; it inserts
+CMD at the first line of LaTeX files now, or after the @setfilename
+for Texinfo files</para></item>
+        </items>
+
+        <items name="info">
+          <item><para>RET now goes to the nearest xref (rather like
+Emacs Info), instead of the next xref starting on the current
+line</para></item>
+        </items>
+
+        <items name="Distribution">
+          <item><para>new Romanian (ro) translation</para></item>
+          <item><para>variables now declared const where
+appropriate</para></item>
+          <item><para>gettext 0.12.1, automake 1.7.5</para></item>
+        </items>
+      </change>
+
+      <change from="4.4" to="4.5">
+        <items name="info">
+          <item><para>a bug in 4.4 prevented compressed info files
+from being found</para></item>
+        </items>
+
+        <items name="info">
+          <item><para>detect sys/ptem.h on Solaris</para></item>
+        </items>
+      </change>
+
+      <change from="4.3" to="4.4">
+        <items name="Language">
+          <item><para>The ' (ASCII apostrophe/right quote) character
+is finally allowed in node and anchor names. Thus, after installing
+this texinfo.tex, existing .aux files will cause errors! Remove them
+and rerun TeX to generate good ones.</para></item>
+          <item><para>@value constructs are now expanded in the
+filename arguments to @include and @verbatiminclude</para></item>
+        </items>
+
+        <items name="makeinfo">
+          <item><para>@macro names may no longer include ^ or _, for
+the sake of math mode</para></item>
+          <item><para>bug fix: @copying text is now reflected in tag
+table positions; before, nodes may not have been found with a
+long-enough @copying</para></item>
+          <item><para>bug fix: html @verb arg is quoted properly, and
+does not imply a paragraph break</para></item>
+        </items>
+
+        <items name="texinfo.tex">
+          <item><para>@smallexample and the like now output in a
+smaller font (9pt) in all paper formats, not just @smallbook and
+@afourpaper</para></item>
+          <item><para>new translation txi-tr.tex</para></item>
+          <item><para>bug fix: &lt;&gt;| and other characters do not
+disappear when they are first on a line in @verbatim</para></item>
+        </items>
+
+        <items name="install-info">
+          <item><para>bug fix: don't translate the '* Menu' info
+keyword</para></item>
+        </items>
+
+        <items name="info">
+          <item><para>CTRL-H is treated like DEL in incremental
+search</para></item>
+          <item><para>arrow keys once again work in isearch contexts
+under Solaris</para></item>
+        </items>
+
+        <items name="infokey">
+          <item><para>use .info key bindings before
+defaults</para></item>
+          <item><para>allow prefix keys to be disabled</para></item>
+        </items>
+
+        <items name="Distribution">
+          <item><para>update to GNU FDL 1.2 (<ulink url="http://www.gnu.org/licenses/fdl.html">http://www.gnu.org/licenses/fdl.html</ulink>)</para></item>
+          <item><para>getopt and other common library files updated
+from gnulib (<ulink url="http://savannah.gnu.org/projects/gnulib/">http://savannah.gnu.org/projects/gnulib/</ulink>)</para></item>
+          <item><para>autoconf 2.57, automake 1.7.2</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 March 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 4.3.3. While stpcpy() is in
+libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

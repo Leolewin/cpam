@@ -1,0 +1,101 @@
+Index: configure.in
+===================================================================
+--- configure.in.orig	2008-08-26 11:42:25.000000000 +0000
++++ configure.in	2008-10-21 19:01:51.065972953 +0000
+@@ -42,43 +42,13 @@
+ 
+ AC_MSG_NOTICE([Detecting options for shared libraries])
+ AC_LIBTOOL_WIN32_DLL
+-AM_PROG_LIBTOOL
++AC_LIBTOOL_TAGS()
++AC_PROG_LIBTOOL
+ 
+-AC_MSG_NOTICE([Detecting compiler options])
+-AC_C_CONST
+-
+-if test "$GCC" = "yes"; then
+-        CFLAGS="${CFLAGS} -Wall -Wpointer-arith -Wstrict-prototypes"
+-
+-	AC_MSG_CHECKING([if gcc supports -Wno-pointer-sign])
+-	_gcc_cflags_save="$CFLAGS"
+-	CFLAGS="${CFLAGS} -Wno-pointer-sign"
+-	AC_COMPILE_IFELSE(AC_LANG_PROGRAM([]), _gcc_psign=yes, _gcc_psign=no)
+-	AC_MSG_RESULT($_gcc_psign)
+-	if test "$_gcc_psign" != "yes"; then
+-          CFLAGS="$_gcc_cflags_save"
+-	fi
+-fi
++AC_SYS_LARGEFILE
+ 
+ AC_MSG_NOTICE([Detecting system's parameters])
+ 
+-# Run self-tests under valgrind?
+-if test "$cross_compiling" = no; then
+-  AC_CHECK_PROGS(VALGRIND, valgrind)
+-fi
+-if test -n "$VALGRIND" && $VALGRIND true > /dev/null 2>&1; then
+-  opt_valgrind_tests=yes
+-else
+-  opt_valgrind_tests=no
+-  VALGRIND=
+-fi 
+-AC_MSG_CHECKING([whether self tests are run under valgrind])
+-AC_ARG_ENABLE(valgrind-tests,
+-	AS_HELP_STRING([--enable-valgrind-tests],
+-                       [run self tests under valgrind]),
+-  opt_valgrind_tests=$enableval)
+-AC_MSG_RESULT($opt_valgrind_tests)
+-
+ AC_CHECK_SIZEOF(unsigned long int, 4)
+ AC_CHECK_SIZEOF(unsigned int, 4)
+ 
+@@ -104,15 +74,6 @@
+ AC_MSG_NOTICE([Running gnulib checks])
+ gl_INIT
+ 
+-# For libtasn1-config.
+-LIBTASN1_LIBS="-L${libdir} -ltasn1 $LIBS"
+-LIBTASN1_CFLAGS="-I${includedir}"
+-AC_SUBST(LIBTASN1_LIBS)
+-AC_SUBST(LIBTASN1_CFLAGS)
+-AC_CONFIG_COMMANDS([chmod],[[
+- chmod +x lib/libtasn1-config
+-]],[[]])
+-
+ # Check for gtk-doc.
+ GTK_DOC_CHECK(1.2)
+ 
+@@ -128,6 +89,6 @@
+ fi
+ 
+ AC_CONFIG_FILES([Makefile src/Makefile tests/Makefile lib/Makefile \
+-	gl/Makefile lib/libtasn1.pc lib/libtasn1-config doc/Makefile \
++	gl/Makefile lib/libtasn1.pc doc/Makefile \
+ 	doc/reference/Makefile examples/Makefile])
+ AC_OUTPUT
+Index: lib/Makefile.am
+===================================================================
+--- lib/Makefile.am.orig	2008-08-26 11:39:11.000000000 +0000
++++ lib/Makefile.am	2008-10-21 18:58:31.480919160 +0000
+@@ -16,9 +16,9 @@
+ # You should have received a copy of the GNU General Public License
+ # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ 
+-include_HEADERS = libtasn1.h
++INCLUDES = -I$(top_srcdir)/gl -I$(top_builddir)/gl
+ 
+-bin_SCRIPTS = libtasn1-config
++include_HEADERS = libtasn1.h
+ 
+ m4datadir = $(datadir)/aclocal
+ dist_m4data_DATA = libtasn1.m4
+Index: lib/libtasn1.pc.in
+===================================================================
+--- lib/libtasn1.pc.in.orig	2008-08-26 11:39:11.000000000 +0000
++++ lib/libtasn1.pc.in	2008-10-21 18:58:31.491526775 +0000
+@@ -7,5 +7,4 @@
+ Description: Library for ASN.1 and DER manipulation
+ Version: @VERSION@
+ Libs: -L${libdir} -ltasn1
+-Libs.private: @LIBTASN1_LIBS@
+ Cflags: -I${includedir}

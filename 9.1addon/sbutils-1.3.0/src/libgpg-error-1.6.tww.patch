@@ -1,0 +1,129 @@
+Index: Makefile.am
+===================================================================
+--- Makefile.am.orig	2007-09-27 08:45:31.000000000 -0500
++++ Makefile.am	2008-02-18 12:07:46.992215955 -0600
+@@ -31,6 +31,9 @@
+ SUBDIRS = m4 src tests po $(lang_subdirs)
+ 
+ 
++pkgconfigdir = $(libdir)/pkgconfig
++pkgconfig_DATA = libgpg-error.pc
++
+ dist-hook:
+ 	sed -e 's/@pkg_version@/$(VERSION)/g' \
+ 	    $(top_srcdir)/libgpg-error.spec.in  > $(distdir)/libgpg-error.spec
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2007-10-29 14:35:13.000000000 -0500
++++ configure.ac	2008-02-18 12:07:46.998109612 -0600
+@@ -61,12 +61,14 @@
+ AC_PROG_CPP
+ AC_PROG_AWK
+ AC_CHECK_TOOL(AR, ar, :)
++AC_LIBTOOL_TAGS()
+ AC_LIBTOOL_WIN32_DLL
+ AC_LIBTOOL_RC
+ AC_GNU_SOURCE
+ 
+ AC_PROG_LIBTOOL
+ 
++AC_SYS_LARGEFILE
+ # We need to compile and run a program on the build machine.
+ dnl The AC_PROG_CC_FOR_BUILD macro in the AC archive is broken for
+ dnl autoconf 2.57.
+@@ -80,7 +82,6 @@
+ AC_MSG_RESULT($CC_FOR_BUILD)
+ AC_ARG_VAR(CC_FOR_BUILD,[build system C compiler])
+ 
+-
+ # Set some internal variables depending on the platform for later use.
+ have_w32_system=no
+ case "${host}" in
+@@ -100,9 +101,9 @@
+ #endif
+ ])
+ 
+-
+ # Note, that autogen.sh greps for the next line.
+-AM_GNU_GETTEXT_VERSION([0.15])
++AM_GNU_GETTEXT_VERSION([0.14])
++
+ AM_GNU_GETTEXT([external])
+ 
+ # Checks for header files.
+@@ -128,7 +129,6 @@
+ GPG_ERROR_CONFIG_CFLAGS=""
+ AC_SUBST(GPG_ERROR_CONFIG_LIBS)
+ AC_SUBST(GPG_ERROR_CONFIG_CFLAGS)
+-AC_CONFIG_FILES([src/gpg-error-config], [chmod +x src/gpg-error-config])
+ 
+ 
+ # Special defines for certain platforms
+@@ -159,6 +159,7 @@
+ 
+ # Substitution
+ AC_CONFIG_FILES([Makefile])
++AC_CONFIG_FILES([libgpg-error.pc])
+ AC_CONFIG_FILES([po/Makefile.in m4/Makefile])
+ AC_CONFIG_FILES([src/Makefile tests/Makefile])
+ AC_CONFIG_FILES([lang/Makefile lang/cl/Makefile lang/cl/gpg-error.asd])
+Index: libgpg-error.pc.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ libgpg-error.pc.in	2008-02-18 12:07:47.009912790 -0600
+@@ -0,0 +1,10 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libgpg-error
++Description: Library of common error values for all GnuPG components
++Version: @VERSION@
++Libs: -L${libdir} -lgpg-error
++Cflags: -I${includedir}
+Index: src/Makefile.am
+===================================================================
+--- src/Makefile.am.orig	2007-10-29 06:45:05.000000000 -0500
++++ src/Makefile.am	2008-02-18 12:07:47.016669393 -0600
+@@ -25,7 +25,6 @@
+ bin_PROGRAMS = gpg-error
+ lib_LTLIBRARIES = libgpg-error.la
+ include_HEADERS = gpg-error.h
+-bin_SCRIPTS = gpg-error-config
+ m4datadir = $(datadir)/aclocal
+ m4data_DATA = gpg-error.m4
+ 
+@@ -86,6 +85,7 @@
+ 
+ endif
+ 
++AM_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"
+ 
+ libgpg_error_la_LDFLAGS = $(gpg_error_res_ldflag) -version-info \
+   @LIBGPG_ERROR_LT_CURRENT@:@LIBGPG_ERROR_LT_REVISION@:@LIBGPG_ERROR_LT_AGE@ \
+@@ -94,11 +94,9 @@
+ libgpg_error_la_SOURCES = gpg-error.h gettext.h $(arch_sources) \
+ 	init.c strsource.c strerror.c code-to-errno.c code-from-errno.c
+ 
+-libgpg_error_la_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"
+ libgpg_error_la_LIBADD = $(intllibs)
+ 
+-gpg_error_SOURCES = strsource-sym.c strerror-sym.c gpg-error.c $(arch_sources)
+-gpg_error_CPPFLAGS = -DLOCALEDIR=\"$(localedir)\"
++gpg_error_SOURCES = strsource-sym.c strerror-sym.c gpg-error.c 
+ gpg_error_LDADD = ./libgpg-error.la @LTLIBINTL@
+ 
+ err-sources.h: Makefile mkstrtable.awk err-sources.h.in
+@@ -126,10 +124,8 @@
+ 	$(CPP) _$@ | grep GPG_ERR_ | $(AWK) -f $(srcdir)/mkerrcodes.awk >$@
+ 	-rm _$@
+ 
+-# It is correct to use $(CC_FOR_BUILD) here.  We want to run the
+-# program at build time.
+ mkerrcodes: mkerrcodes.c mkerrcodes.h Makefile
+-	$(CC_FOR_BUILD) -I. -I$(srcdir) -o $@ $(srcdir)/mkerrcodes.c
++	$(CC) $(CFLAGS) -I. -I$(srcdir) -o $@ $(srcdir)/mkerrcodes.c
+ 
+ code-from-errno.h: mkerrcodes Makefile
+ 	./mkerrcodes | $(AWK) -f $(srcdir)/mkerrcodes2.awk >$@

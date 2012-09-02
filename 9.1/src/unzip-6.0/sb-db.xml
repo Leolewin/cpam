@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="unzip" version="6.0" revision="1">
+    <build-name>${SB_PROG_NAME}60</build-name>
+
+    <install-name>${SB_PROG_NAME}60</install-name>
+
+    <sources>
+      <source checksum="62b490407489521db863b523a7f86375"
+        checksum-type="md5" size="1376845"
+        path="src/unzip60.tgz"/>
+      <patch checksum="24c7c2a383ae02618fe490eb8ff23c75"
+        checksum-type="md5" size="590"
+        path="src/unzip60.rh-attribs-overflow.patch"/>
+      <patch checksum="49cebd0706c314406012b0c36f4e0c78"
+        checksum-type="md5" size="858"
+        path="src/unzip60.rh-bzip2-configure.patch"/>
+      <patch checksum="0b51f3d598f0ac36445067261a4f7ba1"
+        checksum-type="md5" size="3248"
+        path="src/unzip60.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip210">v&gt;=1.0.6</depend>
+    </dependencies>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC="cc -DNO_UNDERLINE" CFLAGS="-mr -Qn -xstrconst -xO2 \
+-xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+gmake -f unix/Makefile CC="${CC:-gcc}" \
+CFLAGS="${SB_VAR_BZIP2+-I${SB_VAR_BZIP2_INC}} \
+${CFLAGS:--O2} -DSYSV" \
+LDFLAGS="${SB_VAR_BZIP2+-L${SB_VAR_BZIP2_LIB} \
+${CC_LD_RT}${SB_VAR_BZIP2_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+prefix=${SB_INSTALL_PREFIX} generic
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake -f unix/Makefile check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake -f unix/Makefile prefix=${SB_INSTALL_PREFIX} install
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para>Copyright (c) 1990-2009 Info-ZIP.  All rights
+reserved.</para>
+        <para>For the purposes of this copyright and license,
+"Info-ZIP" is defined as the following set of individuals: Mark Adler,
+John Bush, Karl Davis, Harald Denker, Jean-Michel Dubois, Jean-loup
+Gailly, Hunter Goatley, Ed Gordon, Ian Gorman, Chris Herborth, Dirk
+Haase, Greg Hartwig, Robert Heath, Jonathan Hudson, Paul Kienitz,
+David Kirschbaum, Johnny Lee, Onno van der Linden, Igor Mandrichenko,
+Steve P. Miller, Sergio Monesi, Keith Owens, George Petrov, Greg
+Roelofs, Kai Uwe Rommel, Steve Salisbury, Dave Smith, Steven M.
+Schweda, Christian Spieler, Cosmin Truta, Antoine Verheijen, Paul von
+Behren, Rich Wales, Mike White.</para>
+        <para>This software is provided "as is," without warranty of
+any kind, express or implied.  In no event shall Info-ZIP or its
+contributors be held liable for any direct, indirect, incidental,
+special or consequential damages arising out of the use of or
+inability to use this software.</para>
+        <para>Permission is granted to anyone to use this software
+for any purpose, including commercial applications, and to alter it
+and redistribute it freely, subject to the above disclaimer and the
+following restrictions:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code (in whole or in
+part) must retain the above copyright notice, definition, disclaimer,
+and this list of conditions.</para></item>
+          <item><para>Redistributions in binary form (compiled
+executables and libraries) must reproduce the above copyright notice,
+definition, disclaimer, and this list of conditions in documentation
+and/or other materials provided with the distribution.  Additional
+documentation is not needed for executables where a command line
+license option provides these and a note regarding this option is in
+the executable's startup banner.  The sole exception to this condition
+is redistribution of a standard UnZipSFX binary (including SFXWiz) as
+part of a self-extracting archive; that is permitted without inclusion
+of this license, as long as the normal SFX banner has not been removed
+from the binary or disabled.</para></item>
+          <item><para>Altered versions--including, but not limited to,
+ports to new operating systems, existing ports with new graphical
+interfaces, versions with modified or added functionality, and
+dynamic, shared, or static library versions not from Info-ZIP--must be
+plainly marked as such and must not be misrepresented as being the
+original source or, if binaries, compiled from the original source.
+Such altered versions also must not be misrepresented as being
+Info-ZIP releases--including, but not limited to, labeling of the
+altered versions with the names "Info-ZIP" (or any variation thereof,
+including, but not limited to, different capitalizations), "Pocket
+UnZip," "WiZ" or "MacZip" without the explicit permission of Info-ZIP.
+Such altered versions are further prohibited from misrepresentative
+use of the Zip-Bugs or Info-ZIP e-mail addresses or the Info-ZIP
+URL(s), such as to imply Info-ZIP will provide support for the altered
+versions.</para></item>
+          <item><para>Info-ZIP retains the right to use the names
+"Info-ZIP," "Zip," "UnZip," "UnZipSFX," "WiZ," "Pocket UnZip," "Pocket
+Zip," and "MacZip" for its own source and binary
+releases.</para></item>
+        </orderedlist>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="5.52" to="6.0">
+        <item><para> Support PKWARE ZIP64 extensions, allowing Zip
+archives and Zip archive entries larger than 4 GiBytes and more than
+65536 entries within a single Zip archive. This support is currently
+only available for Unix, OpenVMS and Win32/Win64.</para></item>
+        <item><para>Support for bzip2 compression
+method.</para></item>
+        <item><para>Support for UTF-8 encoded entry names, both
+through PKWARE's "General Purpose Flags Bit 11" indicator and
+Info-ZIP's new "up" unicode path extra field. (Currently, on Windows
+the UTF-8 handling is limited to the character subset contained in the
+configured non-unicode "system code page".)</para></item>
+        <item><para>Added "wrong implementation used" warning to error
+messages of the MSDOS port when used under Win32, in an attempt to
+reduce false bug reports.</para></item>
+        <item><para>Fixed "Time of Creation/Time of Use" vulnerability
+when setting attributes of extracted files, for Unix and Unix-like
+ports.</para></item>
+        <item><para>Fixed memory leak when processing invalid deflated
+data.</para></item>
+        <item><para>Fixed long-standing bug in unshrink
+(partial_clear), added boundary checks against invalid compressed
+data.</para></item>
+        <item><para>On Unix, keep inherited SGID attribute bit for
+extracted directories unless restoration of owner/group id or
+SUID/SGID/Tacky attributes was requested.</para></item>
+        <item><para>On Unix, allow extracted filenames to contain
+embedded control characters when explicitly requested by specifying
+the new command line option "-^".</para></item>
+        <item><para>On Unix, support restoration of symbolic link
+attributes.</para></item>
+        <item><para>On Unix, support restoration of 32-bit UID/GID
+data using the new "ux" IZUNIX3 extra field introduced with Zip
+3.0.</para></item>
+        <item><para>Support for ODS5 extended filename syntax on new
+OpenVMS systems.</para></item>
+        <item><para>Support symbolic links zipped up on
+VMS.</para></item>
+        <item><para>On VMS (only 8.x or better), support symbolic link
+creation.</para></item>
+        <item><para>On VMS, support option to create converted text
+files in Stream_LF format.</para></item>
+        <item><para>New -D option to suppress restoration of
+timestamps for extracted directory entries (on those ports that
+support setting of directory timestamps). By specifying "-DD", this
+new option also allows to suppress timestamp restoration for ALL
+extracted files on all UnZip ports which support restoration of
+timestamps. On VMS, the default behaviour is now to skip restoration
+of directory timestamps; here, "--D" restores ALL timestamps, "-D"
+restores none.</para></item>
+        <item><para>On OS/2, Win32, and Unix, the (previously
+optional) feature UNIXBACKUP to allow saving backup copies of
+overwritten files on extraction is now enabled by
+default.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

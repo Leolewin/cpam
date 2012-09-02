@@ -1,0 +1,326 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="atk" version="1.32.0" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}132</install-name>
+
+    <sources>
+      <source checksum="b9a19a3e426cd9ca930f0108c4ee343f"
+        checksum-type="md5" size="688186"
+        path="src/atk-1.32.0.tar.bz2"/>
+      <patch checksum="160b76fe00286579ea2b3e0554942c2c"
+        checksum-type="md5" size="2322"
+        path="src/atk-1.32.0.tww.patch"/>
+      <patch checksum="aaa78460cbc4d2ed2fad038d5188b7e1"
+        checksum-type="md5" size="1449992"
+        path="src/atk-1.32.0.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          add-path="prepend">v&gt;=1.13.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="atk" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.32.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}}" \
+CFLAGS="${CFLAGS:=-O2}" LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+--disable-gtk-doc --enable-static --enable-shared \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--disable-dependency-tracking --with-html-dir=${_docdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" atk.pc
+]]>
+      </configure>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018" module="64bit"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113" module="64bit"
+          add-path="prepend">v&gt;=1.13.1</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}}" \
+CFLAGS="${CFLAGS:=-O2}" LDFLAGS="-L${SB_VAR_GETTEXT}/${_libdir} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV}/${_libdir}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV}/${_libdir}/pkgconfig}\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+--disable-gtk-doc --enable-static --enable-shared \
+--disable-dependency-tracking --datadir=${_datadir} \
+--with-html-dir=${_docdir} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" atk.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-pkgconfigDATA
+gmake -C atk install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.30.0" to="1.32.0">
+        <item><para>Fixes: #630097, #621717, #571622, #617851,
+#616812.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.29.92" to="1.30.0">
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.29.4" to="1.29.92">
+        <item><para>Fixes: Bug #608399. Correct the link of
+accessibility page.</para></item>
+        <item><para>Fixes: Bug #606888. Link libatk against
+libintl.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.29.3" to="1.29.4">
+        <item><para>Fixes: #592146.</para></item>
+      </change>
+
+      <change from="1.29.2" to="1.29.3">
+        <item><para>Fixes: #601552.</para></item>
+      </change>
+
+      <change from="1.28.0" to="1.29.2">
+        <item><para>Fixes: #569427.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.27.90" to="1.28.0">
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.26.0" to="1.27.90">
+        <item><para>Fixes: #575794, #591105, #489828.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.25.2" to="1.26.0">
+        <item><para>Fixes: Improve the documentation.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.24.0" to="1.25.2">
+        <item><para>Fixes: #562204, #505445, #361757, #478620,
+#560156, #477708, #478595, #478583 #480126.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.23.5" to="1.24.0">
+        <item><para>Fixes: #551474.</para></item>
+        <item><para>Translation update.</para></item>
+      </change>
+
+      <change from="1.22.0" to="1.23.5">
+        <item><para>Fixes: #535704, #526752.</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 May 11" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-36 to correctly handle
+deplib linking</para></item>
+      </change>
+
+      <change date="2012 May 8" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64-bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,803 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="ghostscript" version="9.01" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}90</install-name>
+
+    <sources>
+      <source checksum="9824d6a21ad8b4a831f67601959f1181"
+        checksum-type="md5" size="23612084"
+        path="src/ghostscript-9.01.tar.bz2"/>
+      <patch checksum="01453c4928f104ebc98c84e6bd6ca488"
+        checksum-type="md5" size="470864"
+        path="src/ghostscript-9.01.tww.patch"/>
+      <patch checksum="f154b0b22c9a58d54967a15b5ec0e32a"
+        checksum-type="md5" size="1494360"
+        path="src/ghostscript-9.01.gnulib.patch"/>
+      <patch checksum="5b50345ea0ec5d86b899aa7c4231957e"
+        checksum-type="md5" size="1470"
+        path="src/ghostscript-9.01.tww-gnulib.patch"/>
+      <patch checksum="336ec138f5906ce4c154abcceaca00ca"
+        checksum-type="md5" size="7028595"
+        path="src/ghostscript-9.01.auto.patch"/>
+      <source checksum="6865682b095f8c4500c54b285ff05ef6"
+        checksum-type="md5" size="3752871"
+        path="src/ghostscript-fonts-std-8.11.tar.gz"
+        noop="1" var="FONT_STD"/>
+      <source checksum="1a643ae62ef166562e4d422b1a601272"
+        checksum-type="md5" size="796086"
+        path="src/ghostscript-fonts-other-6.0.tar.gz"
+        noop="1" var="FONT_OTHER"/>
+    </sources>
+
+    <dependencies>
+      <depend program="mktemp"
+        install-name="mktemp17">v&gt;=1.7</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf24"
+        add-path="prepend">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="jasper" var="JASPER"
+        install-name="libjasper1900">v&gt;=1.900.1</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="lcms" var="LIBLCMS"
+        install-name="liblcms11">v&gt;=1.19</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff39">v&gt;=3.9.5</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+export PKG_CONFIG_PATH="\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}/pkgconfig}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+chmod +x gnulib/configure
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qobjmodel=ibm -qro -qroconst \
+-qnotempinc -qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CXX="cxx" CXXFLAGS="-O2 -arch ev5 -model ansi -ieee -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+esac
+
+# replace automake/libtool files in ijs
+for _auto in config.guess config.sub install-sh ltmain.sh \
+mkinstalldirs missing; do
+  rm -f ijs/${_auto}
+  cp ${_auto} ijs/${_auto}
+done
+
+rm -rf lcms libpng zlib jpeg jasper freetype tiff
+
+(cd ijs
+ ${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+ LDFLAGS="${LDFLAGS+${LDFLAGS}}" CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+ --libdir=${SB_INSTALL_PREFIX_LIB} --mandir=${SB_INSTALL_PREFIX}/man \
+ --prefix=${SB_INSTALL_PREFIX}
+
+ ${SB_PATH_CHMOD} +x install-sh)
+
+${SHELL} ./configure \
+CC="${CC:-gcc}" CFLAGS="" GCFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_JASPER+-I${SB_VAR_JASPER_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBLCMS+-I${SB_VAR_LIBLCMS_INC}} \
+${SB_VAR_FCPACKAGE+-I${SB_VAR_FCPACKAGE_INC}} \
+${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_JASPER+:${SB_VAR_JASPER_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}}\
+${SB_VAR_LIBGDKPIXBUF+:${SB_VAR_LIBGDKPIXBUF_LIB}}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_JASPER+-L${SB_VAR_JASPER_LIB}} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBLCMS+-L${SB_VAR_LIBLCMS_LIB}} \
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_LIBPANGO+-L${SB_VAR_LIBPANGO_LIB}} \
+${SB_VAR_LIBTTF+-L${SB_VAR_LIBTTF_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_CUPS+set}" != set && echo --disable-cups) \
+${SB_VAR_CUPS+--enable-cups} --with-drivers=ALL --disable-contrib \
+--enable-compile-inits --with-ijs --with-system-libtiff \
+$(test "${SB_VAR_JASPER+set}" != set && echo --without-jasper) \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--datadir=${_datadir} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!libdirs=-L\(.*\)!libdirs=\"-L\1 ${CC_LD_RT}\1\"!" ijs/ijs-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ijs/ijs.pc base/ghostscript.pc
+
+# fix paths in gs.1
+${SB_PATH_SED} -i -e "\
+s!@LIBDIR@!${SB_INSTALL_PREFIX_LIB}!; \
+s!@DATADIR@!${_datadir}!; \
+s!@DOCDIR@!${_docdir}!" man/gs.1
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="cups" var="CUPS" module="runtime"
+          add-path="prepend">v==1.4.8</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="ghostscript"
+          module="cups-1.4.8">v==9.01</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+export PKG_CONFIG_PATH="\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}/pkgconfig}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+chmod +x gnulib/configure
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qobjmodel=ibm -qro -qroconst \
+-qnotempinc -qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CXX="cxx" CXXFLAGS="-O2 -arch ev5 -model ansi -ieee -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+esac
+
+# replace automake/libtool files in ijs
+for _auto in config.guess config.sub install-sh ltmain.sh \
+mkinstalldirs missing; do
+  rm -f ijs/${_auto}
+  cp ${_auto} ijs/${_auto}
+done
+
+rm -rf lcms libpng zlib jpeg jasper freetype tiff
+
+(cd ijs
+ ${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+ LDFLAGS="${LDFLAGS+${LDFLAGS}}" CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+ --libdir=${SB_INSTALL_PREFIX_LIB} --mandir=${SB_INSTALL_PREFIX}/man \
+ --prefix=${SB_INSTALL_PREFIX}
+
+ ${SB_PATH_CHMOD} +x install-sh)
+
+${SHELL} ./configure \
+CC="${CC:-gcc}" CFLAGS="" GCFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_JASPER+-I${SB_VAR_JASPER_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBLCMS+-I${SB_VAR_LIBLCMS_INC}} \
+${SB_VAR_FCPACKAGE+-I${SB_VAR_FCPACKAGE_INC}} \
+${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_JASPER+:${SB_VAR_JASPER_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}}\
+${SB_VAR_LIBGDKPIXBUF+:${SB_VAR_LIBGDKPIXBUF_LIB}}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_JASPER+-L${SB_VAR_JASPER_LIB}} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBLCMS+-L${SB_VAR_LIBLCMS_LIB}} \
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_LIBPANGO+-L${SB_VAR_LIBPANGO_LIB}} \
+${SB_VAR_LIBTTF+-L${SB_VAR_LIBTTF_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_CUPS+set}" != set && echo --disable-cups) \
+${SB_VAR_CUPS+--enable-cups} --with-drivers=ALL --disable-contrib \
+--enable-compile-inits --with-ijs --with-system-libtiff \
+$(test "${SB_VAR_JASPER+set}" != set && echo --without-jasper) \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--datadir=${_datadir} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!libdirs=-L\(.*\)!libdirs=\"-L\1 ${CC_LD_RT}\1\"!" ijs/ijs-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ijs/ijs.pc base/ghostscript.pc
+
+# fix paths in gs.1
+${SB_PATH_SED} -i -e "\
+s!@LIBDIR@!${SB_INSTALL_PREFIX_LIB}!; \
+s!@DATADIR@!${_datadir}!; \
+s!@DOCDIR@!${_docdir}!" man/gs.1
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+set -e
+gmake LIBADD="${LDFLAGS+${LDFLAGS}}" docdir=${_docdir} so
+gmake -C ijs
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+set -e
+gmake LIBADD="${LDFLAGS+${LDFLAGS}}" docdir=${_docdir} soinstall
+
+gmake -C ijs install
+
+mv ${SB_INSTALL_PREFIX}/bin/gsc ${SB_INSTALL_PREFIX}/bin/gs
+
+(cd ${_datadir}
+ ${SB_PATH_TAR} --no-same-owner -zxf ${SRC_FONT_STD}
+ ${SB_PATH_TAR} --no-same-owner -zxf ${SRC_FONT_OTHER}
+ ${SB_PATH_CHOWN} -R 0:0 ${_datadir}/fonts
+ ${SB_PATH_FIND} ${_datadir}/fonts -type f -exec ${SB_PATH_CHMOD} 644 {} \;)
+ 
+# make fonts available to fontconfig
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_datadir}/fonts/conf.avail
+cat >${_datadir}/fonts/conf.avail/09-${SB_PROG_NAME}.conf <<_EOT_
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>${_datadir}/fonts</dir>
+</fontconfig>
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="cups-1.4.8">
+      <dependencies replace="0">
+        <depend program="cups" var="CUPS"
+          add-path="prepend">v==1.4.8</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+export PKG_CONFIG_PATH="\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}/pkgconfig}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+chmod +x gnulib/configure
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qobjmodel=ibm -qro -qroconst \
+-qnotempinc -qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CXX="cxx" CXXFLAGS="-O2 -arch ev5 -model ansi -ieee -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+esac
+
+# replace automake/libtool files in ijs
+for _auto in config.guess config.sub install-sh ltmain.sh \
+mkinstalldirs missing; do
+  rm -f ijs/${_auto}
+  cp ${_auto} ijs/${_auto}
+done
+
+rm -rf lcms libpng zlib jpeg jasper freetype tiff
+
+(cd ijs
+ ${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+ LDFLAGS="${LDFLAGS+${LDFLAGS}}" CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+ --libdir=${SB_INSTALL_PREFIX_LIB} --mandir=${SB_INSTALL_PREFIX}/man \
+ --prefix=${SB_INSTALL_PREFIX}
+
+ ${SB_PATH_CHMOD} +x install-sh)
+
+${SHELL} ./configure \
+CC="${CC:-gcc}" CFLAGS="" GCFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_JASPER+-I${SB_VAR_JASPER_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBLCMS+-I${SB_VAR_LIBLCMS_INC}} \
+${SB_VAR_FCPACKAGE+-I${SB_VAR_FCPACKAGE_INC}} \
+${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_JASPER+:${SB_VAR_JASPER_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}}\
+${SB_VAR_LIBGDKPIXBUF+:${SB_VAR_LIBGDKPIXBUF_LIB}}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_JASPER+-L${SB_VAR_JASPER_LIB}} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBLCMS+-L${SB_VAR_LIBLCMS_LIB}} \
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_LIBPANGO+-L${SB_VAR_LIBPANGO_LIB}} \
+${SB_VAR_LIBTTF+-L${SB_VAR_LIBTTF_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_CUPS+set}" != set && echo --disable-cups) \
+${SB_VAR_CUPS+--enable-cups} --with-drivers=ALL --disable-contrib \
+--enable-compile-inits --with-ijs --with-system-libtiff \
+$(test "${SB_VAR_JASPER+set}" != set && echo --without-jasper) \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--datadir=${_datadir} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!libdirs=-L\(.*\)!libdirs=\"-L\1 ${CC_LD_RT}\1\"!" ijs/ijs-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ijs/ijs.pc base/ghostscript.pc
+
+# fix paths in gs.1
+${SB_PATH_SED} -i -e "\
+s!@LIBDIR@!${SB_INSTALL_PREFIX_LIB}!; \
+s!@DATADIR@!${_datadir}!; \
+s!@DOCDIR@!${_docdir}!" man/gs.1
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+mkdir -p bin obj
+gmake cups
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+# Installs to ${SB_VAR_CUPS}
+gmake install-cups
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_cupssysconfdir="/etc${SB_VAR_CUPS}"
+
+rm -f \
+${SB_VAR_CUPS_LIB}/filter/pstoraster \
+${SB_VAR_CUPS_LIB}/filter/pdftoraster \
+${SB_VAR_CUPS_LIB}/filter/pstopxl \
+${SB_VAR_CUPS}/share/model/pxlcolor.ppd \
+${SB_VAR_CUPS}/share/model/pxlmono.ppd \
+${_cupssysconfdir}/pstoraster.convs \
+${_cupssysconfdir}/pdftoraster.convs
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>The files in the base, psi, lib, toolbin, examples,
+doc and man directories (folders) and any subdirectories (sub-folders)
+thereof are part of GPL Ghostscript.</para>
+        <para>The files in the Resource directory and any
+subdirectories thereof are also part of GPL Ghostscript, with the
+explicit exception of the files in the CMap subdirectory. The CMap
+files are copyright Adobe Systems Incorporated and covered by a
+separate license which permits only verbatim distribution.</para>
+        <para>GPL Ghostscript is free software; you can redistribute
+it and/or modify it under the terms the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.</para>
+        <para>GPL Ghostscript is distributed in the hope that it
+will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+the GNU General Public License for more details.</para>
+        <para>You should have received a copy of the GNU General
+Public License along with this program so you can know your rights and
+responsibilities. It should be in a file named doc/COPYING. If not,
+write to the Free Software Foundation, Inc., 59 Temple Place Suite
+330, Boston, MA 02111-1307, USA.</para>
+        <para>GPL Ghostscript contains an implementation of
+techniques covered by US Patents 5,055,942 and 5,917,614, and
+corresponding international patents. These patents are licensed for
+use with GPL Ghostscript under the following grant:</para>
+        <para>Whereas, Raph Levien (hereinafter "Inventor") has
+obtained patent protection for related technology (hereinafter
+"Patented Technology"), Inventor wishes to aid the the GNU free
+software project in achieving its goals, and Inventor also wishes to
+increase public awareness of Patented Technology, Inventor hereby
+grants a fully paid up, nonexclusive, royalty free license to practice
+the patents listed below ("the Patents") if and only if practiced in
+conjunction with software distributed under the terms of any version
+of the GNU General Public License as published by the Free Software
+Foundation, 59 Temple Place, Suite 330, Boston, MA 02111. Inventor
+reserves all other rights, including without limitation, licensing for
+software not distributed under the GNU General Public License.</para>
+        <screen>
+5055942 Photographic image reproduction device using digital 
+        halftoning to screen images allowing adjustable coarseness
+
+5917614 Method and apparatus for error diffusion screening of 
+        images with improved smoothness in highlight and shadow 
+        regions
+        </screen>
+      </license>
+
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="9.00" to="9.01">
+        <item><para>A new, robust CFF parser implemented in C
+(replacing the previous Poscript one).</para></item>
+        <item><para>tiffscaled device - this renders internally as
+tiffgray, but then downsamples by an integer scale factor (specified
+by -dDownScaleFactor=n) and error diffuses to 1bpp output. The
+tiffscaled device also implements limited minimum feature size
+functionality; by setting -dMinFeatureSize to 1, 2 or 3, the device
+output is guaranteed to generate minimum dot sizes as multiples of the
+final resolution, useful for devices that offer finer position control
+than dot size control.</para></item>
+        <item><para>Add DSC compatible output in
+ps2write.</para></item>
+        <item><para>A number of performance, memory use, and stability
+improvements with the new features introduced in 9.00, plus the usual
+bug fixes.</para></item>
+      </change>
+
+      <change from="8.6x" to="9.00">
+        <item><para>This release includes a move to an ICC-based color
+rendering workflow. The design allows easy integration of 3rd party
+color management modules (CMMs) and management of DeviceN and spot
+source colors with ICC profiles as well as with non-ICC proprietary
+methods. The default CMM is the well known littleCMS. Postscript color
+objects and non-ICC CIE-based PDF color spaces are converted to
+equivalent ICC profiles enabling complete color management for all
+color spaces by an ICC-based CMM. New command line options enable the
+specification of gray, rgb and cmyk default ICC profiles as well as
+output device ICC profiles. The new work flow provides performance
+improvements in the rendering of images, shadings and transparencies.
+In addition, the color conversions are designed to work efficiently in
+multithreaded display list (c-list) rendering through the use of a
+shared link cache. Finally, proper ICC based rendering now occurs for
+ALL XPS objects including Named colors, N-Channel colors and images
+with internally embedded ICC profiles.</para></item>
+        <item><para>The second major change in this release is that
+glyph rendering for all font types except Type 3 is now handled by
+Freetype (via a much improved and enhanced Font API). The most obvious
+benefit of this is a complete, and proven implementation of the
+TrueType byte code interpreter (now unencumbered by
+patents).</para></item>
+        <item><para>Another major change is that the Postscript
+interpreter's graphics state now stores two separate colour space
+settings for stroking and filling, to better support the stroke and
+fill colours required by the PDF interpreter.</para></item>
+        <item><para>Finally, support for optional content has been
+added to the PDF interpreter.</para></item>
+        <item><para>This release also includes a number of
+improvements to the pdfwrite device to improve reliability and quality
+with PCL and XPS input. Many improvements to the support of JPX images
+in PDF files, PDF annotation rendering and the usual number of general
+bug and robustness fixes.</para></item>
+        <item><para>For security reasons, Ghostscript no longer
+searches the current directory by default. Use -P option to revert to
+old behavior.</para></item>
+        <item><para>For a list of open issues, or to report problems,
+please visit bugs.ghostscript.com.</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The default font path is:</para>
+        <unorderedlist>
+          <item><para>${SB_INSTALL_PREFIX}/share/lib</para></item>
+          <item><para>${SB_INSTALL_PREFIX}/share/fonts</para></item>
+        </unorderedlist>
+
+        <para>Additional fonts can be specified as defined in the
+<command>${SB_INSTALL_PREFIX}/doc/Use.htm</command>.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>

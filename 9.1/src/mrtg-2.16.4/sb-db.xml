@@ -1,0 +1,182 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="mrtg" version="2.16.4" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}216</install-name>
+
+    <sources>
+      <source checksum="ec298200d239832ff1648fba488e1a9e"
+        checksum-type="md5" size="1089068"
+        path="src/mrtg-2.16.4.tar.gz"/>
+      <patch checksum="baff6fa2a191b5aa18bfe7a4651e6b02"
+        checksum-type="md5" size="7849"
+        path="src/mrtg-2.16.4.tww.patch"/>
+      <patch checksum="3b7298763982a597d68614fcab9e3eee"
+        checksum-type="md5" size="185185"
+        path="src/mrtg-2.16.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gd" var="LIBGD"
+        install-name="libgd20">v&gt;=2.0.35</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="groff" install-name="groff121"
+        add-path="prepend" type="build">v&gt;=1.21</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl,-bnortllib -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBTTF+-L${SB_VAR_LIBTTF_LIB}} \
+${SB_VAR_XPM+-L${SB_VAR_XPM_LIB}} \
+${SB_VAR_LIBPNG+${CC_LD_RT}${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_ZLIB+${CC_LD_RT}${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_LIBGD+${CC_LD_RT}${SB_VAR_LIBGD_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBGD+--with-gd-inc=${SB_VAR_LIBGD_INC}} \
+${SB_VAR_LIBGD+--with-gd-lib=${SB_VAR_LIBGD_LIB}} \
+${SB_VAR_ZLIB+--with-z-inc=${SB_VAR_ZLIB_INC}} \
+${SB_VAR_ZLIB+--with-z-lib=${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_LIBPNG+--with-png-inc=${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBPNG+--with-png-lib=${SB_VAR_LIBPNG_LIB}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--docdir=${_docdir} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+# fix path to Perl libraries
+${SB_PATH_SED} -i -e "\
+s!@bindir@!${SB_INSTALL_PREFIX}/bin!; \
+s!@libdir@!${SB_INSTALL_PREFIX}/lib!;" \
+bin/cfgmaker bin/indexmaker bin/mrtg bin/mrtg-traffic-sum
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install contrib files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_datadir}/contrib
+${SB_PATH_TAR} cf - contrib | (cd ${_datadir} && ${SB_PATH_TAR} xf -)
+${SB_PATH_CHOWN} -hR 0:0 ${_datadir}/contrib
+${SB_PATH_FIND} ${_datadir}/contrib -type d \
+  -exec ${SB_PATH_CHMOD} go-w {} \;
+${SB_PATH_FIND} ${_datadir}/contrib -type f \
+  -exec ${SB_PATH_CHMOD} go-w {} \;
+]]>
+    </install>
+
+    <notes>
+      <change from="2.16.3" to="2.16.4">
+        <item><para>fix "P_DETACH" and Pod::Usage issues with perl
+5.12</para></item>
+        <item><para>relax cfgmaker option parsing when figuring
+whether to test for highspeed counters or not.</para></item>
+        <item><para>fix sorting of numbered interface names index
+maker</para></item>
+        <item><para>belarusian translation for mrtg 2.16</para></item>
+      </change>
+
+      <change from="2.16.2" to="2.16.3">
+        <item><para>three new config options to compliment the
+existing RRDRowCount option to explicitly set the size of all
+RRAs</para></item>
+        <item><para>allow to rename target in the clonedirectory
+option</para></item>
+        <item><para>add import to the require File::Copy</para></item>
+        <item><para>support multiple options in ifdesc and ifref
+setting for cfgmaker</para></item>
+        <item><para>teach cfgmaker about nortel switches</para></item>
+        <item><para>make sure rates over 4G work too</para></item>
+        <item><para>allow group and user option to be set to
+root</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 31" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.4</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+2.4.4</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update groff dependency from 1.19.2 to
+1.21</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2010 November 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

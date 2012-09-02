@@ -1,0 +1,940 @@
+Index: configure.in
+===================================================================
+--- configure.in.orig	2008-10-22 03:47:02.000000000 +0000
++++ configure.in	2008-10-28 04:20:47.118380823 +0000
+@@ -92,10 +92,27 @@
+ AM_CONDITIONAL(HAVE_GCC,   test "x$GCC" = "xyes")
+ 
+ 
+-AC_MSG_RESULT([***
+-*** Detecting compiler options...
++dnl config.h might be included multiple times, avoid that, because it
++dnl causes build failure on AIX-4.3
++AH_TOP([
++/* Include guard */
++#ifndef _TLS_CONFIG_H_INCLUDED
++#define _TLS_CONFIG_H_INCLUDED 1
++])
++AH_BOTTOM([
++/* End of include guard */
++#endif
+ ])
+ 
++AC_ARG_ENABLE(ipv6,
++AC_HELP_STRING([--enable-ipv6],[Enable ipv6 (with ipv4) support])
++AC_HELP_STRING([--disable-ipv6],[Disable ipv6 support]),
++[ case "$enableval" in
++  no)
++         gl_cv_socket_ipv6=no
++       ;;
++esac ], [ : ])
++
+ gl_EARLY
+ lgl_EARLY
+ AC_C_CONST
+@@ -132,11 +149,6 @@
+ 	AC_MSG_WARN([C99 macros not supported. This may affect compiling.]))
+ 
+ if test $ac_cv_c_compiler_gnu != no; then
+-	if test x$opt_developer_mode = xyes; then
+-	  AM_CFLAGS="${AM_CFLAGS} -g -Wall -Wcast-align -W -Wpointer-arith -Wchar-subscripts -Wformat-security -Wno-format-y2k -Wmissing-braces -Winline -Wstrict-prototypes -Wno-unused-parameter"
+-#	  AM_CFLAGS="${AM_CFLAGS} -g -W -Wall -Wcast-align -Wpointer-arith -Wchar-subscripts -Wformat-security -Wno-format-y2k -Wmissing-braces -Winline -Wstrict-prototypes -Wshadow -Wno-unused-parameter -Wimplicit -fno-common -Wno-sign-compare -Wbad-function-cast -Wendif-labels -Wmissing-declarations -Wno-missing-format-attribute -Wmissing-prototypes -Wnested-externs -Wpointer-arith -pedantic -Wlong-long -Wcast-qual -Wcast-align -Winline -Wredundant-decls -Wstrict-prototypes -Wwrite-strings -Wparentheses -Wsequence-point -Wpacked -Waggregate-return -Wfloat-equal -Wmultichar -Wunknown-pragmas -Wtrigraphs -Wswitch -Wreturn-type -Wmain -Wchar-subscripts -Wcomment -Wno-missing-noreturn"
+-	fi
+-
+ 	AC_MSG_CHECKING([whether gcc supports -Wno-pointer-sign])
+ 	_gcc_cflags_save=$CFLAGS
+ 	CFLAGS="${CFLAGS} -Wno-pointer-sign"
+@@ -208,10 +220,6 @@
+ # No fork on MinGW, disable some self-tests until we fix them.
+ AM_CONDITIONAL(HAVE_FORK, test "$ac_cv_func_fork" != "no")
+ 
+-AC_MSG_RESULT([***
+-*** Detecting system's parameters...
+-])
+-
+ # Run self-tests under valgrind?
+ if test "$cross_compiling" = no; then
+   AC_CHECK_PROGS(VALGRIND, valgrind)
+@@ -351,7 +359,7 @@
+ fi
+ AM_CONDITIONAL(HAVE_GUILE, test "x$opt_guile_bindings" = "xyes")
+ 
+-AM_PATH_LIBGCRYPT($GNUTLS_GCRYPT_VERSION,,
++PKG_CHECK_MODULES(LIBGCRYPT, libgcrypt >= $GNUTLS_GCRYPT_VERSION,,
+ dnl Can't disable - gnutls depends on gcrypt
+  	AC_MSG_ERROR([[
+ ***  
+@@ -430,7 +438,7 @@
+ 	ac_enable_camellia=no)
+ if test "$ac_enable_camellia" != "no"; then
+   AC_MSG_CHECKING([for Camellia support in libgcrypt])
+-  if test -n "`$LIBGCRYPT_CONFIG --algorithms | grep -i camellia`"; then
++  if test -n "`libgcrypt-config --algorithms | grep -i camellia`"; then
+     AC_MSG_RESULT([yes])
+     ac_enable_camellia=yes
+   else
+@@ -497,7 +505,7 @@
+ 	minitasn1_enabled=no)
+ 
+ if test x$minitasn1_enabled = xno; then
+-AM_PATH_LIBTASN1($GNUTLS_LIBTASN1_VERSION,,
++PKG_CHECK_MODULES(LIBTASN1, libtasn1 >= $GNUTLS_LIBTASN1_VERSION,,
+  minitasn1_enabled=yes
+  AC_MSG_WARN([[
+ *** 
+@@ -613,45 +621,18 @@
+ dnl Gnulib files
+ dnl
+ 
+-AC_MSG_RESULT([***
+-*** Setting up gnulib compatibility files...
+-])
++AC_MSG_NOTICE([Setting up gnulib compatibility files... ])
+ gl_INIT
+ lgl_INIT
+ 
+-AC_MSG_RESULT([***
+-*** Detecting options for shared libraries...
+-])
++AC_MSG_NOTICE([Detecting options for shared libraries...])
+ AC_LIBTOOL_WIN32_DLL
++AC_LIBTOOL_TAGS([CXX])
+ AC_PROG_LIBTOOL
+ 
+-LIBGNUTLS_LIBS="-L${libdir} -lgnutls $LIBTASN1_LIBS $LIBGCRYPT_LIBS $LIBS"
+-LIBGNUTLS_CFLAGS="$LIBGCRYPT_CFLAGS $LIBTASN1_CFLAGS -I${includedir}"
+-AC_SUBST(LIBGNUTLS_LIBS)
+-AC_SUBST(LIBGNUTLS_CFLAGS)
+-
+-LIBGNUTLS_EXTRA_LIBS="-L${libdir} -lgnutls-extra $LZO_LIBS $LIBGNUTLS_LIBS"
+-LIBGNUTLS_EXTRA_CFLAGS="-I${includedir}"
+-AC_SUBST(LIBGNUTLS_EXTRA_LIBS)
+-AC_SUBST(LIBGNUTLS_EXTRA_CFLAGS)
+-export ac_full
+-
+-AM_CFLAGS="${AM_CFLAGS} ${LIBGCRYPT_CFLAGS}"
+-
+-if test $ac_full -eq 0; then
+-  AC_SUBST(POSSIBLY_WARN_ABOUT_MISSING_FEATURES, [[
+-#ifdef __GNUC__
+-#warning This is not the official GnuTLS library. Several features were disabled at compilation.
+-#endif /* __GNUC__ */]])
+-fi
+-
+-AC_SUBST(AM_CFLAGS)
+-
+-AC_CONFIG_COMMANDS([chmod-config],[[
+- chmod +x lib/libgnutls-config
+- chmod +x libextra/libgnutls-extra-config
+-]],[[]])
++CFLAGS="${CFLAGS} ${LIBGCRYPT_CFLAGS}"
+ 
++AC_SUBST(POSSIBLY_WARN_ABOUT_MISSING_FEATURES)
+ 
+ AC_DEFINE([INTERNAL_GNUTLS_CRYPTO_H_ENABLE_UNSUPPORTED_API], 1,
+           [Enable prototypes in includes/crypto.h.])
+@@ -673,7 +654,6 @@
+ 	tests/openpgp/Makefile tests/openpgp-certs/Makefile \
+ 	src/Makefile \
+ 	src/cfg/Makefile src/cfg/platon/Makefile src/cfg/platon/str/Makefile \
+-	lib/libgnutls-config libextra/libgnutls-extra-config \
+ 	lib/gnutls.pc libextra/gnutls-extra.pc
+ 	guile/Makefile guile/modules/Makefile
+ 	guile/src/Makefile guile/tests/Makefile])
+Index: gl/Makefile.am
+===================================================================
+--- gl/Makefile.am.orig	2008-06-19 10:00:10.000000000 +0000
++++ gl/Makefile.am	2008-10-28 04:20:47.128353170 +0000
+@@ -33,7 +33,7 @@
+ DISTCLEANFILES =
+ MAINTAINERCLEANFILES =
+ 
+-AM_CPPFLAGS = -I$(top_srcdir)/lgl -I$(top_builddir)/lgl
++AM_CPPFLAGS = -I$(top_srcdir)/lgl -I$(top_builddir)/lgl $(LIBGCRYPT_CFLAGS)
+ 
+ include gnulib.mk
+ 
+Index: lib/Makefile.am
+===================================================================
+--- lib/Makefile.am.orig	2008-10-22 03:48:44.000000000 +0000
++++ lib/Makefile.am	2008-10-28 04:20:47.137866813 +0000
+@@ -48,8 +48,6 @@
+ # Make sure this comes after any -I's for internal headers.
+ AM_CPPFLAGS += $(LIBGCRYPT_CFLAGS)
+ 
+-bin_SCRIPTS = libgnutls-config
+-
+ m4datadir = $(datadir)/aclocal
+ dist_m4data_DATA = libgnutls.m4
+ 
+Index: lib/x509/Makefile.am
+===================================================================
+--- lib/x509/Makefile.am.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/x509/Makefile.am	2008-10-28 04:20:47.147191052 +0000
+@@ -18,16 +18,22 @@
+ # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301,
+ # USA
+ 
+-INCLUDES = \
++AM_CPPFLAGS = \
+ 	-I$(top_srcdir)/lgl -I$(top_builddir)/lgl			\
+-	-I$(top_srcdir)/libextra -I$(top_srcdir)/lib/minitasn1		\
++	-I$(top_srcdir)/libextra 		\
+ 	-I$(top_srcdir)/libextra/openpgp/				\
+-	-I$(top_srcdir)/libextra/opencdk -I$(top_srcdir)/lib		\
++	-I$(top_srcdir)/lib		\
+ 	-I$(top_srcdir)/includes -I$(top_builddir)/includes		\
+-	$(LIBOPENCDK_CFLAGS) $(LIBTASN1_CFLAGS) $(LIBGCRYPT_CFLAGS)
++	$(LIBGCRYPT_CFLAGS)
+ 
+ noinst_LTLIBRARIES = libgnutls_x509.la
+ 
++if ENABLE_MINITASN1
++AM_CPPFLAGS += -I$(top_srcdir)/lib/minitasn1
++else
++AM_CPPFLAGS += $(LIBTASN1_CFLAGS) -I$(top_srcdir)/lib/minitasn1
++endif
++
+ libgnutls_x509_la_SOURCES = crl.c dn.c common.c x509.c extensions.c	\
+ 	dsa.c rfc2818_hostname.c verify.c mpi.c privkey.c pkcs7.c	\
+ 	crq.c sign.c privkey_pkcs8.c pkcs12.c pkcs12_bag.c		\
+Index: libextra/Makefile.am
+===================================================================
+--- libextra/Makefile.am.orig	2008-09-15 20:04:19.000000000 +0000
++++ libextra/Makefile.am	2008-10-28 04:20:47.156409423 +0000
+@@ -33,7 +33,6 @@
+ 
+ SUBDIRS = 
+ 
+-bin_SCRIPTS = libgnutls-extra-config
+ 
+ m4datadir = $(datadir)/aclocal
+ dist_m4data_DATA = libgnutls-extra.m4
+Index: lib/auth_cert.c
+===================================================================
+--- lib/auth_cert.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/auth_cert.c	2008-10-28 04:20:47.170431406 +0000
+@@ -1351,7 +1351,7 @@
+ 
+   if (session->security_parameters.cert_type == GNUTLS_CRT_OPENPGP && size != 0)
+     {
+-      gnutls_assert(); // size should be zero
++      gnutls_assert(); /* size should be zero */
+       return GNUTLS_E_UNEXPECTED_PACKET_LENGTH;
+     }
+ 
+Index: src/cli.c
+===================================================================
+--- src/cli.c.orig	2008-10-22 03:51:21.000000000 +0000
++++ src/cli.c	2008-10-28 15:40:24.683358107 +0000
+@@ -43,6 +43,7 @@
+ 
+ #include "common.h"
+ #include "cli-gaa.h"
++#include "getaddrinfo.h"
+ 
+ #if defined _WIN32 || defined __WIN32__
+ int _win_select(int max_fd, fd_set * rfds, fd_set * wfds, fd_set * efds,
+Index: src/serv.c
+===================================================================
+--- src/serv.c.orig	2008-10-22 03:53:00.000000000 +0000
++++ src/serv.c	2008-10-28 15:40:24.690831776 +0000
+@@ -765,12 +765,14 @@
+ 
+ static void gaa_parser (int argc, char **argv);
+ 
+-static int get_port (const struct sockaddr_storage *addr)
++static int get_port (const struct sockaddr *addr)
+ {
+-  switch (addr->ss_family)
++  switch (addr->sa_family)
+     {
++#ifdef HAVE_IPV6
+       case AF_INET6:
+         return ntohs (((const struct sockaddr_in6 *)addr)->sin6_port);
++#endif
+       case AF_INET:
+         return ntohs (((const struct sockaddr_in *)addr)->sin_port);
+     }
+@@ -794,7 +796,11 @@
+   char topbuf[512];
+   char name[256];
+   int accept_fd;
++#ifdef HAVE_IPV6
+   struct sockaddr_storage client_address;
++#else
++  struct sockaddr client_address;
++#endif
+   socklen_t calen;
+ 
+ #ifndef _WIN32
+@@ -1124,7 +1130,7 @@
+ 			printf ("\n* connection from %s, port %d\n",
+ 				addr_ntop ((struct sockaddr *)&client_address, calen,
+ 					   topbuf, sizeof (topbuf)),
+-				get_port (&client_address));
++				get_port ((struct sockaddr *)&client_address));
+ 			print_info (j->tls_session, NULL, 1);
+ 		      }
+ 		    j->handshake_ok = 1;
+@@ -1220,7 +1226,7 @@
+ 			printf ("- connection from %s, port %d\n",
+ 				addr_ntop ((struct sockaddr*) &client_address, calen,
+ 					   topbuf, sizeof (topbuf)),
+-				get_port (&client_address));
++				get_port ((struct sockaddr*)&client_address));
+ 
+ 			print_info (j->tls_session, NULL, 1);
+ 		      }
+Index: src/tls_test.c
+===================================================================
+--- src/tls_test.c.orig	2008-10-22 03:53:29.000000000 +0000
++++ src/tls_test.c	2008-10-28 15:40:24.676738282 +0000
+@@ -31,6 +31,7 @@
+ #include <tests.h>
+ #include <common.h>
+ #include <tls_test-gaa.h>
++#include "getaddrinfo.h"
+ 
+ #define SA struct sockaddr
+ #define ERR(err,s) if (err==-1) {perror(s);return(1);}
+Index: tests/dhepskself.c
+===================================================================
+--- tests/dhepskself.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/dhepskself.c	2008-10-28 04:20:47.221661743 +0000
+@@ -102,7 +102,7 @@
+   gnutls_global_init ();
+ 
+   gnutls_global_set_log_function (tls_log_func);
+-//  gnutls_global_set_log_level (99);
++/*  gnutls_global_set_log_level (99);  */
+ 
+   gnutls_psk_allocate_client_credentials (&pskcred);
+   gnutls_psk_set_client_credentials (pskcred, "test", &key,
+@@ -205,7 +205,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: lib/gnutls.pc.in
+===================================================================
+--- lib/gnutls.pc.in.orig	2008-06-19 10:00:10.000000000 +0000
++++ lib/gnutls.pc.in	2008-10-28 04:20:47.233147953 +0000
+@@ -19,5 +19,4 @@
+ Description: Transport Security Layer implementation for the GNU system
+ Version: @VERSION@
+ Libs: -L${libdir} -lgnutls
+-Libs.private: @LIBGNUTLS_LIBS@ 
+ Cflags: -I${includedir}
+Index: libextra/gnutls-extra.pc.in
+===================================================================
+--- libextra/gnutls-extra.pc.in.orig	2008-06-19 10:00:10.000000000 +0000
++++ libextra/gnutls-extra.pc.in	2008-10-28 04:20:47.239171118 +0000
+@@ -20,5 +20,4 @@
+ Requires: gnutls
+ Version: @VERSION@
+ Libs: -L${libdir} -lgnutls-extra
+-Libs.private: @LIBGNUTLS_EXTRA_LIBS@
+ Cflags: -I${includedir}
+Index: includes/gnutls/gnutls.h.in
+===================================================================
+--- includes/gnutls/gnutls.h.in.orig	2008-09-15 20:04:19.000000000 +0000
++++ includes/gnutls/gnutls.h.in	2008-10-28 04:20:47.258327272 +0000
+@@ -287,7 +287,7 @@
+     {
+       GNUTLS_CRT_PRINT_FULL,
+       GNUTLS_CRT_PRINT_ONELINE,
+-      GNUTLS_CRT_PRINT_UNSIGNED_FULL,
++      GNUTLS_CRT_PRINT_UNSIGNED_FULL
+     } gnutls_certificate_print_formats_t;
+ 
+   typedef enum
+@@ -763,6 +763,8 @@
+ 				     gnutls_realloc_function gt_realloc_func,
+ 				     gnutls_free_function gt_free_func);
+ 
++  int gnutls_set_egd_socket(const char * socket);
++
+ /* For use in callbacks */
+   extern gnutls_alloc_function gnutls_malloc;
+   extern gnutls_alloc_function gnutls_secure_malloc;
+Index: lib/gnutls_errors.c
+===================================================================
+--- lib/gnutls_errors.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/gnutls_errors.c	2008-10-28 04:20:47.269600781 +0000
+@@ -28,6 +28,7 @@
+ #ifdef STDC_HEADERS
+ # include <stdarg.h>
+ #endif
++#include <vasnprintf.h>
+ 
+ /* I18n of error codes. */
+ #include "gettext.h"
+@@ -257,8 +258,10 @@
+ };
+ 
+ #define GNUTLS_ERROR_LOOP(b) \
+-        const gnutls_error_entry *p; \
+-                for(p = error_algorithms; p->desc != NULL; p++) { b ; }
++	do {\
++		const gnutls_error_entry *p; \
++		for(p = error_algorithms; p->desc != NULL; p++) { b ; }\
++	} while (0)
+ 
+ #define GNUTLS_ERROR_ALG_LOOP(a) \
+                         GNUTLS_ERROR_LOOP( if(p->number == error) { a; break; } )
+@@ -396,14 +399,15 @@
+ _gnutls_log (int level, const char *fmt, ...)
+ {
+   va_list args;
+-  char str[MAX_LOG_SIZE];
++  char  str[MAX_LOG_SIZE];
++  size_t length = MAX_LOG_SIZE -1;
+   void (*log_func) (int, const char *) = _gnutls_log_func;
+ 
+   if (_gnutls_log_func == NULL)
+     return;
+ 
+   va_start (args, fmt);
+-  vsnprintf (str, MAX_LOG_SIZE - 1, fmt, args);	/* Flawfinder: ignore */
++  vasnprintf (str, &length, fmt, args);	/* Flawfinder: ignore */
+   va_end (args);
+ 
+   log_func (level, str);
+Index: guile/src/Makefile.am
+===================================================================
+--- guile/src/Makefile.am.orig	2008-06-19 10:00:10.000000000 +0000
++++ guile/src/Makefile.am	2008-10-28 04:20:47.282176783 +0000
+@@ -61,24 +61,6 @@
+ AM_CPPFLAGS = -I$(top_srcdir)/includes -I$(top_builddir)/includes	\
+               -I$(top_builddir) -I$(builddir)
+ 
+-if HAVE_GCC
+-
+-# Generated `.x' files and Guile's `scm_c_define_gsubr ()' require
+-# `-Wno-strict-prototypes'.  This trick makes sure `-Wno-s-p' appears
+-# after `-Ws-p'.
+-AM_CFLAGS += -Wno-strict-prototypes
+-
+-# The `-fgnu89-inline' option appeared in GCC 4.1.3.
+-if HAVE_GCC_GNU89_INLINE_OPTION
+-
+-# Guile and GMP currently rely on GNU inline semantics, not C99 inline.
+-AM_CFLAGS += -fgnu89-inline
+-
+-endif HAVE_GCC_GNU89_INLINE_OPTION
+-
+-endif HAVE_GCC
+-
+-
+ enums.h: $(srcdir)/make-enum-header.scm
+ 	$(GUILE_FOR_BUILD) $^ > $@
+ 
+Index: lib/gnutls_global.c
+===================================================================
+--- lib/gnutls_global.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/gnutls_global.c	2008-10-28 04:20:47.290668558 +0000
+@@ -47,6 +47,17 @@
+ ASN1_TYPE _gnutls_gnutls_asn;
+ 
+ /**
++ * gnutls_set_egd_socket -  This function sets the entropy socket
++ * @sock: The socket
++ *
++ **/
++int
++gnutls_set_egd_socket(const char * sock)
++{
++  return gcry_control(GCRYCTL_SET_RNDEGD_SOCKET,sock);
++}
++
++/**
+   * gnutls_global_set_log_function - set the logging function
+   * @log_func: it's a log function
+   *
+Index: tests/certificate_set_x509_crl.c
+===================================================================
+--- tests/certificate_set_x509_crl.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/certificate_set_x509_crl.c	2008-10-28 04:20:47.298301809 +0000
+@@ -54,7 +54,7 @@
+ {
+   int rc;
+   gnutls_certificate_credentials_t crt;
+-  gnutls_datum_t crldatum = { crl, strlen (crl) };
++  gnutls_datum_t crldatum = { crl, sizeof(crl) };
+   gnutls_x509_crl_t crl;
+ 
+   rc = gnutls_global_init ();
+Index: tests/anonself.c
+===================================================================
+--- tests/anonself.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/anonself.c	2008-10-28 04:20:47.306289421 +0000
+@@ -215,7 +215,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: tests/x509signself.c
+===================================================================
+--- tests/x509signself.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/x509signself.c	2008-10-28 04:20:47.315720193 +0000
+@@ -155,7 +155,7 @@
+     "/iVX2cmMTSh3w3z8MaECQEp0XJWDVKOwcTW6Ajp9SowtmiZ3YDYo1LF9igb4iaLv\n"
+     "sWZGfbnU3ryjvkb6YuFjgtzbZDZHWQCo8/cOtOBmPdk=\n"
+     "-----END RSA PRIVATE KEY-----\n";
+-  const gnutls_datum_t key_dat = { key_pem, sizeof (key_pem) };
++  gnutls_datum_t key_dat = { key_pem, sizeof (key_pem) };
+   int ret;
+ 
+   ret = gnutls_x509_privkey_init (&key);
+@@ -313,7 +313,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: tests/resume.c
+===================================================================
+--- tests/resume.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/resume.c	2008-10-28 15:40:31.388308002 +0000
+@@ -257,7 +257,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: tests/tlsia.c
+===================================================================
+--- tests/tlsia.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/tlsia.c	2008-10-28 04:20:47.334974124 +0000
+@@ -299,7 +299,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: tests/x509self.c
+===================================================================
+--- tests/x509self.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/x509self.c	2008-10-28 04:20:47.344819405 +0000
+@@ -279,7 +279,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: tests/utils.h
+===================================================================
+--- tests/utils.h.orig	2008-06-19 10:00:10.000000000 +0000
++++ tests/utils.h	2008-10-28 04:20:47.352111568 +0000
+@@ -32,7 +32,6 @@
+ extern int break_on_error;
+ 
+ extern char *pkcs3;
+-
+ extern void fail (const char *format, ...);
+ extern void success (const char *format, ...);
+ 
+Index: tests/oprfi.c
+===================================================================
+--- tests/oprfi.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ tests/oprfi.c	2008-10-28 04:20:47.359792961 +0000
+@@ -239,7 +239,8 @@
+ static int
+ generate_dh_params (void)
+ {
+-  const gnutls_datum_t p3 = { pkcs3, strlen (pkcs3) };
++  gnutls_datum_t p3;
++  p3.data = pkcs3; p3.size = strlen( pkcs3 );
+   /* Generate Diffie Hellman parameters - for use with DHE
+    * kx algorithms. These should be discarded and regenerated
+    * once a day, once a week or once a month. Depending on the
+Index: src/cfg/shared.c
+===================================================================
+--- src/cfg/shared.c.orig	2008-06-19 10:00:10.000000000 +0000
++++ src/cfg/shared.c	2008-10-28 04:20:47.373139716 +0000
+@@ -688,7 +688,7 @@
+ { /* {{{ */
+ 	register long          long_val   = 0;
+ 	register unsigned long ulong_val  = 0;
+-	register double        double_val = 0.0;
++	register double        double_val = 0.0, huge_val;
+ 	register int           f_integer  = 0; /* Searching for integer value? */
+ 	char *end;
+ 
+@@ -724,7 +724,8 @@
+ 			if (*end)
+ 				return CFG_ERROR_BADNUMBER;
+ 
+-			if (double_val == +HUGE_VAL || double_val == -HUGE_VAL)
++			huge_val = HUGE_VAL;
++			if (double_val == +huge_val || double_val == -huge_val)
+ 				/* Purpously always return overflow error */
+ 				return f_integer ? CFG_ERROR_OVERFLOW : CFG_ERROR_OVERFLOW;
+ #if HAVE_ERRNO_H
+Index: lib/gnutls_handshake.c
+===================================================================
+--- lib/gnutls_handshake.c.orig	2008-10-22 03:50:00.000000000 +0000
++++ lib/gnutls_handshake.c	2008-10-28 04:20:47.431270582 +0000
+@@ -2648,8 +2648,8 @@
+ int
+ _gnutls_generate_session_id (opaque * session_id, uint8_t * len)
+ {
+-  *len = TLS_MAX_SESSION_ID_SIZE;
+   int ret;
++  *len = TLS_MAX_SESSION_ID_SIZE;
+ 
+   ret = _gnutls_rnd (RND_NONCE, session_id, *len);
+   if (ret < 0)
+Index: lib/openpgp/extras.c
+===================================================================
+--- lib/openpgp/extras.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/openpgp/extras.c	2008-10-28 04:20:47.444383472 +0000
+@@ -145,6 +145,7 @@
+    */
+   if (format == GNUTLS_OPENPGP_FMT_BASE64)
+     {
++      ssize_t written;
+       err = cdk_stream_tmp_from_mem (data->data, data->size, &input);
+       if (!err)
+ 	err = cdk_stream_set_armor_flag (input, 0);
+@@ -180,7 +181,7 @@
+ 
+       raw_len = i;
+ #else
+-      ssize_t written=0;
++      written=0;
+       do 
+         {
+           err = cdk_stream_read (input, raw_data+written, raw_len-written);
+Index: lib/opencdk/verify.c
+===================================================================
+--- lib/opencdk/verify.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/opencdk/verify.c	2008-10-28 04:20:47.455067937 +0000
+@@ -50,7 +50,7 @@
+ };
+ 
+ 
+-static int file_verify_clearsign (cdk_ctx_t, const char *, const char *);
++static cdk_error_t file_verify_clearsign (cdk_ctx_t, const char *, const char *);
+ 
+ 
+ /**
+Index: includes/gnutls/crypto.h
+===================================================================
+--- includes/gnutls/crypto.h.orig	2008-09-15 20:04:19.000000000 +0000
++++ includes/gnutls/crypto.h	2008-10-28 04:20:47.462264777 +0000
+@@ -49,7 +49,7 @@
+ {
+   GNUTLS_RND_KEY = 0,
+   GNUTLS_RND_RANDOM = 1, /* unpredictable */
+-  GNUTLS_RND_NONCE = 2,
++  GNUTLS_RND_NONCE = 2
+ } gnutls_rnd_level_t;
+ 
+ typedef struct gnutls_crypto_rnd {
+Index: lib/opencdk/keydb.c
+===================================================================
+--- lib/opencdk/keydb.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/opencdk/keydb.c	2008-10-28 04:20:47.478857947 +0000
+@@ -42,7 +42,7 @@
+ #define KEYDB_CACHE_ENTRIES 8
+ 
+ static void keydb_cache_free (key_table_t cache);
+-static int keydb_search_copy (cdk_keydb_search_t *r_dst, cdk_keydb_search_t src);
++static cdk_error_t keydb_search_copy (cdk_keydb_search_t *r_dst, cdk_keydb_search_t src);
+ static int classify_data (const byte * buf, size_t len);
+ static cdk_kbnode_t find_selfsig_node (cdk_kbnode_t key, cdk_pkt_pubkey_t pk);
+      
+Index: lib/opencdk/pubkey.c
+===================================================================
+--- lib/opencdk/pubkey.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/opencdk/pubkey.c	2008-10-28 04:20:47.492958434 +0000
+@@ -1252,7 +1252,7 @@
+ 
+ 
+ /* Get the fingerprint of the packet if possible. */
+-int
++cdk_error_t
+ _cdk_pkt_get_fingerprint (cdk_packet_t pkt, byte *fpr)
+ {
+   if (!pkt || !fpr)
+Index: lib/opencdk/stream.c
+===================================================================
+--- lib/opencdk/stream.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/opencdk/stream.c	2008-10-28 04:20:47.506902679 +0000
+@@ -43,9 +43,9 @@
+ /* This is the maximal amount of bytes we map. */
+ #define MAX_MAP_SIZE 16777216
+ 
+-static int stream_flush (cdk_stream_t s);
+-static int stream_filter_write (cdk_stream_t s);
+-static int stream_cache_flush (cdk_stream_t s, FILE *fp);
++static cdk_error_t stream_flush (cdk_stream_t s);
++static cdk_error_t stream_filter_write (cdk_stream_t s);
++static cdk_error_t stream_cache_flush (cdk_stream_t s, FILE *fp);
+ struct stream_filter_s* filter_add (cdk_stream_t s, filter_fnct_t fnc, int type);
+ 
+ /* Customized tmpfile() version from misc.c */
+@@ -1260,7 +1260,7 @@
+ }
+ 
+ 
+-static int
++static cdk_error_t
+ stream_cache_flush (cdk_stream_t s, FILE * fp)
+ {
+   int nwritten;
+Index: gl/getaddrinfo.h
+===================================================================
+--- gl/getaddrinfo.h	2008-06-19 10:00:10.000000000 +0000
++++ gl/getaddrinfo.h	1970-01-01 00:00:00.000000000 +0000
+@@ -1,163 +0,0 @@
+-/* Get address information.
+-   Copyright (C) 1996-2002, 2003, 2004, 2005, 2006, 2008
+-                 Free Software Foundation, Inc.
+-   Contributed by Simon Josefsson <simon@josefsson.org>.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 3, or (at your option)
+-   any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software Foundation,
+-   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
+-
+-#ifndef GETADDRINFO_H
+-#define GETADDRINFO_H
+-
+-/* sys/socket.h in i386-unknown-freebsd4.10 and
+-   powerpc-apple-darwin5.5 require sys/types.h, so include it first.
+-   Then we'll also get 'socklen_t' and 'struct sockaddr' which are
+-   used below. */
+-#include <sys/types.h>
+-/* Get all getaddrinfo related declarations, if available.  */
+-#include <sys/socket.h>
+-#ifdef HAVE_NETDB_H
+-# include <netdb.h>
+-#endif
+-
+-#ifndef HAVE_STRUCT_ADDRINFO
+-
+-/* Structure to contain information about address of a service provider.  */
+-struct addrinfo
+-{
+-  int ai_flags;			/* Input flags.  */
+-  int ai_family;		/* Protocol family for socket.  */
+-  int ai_socktype;		/* Socket type.  */
+-  int ai_protocol;		/* Protocol for socket.  */
+-  socklen_t ai_addrlen;		/* Length of socket address.  */
+-  struct sockaddr *ai_addr;	/* Socket address for socket.  */
+-  char *ai_canonname;		/* Canonical name for service location.  */
+-  struct addrinfo *ai_next;	/* Pointer to next in list.  */
+-};
+-#endif
+-
+-/* Possible values for `ai_flags' field in `addrinfo' structure.  */
+-#ifndef AI_PASSIVE
+-# define AI_PASSIVE	0x0001	/* Socket address is intended for `bind'.  */
+-#endif
+-#ifndef AI_CANONNAME
+-# define AI_CANONNAME	0x0002	/* Request for canonical name.  */
+-#endif
+-#ifndef AI_NUMERICSERV
+-# define AI_NUMERICSERV	0x0400	/* Don't use name resolution.  */
+-#endif
+-
+-#if 0
+-/* The commented out definitions below are not yet implemented in the
+-   GNULIB getaddrinfo() replacement, so are not yet needed and may, in fact,
+-   cause conflicts on systems with a getaddrinfo() function which does not
+-   define them.
+-
+-   If they are restored, be sure to protect the definitions with #ifndef.  */
+-#define AI_NUMERICHOST	0x0004	/* Don't use name resolution.  */
+-#define AI_V4MAPPED	0x0008	/* IPv4 mapped addresses are acceptable.  */
+-#define AI_ALL		0x0010	/* Return IPv4 mapped and IPv6 addresses.  */
+-#define AI_ADDRCONFIG	0x0020	/* Use configuration of this host to choose
+-				   returned address type..  */
+-#endif /* 0 */
+-
+-/* Error values for `getaddrinfo' function.  */
+-#ifndef EAI_BADFLAGS
+-# define EAI_BADFLAGS	  -1	/* Invalid value for `ai_flags' field.  */
+-# define EAI_NONAME	  -2	/* NAME or SERVICE is unknown.  */
+-# define EAI_AGAIN	  -3	/* Temporary failure in name resolution.  */
+-# define EAI_FAIL	  -4	/* Non-recoverable failure in name res.  */
+-# define EAI_NODATA	  -5	/* No address associated with NAME.  */
+-# define EAI_FAMILY	  -6	/* `ai_family' not supported.  */
+-# define EAI_SOCKTYPE	  -7	/* `ai_socktype' not supported.  */
+-# define EAI_SERVICE	  -8	/* SERVICE not supported for `ai_socktype'.  */
+-# define EAI_MEMORY	  -10	/* Memory allocation failure.  */
+-#endif
+-
+-/* Since EAI_NODATA is deprecated by RFC3493, some systems (at least
+-   FreeBSD, which does define EAI_BADFLAGS) have removed the definition
+-   in favor of EAI_NONAME.  */
+-#if !defined EAI_NODATA && defined EAI_NONAME
+-# define EAI_NODATA EAI_NONAME
+-#endif
+-
+-#ifndef EAI_OVERFLOW
+-/* Not defined on mingw32. */
+-# define EAI_OVERFLOW	  -12	/* Argument buffer overflow.  */
+-#endif
+-#ifndef EAI_ADDRFAMILY
+-/* Not defined on mingw32. */
+-# define EAI_ADDRFAMILY  -9	/* Address family for NAME not supported.  */
+-#endif
+-#ifndef EAI_SYSTEM
+-/* Not defined on mingw32. */
+-# define EAI_SYSTEM	  -11	/* System error returned in `errno'.  */
+-#endif
+-
+-#ifdef __USE_GNU
+-# ifndef EAI_INPROGRESS
+-#  define EAI_INPROGRESS	-100	/* Processing request in progress.  */
+-#  define EAI_CANCELED		-101	/* Request canceled.  */
+-#  define EAI_NOTCANCELED	-102	/* Request not canceled.  */
+-#  define EAI_ALLDONE		-103	/* All requests done.  */
+-#  define EAI_INTR		-104	/* Interrupted by a signal.  */
+-#  define EAI_IDN_ENCODE	-105	/* IDN encoding failed.  */
+-# endif
+-#endif
+-
+-#if !HAVE_DECL_GETADDRINFO
+-/* Translate name of a service location and/or a service name to set of
+-   socket addresses.
+-   For more details, see the POSIX:2001 specification
+-   <http://www.opengroup.org/susv3xsh/getaddrinfo.html>.  */
+-extern int getaddrinfo (const char *restrict nodename,
+-			const char *restrict servname,
+-			const struct addrinfo *restrict hints,
+-			struct addrinfo **restrict res);
+-#endif
+-
+-#if !HAVE_DECL_FREEADDRINFO
+-/* Free `addrinfo' structure AI including associated storage.
+-   For more details, see the POSIX:2001 specification
+-   <http://www.opengroup.org/susv3xsh/getaddrinfo.html>.  */
+-extern void freeaddrinfo (struct addrinfo *ai);
+-#endif
+-
+-#if !HAVE_DECL_GAI_STRERROR
+-/* Convert error return from getaddrinfo() to a string.
+-   For more details, see the POSIX:2001 specification
+-   <http://www.opengroup.org/susv3xsh/gai_strerror.html>.  */
+-extern const char *gai_strerror (int ecode);
+-#endif
+-
+-#if !HAVE_DECL_GETNAMEINFO
+-/* Convert socket address to printable node and service names.
+-   For more details, see the POSIX:2001 specification
+-   <http://www.opengroup.org/susv3xsh/getnameinfo.html>.  */
+-extern int getnameinfo(const struct sockaddr *restrict sa, socklen_t salen,
+-		       char *restrict node, socklen_t nodelen,
+-		       char *restrict service, socklen_t servicelen,
+-		       int flags);
+-
+-#endif
+-
+-/* Possible flags for getnameinfo.  */
+-#ifndef NI_NUMERICHOST
+-# define NI_NUMERICHOST 1
+-#endif
+-#ifndef NI_NUMERICSERV
+-# define NI_NUMERICSERV 2
+-#endif
+-
+-#endif /* GETADDRINFO_H */
+Index: lib/opencdk/main.c
+===================================================================
+--- lib/opencdk/main.c.orig	2008-09-15 20:04:19.000000000 +0000
++++ lib/opencdk/main.c	2008-10-28 15:41:04.880999479 +0000
+@@ -63,54 +63,6 @@
+ static int log_level = CDK_LOG_NONE;
+ 
+ 
+-/**
+- * cdk_strerror:
+- * @ec: the error number
+- *
+- * Return an error text for the given id.
+- **/
+-const char*
+-cdk_strerror (int ec)
+-{
+-  static char buf[20];
+-  
+-  switch (ec) 
+-    {
+-    case CDK_EOF:              return "End Of File";
+-    case CDK_Success:          return "No error";
+-    case CDK_General_Error:    return "General error";
+-    case CDK_File_Error:       return strerror (errno);
+-    case CDK_Bad_Sig:          return "Bad signature";
+-    case CDK_Inv_Packet:       return "Invalid packet";
+-    case CDK_Inv_Algo:         return "Invalid algorithm";
+-    case CDK_Not_Implemented:  return "This is not implemented yet";
+-    case CDK_Armor_Error:      return "ASCII armor error";
+-    case CDK_Armor_CRC_Error:  return "ASCII armored damaged (CRC error)";
+-    case CDK_MPI_Error:        return "Invalid or missformed MPI";
+-    case CDK_Inv_Value:        return "Invalid parameter or value";
+-    case CDK_Error_No_Key:     return "No key available or not found";
+-    case CDK_Chksum_Error:     return "Check for key does not match";
+-    case CDK_Time_Conflict:    return "Time conflict";
+-    case CDK_Zlib_Error:       return "ZLIB error";
+-    case CDK_Weak_Key:         return "Weak key was detected";
+-    case CDK_Out_Of_Core:      return "Out of core!!";
+-    case CDK_Wrong_Seckey:     return "Wrong secret key";
+-    case CDK_Wrong_Format:     return "Data has wrong format";
+-    case CDK_Bad_MDC:          return "Manipulated MDC detected";
+-    case CDK_Inv_Mode:         return "Invalid mode";
+-    case CDK_Error_No_Keyring: return "No keyring available";
+-    case CDK_Inv_Packet_Ver:   return "Invalid version for packet";
+-    case CDK_Too_Short:        return "Buffer or object is too short";
+-    case CDK_Unusable_Key:     return "Unusable public key";
+-    case CDK_No_Data:          return "No data";
+-    case CDK_No_Passphrase:    return "No passphrase supplied";
+-    case CDK_Network_Error:    return "A network error occurred";
+-    default:                   sprintf (buf, "ec=%d", ec); return buf;
+-    }
+-  return NULL;
+-}
+-
+-
+ static void
+ out_of_core (size_t n)
+ {

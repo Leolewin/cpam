@@ -1,0 +1,327 @@
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2007-11-13 12:31:37.000000000 +0000
++++ configure.ac	2008-02-20 03:33:29.046965504 +0000
+@@ -45,8 +45,11 @@
+ AC_PROG_CC
+ AC_PROG_INSTALL
+ AC_PROG_LN_S
++AC_LIBTOOL_TAGS()
+ AC_LIBTOOL_WIN32_DLL
+-AM_PROG_LIBTOOL
++AC_PROG_LIBTOOL
++
++AC_SYS_LARGEFILE
+ 
+ AC_STDC_HEADERS
+ AC_C_INLINE
+@@ -104,16 +107,15 @@
+ 			     ]))
+ 			     
+ if test "$ac_cv_libz" != yes; then
+-    AC_MSG_WARN(
++    AC_MSG_WARN([[
+     *** ZLIB was not found. 
+     *** You will not be able to compress any data or
+     *** to parse any data that has been compressed.
+     *** Most OpenPGP programs use compression and as a result
+-    *** any output by this programs cannot be handled.)
++    *** any output by this programs cannot be handled.]])
+ fi
+ 
+-    
+-AM_PATH_LIBGCRYPT(1:1.2.0,,
++PKG_CHECK_MODULES(LIBGCRYPT, libgcrypt >= 1.2.0,, 
+             AC_MSG_ERROR([[
+ 	    ***
+ 	    *** libgcrypt was not found. You may want to get it from
+@@ -121,13 +123,8 @@
+ 	    ***
+ 	    ]]))
+ 	    
+-LIBOPENCDK_LIBS="-L${libdir} -lopencdk $LIBGCRYPT_LIBS $LIBS"
+-LIBOPENCDK_CFLAGS="$LIBGCRYPT_CFLAGS -I${includedir}"
+-AC_SUBST(LIBOPENCDK_LIBS)
+-AC_SUBST(LIBOPENCDK_CFLAGS)
+-    
+ 
+ AC_CONFIG_FILES([Makefile doc/Makefile
+ 		 src/Makefile tests/Makefile
+-                 src/opencdk.h src/opencdk-config src/opencdk.pc])
++                 src/opencdk.h src/opencdk.pc])
+ AC_OUTPUT
+Index: doc/gen-doc.sh
+===================================================================
+--- doc/gen-doc.sh.orig	2007-04-20 10:45:43.000000000 +0000
++++ doc/gen-doc.sh	2008-02-20 02:38:33.731518378 +0000
+@@ -14,6 +14,20 @@
+ # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ # GNU General Public License for more details.
+ 
++#
++# Test how echo keeps arguments on the same line (stolen from autoconf)
++#
++if (echo "testing\c"; echo 1,2,3) | egrep c >/dev/null; then
++  if (echo -n testing; echo 1,2,3) | sed "s/-n/xn/" | egrep xn >/dev/null; then
++    ac_n= ac_c='
++'
++  else
++    ac_n=-n ac_c=
++  fi
++else
++  ac_n= ac_c='\c'
++fi
++
+ rm -f opencdk-api.html
+ echo "<html>" >> opencdk-api.html
+ echo "<title>OpenCDK API Overview</title><body>" >> opencdk-api.html
+@@ -22,8 +36,8 @@
+ cd ..
+ cd src
+ for i in `ls *.c`; do
+-    echo -n "creating documentation for...$i "
+-    ../doc/gdoc -html $i >> ../doc/opencdk-api.html
++    echo $ac_n "creating documentation for...$i " $ac_c
++    perl ../doc/gdoc -html $i >> ../doc/opencdk-api.html
+     echo "ok"
+ done
+ echo "</body></html>" >> opencdk-api.html
+Index: src/Makefile.am
+===================================================================
+--- src/Makefile.am.orig	2007-05-05 19:57:29.000000000 +0000
++++ src/Makefile.am	2008-02-20 02:39:56.555348607 +0000
+@@ -20,9 +20,8 @@
+ 
+ include_HEADERS = opencdk.h
+ lib_LTLIBRARIES = libopencdk.la
+-bin_SCRIPTS = opencdk-config
+ 
+-EXTRA_DIST = opencdk-config.in opencdk.m4 libopencdk.vers opencdk.def
++EXTRA_DIST =  opencdk.m4 libopencdk.vers opencdk.def
+ 
+ AM_CPPFLAGS = $(LIBGCRYPT_CFLAGS) -I$(top_srcdir)/lib -I$(top_builddir)/lib
+ 
+Index: src/opencdk.pc.in
+===================================================================
+--- src/opencdk.pc.in.orig	2007-06-09 10:42:57.000000000 +0000
++++ src/opencdk.pc.in	2008-02-20 02:36:00.913488403 +0000
+@@ -19,5 +19,4 @@
+ Description: OpenCDK - Open Crypto Development Kit
+ Version: @VERSION@
+ Libs: -L${libdir} -lopencdk
+-Libs.private: @LIBOPENCDK_LIBS@
+ Cflags: -I${includedir}
+Index: tests/t-key.c
+===================================================================
+--- tests/t-key.c.orig	2007-10-14 12:15:27.000000000 +0000
++++ tests/t-key.c	2008-02-20 16:15:04.141419628 +0000
+@@ -17,6 +17,10 @@
+  * along with OPENCDK; if not, write to the Free Software Foundation,
+  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
+ #include <stdio.h>
+ #include <gcrypt.h>
+ #include <assert.h>
+@@ -141,7 +145,7 @@
+       if (!n)
+ 	break;
+     }  
+-  if (n > 0)
++  if (n)
+     return CDK_Inv_Value;
+   
+   return 0;
+Index: src/packet.h
+===================================================================
+--- src/packet.h.orig	2007-04-20 07:33:42.000000000 +0000
++++ src/packet.h	2008-02-20 07:09:13.256520789 +0000
+@@ -29,12 +29,12 @@
+ void _cdk_free_userid (cdk_pkt_userid_t uid);
+ void _cdk_free_signature( cdk_pkt_signature_t sig );
+ cdk_prefitem_t _cdk_copy_prefs( const cdk_prefitem_t prefs );
+-int _cdk_copy_userid( cdk_pkt_userid_t *dst, cdk_pkt_userid_t src );
+-int _cdk_copy_pubkey( cdk_pkt_pubkey_t* dst, cdk_pkt_pubkey_t src );
+-int _cdk_copy_seckey( cdk_pkt_seckey_t* dst, cdk_pkt_seckey_t src );
+-int _cdk_copy_pk_to_sk( cdk_pkt_pubkey_t pk, cdk_pkt_seckey_t sk );
+-int _cdk_copy_signature( cdk_pkt_signature_t* dst, cdk_pkt_signature_t src );
+-int _cdk_pubkey_compare( cdk_pkt_pubkey_t a, cdk_pkt_pubkey_t b );
++cdk_error_t _cdk_copy_userid( cdk_pkt_userid_t *dst, cdk_pkt_userid_t src );
++cdk_error_t _cdk_copy_pubkey( cdk_pkt_pubkey_t* dst, cdk_pkt_pubkey_t src );
++cdk_error_t _cdk_copy_seckey( cdk_pkt_seckey_t* dst, cdk_pkt_seckey_t src );
++cdk_error_t _cdk_copy_pk_to_sk( cdk_pkt_pubkey_t pk, cdk_pkt_seckey_t sk );
++cdk_error_t _cdk_copy_signature( cdk_pkt_signature_t* dst, cdk_pkt_signature_t src );
++cdk_error_t _cdk_pubkey_compare( cdk_pkt_pubkey_t a, cdk_pkt_pubkey_t b );
+ 
+ #endif /* CDK_PACKET_H */
+ 
+Index: src/verify.c
+===================================================================
+--- src/verify.c.orig	2007-05-12 13:26:11.000000000 +0000
++++ src/verify.c	2008-02-20 07:15:57.896392236 +0000
+@@ -42,7 +42,7 @@
+ };
+ 
+ 
+-static int file_verify_clearsign (cdk_ctx_t, const char *, const char *);
++static cdk_error_t file_verify_clearsign (cdk_ctx_t, const char *, const char *);
+ 
+ 
+ /**
+Index: src/keydb.c
+===================================================================
+--- src/keydb.c.orig	2007-10-15 23:24:13.000000000 +0000
++++ src/keydb.c	2008-02-20 07:19:46.541153384 +0000
+@@ -91,7 +91,7 @@
+ 
+ 
+ static void keydb_cache_free (key_table_t cache);
+-static int keydb_search_copy (cdk_dbsearch_t *r_dst, cdk_dbsearch_t src);
++static cdk_error_t keydb_search_copy (cdk_dbsearch_t *r_dst, cdk_dbsearch_t src);
+ static void keydb_search_free (cdk_dbsearch_t dbs);
+ static int classify_data (const byte * buf, size_t len);
+ static cdk_kbnode_t find_selfsig_node (cdk_kbnode_t key, cdk_pkt_pubkey_t pk);
+Index: src/sign.c
+===================================================================
+--- src/sign.c.orig	2007-05-12 20:57:29.000000000 +0000
++++ src/sign.c	2008-02-20 07:17:45.481252471 +0000
+@@ -27,7 +27,7 @@
+ #include "stream.h"
+ 
+ 
+-static int file_clearsign (cdk_ctx_t, cdk_strlist_t,
++static cdk_error_t file_clearsign (cdk_ctx_t, cdk_strlist_t,
+                            const char *, const char *);
+ static int stream_clearsign (cdk_ctx_t, cdk_stream_t,
+                              cdk_stream_t, cdk_strlist_t);
+Index: src/pubkey.c
+===================================================================
+--- src/pubkey.c.orig	2007-05-24 18:14:06.000000000 +0000
++++ src/pubkey.c	2008-02-20 07:21:04.708038900 +0000
+@@ -1240,7 +1240,7 @@
+ 
+ 
+ /* Get the fingerprint of the packet if possible. */
+-int
++cdk_error_t
+ _cdk_pkt_get_fingerprint (cdk_packet_t pkt, byte *fpr)
+ {
+   if (!pkt || !fpr)
+Index: src/stream.c
+===================================================================
+--- src/stream.c.orig	2007-11-08 18:31:45.000000000 +0000
++++ src/stream.c	2008-02-20 07:23:47.418958196 +0000
+@@ -35,9 +35,9 @@
+ /* This is the maximal amount of bytes we map. */
+ #define MAX_MAP_SIZE 16777216
+ 
+-static int stream_flush (cdk_stream_t s);
+-static int stream_filter_write (cdk_stream_t s);
+-static int stream_cache_flush (cdk_stream_t s, FILE *fp);
++static cdk_error_t stream_flush (cdk_stream_t s);
++static cdk_error_t stream_filter_write (cdk_stream_t s);
++static cdk_error_t stream_cache_flush (cdk_stream_t s, FILE *fp);
+ 
+ /* Customized tmpfile() version from misc.c */
+ FILE *my_tmpfile (void);
+@@ -1227,7 +1227,7 @@
+ }
+ 
+ 
+-static int
++static cdk_error_t 
+ stream_cache_flush (cdk_stream_t s, FILE * fp)
+ {
+   int nwritten;
+Index: src/stream-socket.c
+===================================================================
+--- src/stream-socket.c.orig	2007-05-12 11:37:30.000000000 +0000
++++ src/stream-socket.c	2008-02-20 16:13:06.234114617 +0000
+@@ -13,6 +13,10 @@
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
+ #include <stdio.h>
+ #include <gcrypt.h>
+ #ifdef _WIN32
+Index: tests/t-encr.c
+===================================================================
+--- tests/t-encr.c.orig	2007-06-11 18:15:39.000000000 +0000
++++ tests/t-encr.c	2008-02-20 16:14:57.617187478 +0000
+@@ -17,6 +17,10 @@
+  * along with OPENCDK; if not, write to the Free Software Foundation,
+  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
+ #include <stdio.h>
+ #include <gcrypt.h>
+ #include <sys/stat.h>
+Index: tests/t-keydb.c
+===================================================================
+--- tests/t-keydb.c.orig	2007-06-11 19:45:09.000000000 +0000
++++ tests/t-keydb.c	2008-02-20 16:15:08.990437531 +0000
+@@ -17,6 +17,9 @@
+  * along with OPENCDK; if not, write to the Free Software Foundation,
+  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
+ 
+ #include <stdio.h>
+ #include <string.h>
+Index: tests/t-misc.c
+===================================================================
+--- tests/t-misc.c.orig	2007-06-11 18:04:56.000000000 +0000
++++ tests/t-misc.c	2008-02-20 16:15:14.945811315 +0000
+@@ -17,6 +17,10 @@
+  * along with OPENCDK; if not, write to the Free Software Foundation,
+  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
+ #include <stdio.h>
+ #include <string.h>
+ 
+Index: tests/t-sign.c
+===================================================================
+--- tests/t-sign.c.orig	2007-06-11 18:06:04.000000000 +0000
++++ tests/t-sign.c	2008-02-20 16:15:21.080754553 +0000
+@@ -17,6 +17,10 @@
+  * along with OPENCDK; if not, write to the Free Software Foundation,
+  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
+ #include <stdio.h>
+ #include <gcrypt.h>
+ 
+Index: tests/t-stream.c
+===================================================================
+--- tests/t-stream.c.orig	2007-05-07 18:16:51.000000000 +0000
++++ tests/t-stream.c	2008-02-20 16:15:30.061074803 +0000
+@@ -17,6 +17,10 @@
+  * along with OpenCDK; if not, write to the Free Software Foundation,
+  * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+  */
++#ifdef HAVE_CONFIG_H
++#include <config.h>
++#endif
++
+ #include <stdio.h>
+ #include <string.h>
+ #include <assert.h>

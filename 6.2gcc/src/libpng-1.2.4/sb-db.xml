@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libpng" version="1.2.4" revision="7">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="00c258c04c8bab83bedac843cc86ccb7"
+        checksum-type="md5" size="992017"
+        path="src/libpng-1.2.4-tww.tar.gz"/>
+    </sources>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --with-zlib=${SB_VAR_ZLIB} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <changelog>
+      <change date="2004 September 7" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 August 7" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Reverse part of pngrtran.c patch that caused a
+SEGV on Redhat Linux</para></item>
+      </change>
+
+      <change date="2004 August 4" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Applied fixes from <ulink url="http://www.graphicsmagick.org/libpng/beta/patches/">http://www.graphicsmagick.org/libpng/beta/patches/"</ulink>:</para>
+        <unorderedlist>
+          <item><para>libpng-patch01-pngrtran-filler-GG-overflow.txt:
+Fixes bug that was introduced in version 1.0.2 This bug was also
+publicised around January 2003. Because of its similarity to patch00,
+there has been some confusion and hardly anyone has applied this
+patch. There was a flurry of bug reports about this in June 2004 when
+people noticed that only half of the problem had been fixed. Mitre has
+assigned a new name, CAN-2004-0768, to this
+vulnerability.</para></item>
+          <item><para>libpng-patch03-trns-chunk-overflow.txt: This fixes
+the most dangerous of the newly reported vulnerabilities, which is
+CERT VU#388984 and Item 1 of CAN-2004-0597.</para></item>
+          <item><para>libpng-patch04-get-uint-31.txt: This patch defines
+PNG_UINT_31_MAX, PNG_UINT_32_MAX, PNG_SIZE_MAX, and png_get_uint_31(),
+which are needed by patches 05-08.</para></item>
+          <item><para>libpng-patch05-pngpread-chunklength.txt: Fixes
+CERT VU#817368.</para></item>
+          <item><para>libpng-patch06-pngread-chunklength.txt: Fixes CERT
+VU#286464.</para></item>
+          <item><para>libpng-patch07-png-read-png-overflow.txt: Fixes
+CERT VU#160448, Item 5 of CAN-2004-0599.</para></item>
+          <item><para>libpng-patch08-splt-buffer-overflow.txt: Fixes
+CERT VU#477512, Item 4 of CAN-2004-0598.</para></item>
+          <item><para>libpng-patch09-null-iccp-profile.txt: Fixes CERT
+VU#236656, CAN-2004-0598.</para></item>
+          <item><para>libpng-patch10-find-duplicate-chunk.txt: No
+security problem. The bugs are similar to the one fixed in patch 03,
+but the only effect is that libpng will fail to detect misplaced
+harmless duplicate chunks.</para></item>
+          <item><para>libpng-patch11-limit-dimensions.txt: This patch
+avoids a host of security problems related to buffer overflows that
+might occur when processing very large images. It causes the reader to
+reject any images having more than one million rows or one million
+columns.</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change date="2004 May 1" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0421 to fix an out of
+bounds access error (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0421">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0421</ulink>).
+When processing a broken PNG image, the error handling routine will
+access memory that is out of bounds when creating an error message.
+Depending on machine architecture, bounds checking and other
+protective measures, this problem could cause the program to crash if
+a defective or intentionally prepared PNG image file is handled by
+libpng.</para></item>
+      </change>
+
+      <change date="2003 April 4" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Install AIX 64-bit libraries in lib/ppc64 instead
+of lib/power3</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+
+      <change date="2003 January 22" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add patch for chunkdata and buffer
+overflow</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Expect" version="1.21" revision="1"
+  systype="!*-aix*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="a151b0dc4d1a35c73941c65b7c26da5b"
+        checksum-type="md5" size="53881"
+        path="src/Expect-1.21.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="IO-Tty" module="5.12.2">v&gt;=1.02</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2011 September 18" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove 5.8.6, 5.8.8, 5.10.1, 5.12.1
+modules</para></item>
+        <item><para>Add 5.12.2 module</para></item>
+      </change>
+
+      <change date="2008 June 19" revision="4"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add 5.8.8 module</para></item>
+      </change>
+
+      <change date="2005 February 15" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 5.8.6 module</para></item>
+      </change>
+
+      <change date="2004 September 22" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add IO-Tty dependency</para></item>
+      </change>
+
+      <change date="2003 November 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Perl 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

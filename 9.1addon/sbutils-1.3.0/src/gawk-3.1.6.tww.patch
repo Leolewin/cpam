@@ -1,0 +1,77 @@
+Index: Makefile.am
+===================================================================
+--- Makefile.am.orig	2007-10-14 21:19:49.000000000 +0000
++++ Makefile.am	2008-06-23 15:23:20.888362962 +0000
+@@ -142,8 +142,6 @@
+ # there's no easy way to distinguish GNU from non-GNU systems.)
+ install-exec-hook:
+ 	(cd $(DESTDIR)$(bindir); \
+-	$(LN) gawk$(EXEEXT) gawk-$(VERSION)$(EXEEXT) 2>/dev/null ; \
+-	$(LN) pgawk$(EXEEXT) pgawk-$(VERSION)$(EXEEXT) 2>/dev/null ; \
+ 	if [ ! -f awk$(EXEEXT) ]; \
+ 	then	$(LN_S) gawk$(EXEEXT) awk$(EXEEXT); \
+ 	fi; exit 0)
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2007-10-22 06:51:06.000000000 +0000
++++ configure.ac	2008-06-23 16:04:06.238019813 +0000
+@@ -199,7 +199,12 @@
+ ],
+ 	AC_DEFINE(HAVE_WINT_T, 1, [systems should define this type here]))
+ dnl check for sockaddr_storage
+-AC_TRY_COMPILE([#include <sys/types.h>
++AC_TRY_COMPILE([
++#if defined(_TANDEM_SOURCE) && ! defined(_SCO_DS)
++#define _XOPEN_SOURCE_EXTENDED 1
++#endif
++
++#include <sys/types.h>
+ #include <sys/socket.h>],[
+ 	struct sockaddr_storage foo;
+ ],
+Index: regex_internal.h
+===================================================================
+--- regex_internal.h.orig	2008-06-23 16:10:17.000000000 +0000
++++ regex_internal.h	2008-06-23 16:10:29.305659289 +0000
+@@ -121,7 +121,6 @@
+ # define BE(expr, val) __builtin_expect (expr, val)
+ #else
+ # define BE(expr, val) (expr)
+-# define inline
+ #endif
+ 
+ /* Number of single byte character.  */
+Index: floatcomp.c
+===================================================================
+--- floatcomp.c.orig	2007-08-11 19:39:49.000000000 +0000
++++ floatcomp.c	2008-06-23 16:17:04.940202319 +0000
+@@ -79,13 +79,7 @@
+ AWKNUM
+ Floor(AWKNUM n)
+ {
+-	return floor(n
+-#if 0
+-#ifdef _CRAY
+-		* (1.0 + DBL_EPSILON)
+-#endif
+-#endif
+-	);
++	return floor(n);
+ }
+ 
+ /* Ceil --- do ceil(), also for Cray */
+@@ -93,13 +87,7 @@
+ AWKNUM
+ Ceil(AWKNUM n)
+ {
+-	return ceil(n
+-#if 0
+-#ifdef _CRAY
+-		* (1.0 + DBL_EPSILON)
+-#endif
+-#endif
+-	);
++	return ceil(n);
+ }
+ 
+ #ifdef HAVE_UINTMAX_T

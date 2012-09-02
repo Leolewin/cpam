@@ -1,0 +1,455 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="libtasn1" version="2.9" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libtasn29</install-name>
+
+    <sources>
+      <source checksum="f4f4035b84550100ffeb8ad4b261dea9"
+        checksum-type="md5" size="1883677"
+        path="src/libtasn1-2.9.tar.gz"/>
+      <patch checksum="16ed5f90f9190fa7e3f793652c6baf88"
+        checksum-type="md5" size="440"
+        path="src/libtasn1-2.9.tww.patch"/>
+      <patch checksum="cff73d48786b3c93018a841bca40074c"
+        checksum-type="md5" size="1261"
+        path="src/libtasn1-2.9.tww-gnulib.patch"/>
+      <patch checksum="02ab8d04b4610362ea5f1ad4abe4e372"
+        checksum-type="md5" size="1906569"
+        path="src/libtasn1-2.9.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="help2man" install-name="help2man138"
+        add-path="prepend" type="build">v&gt;=1.38.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <validate>
+        <depend program="libtasn1" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==2.9</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc \
+-qlanglvl=extc99"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure ${CPP+CPP="${CPP}"} CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--disable-gtk-doc --with-html-dir="${_docdir}/html" \
+--datadir=${_datadir} --disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir="${SB_INSTALL_PREFIX_LIB}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" lib/libtasn1.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo/texi
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/version.texi \
+doc/fdl-1.3.texi doc/libtasn1.texi ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/texi/*.texi \
+${_docdir}/texinfo/texi
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1 \
+-qlanglvl=extc99"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure ${CPP+CPP="${CPP}"} CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--disable-gtk-doc --with-html-dir="${_docdir}/html" \
+--datadir=${_datadir} --disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" lib/libtasn1.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C lib install-pkgconfigDATA install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+
+      <license path="lgpl-2.1.license"/>
+
+      <license path="gfdl-1.2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.8" to="2.9">
+        <item><para>tests: Link to gnulib to avoid build error related
+to 'rpl_ftello' on Solaris.</para></item>
+        <item><para>doc: Fix bug reporting address to point at
+help-libtasn1@gnu.org.</para></item>
+        <item><para>doc: Fix Returns: documentation in
+Texinfo.</para></item>
+        <item><para>build: Update gnulib files.</para></item>
+      </change>
+
+      <change from="2.7" to="2.8">
+        <item><para>Update gnulib files.</para></item>
+        <item><para>Use Libtool 2.2.10 to ease MinGW64
+builds.</para></item>
+      </change>
+
+      <change from="2.6" to="2.7">
+        <item><para>Doc: Build a PDF manual using GTK-PDC.</para></item>
+        <item><para>Doc: Fix of asn1_check_version, documentation was
+missing from last release.</para></item>
+        <item><para>Build: Avoid warnings about ignored visibility
+attributes on Windows.</para></item>
+      </change>
+
+      <change from="2.5" to="2.6">
+        <item><para>Fix build failure on platforms without support for GNU
+LD version scripts.</para></item>
+        <item><para>libtasn1: Simplified implementation of
+asn1_check_version.</para></item>
+        <item><para>tests: Improved self-checks.</para></item>
+        <item><para>Update gnulib files, fix many syntax-check nits, indent
+code, fix license templates.</para></item>
+      </change>
+
+      <change from="2.4" to="2.5">
+        <item><para>doc: Improve GTK-DOC comments.</para></item>
+        <item><para>misc: Updated gnulib files.</para></item>
+      </change>
+
+      <change from="2.3" to="2.4">
+        <item><para>Doc fixes.</para></item>
+        <item><para>Updated gnulib files.</para></item>
+        <item><para>Clean up copyright notices.</para></item>
+      </change>
+
+      <change from="2.2" to="2.3">
+        <item><para>Libtasn1 is now an official GNU project.</para></item>
+        <item><para>Solve build problem on Tru64 related to
+TRUE/FALSE.</para></item>
+        <item><para>More careful decoding of OIDs.</para></item>
+        <item><para>Fixed warning in ASN1.y.</para></item>
+        <item><para>Use "Software libraries" info
+dircategory.</para></item>
+        <item><para>Drop GPL/LGPL copies from the manual (not needed
+there).</para></item>
+        <item><para>New configure parameters to set packaging specific
+information. The parameters are --with-packager, --with-packager-version,
+and --with-packager-bug-reports.</para></item>
+      </change>
+
+      <change from="2.1" to="2.2">
+        <item><para>Change how the ASN1_API decorator is used in
+libtasn1.h, for GTK-DOC.</para></item>
+        <item><para>Changed license of libtasn1.pc from GPLv3+ to
+LGPLv2.1+.</para></item>
+        <item><para>Building with many warning flags now requires
+--enable-gcc-warnings.</para></item>
+        <item><para>Some warnings fixed.</para></item>
+      </change>
+
+      <change from="2.0" to="2.1">
+        <item><para>Fix compilation failure on platforms that can't
+generate empty archives, e.g., Mac OS X.</para></item>
+      </change>
+
+      <change from="1.8" to="2.0">
+        <item><para>Optimized tree generation.</para></item>
+        <item><para>ASN1 parser code re-generated using Bison
+2.4.1.</para></item>
+        <item><para>Build with more warning flags.  Many compiler
+warnings fixed.</para></item>
+        <item><para>Compiled with -fvisibility=hidden by default if
+supported.</para></item>
+        <item><para>The libtasn1-config tool has been removed. For
+application developers, please stop using libtasn1-config for finding
+libtasn1, use proper autoconf checks or pkg-config instead. For users
+that need a libtasn1 that provides a libtasn1-config script (for use
+with older applications), use libtasn1 v1.x instead. Version 1.x is
+still supported.</para></item>
+      </change>
+
+      <change from="1.7" to="1.8">
+        <item><para>Fix crlf self-test under Mingw+Wine.</para></item>
+        <item><para>Fix build problems on platforms that lack
+stdint.h.</para></item>
+      </change>
+
+      <change from="1.6" to="1.7">
+        <item><para>Add libtasn1-config for compatibility. Please stop
+use it as it will disappear in v2.0! Use standard AC_CHECK_FUNCS
+autoconf tests or pkg-config instead.</para></item>
+        <item><para>Read PKCS#12 blob as binary file, fixes self-tests
+under Mingw.</para></item>
+        <item><para>Fix use of __attribute__ ((deprecated)) to work on
+non-GCC (#106548).</para></item>
+      </change>
+
+      <change from="1.5" to="1.6">
+        <item><para>Fixed namespace violation for MAX_NAME_SIZE and
+MAX_ERROR_DESCRIPTION_SIZE. The new names are ASN1_MAX_NAME_SIZE and
+ASN1_MAX_ERROR_DESCRIPTION_SIZE.</para></item>
+        <item><para>Fixed namespace violation for libtasn1_perror and
+libtasn1_strerror. The new names are asn1_perror and
+asn1_strerror.</para></item>
+        <item><para>Fix namespace violation for LIBASN1_VERSION. The new
+name is ASN1_VERSION.</para></item>
+        <item><para>Decoder can now decode BER encoded octet
+strings.</para></item>
+        <item><para>doc: Change license on the manual to
+GFDLv1.3+.</para></item>
+        <item><para>doc: Sync gdoc script with GnuTLS, changes license
+on man-pages to GAP.</para></item>
+        <item><para>doc: Improve gtk-doc manual.</para></item>
+        <item><para>Assumes system has strdup and
+string.h.</para></item>
+        <item><para>Remove libtasn1-config and libtasn1.m4, use standard
+AC_CHECK_FUNCS autoconf tests or pkg-config instead.</para></item>
+        <item><para>Change detection of when to use a linker version
+script, use --enable-ld-version-script or --disable-ld-version-script to
+override auto-detection logic.</para></item>
+        <item><para>API and ABI changes since last version:</para>
+        <unorderedlist>
+          <item><para>asn1_get_length_ber: New function.</para></item>
+          <item><para>ASN1_VERSION: New symbol, replaces
+LIBTASN1_VERSION.</para></item>
+          <item><para>asn1_strerror: New function, replaces
+libtasn1_strerror.</para></item>
+          <item><para>asn1_perror: New function, replaces
+libtasn1_perror.</para></item>
+          <item><para>libtasn1_strerror: Marked as
+deprecated.</para></item>
+          <item><para>libtasn1_perror: Marked as
+deprecated.</para></item>
+          <item><para>LIBTASN1_VERSION: Deprecated.</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="1.4" to="1.5">
+        <item><para>Update gnulib files</para></item>
+        <item><para>Fix memory leaks</para></item>
+      </change>
+
+      <change from="1.3" to="1.4">
+        <item><para>Update gnulib files</para></item>
+        <item><para>Replace uses of alloca with malloc</para></item>
+      </change>
+
+      <change from="1.2" to="1.3">
+        <item><para>Handle 'INTEGER { ... } (a..b)' regression. Revert
+parts of earlier fix.  asn1Parser can now again parse src/pkix.asn1.
+The ASN1.c file was generated using Bison 2.3.</para></item>
+        <item><para>Move examples from src/ to new directory
+examples/</para></item>
+        <item><para>Duplicate copy of divergated pkix.asn
+removed</para></item>
+        <item><para>Merge unnecessary lib/defines.h into
+lib/int.h</para></item>
+        <item><para>Configure no longer tries to use gcc
+-pipe</para></item>
+        <item><para>Update gnulib files</para></item>
+        <item><para>Fix mem leak in self-test</para></item>
+      </change>
+
+      <change from="1.1" to="1.2">
+        <item><para>Update gnulib files</para></item>
+      </change>
+
+      <change from="1.0" to="1.1">
+        <item><para>Fix bug that made asn1_check_version believe that
+1.0 is older than 0.3.10.</para></item>
+      </change>
+
+      <change from="0.3.10" to="1.0">
+        <item><para>The self-tests, command line tools and build
+infrastructure have been re-licensed from GPLv2 to
+GPLv3.</para></item>
+        <item><para>Doc fixes</para></item>
+        <item><para>Update gnulib files</para></item>
+      </change>
+
+      <change from="0.3.9" to="0.3.10">
+        <item><para>Update gnulib files</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

@@ -1,0 +1,257 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="tetex" version="2.0.2" revision="5">
+    <build-name>${SB_PROG_NAME}-src-${SB_PROG_VER}</build-name>
+
+    <install-name>tetex20</install-name>
+
+    <sources>
+      <source checksum="a16f6bba227d55e79aeee46fbbd82d28"
+        checksum-type="md5" size="11745933"
+        path="src/tetex-src-2.0.2.tar.gz"/>
+      <patch checksum="3e35fbd47e6388f5ebdd44a368989b2b"
+        checksum-type="md5" size="1009069"
+        path="src/tetex-src-2.0.2.patch"/>
+      <source checksum="d3bdb96f9077e43b2115d3cc471743b3"
+        checksum-type="md5" size="52424280"
+        path="src/tetex-texmf-2.0.2.tar.gz"
+        noop="1" var="MACROS"/>
+      <source checksum="40d4b2c5582eccbee4b6ec692c3cc253"
+        checksum-type="md5" size="22909537"
+        path="src/tetex-texmfsrc-2.0.2.tar.gz"
+        noop="1"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend var="TETEXP" install-name="tetex20p"
+        set-var-only="1"/>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="flex" add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib13">v&gt;=1.3.1</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qlanglvl=extc89 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  CXXFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-LANG:std -Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64*-linux*)
+  ARGS="--x-libraries=/usr/X11R6/lib64"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R"
+  LDFLAGS="-L/usr/openwin/lib" ;;
+*-solaris2.7)
+  CC=cc CFLAGS="-mr -Qn -xO1 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO1 -xtarget=generic"
+  LDFLAGS="-L/usr/openwin/lib" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  LDFLAGS="-L/usr/openwin/lib" CC_LD_RT="-R" ;;
+esac
+
+# Unpack macros
+if [ ! -d "${SB_VAR_TETEXP}" ]; then
+  sudo -h 2>/dev/null || {
+    sb_msg_err "'sudo' program not found. Before teTeX can \
+be configured, the ${SB_SRC_MACROS} file must be unpacked to \
+${SB_VAR_TETEXP}/texmf. 'sudo' is used to run the necessary \
+commands as root because the configuration step is usually \
+run as a non-root user. Please configure 'sudo' per the sb(1) \
+manual and rerun."
+    exit 1
+  }
+
+  sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_VAR_TETEXP}/texmf
+  (cd ${SB_VAR_TETEXP}/texmf
+  sudo ${SB_PATH_GTAR} zxf ${SB_SRC_MACROS}
+  sudo ${SB_PATH_GCHOWN} -hR 0:0 ${SB_VAR_TETEXP}/texmf)
+fi
+
+${SB_PATH_GFIND} . -name config.cache -exec rm {} \;
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_ZLIB_LIB} ${CC_LD_RT}${SB_VAR_ZLIB_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_T1LIB_LIB}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT}/lib} ${LDFLAGS+${LDFLAGS}}" \
+./configure --enable-ipc --without-texinfo --without-dialog \
+--without-t1utils --without-psutils --disable-multiplatform \
+--without-cxx-runtime-hack --datadir=${SB_VAR_TETEXP} \
+--with-system-pnglib --with-pnglib-libdir=${SB_VAR_LIBPNG_LIB} \
+--with-pnglib-include=${LIBPNG_INC} --with-system-zlib \
+--with-zlib-libdir=${SB_VAR_ZLIB_LIB} \
+--with-zlib-include=${SB_VAR_ZLIB_INC} --with-system-t1lib \
+--with-t1lib-libdir=${SB_VAR_T1LIB_LIB} \
+--with-t1lib-include=${SB_VAR_T1LIB_INC} --enable-shared \
+--enable-static --with-mktexfmt-default \
+--disable-a4 \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+export DISTCC_HOSTS='ilad2219 wsdd2501' ;gmake  -j8 CC="distcc gcc" all
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+chmod 644 ${SB_VAR_TETEXP}/texmf/ls-R
+
+# make parameters usable for passiveTeX
+${PERL}/bin/perl -pi -e "s/main_memory = 1000000/main_memory = 2500000/" \
+${SB_VAR_TETEXP}/texmf/web2c/texmf.cnf
+${PERL}/bin/perl -pi -e "s/save_size = 5000/save_size = 10000/" \
+${SB_VAR_TETEXP}/texmf/web2c/texmf.cnf
+
+# replace perl path
+for i in e2pall epstopdf texdoctk texi2html thumbpdf; do
+  sed -e "1 s|#!.*|#!${PERL}/bin/perl|" ${SB_INSTALL_PREFIX}/bin/$i >/tmp/$$
+  cp /tmp/$$ ${SB_INSTALL_PREFIX}/bin/$i && rm /tmp/$$
+done
+for i in t1mapper; do
+  sed -e "1 s|#!.*|#!${PERL}/bin/perl -w|" ${SB_INSTALL_PREFIX}/bin/$i >/tmp/$$
+  cp /tmp/$$ ${SB_INSTALL_PREFIX}/bin/$i && rm /tmp/$$
+done
+
+# install texinfo source files
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/contrib
+(cd texk
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 dvipsk/dvips.texi \
+dvipsk/contrib/config.proto dvipsk/dvips.help kpathsea/bugs.texi \
+kpathsea/hier.texi kpathsea/install.texi kpathsea/kpathsea.texi \
+kpathsea/unixtex.texi tetex/latex2e.texi ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 dvipsk/contrib/config.proto \
+${_docdir}/contrib)
+
+
+rm -rf /var/tmp/texfonts
+${SB_INSTALL_PREFIX}/bin/texhash
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${SB_VAR_TETEXP}
+]]>
+    </uninstall>
+
+    <notes>
+      <note type="usage">
+        <para>The <command>${SB_INSTALL_BASE}/tetex20p</command> contains all TeX
+packages. In addition to the standard set of TeX packages, the
+<command>prosper</command> LaTeX package for writing transparencies
+has been added. Documentation is available at
+<command>${SB_INSTALL_BASE}/tetex20p/texmf/doc/prosper</command>.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Search for X11 libraries on RHEL 3.0/AMD64 in
+/usr/X11R6/lib64</para></item>
+        <item><para>Upgrade to latest libtool-1.4.2</para></item>
+      </change>
+
+      <change date="2004 January 13" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 November 11" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade GCC dependency to 3.3.2</para></item>
+      </change>
+
+      <change date="2003 May 29" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Use sudo to unpack
+tetex-texmf-2.0.2.tar.gz</para></item>
+      </change>
+
+      <change date="2003 April 4" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

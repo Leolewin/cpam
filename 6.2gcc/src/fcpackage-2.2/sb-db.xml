@@ -1,0 +1,194 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="fcpackage" version="2.2" revision="12">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>fcpackage22</install-name>
+
+    <sources>
+      <source checksum="a67d1db6c026b7acfdb1f9c3ea07eb23"
+        checksum-type="md5" size="978379"
+        path="src/fcpackage-2.2.tar.bz2"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend var="FONTS" install-name="fonts10"
+        set-var-only="1"/>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="pkgconfig" add-path="prepend"
+        type="build">v==0.15.0</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir_fonts="${SB_VAR_FONTS}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" X11_FONT_DIR="/usr/lib/X11/fonts" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s -Wl,+b," X11_FONT_DIR="/usr/lib/X11/fonts" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," X11_FONT_DIR="/usr/lib/X11/fonts" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," X11_FONT_DIR="/usr/X11R6/lib/X11/fonts/Type1"
+  EXTRA_FONT_DIR="/usr/share/fonts,/usr/X11R6/lib/X11/fonts/OTF" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," X11_FONT_DIR="/usr/lib/X11/fonts" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" X11_FONT_DIR="/usr/openwin/lib/X11/fonts" ;;
+*-solaris2.5.1*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -Xc -xO2 -xtarget=generic"
+  CPPFLAGS="-I/usr/openwin/include"
+  LDFLAGS="-L/usr/openwin/lib -R/usr/openwin/lib" CC_LD_RT="-R"
+  X11_FONT_DIR="/usr/openwin/lib/X11/fonts" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -Xc -xO2 -xtarget=generic"
+  CC_LD_RT="-R" X11_FONT_DIR="/usr/openwin/lib/X11/fonts" ;;
+esac
+
+PKG_CONFIG_PATH="${SB_VAR_LIBTTF_LIB}/pkgconfig" \
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+ac_cv_prog_HASDOCBOOK=no \
+--with-freetype-config=${SB_VAR_LIBTTF}/bin/freetype-config \
+--with-expat-includes=${SB_VAR_LIBEXPAT_INC} \
+--with-expat-lib=${SB_VAR_LIBEXPAT_LIB} \
+--with-confdir=${_sysconfdir} --with-docdir=${_docdir} \
+--with-default-fonts=${_datadir_fonts} \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" \
+fontconfig/fontconfig.pc Xft/xft.pc Xrender/xrender.pc
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+_s_fonts_prefix=$(echo ${SB_VAR_FONTS} | sed 's!/!\\/!g')
+
+for _fontdir in /usr/openwin/lib/X11/fonts/F3 \
+/usr/openwin/lib/X11/fonts/TrueType /usr/openwin/lib/X11/fonts/Type1 \
+/usr/openwin/lib/X11/fonts/Type3 /usr/openwin/lib/X11/fonts/Xt+ \
+/usr/lib/X11/fonts/TrueType /usr/lib/X11/fonts/Type1 \
+/usr/lib/X11/fonts/ms.st /usr/lib/X11/fonts/type1.st \
+/usr/share/fonts; do
+  [ ! -d ${_fontdir} ] && continue
+
+  sed -e "\
+/${_s_fonts_prefix}/ {
+i\\
+        <dir>${_fontdir}</dir>
+}" ${_sysconfdir}/fonts.conf >/tmp/$$
+  cp /tmp/$$ ${_sysconfdir}/fonts.conf && rm /tmp/$$
+done
+]]>
+    </install>
+
+    <notes>
+      <note type="configuration">
+        <para>The default font search path is defined in the
+configuration file <command>${SB_INSTALL_PREFIX}/etc/fonts.conf</command>. To add
+additional paths, add additional "<command>&lt;dir&gt;</command>"
+elements.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="12"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 July 9" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add X library directory to xft.pc and
+xrender.pc</para></item>
+      </change>
+
+      <change date="2004 March 11" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade fontconfig to 2.2.92</para></item>
+        <item><para>Upgrade Xft to 2.1.4</para></item>
+        <item><para>Add xrender.pc pkgconfig file; update xft.pc to
+depend on xrender.pc and update fontconfig.pc to depend on
+freetype2.pc</para></item>
+      </change>
+
+      <change date="2004 January 12" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Disable error message about X Render extension not
+being available:</para>
+        <screen>
+Xlib:  extension "RENDER" missing on display ":0.0".
+        </screen></item>
+      </change>
+
+      <change date="2003 July 30" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Change default font path on Redhat
+Linux</para></item>
+      </change>
+
+      <change date="2003 June 1" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>fontconfig CVS sync. Fix for Solaris italic
+fonts.</para></item>
+        <item><para>SYSV shared Xrender libraries on AIX</para></item>
+      </change>
+
+      <change date="2003 April 29" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to fontconfig 2.2</para></item>
+      </change>
+
+      <change date="2003 April 16" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace _XAllocTemp(), _XFreeTemp() with
+malloc/free from recommendation by XFree86 developers on systems
+without them (bug #135)</para></item>
+      </change>
+
+      <change date="2003 April 10" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Provide replacement _XAllocTemp(), _XFreeTemp()
+for Xrender on Solaris 2.5.1</para></item>
+      </change>
+
+      <change date="2003 April 3" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Include &lt;X11/Xdefs.h&gt; in Xrender.h to get
+some typedefs</para></item>
+      </change>
+
+      <change date="2003 April 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+        <item><para>Fix path references</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

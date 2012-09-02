@@ -1,0 +1,60 @@
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2008-06-24 15:55:30.074429851 +0000
++++ configure.ac	2008-06-24 15:57:43.464635833 +0000
+@@ -258,7 +258,7 @@
+ v=EXTRA_PROGRAMS
+ for gl_i in `sed -n '/^'$v' =/,/[[^\]]$/p' $mk \
+     | sed 's/^  *//;/^\$.*/d;/^'$v' =/d' \
+-    | tr -s '\\015\\012\\\\' '  '`; do
++    | tr -s '\\015\\012\\\\' '   '`; do
+   gl_ADD_PROG([optional_bin_progs], $gl_i)
+ done
+ 
+@@ -313,7 +313,7 @@
+ 
+ # Change ginstall.1 to "install.h" in $MAN.
+ MAN=`for m in $MAN; do test $m = ginstall.1 && m=install.1; echo $m; done \
+-  | tr '\015\012' ' '; echo`
++  | tr '\015\012' '  '; echo`
+ 
+ # Remove [.1, since writing a portable rule for it in man/Makefile.am
+ # is not practical.  The sed LHS below uses the autoconf quadrigraph
+Index: tests/Makefile.am
+===================================================================
+--- tests/Makefile.am.orig	2008-05-27 11:47:53.000000000 +0000
++++ tests/Makefile.am	2008-06-24 16:08:08.067657321 +0000
+@@ -137,7 +137,6 @@
+   misc/df-P					\
+   misc/pwd-unreadable-parent			\
+   misc/chcon-fail				\
+-  misc/selinux					\
+   misc/cut					\
+   misc/wc					\
+   misc/wc-files0-from				\
+Index: gnulib-tests/test-vc-list-files-cvs.sh
+===================================================================
+--- gnulib-tests/test-vc-list-files-cvs.sh.orig	2008-05-15 13:18:53.000000000 +0000
++++ gnulib-tests/test-vc-list-files-cvs.sh	2008-06-24 17:24:16.069174118 +0000
+@@ -44,7 +44,7 @@
+   ok=0
+   mkdir $tmpdir && cd $tmpdir &&
+     # without cvs, skip the test
+-    { ( cvs -Q -d "$repo" init ) > /dev/null 2>&1 || exit 77; } &&
++    { ( cvs -Q -d "$repo" init ) > /dev/null 2>&1 || { (exit 77); exit 77; } } &&
+     mkdir w && cd w &&
+     mkdir d &&
+     touch d/a b c &&
+Index: gnulib-tests/test-vc-list-files-git.sh
+===================================================================
+--- gnulib-tests/test-vc-list-files-git.sh.orig	2008-05-15 13:18:53.000000000 +0000
++++ gnulib-tests/test-vc-list-files-git.sh	2008-06-24 17:23:46.395137785 +0000
+@@ -31,7 +31,7 @@
+ fail=1
+ mkdir $tmpdir && cd $tmpdir &&
+   # without git, skip the test
+-  { ( git init -q ) > /dev/null 2>&1 || exit 77; } &&
++  { ( git init -q ) > /dev/null 2>&1 || { (exit 77) ;exit 77; } } &&
+   mkdir d &&
+   touch d/a b c &&
+   git add . > /dev/null &&

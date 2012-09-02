@@ -1,0 +1,251 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="findutils" version="4.4.2" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}44</install-name>
+
+    <sources>
+      <source checksum="351cc4adb07d54877fa15f75fb77d39f"
+        checksum-type="md5" size="2149838"
+        path="src/findutils-4.4.2.tar.gz"/>
+      <patch checksum="f2667f73adcada9d099777b373c41b1d"
+        checksum-type="md5" size="2584"
+        path="src/findutils-4.4.2.tww.patch"/>
+      <patch checksum="4172947224ad06e2457610cc8575f773"
+        checksum-type="md5" size="2920167"
+        path="src/findutils-4.4.2.gnulib.patch"/>
+      <patch checksum="26d2b873186a8117e587ac85bb54d43d"
+        checksum-type="md5" size="2838935"
+        path="src/findutils-4.4.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  export gl_cv_have_arbitrary_file_name_length_limit=yes ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+
+  # isblank() is C99
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--localstatedir=${_localstatedir} --datadir=${_datadir} \
+--datarootdir=${_datadir} --infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" --program-prefix=g \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+gmake -C locate dblocation.texi
+
+# fix path to locatedb database (quote @ for AFS filesystems)
+${SB_PATH_SED} -i -e "\
+s!${_localstatedir}!${_localstatedir/@/@@}!g;" \
+locate/dblocation.texi
+
+${SB_PATH_SED} -i -e "\
+s!/var/cache/locate/locatedb!${_localstatedir}/locatedb!g;" \
+locate/updatedb.1
+]]>
+    </configure>
+
+    <test auto-include="0">
+      <dependencies>
+        <depend program="dejagnu" var="DEJAGNU"
+          install-name="dejagnu14"
+          add-path="prepend">v&gt;=1.4.4</depend>
+        <depend program="expect" install-name="expect54"
+          add-path="prepend">v&gt;=5.45</depend>
+      </dependencies>
+<![CDATA[
+set +x
+# Ensure that the .sh files in the gnulib test dir have their execute
+# bits set
+${SB_PATH_FIND} tests -type f -name '*.sh' -exec chmod +x '{}' \;
+
+# updatedb has the program-prefixed names
+find=${SB_BUILD_PREFIX}/find/find
+code=${SB_BUILD_PREFIX}/locate/code
+bigram=${SB_BUILD_PREFIX}/locate/bigram
+frcode=${SB_BUILD_PREFIX}/locate/frcode
+export find code bigram frcode
+
+case "${SB_SYSTYPE}" in
+# AIX sv-bug-24169.exp hangs forever
+*-aix*) rm find/testsuite/find.gnu/sv-bug-24169.exp ;;
+# On OSF our either our dejagnu or expect hangs forever
+*-osf*) exit 0 ;;
+esac
+
+_dejagnu_datadir="${SB_VAR_DEJAGNU}/share"
+
+DEJAGNULIBS=${_dejagnu_datadir} gmake -k check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+if [ "${_localstatedir+set}" != set ]; then
+  rmdir ${SB_INSTALL_PREFIX}/var
+fi
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/fdl.texi \
+doc/find.texi doc/find-maint.texi doc/getdate.texi doc/perm.texi \
+doc/regexprops.texi doc/version.texi doc/versionmaint.texi \
+locate/dblocation.texi ${_docdir}/texinfo
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="4.4.1" to="4.4.2">
+        <items name="Bug Fixes">
+          <item><para>#26537: find -prune now makes sure it has valid
+stat() information.</para></item>
+        </items>
+
+        <items name="Translations">
+          <item><para>Updated the Slovenian translation.</para></item>
+        </items>
+      </change>
+
+      <change from="4.4.0" to="4.4.1">
+        <items name="Bug Fixes">
+          <item><para>On some systems without support for a boolean type
+(for example some versions of the AIX C compiler), find's regular
+expression implementation fails to support case-insensitive regular
+expression matching, causing -iregex to behave like -regex.  This is
+now fixed.</para></item>
+          <item><para>#25764: remove duplicate entry for 'proc' in
+updatedb's $PRUNEFS.</para></item>
+          <item><para>#25154: Allow compilation with C compilers that
+don't allow declarations to follow statements.</para></item>
+          <item><para>#25144: Misleading error message when argument to
+find -user is an unknown user or is missing.</para></item>
+          <item><para>#24283: -printf %TY causes NULL pointer
+dereference on Solaris.</para></item>
+          <item><para>#24169: find would segfault if the -newerXY test
+was not followed by any argument.</para></item>
+          <item><para>#23996: integer overflow on some platforms when
+parsing "-used 3".</para></item>
+          <item><para>#23663: crash in some locales for -printf %AX
+(this problem seems to have affected only the CVS code for 4.5.x, and
+not any public releases, but it was a problem with the original fix
+for bug #22662)</para></item>
+          <item><para>#22662: find -printf %AX appends nanoseconds in
+the right place now.</para></item>
+        </items>
+
+        <items name="Functional Enhancements to find">
+          <item><para>If the POSIXLY_CORRECT environment variable is
+set, the system's definition of "yes" and "no" responses are used to
+interpret the response to questions from -ok and -okdir.  The default
+is still to use information from the findutils message translations.
+</para></item>
+        </items>
+
+        <items name="Documentation Enhancements">
+          <item><para>Both the Texinfo manual and the find manual page
+now include a more precise description of how your locale
+configuration affects the interpretation of regular expressions and
+how your response to prompts from the -ok action are
+interpreted.</para></item>
+          <item><para>Added a worked example describing how to find
+the shallowest instances of a given directory name (or names) in a
+directory hierarchy.</para></item>
+          <item><para>The file README-CVS has been renamed to
+README-hacking and improved.</para></item>
+        </items>
+
+        <items name="Translations">
+          <item><para>Updated translations: Catalan, French, German,
+Indonesian, Irish, Dutch, Polish, Slovenian, Swedish, Vietnamese,
+Chinese (simplified), Lithuanian.</para></item>
+        </items>
+      </change>
+
+      <note type="configuration">
+        <para>The default path used by <command>gupdatedb</command> to
+store the file name database is
+<command>/var${SB_INSTALL_PREFIX}/locatedb</command>. This can be changed when
+running <command>gupdatedb</command> using the
+"<command>--output</command>" command-line option.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2011 October 10" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3.</para></item>
+        <item><para>Update expect dependency from 5.43 to
+5.45.</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1.</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1.</para></item>
+        <item><para>Remove support for RHEL3.</para></item>
+        <item><para>Remove support for HPUX/10.20.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="OpenSP" version="1.5.1" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>opensp15</install-name>
+
+    <sources>
+      <source checksum="f46fe0a04b76a4454ec27b7fcc84ec54"
+        checksum-type="md5" size="1418784"
+        path="src/OpenSP-1.5.1.tar.gz"/>
+      <patch checksum="d42f0ea476a2295bf3dd6ef835336a5b"
+        checksum-type="md5" size="1432938"
+        path="src/OpenSP-1.5.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011" add-path="prepend"
+        type="build">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend var="GCC_RT" install-name="gcc323r"
+        systype="*-hpux10*"/>
+      <depend var="GCC_RT" install-name="gcc332r"
+        systype="*-aix*|*-hpux11*|*-irix*|*-osf*|*-solaris*"/>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+      <depend program="gcc" add-path="prepend" systype="*-hpux10*"
+        type="build">v==3.2.3</depend>
+      <depend program="gcc" add-path="prepend"
+        systype="*-aix*|*-hpux11*|*-irix*|*-osf*|*-solaris*"
+        type="build">v==3.3.2</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=common" CXXFLAGS="-O2 -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" MAKE=gmake \
+LDFLAGS="${SB_VAR_GCC_RT+${CC_LD_RT}}${SB_VAR_GCC_RT+${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" ac_cv_cxx_gnu_avoid_new_h=no \
+--enable-http --enable-static --enable-shared \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--disable-nls --enable-default-catalog=${SB_VAR_XMLCATALOG}/catalog \
+--enable-default-search-path=${SB_VAR_XMLCATALOG} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdocdir="${_docdir}" pkgdatadir="${_sysconfdir}" \
+pkgincludedir="${SB_INSTALL_PREFIX}/include"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdocdir="${_docdir}" pkgdatadir="${_sysconfdir}" \
+pkgincludedir="${SB_INSTALL_PREFIX}/include"
+]]>
+    </install>
+
+    <notes>
+      <change from="1.5" to="1.5.1">
+        <item><para>Enable run time selection of message format with
+SP_MESSAGE_FORMAT environment variable. Value is one of XML, NONE,
+TRADITIONAL</para></item>
+        <item><para>Add support for restricted files option to generic
+API</para></item>
+        <item><para>Add support for http redirection</para></item>
+        <item><para>Add support for specifying the user agent at run
+time with the SP_HTTP_USER_AGENT environment variable</para></item>
+        <item><para>Add support for specifying Accept: headers with
+the SP_HTTP_ACCEPT environment variable</para></item>
+        <item><para>Fix for Mac OS X/Darwin compilation</para></item>
+        <item><para>Build Infrastructure/Localisation
+enhancements</para></item>
+        <item><para>Enhancements to osx. Preserve case option,
+security fixes</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 July 5" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update xmlcatalog dependency from 1.0 to
+1.1</para></item>
+        <item><para>Support HP-UX 10.20 by using GCC
+3.2.3</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

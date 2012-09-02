@@ -1,0 +1,255 @@
+Index: Makefile.am
+===================================================================
+--- Makefile.am.orig	2008-06-23 19:53:47.799007820 +0000
++++ Makefile.am	2008-06-23 20:42:55.111421637 +0000
+@@ -6,7 +6,7 @@
+ 
+ PACKAGE = sed
+ 
+-SUBDIRS = lib po sed doc testsuite
++SUBDIRS = gnulib lib po sed doc testsuite
+ 
+ noinst_DATA = bootstrap.sh
+ noinst_HEADERS = basicdefs.h
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2008-06-23 19:53:48.026285833 +0000
++++ configure.ac	2008-06-23 20:42:55.121208066 +0000
+@@ -11,11 +11,9 @@
+   [Define to the version of GNU sed whose features are supported by this sed.])
+ AC_SUBST(SED_FEATURE_VERSION)
+ 
+-AC_PROG_CC
+-AC_PROG_RANLIB
+ AC_GNU_SOURCE
+-AC_AIX
+-AC_MINIX
++AC_PROG_CC
++gl_EARLY
+ AC_ISC_POSIX
+ AC_SYS_LARGEFILE
+ AC_SYS_LONG_FILE_NAMES
+@@ -52,27 +50,13 @@
+ AC_TYPE_SIZE_T
+ AC_CHECK_TYPE(ssize_t, int)
+ 
+-AC_HEADER_STDBOOL
+-if test "$ac_cv_type__Bool" = no; then
+-  HAVE__BOOL=0
+-else
+-  HAVE__BOOL=1
+-fi
+-AC_SUBST(HAVE__BOOL)
+-if test "$ac_cv_header_stdbool_h" = no; then
+-  AC_CONFIG_FILES(lib/stdbool.h:lib/stdbool_.h)
+-fi
+-
+ AC_FUNC_ALLOCA
+-AC_FUNC_VPRINTF
+-AM_FUNC_GETLINE
+-AC_FUNC_OBSTACK
+ AC_FUNC_MBRTOWC
+ AC_TYPE_MBSTATE_T
+-gl_FUNC_STRVERSCMP
+ AC_REPLACE_FUNCS(memchr memcmp memmove strerror mkstemp)
+ AC_CHECK_FUNCS(isatty bcopy bzero isascii memcpy memset strchr strtoul popen \
+ 		pathconf isblank fchown fchmod setlocale wcrtomb wcscoll btowc)
++gl_INIT
+ 
+ AC_ARG_ENABLE(i18n,
+ [  --disable-i18n          disable internationalization (default=yes)], ,
+@@ -147,7 +131,7 @@
+ AM_GNU_GETTEXT([external], [need-ngettext])
+ 
+ AC_CONFIG_FILES([bootstrap.sh], chmod +x bootstrap.sh)
+-AC_CONFIG_FILES([Makefile doc/Makefile \
++AC_CONFIG_FILES([Makefile doc/Makefile gnulib/Makefile \
+ lib/Makefile sed/Makefile testsuite/Makefile \
+ po/Makefile.in])
+ AC_OUTPUT
+Index: lib/Makefile.am
+===================================================================
+--- lib/Makefile.am.orig	2008-06-23 19:53:48.014553959 +0000
++++ lib/Makefile.am	2008-06-23 20:42:55.143224588 +0000
+@@ -1,16 +1,6 @@
+ ## Process this file with automake to produce Makefile.in
+ noinst_LIBRARIES = libsed.a
+-noinst_HEADERS = getopt.h utils.h obstack.h regex_.h regex_internal.h \
+-	strverscmp.h stdbool_.h
+ 
+-libsed_a_SOURCES = getopt1.c getopt.c utils.c
++libsed_a_SOURCES = utils.c
+ 
+-EXTRA_DIST = memmove.c strerror.c regcomp.c regexec.c regex_internal.c
+-
+-AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_srcdir)/intl -I$(top_srcdir) \
+-	-I$(top_builddir)/lib -I$(top_builddir)/intl
+-
+-libsed_a_LIBADD = @LIBOBJS@ @ALLOCA@
+-libsed_a_DEPENDENCIES = $(libsed_a_LIBADD)
+-
+-DISTCLEANFILES = regex.h stdbool.h
++AM_CPPFLAGS = -I$(top_builddir)/gnulib
+Index: sed/Makefile.am
+===================================================================
+--- sed/Makefile.am.orig	2008-06-23 19:53:48.046012415 +0000
++++ sed/Makefile.am	2008-06-23 20:42:55.261826421 +0000
+@@ -6,12 +6,13 @@
+ sed_SOURCES = sed.c compile.c execute.c regexp.c fmt.c mbcs.c
+ noinst_HEADERS = sed.h
+ 
+-AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_srcdir)/intl \
+-	-I$(top_srcdir) -I$(top_builddir)/lib \
+-	-I$(top_builddir)/intl -DLOCALEDIR=\"$(localedir)\"
++AM_CPPFLAGS = -I$(top_srcdir) -I$(top_builddir)/gnulib \
++	-I$(top_builddir)/lib -DLOCALEDIR=\"$(localedir)\"
+ 
+-sed_LDADD = ../lib/libsed.a @INTLLIBS@
+-sed_DEPENDENCIES = ../lib/libsed.a
++sed_LDADD = $(top_builddir)/lib/libsed.a \
++	$(top_builddir)/gnulib/libgnu.a $(INTLLIBS)
++sed_DEPENDENCIES = $(top_builddir)/lib/libsed.a \
++	$(top_builddir)/gnulib/libgnu.a
+ 
+ $(PROGRAMS): $(LDADD)
+ 
+Index: testsuite/Makefile.am
+===================================================================
+--- testsuite/Makefile.am.orig	2008-06-23 19:53:47.929096997 +0000
++++ testsuite/Makefile.am	2008-06-23 20:42:55.301785469 +0000
+@@ -3,9 +3,10 @@
+ TESTS = $(check_PROGRAMS) $(SEDTESTS)
+ SEDTESTS =
+ 
+-LDADD = ../lib/libsed.a
++LDADD = $(top_builddir)/lib/libsed.a $(top_builddir)/gnulib/libgnu.a \
++	$(INTLLIBS)
+ noinst_HEADERS = testcases.h ptestcases.h
+-AM_CPPFLAGS = -I../lib
++AM_CPPFLAGS = -I$(top_builddir)/gnulib -I$(top_builddir)/lib
+ 
+ if TEST_REGEX
+ check_PROGRAMS = bug-regex7 \
+Index: testsuite/bug-regex7.c
+===================================================================
+--- testsuite/bug-regex7.c.orig	2008-06-23 19:53:47.934734010 +0000
++++ testsuite/bug-regex7.c	2008-06-23 20:42:55.311755891 +0000
+@@ -18,6 +18,8 @@
+    Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+    02110-1301 USA.  */
+ 
++#include "config.h"
++
+ #include <locale.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+Index: testsuite/bug-regex8.c
+===================================================================
+--- testsuite/bug-regex8.c.orig	2008-06-23 19:53:47.999088230 +0000
++++ testsuite/bug-regex8.c	2008-06-23 20:42:55.322174189 +0000
+@@ -18,6 +18,8 @@
+    Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+    02110-1301 USA.  */
+ 
++#include "config.h"
++
+ #include <locale.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+Index: testsuite/bug-regex10.c
+===================================================================
+--- testsuite/bug-regex10.c.orig	2008-06-23 19:53:47.986567552 +0000
++++ testsuite/bug-regex10.c	2008-06-23 20:42:55.330431380 +0000
+@@ -18,6 +18,8 @@
+    Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+    02110-1301 USA.  */
+ 
++#include "config.h"
++
+ #include <locale.h>
+ #include <stdio.h>
+ #include <string.h>
+Index: testsuite/bug-regex15.c
+===================================================================
+--- testsuite/bug-regex15.c.orig	2008-06-23 19:53:47.975623819 +0000
++++ testsuite/bug-regex15.c	2008-06-23 20:42:55.339686426 +0000
+@@ -1,5 +1,7 @@
+ /* Test for memory/CPU leak in regcomp.  */
+ 
++#include "config.h"
++
+ #include <sys/types.h>
+ #include <sys/time.h>
+ #include <sys/resource.h>
+Index: testsuite/bug-regex16.c
+===================================================================
+--- testsuite/bug-regex16.c.orig	2008-06-23 19:53:47.940246462 +0000
++++ testsuite/bug-regex16.c	2008-06-23 20:42:55.350345752 +0000
+@@ -1,5 +1,7 @@
+ /* Test re_compile_pattern error messages.  */
+ 
++#include "config.h"
++
+ #include <stdio.h>
+ #include <string.h>
+ #include <regex.h>
+Index: testsuite/tst-regex2.c
+===================================================================
+--- testsuite/tst-regex2.c.orig	2008-06-23 19:53:47.945433441 +0000
++++ testsuite/tst-regex2.c	2008-06-23 20:42:55.384114885 +0000
+@@ -1,3 +1,5 @@
++#include "config.h"
++
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <regex.h>
+Index: testsuite/runtests.c
+===================================================================
+--- testsuite/runtests.c.orig	2008-06-23 19:53:47.981127632 +0000
++++ testsuite/runtests.c	2008-06-23 20:42:55.394924510 +0000
+@@ -24,6 +24,8 @@
+ 
+ 
+ 
++#include "config.h"
++
+ #include <sys/types.h>
+ #include <regex.h>
+ #include <stdio.h>
+Index: testsuite/runptests.c
+===================================================================
+--- testsuite/runptests.c.orig	2008-06-23 19:53:47.923126915 +0000
++++ testsuite/runptests.c	2008-06-23 20:42:55.404997346 +0000
+@@ -18,6 +18,8 @@
+    Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+    02110-1301 USA.  */
+ 
++#include "config.h"
++
+ #include <sys/types.h>
+ #include <regex.h>
+ #include <stdio.h>
+Index: testsuite/bug-regex14.c
+===================================================================
+--- testsuite/bug-regex14.c.orig	2008-06-23 19:11:04.000000000 +0000
++++ testsuite/bug-regex14.c	2008-06-23 20:43:03.999699149 +0000
+@@ -20,7 +20,6 @@
+ 
+ #include "config.h"
+ 
+-#define _REGEX_RE_COMP
+ #include <sys/types.h>
+ #ifdef HAVE_MCHECK_H
+ #include <mcheck.h>
+Index: m4/include_next.m4
+===================================================================
+--- m4/include_next.m4.orig	2008-06-23 20:42:53.000000000 +0000
++++ m4/include_next.m4	2008-09-04 19:35:30.767228004 +0000
+@@ -15,6 +15,7 @@
+      mkdir conftestd1 conftestd2
+      cat <<EOF > conftestd1/conftest.h
+ #define DEFINED_IN_CONFTESTD1
++#include <stdio.h>
+ #include_next <conftest.h>
+ #ifdef DEFINED_IN_CONFTESTD2
+ int foo;

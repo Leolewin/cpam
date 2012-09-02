@@ -1,0 +1,684 @@
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2009-02-06 23:21:48.162314785 +0000
++++ configure.ac	2009-02-06 23:21:48.565901923 +0000
+@@ -61,70 +61,9 @@
+ AC_CHECK_DEBUGGING
+ AC_CHECK_PROFILING
+ AC_CHECK_OPTIMIZE
+-if test -f "$srcdir/ltmain.sh"; then
+-    case "$PLATFORM" in
+-        #   Solaris 2.7/x86 is slightly broken
+-        *-pc-solaris2.[[78]] [)] enable_shared=no ;;
+-    esac
+-    sinclude(libtool.m4)
+-    AC_PROG_LIBTOOL
+-else
+-    dnl # only for stripped down Pth source tree
+-    AC_CHECK_PROG(AR, ar, ar)
+-    AC_PROG_RANLIB
+-fi
+-
+-dnl ##  Support for some special platform/compiler options
+-case "$PLATFORM:$CC" in
+-    *-sun-solaris2*:cc )
+-        #   shut-up harmless warnings caused by do-while macros on Solaris
+-        test ".$ac_cv_prog_gcc" = ".no" && CFLAGS="$CFLAGS -w"
+-        ;;
+-    *-*-sysv*uw[[27]]*:cc )
+-        #   shut-up harmless warnings caused by do-while macros on UnixWare
+-        CFLAGS="$CFLAGS -w"
+-        ;;
+-    *-hp-hpux*:cc )
+-        #   HPUX needs a few special options to find its ANSI C brain
+-        CFLAGS="$CFLAGS -Ae -O"
+-        ;;
+-    *-hp-hpux*:CC )
+-        #   HPUX outputs useless warnings
+-        CFLAGS="$CFLAGS -w"
+-        ;;
+-    *-sgi-irix6.2:cc )
+-        #   shut-up warnings caused by IRIX brain-dead 32/64 bit stuff
+-        LDFLAGS="$LDFLAGS -woff 85 -Wl,-woff,84 -Wl,-woff,85"
+-        ;;
+-    *-sgi-irix6.5.[[2-9]]:cc )
+-        #   since IRIX 6.5.2 the C compiler is smart enough,
+-        #   but the linker is still complaining, of course
+-        LDFLAGS="$LDFLAGS -woff 84,85,134"
+-        ;;
+-    *-sgi-irix6.5:cc )
+-        #   shut-up warnings caused by IRIX brain-dead 32/64 bit stuff
+-        CFLAGS="$CFLAGS -woff 1110,1048"
+-        LDFLAGS="$LDFLAGS -woff 84,85,134"
+-        ;;
+-    *-dec-osf4*:cc )
+-        #   make sure the standard compliant functions are used on Tru64/OSF1 4.x
+-        CFLAGS="$CFLAGS -std"
+-        ;;
+-    *-dec-osf5*:cc )
+-        #   make sure the standard compliant functions are used on Tru64/OSF1 5.x
+-        CFLAGS="$CFLAGS -std -D_XOPEN_SOURCE_EXTENDED"
+-        ;;
+-    *-*-isc*:* )
+-        #   ISC is brain-dead and needs a bunch of options to find its brain
+-        CPPFLAGS="$CPPFLAGS -D_POSIX_SOURCE";
+-        LIBS="$LIBS -lcposix -linet";
+-        ;;
+-    *-*-aix4.1*:cc )
+-        #   AIX 4.1.x' cc complains about our use of "volatile"
+-        CPPFLAGS="$CPPFLAGS '-Dvolatile=/**/'";
+-        ;;
+-esac
+-
++m4_include(libtool.m4)
++AC_LIBTOOL_TAGS()
++AC_PROG_LIBTOOL
+ dnl ##
+ dnl ##   MANDATORY PLATFORM ENVIRONMENT
+ dnl ##
+@@ -263,6 +202,8 @@
+ #include <sys/types.h>
+ #include <sys/time.h>
+ #include <unistd.h>
++
++extern int gettimeofday(struct timeval *);
+ ],[
+ struct timeval tv;
+ (void)gettimeofday(&tv);
+@@ -271,10 +212,6 @@
+ ,
+ msg="no"
+ )
+-case $PLATFORM in
+-    *-*-aix4* ) msg="no" ;; # on AIX the compiler test doesn't work
+-    *-*-isc* )  msg="no" ;; # on ISC the compiler test doesn't work
+-esac
+ if test ".$msg" = .yes; then
+     AC_DEFINE(HAVE_GETTIMEOFDAY_ARGS1, 1, [define if gettimeofday(2) wants a single-argument only])
+ fi
+@@ -300,9 +237,9 @@
+ 
+ dnl # check for network/socket size type
+ AC_CHECK_SOCKLENTYPE([
+-FALLBACK_SOCKLEN_T="typedef ${ac_type} socklen_t;"
++FALLBACK_SOCKLEN_T="typedef ${ac_type} pth_socklen_t;"
+ if test ".$ac_type" = ".socklen_t"; then
+-    FALLBACK_SOCKLEN_T="/* $FALLBACK_SOCKLEN_T */"
++    FALLBACK_SOCKLEN_T="typedef socklen_t pth_socklen_t;"
+ fi
+ AC_SUBST(FALLBACK_SOCKLEN_T)
+ ])
+@@ -644,6 +581,8 @@
+ dnl ##
+ 
+ AC_MSG_PART(Output Substitution)
++VERSION=2.0.7
++AC_SUBST(VERSION)
+ 
+ AC_OUTPUT(dnl
+ Makefile dnl
+@@ -652,6 +591,7 @@
+ pth-config dnl
+ pth.h dnl
+ pth_acmac.h dnl
++libpth.pc
+ ,dnl
+ chmod +rx pthread-config
+ chmod +rx pth-config
+Index: aclocal.m4
+===================================================================
+--- aclocal.m4.orig	2009-02-06 23:21:48.284176127 +0000
++++ aclocal.m4	2009-02-06 23:21:48.573754570 +0000
+@@ -373,51 +373,9 @@
+ AC_ARG_ENABLE(debug,dnl
+ [  --enable-debug          build for debugging (default=no)],
+ [dnl
+-if test ".$ac_cv_prog_gcc" = ".yes"; then
+-    case "$CFLAGS" in
+-        *-O* ) ;;
+-           * ) CFLAGS="$CFLAGS -O2" ;;
+-    esac
+-    case "$CFLAGS" in
+-        *-g* ) ;;
+-           * ) CFLAGS="$CFLAGS -g" ;;
+-    esac
+-    case "$CFLAGS" in
+-        *-pipe* ) ;;
+-              * ) AC_COMPILER_OPTION(pipe, -pipe, -pipe, CFLAGS="$CFLAGS -pipe") ;;
+-    esac
+-    case $PLATFORM in
+-        *-*-freebsd*|*-*-solaris* ) CFLAGS="$CFLAGS -pedantic" ;;
+-    esac
+-    CFLAGS="$CFLAGS -Wall"
+-    WMORE="-Wshadow -Wpointer-arith -Wcast-align -Winline"
+-    WMORE="$WMORE -Wmissing-prototypes -Wmissing-declarations -Wnested-externs"
+-    AC_COMPILER_OPTION(wmore, -W<xxx>, $WMORE, CFLAGS="$CFLAGS $WMORE")
+-    AC_COMPILER_OPTION(wnolonglong, -Wno-long-long, -Wno-long-long, CFLAGS="$CFLAGS -Wno-long-long")
+-    AC_COMPILER_OPTION(fnostrictaliasing, -fno-strict-aliasing, -fno-strict-aliasing, CFLAGS="$CFLAGS -fno-strict-aliasing")
+-else
+-    case "$CFLAGS" in
+-        *-g* ) ;;
+-           * ) CFLAGS="$CFLAGS -g" ;;
+-    esac
+-fi
+ msg="enabled"
+ AC_DEFINE(PTH_DEBUG, 1, [define to enable Pth debugging])
+ ],[
+-if test ".$ac_cv_prog_gcc" = ".yes"; then
+-case "$CFLAGS" in
+-    *-pipe* ) ;;
+-          * ) AC_COMPILER_OPTION(pipe, -pipe, -pipe, CFLAGS="$CFLAGS -pipe") ;;
+-esac
+-fi
+-case "$CFLAGS" in
+-    *-g* ) CFLAGS=`echo "$CFLAGS" |\
+-                   sed -e 's/ -g / /g' -e 's/ -g$//' -e 's/^-g //g' -e 's/^-g$//'` ;;
+-esac
+-case "$CXXFLAGS" in
+-    *-g* ) CXXFLAGS=`echo "$CXXFLAGS" |\
+-                     sed -e 's/ -g / /g' -e 's/ -g$//' -e 's/^-g //g' -e 's/^-g$//'` ;;
+-esac
+ msg="disabled"
+ ])dnl
+ AC_MSG_CHECKING(for compilation debug mode)
+@@ -1184,6 +1142,7 @@
+ #include <stdio.h>
+ #include <sys/types.h>
+ #include <unistd.h>
++#include <sys/time.h>
+ int main(int argc, char *argv[])
+ {
+     FILE *fp;
+@@ -1380,13 +1339,13 @@
+     fclose(fp);
+ 
+     /* configure a child user-space context */
+-    if ((stack = malloc(64*1024)) == NULL)
++    if ((stack = malloc(256*1024)) == NULL)
+         exit(1);
+     if (getcontext(&uc_child) != 0)
+         exit(1);
+     uc_child.uc_link = NULL;
+-    uc_child.uc_stack.ss_sp = (char *)stack+(32*1024);
+-    uc_child.uc_stack.ss_size = 32*1024;
++    uc_child.uc_stack.ss_sp = (char *)stack+(128*1024);
++    uc_child.uc_stack.ss_size = 128*1024;
+     uc_child.uc_stack.ss_flags = 0;
+     makecontext(&uc_child, child, 2, (void *)12345);
+ 
+@@ -1522,7 +1481,7 @@
+     int sksize;
+     char result[1024];
+     int i;
+-    sksize = 32768;
++    sksize = 262144;
+     skbuf = (char *)malloc(sksize*2+2*sizeof(union alltypes));
+     if (skbuf == NULL)
+         exit(1);
+Index: pth_syscall.c
+===================================================================
+--- pth_syscall.c.orig	2009-02-06 23:21:48.214022765 +0000
++++ pth_syscall.c	2009-02-06 23:21:48.581366595 +0000
+@@ -46,14 +46,16 @@
+ #define pselect       __pth_sys_pselect
+ #define poll          __pth_sys_poll
+ #define connect       __pth_sys_connect
++#ifndef _AIX
+ #define accept        __pth_sys_accept
++#define recvfrom      __pth_sys_recvfrom
++#endif
+ #define read          __pth_sys_read
+ #define write         __pth_sys_write
+ #define readv         __pth_sys_readv
+ #define writev        __pth_sys_writev
+ #define recv          __pth_sys_recv
+ #define send          __pth_sys_send
+-#define recvfrom      __pth_sys_recvfrom
+ #define sendto        __pth_sys_sendto
+ #define pread         __pth_sys_pread
+ #define pwrite        __pth_sys_pwrite
+@@ -411,18 +413,18 @@
+ }
+ 
+ /* ==== Pth hard syscall wrapper for connect(2) ==== */
+-int connect(int, const struct sockaddr *, socklen_t);
+-int connect(int s, const struct sockaddr *addr, socklen_t addrlen)
++int connect(int, const struct sockaddr *, pth_socklen_t);
++int connect(int s, const struct sockaddr *addr, pth_socklen_t addrlen)
+ {
+     /* external entry point for application */
+     pth_implicit_init();
+     return pth_connect(s, addr, addrlen);
+ }
+-intern int pth_sc_connect(int s, const struct sockaddr *addr, socklen_t addrlen)
++intern int pth_sc_connect(int s, const struct sockaddr *addr, pth_socklen_t addrlen)
+ {
+     /* internal exit point for Pth */
+     if (pth_syscall_fct_tab[PTH_SCF_connect].addr != NULL)
+-        return ((int (*)(int, const struct sockaddr *, socklen_t))
++        return ((int (*)(int, const struct sockaddr *, pth_socklen_t))
+                pth_syscall_fct_tab[PTH_SCF_connect].addr)
+                (s, addr, addrlen);
+ #if defined(HAVE_SYSCALL) && defined(SYS_connect)
+@@ -441,18 +443,18 @@
+ }
+ 
+ /* ==== Pth hard syscall wrapper for accept(2) ==== */
+-int accept(int, struct sockaddr *, socklen_t *);
+-int accept(int s, struct sockaddr *addr, socklen_t *addrlen)
++int accept(int, struct sockaddr *, pth_socklen_t *);
++int accept(int s, struct sockaddr *addr, pth_socklen_t *addrlen)
+ {
+     /* external entry point for application */
+     pth_implicit_init();
+     return pth_accept(s, addr, addrlen);
+ }
+-intern int pth_sc_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
++intern int pth_sc_accept(int s, struct sockaddr *addr, pth_socklen_t *addrlen)
+ {
+     /* internal exit point for Pth */
+     if (pth_syscall_fct_tab[PTH_SCF_accept].addr != NULL)
+-        return ((int (*)(int, struct sockaddr *, socklen_t *))
++        return ((int (*)(int, struct sockaddr *, pth_socklen_t *))
+                pth_syscall_fct_tab[PTH_SCF_accept].addr)
+                (s, addr, addrlen);
+ #if defined(HAVE_SYSCALL) && defined(SYS_accept)
+@@ -647,7 +649,7 @@
+ #if defined(HAVE_SYSCALL) && defined(SYS_recv)
+     else return (ssize_t)syscall(SYS_recv, fd, buf, nbytes, flags);
+ #elif defined(HAVE_SYSCALL) && defined(SYS_recvfrom)
+-    else return (ssize_t)syscall(SYS_recvfrom, fd, buf, nbytes, flags, (struct sockaddr *)NULL, (socklen_t *)NULL);
++    else return (ssize_t)syscall(SYS_recvfrom, fd, buf, nbytes, flags, (struct sockaddr *)NULL, (pth_socklen_t *)NULL);
+ #else
+     else PTH_SYSCALL_ERROR(-1, ENOSYS, "recv");
+ #endif
+@@ -678,18 +680,18 @@
+ }
+ 
+ /* ==== Pth hard syscall wrapper for recvfrom(2) ==== */
+-ssize_t recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
+-ssize_t recvfrom(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, socklen_t *fromlen)
++ssize_t recvfrom(int, void *, size_t, int, struct sockaddr *, pth_socklen_t *);
++ssize_t recvfrom(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, pth_socklen_t *fromlen)
+ {
+     /* external entry point for application */
+     pth_implicit_init();
+     return pth_recvfrom(fd, buf, nbytes, flags, from, fromlen);
+ }
+-intern ssize_t pth_sc_recvfrom(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, socklen_t *fromlen)
++intern ssize_t pth_sc_recvfrom(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, pth_socklen_t *fromlen)
+ {
+     /* internal exit point for Pth */
+     if (pth_syscall_fct_tab[PTH_SCF_recvfrom].addr != NULL)
+-        return ((ssize_t (*)(int, void *, size_t, int, struct sockaddr *, socklen_t *))
++        return ((ssize_t (*)(int, void *, size_t, int, struct sockaddr *, pth_socklen_t *))
+                pth_syscall_fct_tab[PTH_SCF_recvfrom].addr)
+                (fd, buf, nbytes, flags, from, fromlen);
+ #if defined(HAVE_SYSCALL) && defined(SYS_recvfrom)
+@@ -700,18 +702,18 @@
+ }
+ 
+ /* ==== Pth hard syscall wrapper for sendto(2) ==== */
+-ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
+-ssize_t sendto(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, socklen_t tolen)
++ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, pth_socklen_t);
++ssize_t sendto(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, pth_socklen_t tolen)
+ {
+     /* external entry point for application */
+     pth_implicit_init();
+     return pth_sendto(fd, buf, nbytes, flags, to, tolen);
+ }
+-intern ssize_t pth_sc_sendto(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, socklen_t tolen)
++intern ssize_t pth_sc_sendto(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, pth_socklen_t tolen)
+ {
+     /* internal exit point for Pth */
+     if (pth_syscall_fct_tab[PTH_SCF_sendto].addr != NULL)
+-        return ((ssize_t (*)(int, const void *, size_t, int, const struct sockaddr *, socklen_t))
++        return ((ssize_t (*)(int, const void *, size_t, int, const struct sockaddr *, pth_socklen_t))
+                pth_syscall_fct_tab[PTH_SCF_sendto].addr)
+                (fd, buf, nbytes, flags, to, tolen);
+ #if defined(HAVE_SYSCALL) && defined(SYS_sendto)
+Index: pth_high.c
+===================================================================
+--- pth_high.c.orig	2009-02-06 23:21:48.351801312 +0000
++++ pth_high.c	2009-02-06 23:21:48.588247573 +0000
+@@ -588,18 +588,22 @@
+ }
+ 
+ /* Pth variant of connect(2) */
+-int pth_connect(int s, const struct sockaddr *addr, socklen_t addrlen)
++int pth_connect(int s, const struct sockaddr *addr, pth_socklen_t addrlen)
+ {
+     return pth_connect_ev(s, addr, addrlen, NULL);
+ }
+ 
+ /* Pth variant of connect(2) with extra events */
+-int pth_connect_ev(int s, const struct sockaddr *addr, socklen_t addrlen, pth_event_t ev_extra)
++int pth_connect_ev(int s, const struct sockaddr *addr, pth_socklen_t addrlen, pth_event_t ev_extra)
+ {
+     pth_event_t ev;
+     static pth_key_t ev_key = PTH_KEY_INIT;
+     int rv, err;
+-    socklen_t errlen;
++#if defined(__hpux) && defined(__ia64)
++    int errlen;
++#else
++    pth_socklen_t errlen;
++#endif
+     int fdmode;
+ 
+     pth_implicit_init();
+@@ -646,13 +650,13 @@
+ }
+ 
+ /* Pth variant of accept(2) */
+-int pth_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
++int pth_accept(int s, struct sockaddr *addr, pth_socklen_t *addrlen)
+ {
+     return pth_accept_ev(s, addr, addrlen, NULL);
+ }
+ 
+ /* Pth variant of accept(2) with extra events */
+-int pth_accept_ev(int s, struct sockaddr *addr, socklen_t *addrlen, pth_event_t ev_extra)
++int pth_accept_ev(int s, struct sockaddr *addr, pth_socklen_t *addrlen, pth_event_t ev_extra)
+ {
+     pth_event_t ev;
+     static pth_key_t ev_key = PTH_KEY_INIT;
+@@ -672,7 +676,11 @@
+ 
+     /* poll socket via accept */
+     ev = NULL;
++#if defined(__hpux) && defined(__ia64)
++    while ((rv = pth_sc(accept)(s, addr, (int *)addrlen)) == -1
++#else
+     while ((rv = pth_sc(accept)(s, addr, addrlen)) == -1
++#endif
+            && (errno == EAGAIN || errno == EWOULDBLOCK)
+            && fdmode != PTH_FDMODE_NONBLOCK) {
+         /* do lazy event allocation */
+@@ -1307,13 +1315,13 @@
+ }
+ 
+ /* Pth variant of SUSv2 recvfrom(2) */
+-ssize_t pth_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr *from, socklen_t *fromlen)
++ssize_t pth_recvfrom(int s, void *buf, size_t len, int flags, struct sockaddr *from, pth_socklen_t *fromlen)
+ {
+     return pth_recvfrom_ev(s, buf, len, flags, from, fromlen, NULL);
+ }
+ 
+ /* Pth variant of SUSv2 recvfrom(2) with extra event(s) */
+-ssize_t pth_recvfrom_ev(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, socklen_t *fromlen, pth_event_t ev_extra)
++ssize_t pth_recvfrom_ev(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, pth_socklen_t *fromlen, pth_event_t ev_extra)
+ {
+     struct timeval delay;
+     pth_event_t ev;
+@@ -1372,7 +1380,11 @@
+        above by polling that the next recvfrom(2) call will not block.  But keep
+        in mind, that only 1 next recvfrom(2) call is guarrantied to not block
+        (except for the EINTR situation). */
++#if defined(__hpux) && defined(__ia64)
++    while ((n = pth_sc(recvfrom)(fd, buf, nbytes, flags, from, (int *)fromlen)) < 0
++#else
+     while ((n = pth_sc(recvfrom)(fd, buf, nbytes, flags, from, fromlen)) < 0
++#endif
+            && errno == EINTR) ;
+ 
+     pth_debug2("pth_recvfrom_ev: leave to thread \"%s\"", pth_current->name);
+@@ -1392,13 +1404,13 @@
+ }
+ 
+ /* Pth variant of SUSv2 sendto(2) */
+-ssize_t pth_sendto(int s, const void *buf, size_t len, int flags, const struct sockaddr *to, socklen_t tolen)
++ssize_t pth_sendto(int s, const void *buf, size_t len, int flags, const struct sockaddr *to, pth_socklen_t tolen)
+ {
+     return pth_sendto_ev(s, buf, len, flags, to, tolen, NULL);
+ }
+ 
+ /* Pth variant of SUSv2 sendto(2) with extra event(s) */
+-ssize_t pth_sendto_ev(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, socklen_t tolen, pth_event_t ev_extra)
++ssize_t pth_sendto_ev(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, pth_socklen_t tolen, pth_event_t ev_extra)
+ {
+     struct timeval delay;
+     pth_event_t ev;
+Index: Makefile.in
+===================================================================
+--- Makefile.in.orig	2009-02-06 23:21:48.259685803 +0000
++++ Makefile.in	2009-02-06 23:21:48.595552846 +0000
+@@ -44,6 +44,7 @@
+ includedir  = @includedir@
+ mandir      = @mandir@
+ datadir     = @datadir@
++datarootdir = @datarootdir@
+ 
+ DESTDIR     =
+ 
+@@ -152,7 +153,7 @@
+ .c.o:
+ 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+ .c.lo:
+-	$(LIBTOOL) --mode=compile --quiet $(CC) -c $(CPPFLAGS) $(CFLAGS) $<
++	$(LIBTOOL) --mode=compile  $(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+ 
+ #   the default target
+ all: all-normal
+@@ -168,10 +169,10 @@
+ 
+ #   build the static and possibly shared libraries
+ libpth.la: $(LOBJS)
+-	$(LIBTOOL) --mode=link --quiet $(CC) -o libpth.la $(LOBJS) \
++	$(LIBTOOL) --mode=link  $(CC) -o libpth.la  $(CFLAGS) $(LDFLAGS) $(LOBJS) $(LIBS) \
+ 	-rpath $(libdir) -version-info `$(SHTOOL) version -lc -dlibtool $(_VERSION_FILE)`
+ libpthread.la: pthread.lo $(LOBJS)
+-	$(LIBTOOL) --mode=link --quiet $(CC) -o libpthread.la pthread.lo $(LOBJS) \
++	$(LIBTOOL) --mode=link  $(CC) -o libpthread.la $(CFLAGS) $(LDFLAGS) pthread.lo $(LOBJS) $(LIBS) \
+ 	-rpath $(libdir) -version-info `$(SHTOOL) version -lc -dlibtool $(_VERSION_FILE)`
+ 
+ #   build the manual pages
+@@ -194,25 +195,25 @@
+ 
+ #   build test program
+ test_std: test_std.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_std test_std.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC) $(CFLAGS) $(LDFLAGS) -o test_std test_std.o test_common.o libpth.la
+ test_httpd: test_httpd.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_httpd test_httpd.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_httpd test_httpd.o test_common.o libpth.la
+ test_misc: test_misc.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_misc test_misc.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_misc test_misc.o test_common.o libpth.la
+ test_mp: test_mp.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_mp test_mp.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_mp test_mp.o test_common.o libpth.la
+ test_philo: test_philo.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_philo test_philo.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_philo test_philo.o test_common.o libpth.la
+ test_sig: test_sig.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_sig test_sig.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_sig test_sig.o test_common.o libpth.la
+ test_select: test_select.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_select test_select.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_select test_select.o test_common.o libpth.la
+ test_sfio: test_sfio.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_sfio test_sfio.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_sfio test_sfio.o test_common.o libpth.la
+ test_uctx: test_uctx.o test_common.o libpth.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_uctx test_uctx.o test_common.o libpth.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_uctx test_uctx.o test_common.o libpth.la
+ test_pthread: test_pthread.o test_common.o libpthread.la
+-	$(LIBTOOL) --mode=link --quiet $(CC) $(LDFLAGS) -o test_pthread test_pthread.o test_common.o libpthread.la $(LIBS)
++	$(LIBTOOL) --mode=link  $(CC)  $(CFLAGS) $(LDFLAGS) -o test_pthread test_pthread.o test_common.o libpthread.la
+ 
+ #   install the package
+ install: all-for-install
+@@ -224,6 +225,7 @@
+ 	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(bindir)
+ 	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(includedir)
+ 	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(libdir)
++	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(libdir)/pkgconfig
+ 	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(mandir)/man1
+ 	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(mandir)/man3
+ 	$(SHTOOL) mkdir -f -p -m 755 $(DESTDIR)$(datadir)/aclocal
+@@ -235,6 +237,7 @@
+ 	$(SHTOOL) install -c -m 644 pth.h $(DESTDIR)$(includedir)/pth.h
+ 	@umask 022; $(LIBTOOL) --mode=install \
+ 	$(SHTOOL) install -c libpth.la $(DESTDIR)$(libdir)/libpth.la
++	$(SHTOOL) install -c -m 644 libpth.pc $(DESTDIR)$(libdir)/pkgconfig/libpth.pc
+ install-pthread:
+ 	$(SHTOOL) install -c -m 755 pthread-config $(DESTDIR)$(bindir)/pthread-config
+ 	$(SHTOOL) install -c -m 644 $(S)pthread-config.1 $(DESTDIR)$(mandir)/man1/pthread-config.1
+@@ -260,6 +263,7 @@
+ 	$(RM) $(DESTDIR)$(mandir)/man3/pth.3
+ 	$(RM) $(DESTDIR)$(datadir)/aclocal/pth.m4
+ 	$(RM) $(DESTDIR)$(includedir)/pth.h
++	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libpth.pc
+ 	@$(LIBTOOL) --mode=uninstall $(RM) $(DESTDIR)$(libdir)/libpth.la
+ uninstall-dirs:
+ 	-$(RMDIR) $(DESTDIR)$(datadir)/aclocal >/dev/null 2>&1 || $(TRUE)
+@@ -268,6 +272,7 @@
+ 	-$(RMDIR) $(DESTDIR)$(mandir)/man3 >/dev/null 2>&1 || $(TRUE)
+ 	-$(RMDIR) $(DESTDIR)$(mandir) >/dev/null 2>&1 || $(TRUE)
+ 	-$(RMDIR) $(DESTDIR)$(libdir) >/dev/null 2>&1 || $(TRUE)
++	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig >/dev/null 2>&1 || $(TRUE)
+ 	-$(RMDIR) $(DESTDIR)$(includedir) >/dev/null 2>&1 || $(TRUE)
+ 	-$(RMDIR) $(DESTDIR)$(bindir) >/dev/null 2>&1 || $(TRUE)
+ 	-$(RMDIR) $(DESTDIR)$(prefix) >/dev/null 2>&1 || $(TRUE)
+Index: pth.h.in
+===================================================================
+--- pth.h.in.orig	2009-02-06 23:21:48.231797557 +0000
++++ pth.h.in	2009-02-06 23:21:48.602275571 +0000
+@@ -46,12 +46,14 @@
+ #include <sys/signal.h>    /* for sigset_t        */
+ @EXTRA_INCLUDE_SYS_SELECT_H@
+ 
++	/* Pth socklen_t type */
++@FALLBACK_SOCKLEN_T@
++
+     /* fallbacks for essential typedefs */
+ #ifndef _PTHREAD_PRIVATE
+ @FALLBACK_PID_T@
+ @FALLBACK_SIZE_T@
+ @FALLBACK_SSIZE_T@
+-@FALLBACK_SOCKLEN_T@
+ @FALLBACK_OFF_T@
+ @FALLBACK_SIG_ATOMIC_T@
+ @FALLBACK_NFDS_T@
+@@ -513,8 +515,8 @@
+ 
+     /* generalized variants of replacement functions */
+ extern int            pth_sigwait_ev(const sigset_t *, int *, pth_event_t);
+-extern int            pth_connect_ev(int, const struct sockaddr *, socklen_t, pth_event_t);
+-extern int            pth_accept_ev(int, struct sockaddr *, socklen_t *, pth_event_t);
++extern int            pth_connect_ev(int, const struct sockaddr *, pth_socklen_t, pth_event_t);
++extern int            pth_accept_ev(int, struct sockaddr *, pth_socklen_t *, pth_event_t);
+ extern int            pth_select_ev(int, fd_set *, fd_set *, fd_set *, struct timeval *, pth_event_t);
+ extern int            pth_poll_ev(struct pollfd *, nfds_t, int, pth_event_t);
+ extern ssize_t        pth_read_ev(int, void *, size_t, pth_event_t);
+@@ -523,8 +525,8 @@
+ extern ssize_t        pth_writev_ev(int, const struct iovec *, int, pth_event_t);
+ extern ssize_t        pth_recv_ev(int, void *, size_t, int, pth_event_t);
+ extern ssize_t        pth_send_ev(int, const void *, size_t, int, pth_event_t);
+-extern ssize_t        pth_recvfrom_ev(int, void *, size_t, int, struct sockaddr *, socklen_t *, pth_event_t);
+-extern ssize_t        pth_sendto_ev(int, const void *, size_t, int, const struct sockaddr *, socklen_t, pth_event_t);
++extern ssize_t        pth_recvfrom_ev(int, void *, size_t, int, struct sockaddr *, pth_socklen_t *, pth_event_t);
++extern ssize_t        pth_sendto_ev(int, const void *, size_t, int, const struct sockaddr *, pth_socklen_t, pth_event_t);
+ 
+     /* standard replacement functions */
+ extern int            pth_nanosleep(const struct timespec *, struct timespec *);
+@@ -534,8 +536,8 @@
+ extern int            pth_system(const char *);
+ extern int            pth_sigmask(int, const sigset_t *, sigset_t *);
+ extern int            pth_sigwait(const sigset_t *, int *);
+-extern int            pth_connect(int, const struct sockaddr *, socklen_t);
+-extern int            pth_accept(int, struct sockaddr *, socklen_t *);
++extern int            pth_connect(int, const struct sockaddr *, pth_socklen_t);
++extern int            pth_accept(int, struct sockaddr *, pth_socklen_t *);
+ extern int            pth_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+ extern int            pth_pselect(int, fd_set *, fd_set *, fd_set *, const struct timespec *, const sigset_t *);
+ extern int            pth_poll(struct pollfd *, nfds_t, int);
+@@ -545,8 +547,8 @@
+ extern ssize_t        pth_writev(int, const struct iovec *, int);
+ extern ssize_t        pth_recv(int, void *, size_t, int);
+ extern ssize_t        pth_send(int, const void *, size_t, int);
+-extern ssize_t        pth_recvfrom(int, void *, size_t, int, struct sockaddr *, socklen_t *);
+-extern ssize_t        pth_sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
++extern ssize_t        pth_recvfrom(int, void *, size_t, int, struct sockaddr *, pth_socklen_t *);
++extern ssize_t        pth_sendto(int, const void *, size_t, int, const struct sockaddr *, pth_socklen_t);
+ extern ssize_t        pth_pread(int, void *, size_t, off_t);
+ extern ssize_t        pth_pwrite(int, const void *, size_t, off_t);
+ 
+Index: pthread.c
+===================================================================
+--- pthread.c.orig	2009-02-06 23:21:48.143535807 +0000
++++ pthread.c	2009-02-06 23:21:48.608726785 +0000
+@@ -1080,13 +1080,13 @@
+     return pth_waitpid(pid, status, options);
+ }
+ 
+-int __pthread_connect(int s, struct sockaddr *addr, socklen_t addrlen)
++int __pthread_connect(int s, struct sockaddr *addr, pth_socklen_t addrlen)
+ {
+     pthread_initialize();
+     return pth_connect(s, addr, addrlen);
+ }
+ 
+-int __pthread_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
++int __pthread_accept(int s, struct sockaddr *addr, pth_socklen_t *addrlen)
+ {
+     pthread_initialize();
+     return pth_accept(s, addr, addrlen);
+@@ -1141,13 +1141,13 @@
+     return pth_send(fd, buf, nbytes, flags);
+ }
+ 
+-ssize_t __pthread_recvfrom(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, socklen_t *fromlen)
++ssize_t __pthread_recvfrom(int fd, void *buf, size_t nbytes, int flags, struct sockaddr *from, pth_socklen_t *fromlen)
+ {
+     pthread_initialize();
+     return pth_recvfrom(fd, buf, nbytes, flags, from, fromlen);
+ }
+ 
+-ssize_t __pthread_sendto(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, socklen_t tolen)
++ssize_t __pthread_sendto(int fd, const void *buf, size_t nbytes, int flags, const struct sockaddr *to, pth_socklen_t tolen)
+ {
+     pthread_initialize();
+     return pth_sendto(fd, buf, nbytes, flags, to, tolen);
+Index: test_httpd.c
+===================================================================
+--- test_httpd.c.orig	2009-02-06 23:21:48.180879225 +0000
++++ test_httpd.c	2009-02-06 23:21:48.615294742 +0000
+@@ -140,7 +140,7 @@
+     struct sockaddr_in sar;
+     struct protoent *pe;
+     struct sockaddr_in peer_addr;
+-    socklen_t peer_len;
++    pth_socklen_t peer_len;
+     int sr;
+     int port;
+ 
+Index: libpth.pc.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ libpth.pc.in	2009-02-06 23:21:48.621303639 +0000
+@@ -0,0 +1,10 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: libpth
++Description: GNU Portable Threads library
++Version: @VERSION@
++Libs: -L${libdir} -lpth
++Cflags: -I${includedir}
+Index: pth-config.in
+===================================================================
+--- pth-config.in.orig	2009-02-06 23:21:48.336362230 +0000
++++ pth-config.in	2009-02-06 23:21:48.625888537 +0000
+@@ -37,6 +37,7 @@
+ pth_includedir="@includedir@"
+ pth_mandir="@mandir@"
+ pth_datadir="@datadir@"
++pth_datarootdir="@datarootdir@"
+ pth_acdir="@datadir@/aclocal"
+ pth_cflags="@CFLAGS@"
+ pth_ldflags="@LDFLAGS@"

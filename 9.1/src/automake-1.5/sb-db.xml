@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="automake" version="1.5" revision="10">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}15</install-name>
+
+    <sources>
+      <source checksum="74a22ac0581378e807ecb334a55c5bab"
+        checksum-type="md5" size="526934"
+        path="src/automake-1.5.tar.gz"/>
+      <patch checksum="d0c0cd0e169878720b6542fa51164f5d"
+        checksum-type="md5" size="1868"
+        path="src/automake-1.5.CVE-2009-4029.patch"/>
+      <patch checksum="dbee30807cb276c05564a89c10bc688e"
+        checksum-type="md5" size="579"
+        path="src/automake-1.5.CVE-2012-3386.patch"/>
+      <patch checksum="cfb6a85fa96dada13fcc28400e6dae67"
+        checksum-type="md5" size="1573"
+        path="src/automake-1.5.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="autoconf" install-name="autoconf25"
+        add-path="prepend">v&gt;=2.59</depend>
+      <depend program="gzip" install-name="gzip14"
+        add-path="append">v&gt;=1.4</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+./configure --datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+PERL=${SB_VAR_PERL}/bin/perl MAKE=gmake gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 automake.texi \
+version.texi ${_docdir}
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.4" to="1.5">
+        <item><para>Support for `configure.ac'.</para></item>
+        <item><para>Support for `else COND', `endif COND' and negated
+conditions `!COND'.</para></item>
+        <item><para>`make dist-all' is much faster.</para></item>
+        <item><para>Allows '@' AC_SUBSTs in macro names.</para></item>
+        <item><para>Faster AM_INIT_AUTOMAKE (requires update of
+`missing' script)</para></item>
+        <item><para>User-side dependency tracking.  Developers no
+longer need GNU make or gcc</para></item>
+        <item><para>Python support</para></item>
+        <item><para>Uses DIST_SUBDIRS in some situations when SUBDIRS
+is conditional</para></item>
+        <item><para>Most files are correctly handled if they appear in
+subdirs. For instance, a _DATA file can appear in a
+subdir</para></item>
+        <item><para>GNU tar is no longer required for `make
+dist'</para></item>
+        <item><para>Added support for `dist_' and `nodist_'
+prefixes</para></item>
+        <item><para>Added support for `nobase_' prefix</para></item>
+        <item><para>Compiled Java support</para></item>
+        <item><para>Support for per-executable and per-library
+compilation flags</para></item>
+        <item><para>Many bug fixes</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 July 13" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2012-3386 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-3386">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-3386</ulink>).
+A race condition in automake (<command>lib/am/distdir.am</command>)
+could allow a local attacker to run arbitrary code with the privileges
+of the user running make distcheck.</para></item>
+      </change>
+
+      <change date="2009 December 9" revision="9"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Update gzip dependency from 1.3.12 to
+1.4</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2009 December 9" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Apply patch for CVE-2009-4029 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4029">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4029</ulink>).
+The (1) dist or (2) distcheck rules in GNU Automake, when producing a
+distribution tarball for a package that uses Automake, assign insecure
+permissions (777) to directories in the build tree, which introduces a
+race condition that allows local users to modify the contents of
+package files, introduce Trojan horse programs, or conduct other
+attacks before the build is complete.</para></item>
+      </change>
+
+      <change date="2009 June 17" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+
+      <change date="2007 May 2" revision="6"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Allow install prefix to contain perl reserved
+characters.</para></item>
+      </change>
+
+      <change date="2005 August 9" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Removed texinfo dependency as now part of 
+sbutils</para></item>
+      </change>
+
+      <change date="2005 May 4" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade perl dependency from 5.8.2 to
+5.8.6</para></item>
+      </change>
+
+      <change date="2004 November 1" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade texinfo dependency from 4.6 to
+4.7</para></item>
+      </change>
+
+      <change date="2004 January 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade autoconf dependency to 2.59</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Upgrade texinfo dependency to 4.6</para></item>
+      </change>
+
+      <change date="2003 May 29" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade autoconf dependency to 2.57</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

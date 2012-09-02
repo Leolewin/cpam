@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="pvm" version="3.4.5" revision="4">
+    <build-name>${SB_PROG_NAME}3</build-name>
+
+    <install-name>${SB_PROG_NAME}34</install-name>
+
+    <sources>
+      <source checksum="086e6d707b40adba04bddba8e5b6b17d"
+        checksum-type="md5" size="979201"
+        path="src/pvm3.4.5.tgz"/>
+      <patch checksum="e18879602cbb077a3ad6d995ed75a28b"
+        checksum-type="md5" size="19623"
+        path="src/pvm3.tww.patch"/>
+      <patch checksum="1e90852e649a723a8c6de1df23db2379"
+        checksum-type="md5" size="1365"
+        path="src/pvm3.fc-x86_64-segfault.patch"/>
+      <patch checksum="dc5ff8fea70a5962411b4b4130856ba3"
+        checksum-type="md5" size="425"
+        path="src/pvm3.fc-147337.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  PLATFORM=AIX46K ;;
+*-aix*)
+  PLATFORM=AIX56K ;;
+*-hpux10*)
+  PLATFORM=HPPA10 ;;
+*-hpux11.[01]*)
+  PLATFORM=HPPA11 ;;
+*-hpux11*)
+  PLATFORM=HPPA1123 ;;
+*-irix*)
+  PLATFORM=SGI6 ;;
+x86_64*-linux*)
+  PLATFORM=LINUX64 ;;
+*-linux*)
+  PLATFORM=LINUX ;;
+*-osf*)
+  PLATFORM=ALPHA ;;
+i386*-solaris*)
+  PLATFORM=X86SOL2 ;;
+*-solaris*)
+  PLATFORM=SUN4SOL2 ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+PVM_ROOT=${SB_BUILD_PREFIX} PVM_ARCH=${PLATFORM} gmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/conf ${SB_INSTALL_PREFIX}/include \
+${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/libexec \
+${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/man/man1 \
+${SB_INSTALL_PREFIX}/man/man3
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 conf/${PLATFORM}.def \
+${SB_INSTALL_PREFIX}/conf
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 include/fpvm3.h include/pvm3.h \
+include/pvmproto.h include/pvmtev.h ${SB_INSTALL_PREFIX}/include
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/${PLATFORM}/*.a \
+${SB_INSTALL_PREFIX}/lib
+${SB_PATH_INSTALL} -m 755 -o root -g 0 lib/pvmgetarch \
+${SB_INSTALL_PREFIX}/lib
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 lib/${PLATFORM}/pvmgs \
+${SB_INSTALL_PREFIX}/bin
+${SB_PATH_INSTALL} -m 755 -o root -g 0 lib/pvm \
+${SB_INSTALL_PREFIX}/bin/pvm
+${SB_PATH_INSTALL} -m 755 -o root -g 0 lib/pvmd \
+${SB_INSTALL_PREFIX}/bin/pvmd
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 lib/${PLATFORM}/pvm \
+${SB_INSTALL_PREFIX}/libexec/pvm
+${SB_PATH_INSTALL} -m 755 -o root -g 0 lib/${PLATFORM}/pvmd3 \
+${SB_INSTALL_PREFIX}/libexec/pvmd
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 man/man1/pvm.1 \
+man/man1/pvm_intro.1 man/man1/pvm_shmd.1 \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_INSTALL} -m 644 -o root -g 0 man/man1/pvmd3.1 \
+${SB_INSTALL_PREFIX}/man/man1/pvmd.1
+${SB_PATH_INSTALL} -m 644 -o root -g 0 man/man3/* \
+${SB_INSTALL_PREFIX}/man/man3
+]]>
+    </install>
+
+    <notes>
+      <change from="3.4.4" to="3.4.5">
+        <item><para>Mainly bug fixes and additional support for
+varying Linux distributions and some better 64-bit Linux/AMD support
+(like it doesn't seg fauly any more)</para></item>
+        <item><para>Added strerror() support instead of old crusty
+global vars</para></item>
+        <item><para>New architectures were added for
+AIX5*</para></item>
+        <item><para>Fixed hilarious bug in pvmtmpnam(), caused crash
+after 10,000 spawns</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The environment variable <command>PVM_ROOT</command>
+must be set to <command>${SB_INSTALL_PREFIX}</command> prior to
+invoking <command>pvm</command>. This variable must be set in your
+startup dot files such that:</para>
+        <screen>
+ssh [host] echo $PVM_ROOT
+rsh [host] echo $PVM_ROOT
+        </screen>
+
+        <para>returns the correct result. An alternative is to set the
+following variables in <command>~/.pvmprofile</command> (the
+<command>PVM_DPATH</command> variable is needed because pvm will try
+to launch <command>$PVM_ROOT/bin/pvmd</command> on the remote host
+which will fail if <command>PVM_ROOT</command> is not set in the
+startup dot files):</para>
+        <screen>
+PVM_ROOT=${SB_INSTALL_PREFIX}
+PVM_DPATH=${PVM_ROOT}/bin/pvmd
+export PVM_ROOT
+export PVM_DPATH
+        </screen>
+
+        <para>The default mechanism used to connect to a remote host
+to invoke pvmd is rsh (remsh on HP-UX). Setting
+<command>PVM_RSH</command> to the full path of ssh will force usage of
+ssh.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2009 October 21" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31</para></item>
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 April 9" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+        <item><para>Build PA2.0 binaries on HP-UX
+11.23/PA-RISC</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

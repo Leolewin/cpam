@@ -1,0 +1,160 @@
+This is the mail archive of the gcc@gcc.gnu.org mailing list for the GCC project. 
+
+
+--------------------------------------------------------------------------------
+Index Nav: [Date Index] [Subject Index] [Author Index] [Thread Index]  
+Message Nav: [Date Prev] [Date Next] [Thread Prev] [Thread Next] 
+Other format: [Raw text] 
+
+using distcc to speed up GCC bootstraps
+From: Alexandre Oliva <aoliva at redhat dot com> 
+To: gcc at gcc dot gnu dot org, law at redhat dot com 
+Date: 18 Feb 2004 01:59:14 -0300 
+Subject: using distcc to speed up GCC bootstraps 
+Organization: Red Hat Global Engineering Services Compiler Team 
+
+--------------------------------------------------------------------------------
+
+Jeff had asked me to post instructions on how to use distcc to
+bootstrap GCC.  I said I would as soon as the code to support that was
+in.  Well, it turns out that, thanks to Per Bothner's
+not-so-recent-any-more :-) patches, it works again, so, here's the
+summary:
+
+What you need:
+
+- distccd running on a collection of hosts
+
+- the build tree visible on all such hosts in the same pathname
+  (they're going to need it to run compilers from the build tree)
+
+- distccrel: a wrapper script/program used to start distcc after
+  turning relative filenames in the command line into absolute
+  filenames.
+
+- an optional script/program that used to turn relative pathnames into
+  network-neutral absolute filenames.
+
+What you have to do:
+
+- Set up DISTCC_HOSTS and start distccd on the remote servers if
+  appropriate.  Set CC="distcc gcc" if you like.  CC="ccache
+  distcc gcc" will do as well.  CXX="ccache distcc g++" may help too.
+
+- Set DISTCCREL_HOSTS to $DISTCC_HOSTS.  distccrel has some magic to
+  avoid running compilations on localhost, that are no longer
+  necessary now that GCC generates identical object files with or
+  without separate preprocessing.  Alternatively, you may just set
+  DISTCCREL_LOCALHOST=localhost
+
+- Set the environment variable NETPWD to the script/program that, when
+  run, outputs an absolute pathname that corresponds to the current
+  working directory on all the distcc servers.  If running pwd in the
+  build tree outputs a pathname that corresponds to the build tree on
+  all hosts, set the environment variable NETPWD to it.  Otherwise,
+  customize the netpwd script (attached) such that it does, and set
+  NETPWD to it.
+
+- Set the environment variable STAGE_CC_WRAPPER to distccrel
+
+- configure and make -jN bootstrap
+
+
+The scripts mentioned above are attached.
+
+I hope this helps,
+
+
+Attachment: distccrel
+Description: Binary data
+
+Attachment: netpwd
+Description: Binary data
+
+-- 
+Alexandre Oliva   Enjoy Guarana', see http://www.ic.unicamp.br/~oliva/
+Happy GNU Year!                     oliva@{lsd.ic.unicamp.br, gnu.org}
+Red Hat GCC Developer                 aoliva@{redhat.com, gcc.gnu.org}
+Free Software Evangelist                Professional serial bug killer
+
+
+--------------------------------------------------------------------------------
+
+Follow-Ups: 
+Re: using distcc to speed up GCC bootstraps 
+From: law
+Index Nav: [Date Index] [Subject Index] [Author Index] [Thread Index]  
+Message Nav: [Date Prev] [Date Next] [Thread Prev] [Thread Next] 
+
+This is the mail archive of the gcc@gcc.gnu.org mailing list for the GCC project. 
+
+
+--------------------------------------------------------------------------------
+Index Nav: [Date Index] [Subject Index] [Author Index] [Thread Index]  
+Message Nav: [Date Prev] [Date Next] [Thread Prev] [Thread Next] 
+Other format: [Raw text] 
+
+Re: using distcc to speed up GCC bootstraps
+From: Alexandre Oliva <aoliva at redhat dot com> 
+To: law at redhat dot com 
+Cc: gcc at gcc dot gnu dot org 
+Date: 19 Feb 2004 01:31:21 -0300 
+Subject: Re: using distcc to speed up GCC bootstraps 
+Organization: Red Hat Global Engineering Services Compiler Team 
+References: <200402190310.i1J3Ar0r010441@speedy.slc.redhat.com> 
+
+--------------------------------------------------------------------------------
+
+On Feb 19, 2004, law@redhat.com wrote:
+
+> I don't see how it would be all that much of a hack.  But I've certainly
+> never looked at distcc.
+
+What distcc does is:
+
+run compiler driver for preprocessing, with -E -o tmpfile
+send command line and tmpfile to remote distcc
+distccd runs command line with tmpfile, producing outfile
+distccd sends outfile back
+distcc stores outfile in expected output object file
+
+> Basically it seems to me all you need to do is ship across the referenced
+> source and the command line -- for java that's all you need
+
+Not in the distcc case.  In our particular case, because of the
+requirement to have access to the build tree in order to run the
+compiler, we probably also have access to the libjava build tree.  But
+we don't necessarily have access to the source tree.
+
+> (ie, pretend the original source file is already preprocessed and I
+> would think it would "just work".)
+
+It's not that simple.  There's a lot of state that the Java compiler
+gets from other files in the class search path, that are not present
+in the Java source that we'd send to the remote compiler should we do
+it like that.
+
+Some of the state is also affected by the current working directory,
+and since not even distccrel makes all pathnames in command line flags
+network-neutral, and since distccd runs all compilations from within
+its own temporary directory, compilations might produce different
+results, or simply fail.
+
+-- 
+Alexandre Oliva   Enjoy Guarana', see http://www.ic.unicamp.br/~oliva/
+Happy GNU Year!                     oliva@{lsd.ic.unicamp.br, gnu.org}
+Red Hat GCC Developer                 aoliva@{redhat.com, gcc.gnu.org}
+Free Software Evangelist                Professional serial bug killer
+
+
+
+--------------------------------------------------------------------------------
+
+Follow-Ups: 
+Re: using distcc to speed up GCC bootstraps 
+From: Tom Tromey
+References: 
+Re: using distcc to speed up GCC bootstraps 
+From: law
+Index Nav: [Date Index] [Subject Index] [Author Index] [Thread Index]  
+Message Nav: [Date Prev] [Date Next] [Thread Prev] [Thread Next] 

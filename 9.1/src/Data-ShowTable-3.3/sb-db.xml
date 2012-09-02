@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Data-ShowTable" version="3.3" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="e8a3060790803bdf9f0fcb73bb4e71c4"
+        checksum-type="md5" size="94369"
+        path="src/Data-ShowTable-3.3.tar.gz"/>
+      <patch checksum="6a9b1e8ccebda877abd3e85dbb773655"
+        checksum-type="md5" size="65106"
+        path="src/Data-ShowTable-3.3.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Data/ShowTable/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Data/ShowTable/.packlist
+rmdir ${_installsitearch}/auto/Data/ShowTable
+rmdir ${_installsitearch}/auto/Data 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Data::ShowTable|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2008 June 19" revision="4"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add 5.8.8 module</para></item>
+      </change>
+
+      <change date="2005 February 15" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 5.8.6 module</para></item>
+      </change>
+
+      <change date="2004 October 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add uninstall section</para></item>
+      </change>
+
+      <change date="2003 November 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Perl 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

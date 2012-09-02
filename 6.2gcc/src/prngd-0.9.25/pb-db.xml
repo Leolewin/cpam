@@ -1,0 +1,115 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="prngd" version="0.9.25" revision="1">
+    <package-manager name="pkgadd">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWWprngd</pkgname-base>
+
+      <version>0.9.25</version>
+      <revision>1</revision>
+
+      <init name="/etc/init.d/TWWprngd"
+        path="pkg/init-sol"
+        checksum="f176160ac0e54c7cbde3b87bb29be4e2"
+        checksum-type="md5" size="667"/>
+      <init link-src="/etc/rc2.d/S79TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+      <init link-src="/etc/rc1.d/K19TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+      <init link-src="/etc/rc0.d/K19TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+
+      <config>/etc/init.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+      </subpkg>
+    </package-manager>
+
+    <changelog>
+      <change date="2004 June 15" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>On Solaris 8 prngd did hang in a tight loop. Due
+to "truss" output added in the bug report, the bug could be found: in
+collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+        <item><para>When failing to execl() a gatherer command, NULL
+pointers could be passed to snprintf() instead of empty strings if not
+all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+        <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+        <item>
+        
+        <para>Modified serverloop.c wait_write() behaviour: on
+failure enforce . Later this setting could be changed back
+to wait_command in case of . This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+        <item><para>When lots of processes query entropy at the same
+time, the "fairness" change introduced in 0.9.25 could lead to clients
+being only served with a delay. Reason: in serverloop.c the next
+client to serv is "i1" as determined from</para>
+        
+        
+        <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+() was filled correctly for
+. The problem therefore has no impact
+on the quality of seeding.</para></item>
+        <item><para>When lots of processes query entropy at the same
+time, the "fairness" change introduced in 0.9.25 could lead to clients
+being only served with a delay. Reason: in serverloop.c the next
+client to serv is "i1" as determined from</para>
+        
+        
+        <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+() was filled correctly for
+. The problem therefore has no impact
+on the quality of seeding.</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

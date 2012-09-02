@@ -1,0 +1,289 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="openssh" version="3.8.1p1" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}38</install-name>
+
+    <sources>
+      <source checksum="1dbfd40ae683f822ae917eebf171ca42"
+        checksum-type="md5" size="817932"
+        path="src/openssh-3.8.1p1.tar.gz"/>
+      <patch checksum="1e3148d736228390b697c107a4d7a13a"
+        checksum-type="md5" size="825570"
+        path="src/openssh-3.8.1p1.patch"/>
+    </sources>
+
+    <dependencies>
+    <depend user="sshd"/>
+
+    <depend group="sshd"/>
+
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097s"
+        module="tww-static">v&gt;=0.9.7b</depend>
+      <depend program="pcre" var="LIBPCRE" install-name="libpcre44s"
+        module="tww-static">v&gt;=4.4</depend>
+      <depend program="zlib" var="ZLIB" install-name="zlib11s"
+        module="tww-static">v&gt;=1.1.4</depend>
+      <depend program="tcp_wrappers" var="TCPWRAP"
+        install-name="tcpwrap">v&gt;=7.6</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_prngdsocket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qlanglvl=extc89 \
+-qmaxmem=-1 -qarch=com"
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR=/etc ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings"
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR="/var/run" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR="/var/run"
+  ARGS="--with-pam"
+
+  # getnameinfo and getaddrinfo are broken
+  export ac_cv_func_getnameinfo=no
+  export ac_cv_func_getaddrinfo=no
+
+  # freeaddrinfo requires newer libc
+  export ac_cv_func_freeaddrinfo=no ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR="/var/run"
+  ARGS="--with-pam" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR="/var/run" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR="/var/adm" ;;
+*-linux*)
+  SYSTEM_PATH="/usr/bin/X11" PID_DIR="/var/run"
+  ARGS="--with-pam --with-md5-passwords --without-rand-helper" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  SYSTEM_PATH="/usr/dt/bin:/usr/openwin/bin"
+  PID_DIR="/var/run" ARGS="--with-pam" ;;
+*-solaris2.[67])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  SYSTEM_PATH="/usr/dt/bin:/usr/openwin/bin"
+  PID_DIR="/var/adm" ARGS="--with-pam" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  SYSTEM_PATH="/usr/dt/bin:/usr/openwin/bin"
+  PID_DIR="/var/adm" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2} \
+${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}}" \
+${SB_VAR_TCPWRAP+LDFLAGS="-L${SB_VAR_TCPWRAP_LIB}"} \
+PERL=${SB_VAR_PERL}/bin/perl --sysconfdir=${_sysconfdir} \
+${SB_VAR_PRNGD+--with-prngd-socket=${_prngdsocket}} \
+--with-privsep-path=${_localstatedir}/chroot \
+${SB_VAR_TCPWRAP+--with-tcp-wrappers} --with-ssl-dir=${SB_VAR_LIBOPENSSL} \
+--with-mantype=man --with-default-path="/bin:/usr/bin:/sbin:/usr/sbin:\
+${SB_INSTALL_PREFIX}/bin:${SYSTEM_PATH}:/opt/local/bin:/opt/local/sbin:\
+/usr/local/bin:/usr/local/sbin" --with-pid-dir="${PID_DIR}" \
+--disable-strip --with-privsep-user=sshd --with-zlib=${SB_VAR_ZLIB} \
+--with-pcre=${SB_VAR_LIBPCRE} --with-osfsia=no --with-rpath=no \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install-nokeys
+
+for _config in shosts.equiv ssh_host_dsa_key ssh_host_dsa_key.pub \
+ssh_host_key ssh_host_key.pub ssh_host_rsa_key ssh_host_rsa_key.pub \
+ssh_known_hosts; do
+  [ ! -f "${_sysconfdir}/${_config}" ] && \
+  ${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/${_config}
+done
+
+${SB_PATH_GCHMOD} 600 ${_sysconfdir}/ssh_host_dsa_key \
+${_sysconfdir}/ssh_host_key ${_sysconfdir}/ssh_host_rsa_key
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/chroot
+
+# fix X11UseLocalhost depending on platform
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  sed -e "\
+/^#X11UseLocalhost yes/ {
+a\\
+X11UseLocalhost no
+}" ${_sysconfdir}/sshd_config >/tmp/$$
+  cp /tmp/$$ ${_sysconfdir}/sshd_config && rm /tmp/$$ ;;
+esac
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${_sysconfdir} ${_localstatedir}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="3.8p1" to="3.8.1p1">
+        <item><para>Bug #673 - Fix compilation on NetBSD with S/Key
+enabled</para></item>
+        <item><para>Bug #748 - Detect and workaround broken name
+resolution on HP-UX</para></item>
+        <item><para>Bug #802 - Fix linking on Tru64 when compiled with
+SIA support</para></item>
+        <item><para>Bug #808 - Fix PAM crash on expired password when
+not authenticated using pam/kbdint mechanism</para></item>
+        <item><para>Bug #810 - Fix erroneous clearing of TZ
+environment variable</para></item>
+        <item><para>Bug #811 - Improve locked password detection
+across Linux variants</para></item>
+        <item><para>Bug #820 - Fix utmp corruption on
+Irix</para></item>
+        <item><para>Bug #825 - Fix disconnection problem when using
+IPv4-in-IPv6 mapped addresses on Solaris</para></item>
+        <item><para>Fix compilation on OS X systems with
+Kerberos/GSSAPI</para></item>
+      </change>
+
+      <change from="3.7p1" to="3.8p1">
+        <item><para>sshd(8) now supports forced changes of expired
+passwords via <command>/usr/bin/passwd</command> or
+keyboard-interactive authentication</para>
+        <para>Note for AIX: sshd will now deny password access to
+accounts with passwords expired longer than their maxexpired
+attribute</para></item>
+        <item><para>ssh(1) now uses untrusted cookies for
+X11-Forwarding. Some X11 applications might need full access to the
+X11 server, see ForwardX11Trusted in ssh(1) and xauth(1) for more
+information.</para></item>
+        <item><para>ssh(1) now supports sending application layer
+keep-alive messages to the server. See ServerAliveInterval in ssh(1)
+for more information.</para></item>
+        <item><para>Improved sftp(1) batch file support</para></item>
+        <item><para>New KerberosGetAFSToken option for
+sshd(8)</para></item>
+        <item><para>Updated /etc/moduli file and improved performance
+for protocol version 2</para></item>
+        <item><para>Support for host keys in DNS
+(draft-ietf-secsh-dns-xx.txt). Please see README.dns in the source
+distribution for details.</para></item>
+        <item><para>Fix a number of memory leaks</para></item>
+        <item><para>The experimental "gssapi" support has been
+replaced with the "gssapi-with-mic" to fix possible MITM attacks. The
+two versions are not compatible.</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>The PCRE regular expression library was used rather than
+the builtin system regular expression library. This provides more
+robust regular expression support where applicable.</para>
+
+        <para><command>/opt/local/bin</command>,
+<command>/opt/local/sbin</command>, <command>/usr/local/bin</command>,
+and <command>/usr/local/sbin</command> are path components of the
+default SSHD path. This is done for legacy reasons for systems that
+use to use these two paths. They will be removed in a future OpenSSH
+version.</para>
+      </note>
+
+      <note type="installation">
+        <para>Beginning with the 3.8 release, ssh now uses untrusted
+X11 cookies by default. The previous behavior can be restored by
+setting <command>ForwardX11Trusted yes</command> in
+<command>/etc${SB_INSTALL_PREFIX}/ssh_config</command>.</para>
+
+        <para>A new ``<command>sshd</command>'' user and
+``<command>sshd</command>'' group must be created for privilege
+separation to work. The non-privileged sshd daemon chroots to
+<command>/var${SB_INSTALL_PREFIX}/chroot</command> and runs as the
+<command>sshd</command> user.</para>
+
+        <para>The ssh program, beginning with version 3.3p1, is no
+longer suid root. With privilege separation enabled and using SSH
+Protocol v2, suid privileges are no longer necessary.</para>
+
+        <para>PAM is disabled by default. To enable PAM, add
+"<command>UsePAM yes</command>" to the sshd configuration file.</para>
+
+        <para>The following files have been marked as configuration
+files in <command>/etc${SB_INSTALL_PREFIX}</command>:
+<command>shosts.equiv</command>, <command>ssh_config</command>,
+<command>ssh_host_dsa_key</command>,
+<command>ssh_host_dsa_key.pub</command>,
+<command>ssh_host_key</command>, <command>ssh_host_key.pub</command>,
+<command>ssh_host_rsa_key</command>,
+<command>ssh_host_rsa_key.pub</command>,
+<command>ssh_known_hosts</command>, <command>ssh_prng_cmds</command>,
+and <command>sshd_config</command>. Of these, all have been marked as
+upgradable except for <command>ssh_prng_cmds</command>. If upgrading
+from a previous release of OpenSSH, the old versions will be copied in
+place of the new though a backup of the new files will exist to assist
+with upgrading.</para>
+
+        <para>For every host you wish to secure by running OpenSSH
+(sshd), a host key must be generated. This is done with ssh-keygen.
+The following commands will create a RSA public/private host keypair
+and a DSA public/private host keypair:</para>
+        <screen>
+$ ssh-keygen -t rsa1 -f /etc${SB_INSTALL_PREFIX}/ssh_host_key -N ""
+$ ssh-keygen -t dsa -f /etc${SB_INSTALL_PREFIX}/ssh_host_dsa_key -N ""
+$ ssh-keygen -t rsa -f /etc${SB_INSTALL_PREFIX}/ssh_host_rsa_key -N ""
+        </screen>
+
+        <para>The startup script will execute these commands
+automatically if using the default configuration.</para>
+      </note>
+
+      <platform name="AIX">
+        <para>When connecting to an AIX host, the default search path
+is:</para>
+        <screen>
+/usr/bin:/etc:/usr/sbin:/usr/ucb:/usr/bin/X11:/sbin
+        </screen>
+
+        <para>This is defined in <command>/etc/environment</command>.
+Because of this, scp will fail. For scp to work to an AIX host, add
+<command>${SB_INSTALL_PREFIX}/bin</command> to <command>PATH</command>
+in <command>/etc/environment</command> or add the binary common path
+prefix. The latter is the recommended method.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX 5.1">
+        <para>Tru64 UNIX 5.1 requires patch #761 or newer to fix
+problems with <command>getaddrinfo()</command>. Without this patch the
+following error might occur:</para>
+        <screen>
+getaddrinfo [hostname]: Name does not resolv to supplied
+parameters; neither nodename nor servname were passed.
+        </screen>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Backport getrrsetbyname() autoconf test with fixes
+for res_query() detection on RHEL 3.0/AMD64</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

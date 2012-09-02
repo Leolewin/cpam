@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="automake" version="1.7.9" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}17</install-name>
+
+    <sources>
+      <source checksum="571fd0b0598eb2a27dcf68adcfddfacb"
+        checksum-type="md5" size="577705"
+        path="src/automake-1.7.9.tar.bz2"/>
+      <patch checksum="b6e795619617321a0aabb3af4eb3e259"
+        checksum-type="md5" size="1731"
+        path="src/automake-1.7.9.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="autoconf" install-name="autoconf25"
+        add-path="prepend">v&gt;=2.59</depend>
+      <depend program="libtool" install-name="libtool15"
+        add-path="prepend" type="build">v&gt;=1.5</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+./configure --datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake m4datadir="${_datadir}" pkgdatadir="${_datadir}" \
+pkgvdatadir="${_datadir}"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+PERL=${SB_VAR_PERL}/bin/perl MAKE=gmake gmake check
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install m4datadir="${_datadir}" pkgdatadir="${_datadir}" \
+pkgvdatadir="${_datadir}"
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 version.texi automake.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="1.7.8" to="1.7.9">
+        <item><para>Fix install-strip to work with nobase_
+binaries</para></item>
+        <item><para>Fix renaming of #line directives in
+ylwrap</para></item>
+        <item><para>Rebuild with Autoconf 2.59 (1.7.8 was not
+installable with pdksh)</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 15" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Ignore failed tests</para></item>
+      </change>
+
+      <change date="2004 August 22" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade libtool dependency from 1.4.2 to
+1.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

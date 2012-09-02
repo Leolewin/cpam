@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="indent" version="2.2.9" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}2</install-name>
+
+    <sources>
+      <source checksum="dcdbb163bef928306dee2a0cfc581c89"
+        checksum-type="md5" size="678173"
+        path="src/indent-2.2.9.tar.gz"/>
+      <patch checksum="8c0cd4a74a185a6efbd6ba635765f79f"
+        checksum-type="md5" size="141278"
+        path="src/indent-2.2.9.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--datadir="${_datadir}" --with-libintl-prefix=${GETTEXT} \
+${LIBICONV+--with-libiconv-prefix=${LIBICONV}} \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake docdir=${_docdir} install
+
+# install texinfo source files
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/indent.texinfo \
+doc/version.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="2.2.8" to="2.2.9">
+        <item><para>Added support for -brf to place function opening
+brace after function declaration</para></item>
+        <item><para>Added --preprocessor-indentation (ppi) if set,
+will indent nested preprocessor-statements with n spaces per level.
+Overrides -lps.</para></item>
+        <item><para>Added option break-function-decl-args-end (bfde)
+to break the function arguments list before the closing bracket. -bdfa
+now causes a break after the opening bracket and before the first
+argument so that the first argument and subsequent argments are
+indented one indentation step instead of being aligned with the
+opening bracket.</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 June 25" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update texinfo dependency from 4.3 to
+4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

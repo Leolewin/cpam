@@ -1,0 +1,207 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="ggobi" version="2.1.8" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}21</install-name>
+
+    <sources>
+      <source checksum="0b07adffcf4379e819b1a26e4cd60d7b"
+        checksum-type="md5" size="2531628"
+        path="src/ggobi-2.1.8.tar.bz2"/>
+      <patch checksum="be154143a9f96220fe4a15c2f3c02f04"
+        checksum-type="md5" size="33522"
+        path="src/ggobi-2.1.8.tww.patch"/>
+      <patch checksum="4a874c5bd33d30444dfb1100ba7651bb"
+        checksum-type="md5" size="1002544"
+        path="src/ggobi-2.1.8.ltdl.patch"/>
+      <patch checksum="f96ac5c69cda4aa881e9a79a61946bff"
+        checksum-type="md5" size="12053364"
+        path="src/ggobi-2.1.8.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4</depend>
+      <depend program="intltool" install-name="intltool041"
+        add-path="prepend" type="build">v==0.41.1</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        add-path="prepend">v&gt;=2.7.8</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="XML-Parser"
+        module="5.12.2">v&gt;=2.34</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="\
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+PERL="${SB_VAR_PERL}/bin/perl" \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--disable-dependency-tracking --with-all-plugins \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" \
+ggobi-system.pc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# The config file that is used to load plugins is neither built nor
+# installed by default
+gmake ggobirc
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+# The config file that is used to load plugins is neither built nor
+# installed by default
+${SB_PATH_INSTALL} -o root -g 0 -m 644 ggobirc ${_datadir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 February 1" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update atk dependency from 1.22.0 to
+1.32.0</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.4</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

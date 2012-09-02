@@ -1,0 +1,1247 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="cairo" version="1.10.2" revision="1">
+    <install-name>lib${SB_PROG_NAME}110</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="f101a9e88b783337b20b2e26dfd26d5f"
+          checksum-type="md5" size="23558405"
+          path="src/cairo-1.10.2.tar.gz"/>
+        <patch checksum="817a89feb1c2d03024c6413ab4ad4524"
+          checksum-type="md5" size="16649"
+          path="src/cairo-1.10.2.tww.patch"/>
+        <patch checksum="846b9331cfedb7bcbfe1e4162471e6dd"
+          checksum-type="md5" size="1804248"
+          path="src/cairo-1.10.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib226">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="cairo" var="PIXMAN"
+          module="pixman">v==1.10.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="cairo"
+          module="pycairo-2.6.7">v==1.10.2</depend>
+        <depend program="cairo"
+          module="pycairo-2.7.2">v==1.10.2</depend>
+        <depend program="cairo" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.10.2</depend>
+        <depend program="cairo"
+          module="Cairo-5.12.2">v==1.10.2</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro \
+-fno-strict-aliasing"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CFLAGS="-fno-strict-aliasing"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_PIXMAN_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--disable-xcb --enable-pdf --enable-ps --enable-svg \
+--enable-static --enable-shared --enable-tee \
+--disable-valgrind --disable-silent-rules \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" src/cairo.pc
+]]>
+      </configure>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="ghostscript" var="GHOSTSCRIPT"
+            install-name="ghostscript90" add-path="prepend"
+            type="build">v&gt;=9.01</depend>
+        </dependencies>
+<![CDATA[
+# A shared ~/.fontconfig causes errors when a newer version of the
+# OS has a font unavailable on an older release. Fontconfig will
+# assume every OS with the cached font path has it available.
+# Force test-specific font cache directory.
+(cd ${SB_BUILD_PREFIX}/test
+ cp ${_fcpackage_sysconfdir}/fonts.conf .
+ ${SB_PATH_SED} -i -e "\
+s!<cachedir>.*!<cachedir>${SB_BUILD_PREFIX}/test/.fontconfig</cachedir>!" \
+ fonts.conf
+ rm -rf .fontconfig
+ mkdir .fontconfig)
+
+# Most of these tests are junk.  They are hypersensitive to pixel
+# differences in rendering of fonts and the like, especially in the
+# pdf and postscript tests.  Although they take a long time to build
+# and run, it's nice to have them on as a sanity check for the build.
+# Expect around half of them to fail, except on irix where the tests
+# can't even be compiled since their cpps don't support variadic
+# macros. :-/
+
+FONTCONFIG_FILE="${SB_BUILD_PREFIX}/test/fonts.conf" gmake check
+]]>
+      </test>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="f101a9e88b783337b20b2e26dfd26d5f"
+          checksum-type="md5" size="23558405"
+          path="src/cairo-1.10.2.tar.gz"/>
+        <patch checksum="817a89feb1c2d03024c6413ab4ad4524"
+          checksum-type="md5" size="16649"
+          path="src/cairo-1.10.2.tww.patch"/>
+        <patch checksum="846b9331cfedb7bcbfe1e4162471e6dd"
+          checksum-type="md5" size="1804248"
+          path="src/cairo-1.10.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          module="64bit">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="cairo" var="PIXMAN"
+          module="pixman-64bit">v==1.10.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBZ_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBZ}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_libdir}/pkgconfig:\
+${SB_VAR_PIXMAN}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig" \
+--disable-xcb --enable-pdf --enable-ps --enable-svg \
+--enable-static --enable-shared --enable-tee \
+--disable-valgrind --disable-silent-rules \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" src/cairo.pc
+]]>
+      </configure>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="ghostscript" var="GHOSTSCRIPT"
+            install-name="ghostscript90" add-path="prepend"
+            type="build">v&gt;=9.01</depend>
+        </dependencies>
+<![CDATA[
+# A shared ~/.fontconfig causes errors when a newer version of the
+# OS has a font unavailable on an older release. Fontconfig will
+# assume every OS with the cached font path has it available.
+# Force test-specific font cache directory.
+(cd ${SB_BUILD_PREFIX}/test
+ cp ${_fcpackage_sysconfdir}/fonts.conf .
+ ${SB_PATH_SED} -i -e "\
+s!<cachedir>.*!<cachedir>${SB_BUILD_PREFIX}/test/.fontconfig</cachedir>!" \
+ fonts.conf
+ rm -rf .fontconfig
+ mkdir .fontconfig)
+
+# Most of these tests are junk.  They are hypersensitive to pixel
+# differences in rendering of fonts and the like, especially in the
+# pdf and postscript tests.  Although they take a long time to build
+# and run, it's nice to have them on as a sanity check for the build.
+# Expect around half of them to fail, except on irix where the tests
+# can't even be compiled since their cpps don't support variadic
+# macros. :-/
+
+FONTCONFIG_FILE="${SB_BUILD_PREFIX}/test/fonts.conf" gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake -C src install-libLTLIBRARIES install-pkgconfigDATA
+]]>
+      </install>
+    </module>
+
+    <module name="Cairo-5.12.2">
+      <build-name>Cairo-1.061</build-name>
+
+      <sources>
+        <source checksum="08cd5e847f61858651fc4de769066e88"
+          checksum-type="md5" size="90604"
+          path="src/Cairo-1.061.tar.gz"/>
+        <patch checksum="31855f029285f0787d4f46f6668b825b"
+          checksum-type="md5" size="1679"
+          path="src/Cairo-1.061.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="ExtUtils-Depends"
+          module="5.12.2">v&gt;=0.300</depend>
+        <depend program="ExtUtils-PkgConfig"
+          module="5.12.2">v&gt;=1.11</depend>
+        <depend program="Test-Number-Delta"
+          module="5.12.2">v&gt;=1.03</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib226">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          type="build">v&gt;=4.4.6</depend>
+        <depend program="cairo" var="LIBCAIRO">v==1.10.2</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gcc_subdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gcc_subdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test auto-include="0">
+<![CDATA[
+_fcpackage_sysconfdir="${SB_VAR_FCPACKAGE}/etc"
+
+# A shared ~/.fontconfig causes errors when a newer version of the
+# OS has a font unavailable on an older release. Fontconfig will
+# assume every OS with the cached font path has it available.
+# Force test-specific font cache directory.
+(cp ${_fcpackage_sysconfdir}/fonts.conf .
+ ${SB_PATH_SED} -i -e "\
+s!<cachedir>.*!<cachedir>${SB_BUILD_PREFIX}/.fontconfig</cachedir>!" \
+ fonts.conf
+ rm -rf .fontconfig
+ mkdir .fontconfig)
+
+FONTCONFIG_FILE="${SB_BUILD_PREFIX}/fonts.conf" gmake test
+
+: ignore testsuite failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix} ${SB_INSTALL_PREFIX}/man/man3
+
+rmdir ${SB_INSTALL_PREFIX}/man || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="pixman-64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <build-name>pixman-0.21.2</build-name>
+
+      <sources>
+        <source checksum="9e09fd6e58cbf9717140891e0b7d4a7a"
+          checksum-type="md5" size="543775"
+          path="src/pixman-0.21.2.tar.gz"/>
+        <patch checksum="a14d2eacb4d8127a977d20e8d5d4b67d"
+          checksum-type="md5" size="5684"
+          path="src/pixman-0.21.2.tww.patch"/>
+        <patch checksum="a620fff4b8049240d87dcd6f0361b45d"
+          checksum-type="md5" size="1794"
+          path="src/pixman-0.21.2.bug32764.patch"/>
+        <patch checksum="6de59a20d9701a4b0046c87d8f71e9d4"
+          checksum-type="md5" size="1682289"
+          path="src/pixman-0.21.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac
+
+  # The toolchain does support __thread, but the resulting library
+  # can not be dlopen()ed
+  export pixman_cv_support_for__thread=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R"
+
+  ARGS="--disable-mmx --disable-sse2" ;;
+*-solaris2.[78])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-solaris2.[0-9])
+  export pixman_cv_support_for__thread=no ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--enable-static --enable-shared --disable-openmp \
+--disable-silent-rules --disable-gtk --disable-dependency-tracking \
+--datarootdir=${_datadir} --datadir=${_datadir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" pixman-1.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake SUBDIRS=pixman
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install-pkgconfigDATA
+gmake -C pixman install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -f ${SB_INSTALL_PREFIX}/${_libdir}/pkgconfig/pixman-1.pc \
+${SB_INSTALL_PREFIX}/${_libdir}/libpixman-1.*
+
+rmdir ${SB_INSTALL_PREFIX}/${_libdir}/pkgconfig || :
+rmdir ${SB_INSTALL_PREFIX}/${_libdir} || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="pycairo-2.7.2">
+      <build-name>pycairo-1.8.10</build-name>
+
+      <sources>
+        <source checksum="87421a6a70304120555ba7ba238f3dc3"
+          checksum-type="md5" size="588459"
+          path="src/py2cairo-1.8.10.tar.gz"/>
+        <patch checksum="a4f5d3244a1b9f6dd46cd9f9b45a4326"
+          checksum-type="md5" size="1992"
+          path="src/pycairo-1.8.10.tww.patch"/>
+        <patch checksum="7374beffc35f8dc4217cd6ab3d8efeb0"
+          checksum-type="md5" size="1839527"
+          path="src/pycairo-1.8.10.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="python" install-name="python27"
+          add-path="prepend" type="build">v&gt;=2.7.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib226">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          type="build">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="cairo" var="LIBCAIRO">v==1.10.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+_gcc_subdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gcc_subdir+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--enable-static --enable-shared --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${_install_prefix}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pyexecdir=${_install_prefix}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pyexecdir=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="pycairo-2.6.7">
+      <build-name>pycairo-1.8.10</build-name>
+
+      <sources>
+        <source checksum="87421a6a70304120555ba7ba238f3dc3"
+          checksum-type="md5" size="588459"
+          path="src/py2cairo-1.8.10.tar.gz"/>
+        <patch checksum="a4f5d3244a1b9f6dd46cd9f9b45a4326"
+          checksum-type="md5" size="1992"
+          path="src/pycairo-1.8.10.tww.patch"/>
+        <patch checksum="7374beffc35f8dc4217cd6ab3d8efeb0"
+          checksum-type="md5" size="1839527"
+          path="src/pycairo-1.8.10.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="python" install-name="python26"
+          add-path="prepend" type="build">v&gt;=2.6.7</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib226">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          type="build">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="cairo" var="LIBCAIRO">v==1.10.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+_gcc_subdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gcc_subdir+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--enable-static --enable-shared --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${_install_prefix}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pyexecdir=${_install_prefix}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pyexecdir=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="pixman">
+      <build-name>pixman-0.21.2</build-name>
+
+      <sources>
+        <source checksum="9e09fd6e58cbf9717140891e0b7d4a7a"
+          checksum-type="md5" size="543775"
+          path="src/pixman-0.21.2.tar.gz"/>
+        <patch checksum="a14d2eacb4d8127a977d20e8d5d4b67d"
+          checksum-type="md5" size="5684"
+          path="src/pixman-0.21.2.tww.patch"/>
+        <patch checksum="a620fff4b8049240d87dcd6f0361b45d"
+          checksum-type="md5" size="1794"
+          path="src/pixman-0.21.2.bug32764.patch"/>
+        <patch checksum="6de59a20d9701a4b0046c87d8f71e9d4"
+          checksum-type="md5" size="1682289"
+          path="src/pixman-0.21.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 -Ae +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+# The toolchain does support __thread, but the resulting library can
+# not be dlopen()ed
+  export pixman_cv_support_for__thread=no ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+# The toolchain does support __thread, but the resulting library can
+# not be dlopen()ed
+  export pixman_cv_support_for__thread=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro \
+-fno-strict-aliasing"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CFLAGS="-fno-strict-aliasing"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--disable-mmx --disable-sse2" ;;
+*-solaris2.9|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-solaris2.[89])
+  export pixman_cv_support_for__thread=no ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--enable-static --enable-shared --disable-openmp \
+--disable-silent-rules --disable-gtk --disable-dependency-tracking \
+--datarootdir=${_datadir} --datadir=${_datadir} ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" pixman-1.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+# Rather than changing all the named initializers in the tests, since
+# it doesn't really matter what compiler compiles the test cases we'll
+# use one that can grok named initializers
+case "${SB_SYSTYPE}" in
+*-irix*)
+  CC=c99;;
+esac
+
+gmake check ${CC+CC=${CC}} ${CFLAGS+CFLAGS="${CFLAGS}"}
+]]>
+      </test>
+
+      <uninstall>
+<![CDATA[
+rm -f ${SB_INSTALL_PREFIX_LIB}/pkgconfig/pixman-1.pc \
+${SB_INSTALL_PREFIX_LIB}/libpixman-1.* \
+${SB_INSTALL_PREFIX}/include/pixman-version.h \
+${SB_INSTALL_PREFIX}/include/pixman.h
+
+rmdir ${SB_INSTALL_PREFIX_LIB}/pkgconfig || :
+rmdir ${SB_INSTALL_PREFIX_LIB} || :
+rmdir ${SB_INSTALL_PREFIX}/include || :
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="1.10.1" to="1.10.2">
+        <items name="Bug fixes">
+          <item><para>Fix embedding of grayscale jpegs in PS.
+https://bugs.freedesktop.org/show_bug.cgi?id=31632</para></item>
+          <item><para>Fix the reported path of extents containing a
+curve.</para></item>
+          <item><para>Fix the compositing of unaligned
+boxes.</para></item>
+          <item><para>Reset the clipper in PDF upon
+finish.</para></item>
+          <item><para>Fix degenerates arcs to become a degenerate
+line.</para></item>
+          <item><para>Build support for autoconf 2.67</para></item>
+          <item><para>Fix painting of transformed patterns in
+PS</para></item>
+          <item><para>Fix the EPS bounding box for PS
+https://bugs.freedesktop.org/show_bug.cgi?id=24688</para></item>
+          <item><para>Fix the missing content for EPS
+https://bugs.freedesktop.org/show_bug.cgi?id=24688</para></item>
+          <item><para>Fix regression upon changing page size in PS/PDF
+https://bugs.freedesktop.org/show_bug.cgi?id=24691</para></item>
+          <item><para>Only use ActualText with PDF-1.5
+documents</para></item>
+          <item><para>Fix the bbox for type1 fallbacks.</para></item>
+          <item><para>Reset the color after ending the context in PDF
+https://bugs.freedesktop.org/show_bug.cgi?id=31140</para></item>
+          <item><para>Fix the advance of subsetted type1 fonts
+https://bugs.freedesktop.org/show_bug.cgi?id=31062</para></item>
+          <item><para>Fix handling of EXTEND_NONE gradients for
+PDF</para></item>
+          <item><para>Restrict in-place optimisation for a8 image
+masks with SOURCE</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.x" to="1.10.0">
+        <item><para>The cairo community is astounded (and flabbergast)
+to finally announce the 1.10.0 release of the cairo graphics library.
+This is a major update to cairo, with new features and enhanced
+functionality which maintains compatibility for applications written
+using any previous major cairo release, (1.8, 1.6, 1.4, 1.2, or 1.0).
+We recommend that anybody using a previous version of cairo upgrade to
+cairo 1.10.0. </para></item>
+        <item><para>One of the more interesting departures for cairo
+for this release is the inclusion of a tracing utility, cairo-trace.
+cairo-trace generates a human-readable, replayable, compact
+representation of the sequences of drawing commands made by an
+application. This can be used to inspecting applications to understand
+issues and as a means for profiling real-world usage of
+cairo.</para></item>
+        <item><para>The traces generated by cairo-trace have been
+collected in <ulink url="git://git.cairographics.org/git/cairo-traces">git://git.cairographics.org/git/cairo-traces</ulink>
+and have driven the performance tuning of cairo over the last couple
+of years. In particular, the image backend is much faster with a new
+polygon rasterisation and a complete overhaul of the tessellator. Not
+only is this faster, but also eliminates visual artifacts from
+self-intersecting strokes. Not only has cairo-trace been driving
+performance improvements within cairo, but as a repeatable means of
+driving complex graphics it has been used to tune OpenGL, DDX, and
+pixman.</para></item>
+        <item><para>Cairo's API has been extended to better support
+printing, notably through the ability to include a single compressed
+representation of an image for patterns used throughout a document,
+leading to dramatic file size reductions. Also the meta-surface used
+to record the vector commands compromising a drawing sequence is now
+exposed as a CAIRO_SURFACE_TYPE_RECORDING, along with a new surface
+that is a child of a larger surface, CAIRO_SURFACE_TYPE_SUBSURFACE.
+One typical usage of a subsurface would be as a source glyph in a
+texture atlas, or as a restricted subwindow within a
+canvas.</para></item>
+        <item><para>Cairo's API has also resurrected the RGB16 format
+from the past as the prevalence of 16-bit framebuffers has not
+diminished and is a fore-taste of the extended format support we
+anticipate in the future. Increasing cairo's utility, we introduce the
+cairo_region_t for handling sets of pixel aligned rectangles commonly
+used in graphics applications. This is a merger of the GdkRegion and
+the pixman_region_t, hopefully providing the utility of the former
+with the speed of the latter.</para></item>
+        <item><para>Furthermore cairo has been reworked to
+interoperate more closely with various acceleration architectures,
+gaining the ability to share those hardware resources through the new
+cairo_device_t. For instance, with the new OpenGL backend that
+supersedes the Glitz backend, hardware and rendering operations can be
+shared between a classic OpenGL application mixing libVA for the
+hardware assisted video decode with cairo for high quality overlays
+all within the same OpenGL canvas.</para></item>
+      </change>
+
+      <change from="1.6.x" to="1.8.0">
+        <item><para>The cairo community is happy (and relieved) to
+announce the 1.8.0 release of the cairo graphics library. This is a
+major update to cairo, with new features and enhanced functionality
+which maintains compatibility for applications written using any
+previous major cairo release, (1.6, 1.4, 1.2, or 1.0). We recommend
+that anybody using a previous version of cairo upgrade to cairo
+1.8.0.</para></item>
+        <item><para>The dominant theme of this release is improvements
+to cairo's ability to handle text. The highlights include a new "user
+fonts" feature as well as a new cairo_show_text_glyphs API which
+allows glyphs to be embedded in PDF output along with their original
+text, (for searching, selection, and copy-and-paste). Another major
+feature is a revamp of cairo's build system making it much easier to
+build cairo on various platforms.</para></item>
+        <item><para>See below for more details.</para></item>
+        <items name="User fonts">
+          <item><para>This new API allows the user of cairo API to
+provide drawings for glyphs in a font. A common use for this is
+implementing fonts in non-standard formats, like SVG fonts and Flash
+fonts. This API can also be used by applications to provide custom
+glyph shapes for fonts while still getting access to cairo's glyph
+caches. See test/user-font.c and test/user-font-proxy.c for usage
+examples.</para></item>
+          <item><para>This new API consists of the following functions
+(and corresponding _get functions):</para>
+          <screen>
+cairo_user_font_face_create
+
+	cairo_user_font_face_set_init_func
+	cairo_user_font_face_set_render_glyph_func
+	cairo_user_font_face_set_text_to_glyphs_func
+	cairo_user_font_face_set_unicode_to_glyph_func
+          </screen>
+          <para>An additional, new API is</para>
+          <screen>
+cairo_scaled_font_text_to_glyphs
+          </screen>
+          <para>We were previously reluctant to provide this
+function as text-to-glyphs support in cairo was limited to "toy" font
+functionality, not really interesting for real-world text processing.
+However, with user fonts landing, this API is needed to expose full
+access to how user fonts convert text to glyphs. This is expected to
+be used by text toolkits like Pango, as well as "proxy" user-font
+implementations.</para></item>
+        </items>
+
+        <items name="cairo_show_text_glyphs">
+          <item><para>This new API allows the caller of cairo to
+provide text data corresponding to glyphs being drawn. The PDF backend
+implements this new API so that complex text can be copied out of
+cairo's PDF output correctly and reliably, (assuming the user of cairo
+calls cairo_show_text_glyphs). The cairo_show_text_glyphs API is
+definitely the most daunting API to debut in cairo. It is anticipated
+that pango (and similar high-level text libraries) will be the primary
+users of this API. In fact, pango 1.22 already uses
+cairo_show_text_glyphs.</para></item>
+          <item><para>The cairo_show_text_glyphs API includes the
+following new functions:</para>
+          <screen>
+cairo_show_text_glyphs
+
+	cairo_glyph_allocate
+	cairo_glyph_free
+
+	cairo_text_cluster_allocate
+	cairo_text_cluster_free
+
+	cairo_surface_has_show_text_glyphs
+          </screen></item>
+        </items>
+
+        <items name="Build system revamp">
+          <item><para>The primary goal of the revamp is to make the
+build system less fragile, (particularly for non-Linux platforms). For
+example, now people building on win32 will no longer need to maintain
+a platform-specific list of files to be built. See the new
+README.win32 for details. Also, the .so file will now be installed
+with a different naming scheme, (for example, 1.7.6 will install with
+a .10800 suffix).</para></item>
+        </items>
+
+        <items name="Assorted API additions">
+          <item><para>For API completeness, several missing "getter"
+functions were added:</para>
+          <screen>
+cairo_scaled_font_get_scale_matrix
+
+	cairo_surface_get_fallback_resolution
+
+	cairo_toy_font_face_create
+	cairo_toy_font_face_get_family
+	cairo_toy_font_face_get_slant
+	cairo_toy_font_face_get_weight
+          </screen>
+          <para>The new cairo_toy_font_face functions provide
+access to functionality and settings provided by
+cairo_select_font_face().</para></item>
+        </items>
+
+        <items name="cairo-ps/cairo-pdf: More efficient output">
+          <item><para>Fixed all kinds of bugs in PS and PDF backends,
+as well made them generate much more compact output by avoiding things
+like re-emitting the color or linestyle on every drawing
+operation.</para></item>
+        </items>
+
+        <items name="cairo-xlib: dithering">
+          <item><para>Dithering: Cairo now does simple dithering when
+rendering to legacy X servers. This is most visible with 8-bit
+visuals.</para></item>
+        </items>
+
+        <items name="cairo-xlib: Avoid rendering glyphs out of surface bounds">
+          <item><para>This seemingly harmless optimization exposed a
+bug in OpenOffice.org 3 versions where OO.o was passing bogus surface
+extents to cairo, resulting in no text rendered in OO.o. Please
+contact your distribution's OO.o maintainers if you see this bug and
+point them to the following URL: <ulink url="https://bugs.freedesktop.org/show_bug.cgi?id=16209">https://bugs.freedesktop.org/show_bug.cgi?id=16209</ulink></para></item>
+        </items>
+
+        <items name="cairo-xlib: Improved performance with X server without Render">
+          <item><para>Cairo now performs better on remote X servers
+that lack the Render extension by being smarter about using X core
+protocol facilities instead of falling back to doing all rendering on
+the client side.</para></item>
+        </items>
+
+        <items name="cairo-ft: respecting FC_FT_FACE">
+          <item><para>Previously it was impossible to instruct cairo
+to do emboldening on a font face object created from an FT_Face. Cairo
+now respects and uses the FC_FT_FACE fontconfig pattern element, so
+emboldening can be achieved by using
+cairo_ft_font_face_create_for_pattern() and a carefully crafted
+pattern using FC_FT_FACE and FC_EMBOLDEN.</para></item>
+        </items>
+
+        <items name="cairo-directfb: backend improvements">
+          <item><para>The directfb backend, though still unsupported,
+has seen a good deal of improvements.</para></item>
+        </items>
+
+        <items name="Bug fixing and optimizations">
+          <item><para>xlib: Faster bookkeeping <ulink url="https://bugzilla.mozilla.org/show_bug.cgi?id=453199#c5">https://bugzilla.mozilla.org/show_bug.cgi?id=453199#c5</ulink></para></item>
+          <item><para>PS: Fix gradients with non-constant
+alpha</para></item>
+          <item><para>Fix deadlock in user-font code <ulink url="http://bugs.freedesktop.org/show_bug.cgi?id=16819">http://bugs.freedesktop.org/show_bug.cgi?id=16819</ulink></para></item>
+          <item><para>Countless other bugs have been fixed and
+optimizations made</para></item>
+          <item><para>Note also that the code that had been in cairo
+1.7.x calling into freetype's optional lcd_filter function was removed
+from cairo before the 1.8.0 release. We do expect this code to come
+back in some form in the future.</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The cairo Python bindings are available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.x
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.x
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+        <para>The Cairo Perl bindings are available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>The directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

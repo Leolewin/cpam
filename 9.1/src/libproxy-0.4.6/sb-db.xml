@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="libproxy" version="0.4.6" revision="1"
+  systype="!*-hpux*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}04</install-name>
+
+    <sources>
+      <source checksum="a7349063e584d2481f110edd6a9c645d"
+        checksum-type="md5" size="128581"
+        path="src/libproxy-0.4.6.zip"/>
+      <patch checksum="5b397238053c3d72f400eee58936ee23"
+        checksum-type="md5" size="7148"
+        path="src/libproxy-0.4.6.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="cmake" install-name="cmake28"
+        add-path="prepend" type="build">v&gt;=2.8.5</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir=${SB_INSTALL_PREFIX}/etc
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +Ofltacc +O2 +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="-DCMAKE_NO_BUILTIN_CHRPATH=ON" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +Ofltacc +O2 +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit +hpxstd98"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +Ofltacc +O2 +Olit=all +Oentrysched \
++Odataprefetch +Onolimit +hpxstd98"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local -D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+rm -rf CMakeCache.txt CMakeFiles Makefile \
+cmake_install.cmake CMakeOutput.log CMakeTmp
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+cmake \
+-DCMAKE_EXE_LINKER_FLAGS:STRING="-L${SB_INSTALL_PREFIX_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+-DCMAKE_INSTALL_RPATH="${SB_INSTALL_PREFIX_LIB}" \
+-DCMAKE_BUILD_TYPE:STRING="Release" \
+-DCMAKE_CXX_FLAGS_RELEASE="${CXXFLAGS:--O2}" \
+-DBUILD_SHARED_LIBS:BOOL=ON \
+-DWITH_DOTNET:BOOL=OFF \
+-DWITH_GNOME:BOOL=OFF \
+-DWITH_KDE4:BOOL=OFF \
+-DWITH_MOZJS:BOOL=OFF \
+-DWITH_PYTHON:BOOL=OFF \
+-DWITH_PERL:BOOL=OFF \
+-DWITH_VALA:BOOL=OFF \
+-DWITH_WEBKIT:BOOL=OFF \
+-DWITH_NM:BOOL=OFF \
+-DCMAKE_NO_BUILTIN_CHRPATH=ON \
+-DCMAKE_INSTALL_PREFIX:PATH="${SB_INSTALL_PREFIX}"
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libproxy-1.0.pc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake VERBOSE=1
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install VERBOSE=1
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  ${SB_PATH_FIND} ${SB_BUILD_PREFIX} -path "*/CMakeRelink.dir/*" \
+    -type f -exec rm '{}' \;
+  gmake install VERBOSE=1 ;;
+esac
+]]>
+    </install>
+  </program>
+</programs>

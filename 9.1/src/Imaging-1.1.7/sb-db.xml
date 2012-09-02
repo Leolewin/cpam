@@ -1,0 +1,376 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Imaging" version="1.1.7" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="fc14a54e1ce02a0225be8854bfba478e"
+        checksum-type="md5" size="498749"
+        path="src/Imaging-1.1.7.tar.gz"/>
+      <patch checksum="2ff1ce97b4169cd17d1487dc27c96cd0"
+        checksum-type="md5" size="596"
+        path="src/Imaging-1.1.7.fc-giftrans.patch"/>
+      <patch checksum="a0e868178cc475e3210dd6242ed35ef9"
+        checksum-type="md5" size="461"
+        path="src/Imaging-1.1.7.fc-sane-types.patch"/>
+      <patch checksum="5121a22fa4fd2793786b1a9513207635"
+        checksum-type="md5" size="4785"
+        path="src/Imaging-1.1.7.tww.patch"/>
+      <patch checksum="f699f99fe16432bb0220246d6fffd1cd"
+        checksum-type="md5" size="1015"
+        path="src/Imaging-1.1.7.nolib64.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="lcms" var="LIBLCMS"
+        install-name="liblcms11">v&gt;=1.19</depend>
+      <depend program="tiff" var="TIFF"
+        install-name="libtiff39">v&gt;=3.9.5</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case ${SB_SYSTYPE} in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:"
+  LD_RT_POST=":/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+  X_LIB="-L/usr/lib32" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  X_LIB="-L/usr/X11R6/lib64" ;;
+*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  X_LIB="-L/usr/X11R6/lib -Wl,-rpath,/usr/X11R6/lib" ;;
+*-solaris*)
+  CC_LD_RT="-R"
+  X_INC="-I/usr/openwin/include"
+  X_LIB="-L/usr/openwin/lib -R/usr/openwin/lib" ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+_EOT_
+
+if [ "${X_INC+set}" = set ]; then
+  cat >>setup.cfg <<_EOT_
+include_dirs=${X_INC}
+_EOT_
+fi
+
+cat >>setup.cfg <<_EOT_
+rpath=${SB_VAR_TCL_LIB}:${SB_VAR_TK_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}
+_EOT_
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+if [ "${SB_VAR_JPEG+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(JPEG_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_JPEG}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBLCMS+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(LCMS_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBLCMS}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBTTF+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(FREETYPE_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBTTF}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBZ+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(LIBZ_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBZ}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TCL+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TCL_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TCL}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TIFF+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TIFF_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TIFF}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TK+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TK_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TK}')!g;" setup.py
+fi
+
+${SB_VAR_PYTHON}/bin/python setup.py build_ext -i
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python selftest.py
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/PIL \
+${_install_prefix}/PIL.pth \
+${SB_INSTALL_PREFIX}/bin/pilconvert.py \
+${SB_INSTALL_PREFIX}/bin/pildriver.py \
+${SB_INSTALL_PREFIX}/bin/pilfile.py \
+${SB_INSTALL_PREFIX}/bin/pilprint.py
+]]>
+    </uninstall>
+
+    <module name="2.7.2">
+      <install-name>python27p</install-name>
+
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="tcl" var="TCL" install-name="tcl85"
+          add-path="prepend">v&gt;=8.5.10</depend>
+        <depend program="tk" var="TK" install-name="tk85"
+          add-path="prepend">v&gt;=8.5.10</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_install_prefix=${SB_INSTALL_PREFIX}/lib/python2.7/site-packages
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+_EOT_
+
+if [ "${X_INC+set}" = set ]; then
+  cat >>setup.cfg <<_EOT_
+include_dirs=${X_INC}
+_EOT_
+fi
+
+cat >>setup.cfg <<_EOT_
+rpath=${SB_VAR_TCL_LIB}:${SB_VAR_TK_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+if [ "${SB_VAR_JPEG+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(JPEG_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_JPEG}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBLCMS+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(LCMS_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBLCMS}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBTTF+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(FREETYPE_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBTTF}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBZ+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(LIBZ_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBZ}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TCL+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TCL_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TCL}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TIFF+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TIFF_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TIFF}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TK+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TK_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TK}')!g;" setup.py
+fi
+
+${SB_VAR_PYTHON}/bin/python setup.py build_ext -i
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python selftest.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/PIL \
+${_install_prefix}/PIL.pth \
+${SB_INSTALL_PREFIX}/bin/pilconvert.py \
+${SB_INSTALL_PREFIX}/bin/pildriver.py \
+${SB_INSTALL_PREFIX}/bin/pilfile.py \
+${SB_INSTALL_PREFIX}/bin/pilprint.py
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <install-name>python26p</install-name>
+
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="tcl" var="TCL" install-name="tcl85"
+          add-path="prepend">v&gt;=8.5.10</depend>
+        <depend program="tk" var="TK" install-name="tk85"
+          add-path="prepend">v&gt;=8.5.10</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_install_prefix=${SB_INSTALL_PREFIX}/lib/python2.6/site-packages
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+_EOT_
+
+if [ "${X_INC+set}" = set ]; then
+  cat >>setup.cfg <<_EOT_
+include_dirs=${X_INC}
+_EOT_
+fi
+
+cat >>setup.cfg <<_EOT_
+rpath=${SB_VAR_TCL_LIB}:${SB_VAR_TK_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+if [ "${SB_VAR_JPEG+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(JPEG_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_JPEG}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBLCMS+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(LCMS_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBLCMS}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBTTF+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(FREETYPE_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBTTF}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_LIBZ+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(LIBZ_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_LIBZ}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TCL+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TCL_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TCL}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TIFF+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TIFF_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TIFF}')!g;" setup.py
+fi
+
+if [ "${SB_VAR_TK+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!^\(TK_ROOT.*=\).*\$!\1 libinclude('${SB_VAR_TK}')!g;" setup.py
+fi
+
+${SB_VAR_PYTHON}/bin/python setup.py build_ext -i
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python selftest.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/PIL \
+${_install_prefix}/PIL.pth \
+${SB_INSTALL_PREFIX}/bin/pilconvert.py \
+${SB_INSTALL_PREFIX}/bin/pildriver.py \
+${SB_INSTALL_PREFIX}/bin/pilfile.py \
+${SB_INSTALL_PREFIX}/bin/pilprint.py
+]]>
+      </uninstall>
+    </module>
+
+    <changelog>
+      <change date="2011 September 18" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove 2.6.6 and 2.7.1 modules</para></item>
+        <item><para>Add 2.6.7 and 2.7.2 modules</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

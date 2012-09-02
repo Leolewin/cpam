@@ -1,0 +1,133 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="xdgdata" version="1.2" revision="1">
+    <install-name>xdgdata12</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <module name="shared-mime-info">
+      <build-name>${SB_MODULE_NAME}-0.91</build-name>
+
+      <sources>
+        <source checksum="982a211560ba4c47dc791ccff34e8fbc"
+          checksum-type="md5" size="488740"
+          path="src/shared-mime-info-0.91.tar.xz"/>
+        <patch checksum="5c526fcbdceb002966ad2be13f86415c"
+          checksum-type="md5" size="3885"
+          path="src/shared-mime-info-0.91.tww.patch"/>
+        <patch checksum="51de1aaf346ced868e47db3b4f5b017b"
+          checksum-type="md5" size="167951"
+          path="src/shared-mime-info-0.91.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="intltool" install-name="intltool041"
+          add-path="prepend" type="build">v&gt;=0.41.1</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          add-path="prepend">v&gt;=1.13.1</depend>
+        <depend program="libxml" var="LIBXML" install-name="libxml27"
+          add-path="prepend">v&gt;=2.7.8</depend>
+        <depend program="XML-Parser"
+          module="5.12.2">v&gt;=2.40</depend>
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC}" \
+LDFLAGS="-L${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBXML+:${SB_VAR_LIBXML_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} ${ARGS+${ARGS}} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="hicolor-icon-theme">
+      <build-name>${SB_MODULE_NAME}-0.12</build-name>
+
+      <sources>
+        <source checksum="55cafbcef8bcf7107f6d502149eb4d87"
+          checksum-type="md5" size="38008"
+          path="src/hicolor-icon-theme-0.12.tar.gz"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure --datarootdir=${_datadir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <licenses>
+      <license module="hicolor-icon-theme" path="gpl-2.license"/>
+
+      <license module="shared-mime-info" path="gpl-2.license"/>
+    </licenses>
+  </program>
+</programs>

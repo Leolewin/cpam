@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="mc" version="4.6.1" revision="9">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}46</install-name>
+
+    <sources>
+      <source checksum="18b20db6e40480a53bac2870c56fc3c4"
+        checksum-type="md5" size="3928370"
+        path="src/mc-4.6.1.tar.gz"/>
+      <patch checksum="c8d3a8104cf35f302924094815438088"
+        checksum-type="md5" size="996"
+        path="src/mc-4.6.1.tww.patch"/>
+      <patch checksum="3f5c48b62330c5875325b3dd2fc8d2ff"
+        checksum-type="md5" size="86367"
+        path="src/mc-4.6.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses57">v&gt;=5.7</depend>
+      <depend program="zlib" var="LIBZ" install-name="libz12"
+        type="build">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-screen=ncurses --enable-charset --without-x \
+--datadir=${_datadir} --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir} pkglibdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir} \
+pkglibdir="${SB_INSTALL_PREFIX}/lib"
+
+rmdir ${SB_INSTALL_PREFIX}/man/man8 2>/dev/null || :
+rmdir ${SB_INSTALL_PREFIX}/sbin 2>/dev/null || :
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 25" revision="9"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+      </change>
+
+      <change date="2010 November 10" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 December 3" revision="7"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gettext dependency from 0.14.1 to
+0.17</para></item>
+        <item><para>Update glib dependency from 2.12.13 to
+2.16.5</para></item>
+        <item><para>Update libiconv dependency from 1.9.2 to
+1.12</para></item>
+        <item><para>Update pkgconfig dependency from 0.21 to
+0.23</para></item>
+      </change>
+
+      <change date="2007 October 1" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update glib dependency from 2.6.5 to
+2.12.13</para></item>
+        <item><para>Update ncurses dependency from 5.4 to
+5.6</para></item>
+        <item><para>Update zlib dependency from 1.1.4 to
+1.2.3</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 April 6" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 December 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+        <item><para>Update bison dependency from 2.0 to
+2.1</para></item>
+        <item><para>Update pkgconfig dependency from 0.15.0 to
+0.20</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

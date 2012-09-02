@@ -1,0 +1,55 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release: 3.2
+Patch-ID: bash32-031
+
+Bug-Reported-by:	Miroslav Lichvar <mlichvar@redhat.com>
+Bug-Reference-ID:	Fri, 02 Nov 2007 14:07:45 +0100
+Bug-Reference-URL:	http://lists.gnu.org/archive/html/bug-readline/2007-11/msg00000.html
+
+Bug-Description:
+
+In certain cases when outputting characters at the end of the line,
+e.g., when displaying the prompt string, readline positions the cursor
+incorrectly if the prompt string contains invisible characters and the
+text being drawn begins before the last invisible character in the line.
+
+Patch:
+
+Index: lib/readline/display.c
+===================================================================
+--- lib/readline/display.c.orig
++++ lib/readline/display.c
+@@ -1569,11 +1569,16 @@ update_line (old, new, current_line, oma
+ 	    }
+ 	  else
+ 	    {
+-	      /* We have horizontal scrolling and we are not inserting at
+-		 the end.  We have invisible characters in this line.  This
+-		 is a dumb update. */
+ 	      _rl_output_some_chars (nfd, temp);
+ 	      _rl_last_c_pos += col_temp;
++	      /* If nfd begins before any invisible characters in the prompt,
++		 adjust _rl_last_c_pos to account for wrap_offset and set
++		 cpos_adjusted to let the caller know. */
++	      if (current_line == 0 && wrap_offset && ((nfd - new) <= prompt_last_invisible))
++		{
++		  _rl_last_c_pos -= wrap_offset;
++		  cpos_adjusted = 1;
++		}
+ 	      return;
+ 	    }
+ 	  /* Copy (new) chars to screen from first diff to last match. */
+Index: patchlevel.h
+===================================================================
+--- patchlevel.h.orig
++++ patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 30
++#define PATCHLEVEL 31
+ 
+ #endif /* _PATCHLEVEL_H_ */

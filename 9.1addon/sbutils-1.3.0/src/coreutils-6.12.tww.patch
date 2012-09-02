@@ -1,0 +1,93 @@
+Index: tests/mkdir/selinux
+===================================================================
+--- tests/mkdir/selinux.orig	2008-06-25 19:46:54.555314508 +0000
++++ tests/mkdir/selinux	2009-04-02 03:16:53.617557962 +0000
+@@ -49,6 +49,7 @@
+     -e 's/ Unknown system error$//'	\
+     -e 's/ Operation not supported$//'	\
+     -e 's/ Function not implemented$//'	\
++    -e 's/ Unsupported attribute value$//'	\
+     -e 's/ No such file or directory$//' out > k || fail=1
+   mv k out || fail=1
+   compare out exp || fail=1
+Index: tests/test-lib.sh
+===================================================================
+--- tests/test-lib.sh.orig	2008-06-25 19:46:54.491875864 +0000
++++ tests/test-lib.sh	2009-04-02 03:16:53.675278930 +0000
+@@ -281,8 +281,16 @@
+ 
+ if ( diff --version < /dev/null 2>&1 | grep GNU ) 2>&1 > /dev/null; then
+   compare() { diff -u "$@"; }
++elif ( gnudiff --version < /dev/null 2>&1 | grep GNU ) 2>&1 > /dev/null; then
++  compare() { gnudiff -u "$@"; }
++elif ( gdiff --version < /dev/null 2>&1 | grep GNU ) 2>&1 > /dev/null; then
++  compare() { gdiff -u "$@"; }
+ elif ( cmp --version < /dev/null 2>&1 | grep GNU ) 2>&1 > /dev/null; then
+   compare() { cmp -s "$@"; }
++elif ( gnucmp --version < /dev/null 2>&1 | grep GNU ) 2>&1 > /dev/null; then
++  compare() { gnucmp -s "$@"; }
++elif ( gcmp --version < /dev/null 2>&1 | grep GNU ) 2>&1 > /dev/null; then
++  compare() { gcmp -s "$@"; }
+ else
+   compare() { cmp "$@"; }
+ fi
+Index: src/shred.c
+===================================================================
+--- src/shred.c.orig	2008-06-25 19:46:54.683305781 +0000
++++ src/shred.c	2009-04-02 03:16:53.755060506 +0000
+@@ -295,7 +295,7 @@
+   if (fdatasync (fd) == 0)
+     return 0;
+   err = errno;
+-  if (err != EINVAL && err != EBADF)
++  if (err != EINVAL && err != EBADF && err != EISDIR)
+     {
+       error (0, err, _("%s: fdatasync failed"), qname);
+       errno = err;
+@@ -306,7 +306,7 @@
+   if (fsync (fd) == 0)
+     return 0;
+   err = errno;
+-  if (err != EINVAL && err != EBADF)
++  if (err != EINVAL && err != EBADF && err != EISDIR)
+     {
+       error (0, err, _("%s: fsync failed"), qname);
+       errno = err;
+Index: tests/check.mk
+===================================================================
+--- tests/check.mk.orig	2008-06-25 19:19:24.000000000 +0000
++++ tests/check.mk	2009-04-02 03:16:53.828369554 +0000
+@@ -53,9 +53,9 @@
+   . $(srcdir)/envvar-check;			\
+   TMPDIR=$$tmp__; export TMPDIR;		\
+   shell_or_perl_() {				\
+-    if grep '^\#!/usr/bin/perl' "$$1" > /dev/null; then			\
++    if $(GREP) '^\#!/usr/bin/perl' "$$1" > /dev/null; then			\
+       if $(PERL) -e 'use warnings' > /dev/null 2>&1; then		\
+-	grep '^\#!/usr/bin/perl -T' "$$1" > /dev/null && T_=T || T_=;	\
++	$(GREP) '^\#!/usr/bin/perl -T' "$$1" > /dev/null && T_=T || T_=;	\
+         $(PERL) -w$$T_ -I$(srcdir) -MCoreutils				\
+ 	      -M"CuTmpdir qw($$tst)" -- "$$1";	\
+       else					\
+Index: src/Makefile.am
+===================================================================
+--- src/Makefile.am.orig	2008-05-31 18:15:33.000000000 +0000
++++ src/Makefile.am	2009-12-10 22:11:23.777562273 +0000
+@@ -120,7 +120,7 @@
+ printf_LDADD = $(LDADD) $(POW_LIB) $(LIBICONV)
+ 
+ # If necessary, add -lm to resolve use of pow in lib/strtod.c.
+-seq_LDADD = $(LDADD) $(POW_LIB)
++seq_LDADD = $(LDADD) $(SEQ_LIBM) $(POW_LIB)
+ 
+ # If necessary, add libraries to resolve the `pow' reference in lib/strtod.c
+ # and the `nanosleep' reference in lib/xnanosleep.c.
+@@ -279,7 +279,7 @@
+ BUILT_SOURCES += wheel.h
+ wheel.h: wheel-gen.pl Makefile.am
+ 	@rm -f $@ $@-t
+-	$(srcdir)/wheel-gen.pl $(wheel_size) > $@-t
++	$(PERL) $(srcdir)/wheel-gen.pl $(wheel_size) > $@-t
+ 	@chmod a-w $@-t
+ 	mv $@-t $@
+ 

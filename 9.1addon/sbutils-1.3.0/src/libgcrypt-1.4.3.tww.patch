@@ -1,0 +1,635 @@
+Index: acinclude.m4
+===================================================================
+--- acinclude.m4.orig	2008-10-17 18:26:32.814580067 +0000
++++ acinclude.m4	2008-10-17 18:26:34.727437060 +0000
+@@ -224,6 +224,7 @@
+              AC_DEFINE(HAVE_BROKEN_MLOCK,1,
+                        [Defined if the mlock() call does not work])
+              AC_MSG_RESULT(yes)
++             AC_CHECK_FUNCS(plock)
+          else
+             if test "$gnupg_cv_have_broken_mlock" = "no"; then
+                 AC_MSG_RESULT(no)
+Index: cipher/Makefile.am
+===================================================================
+--- cipher/Makefile.am.orig	2008-10-17 18:26:32.782594779 +0000
++++ cipher/Makefile.am	2008-10-17 18:26:34.736456331 +0000
+@@ -61,16 +61,7 @@
+ sha1.c \
+ sha256.c \
+ sha512.c \
+-tiger.c \
+ whirlpool.c \
+ twofish.c \
+ rfc2268.c \
+ camellia.c camellia.h camellia-glue.c
+-
+-
+-# We need to lower the optimization for this module.
+-tiger.o: $(srcdir)/tiger.c
+-	`echo $(COMPILE) -c $(srcdir)/tiger.c | sed -e 's/-O[2-9s]*/-O1/g' `
+-
+-tiger.lo: $(srcdir)/tiger.c
+-	`echo $(LTCOMPILE) -c $(srcdir)/tiger.c | sed -e 's/-O[2-9s]*/-O1/g' `
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2008-10-17 18:26:32.841836348 +0000
++++ configure.ac	2008-10-22 05:07:34.935568371 +0000
+@@ -131,10 +131,11 @@
+ AC_PROG_INSTALL
+ AC_PROG_AWK
+ 
++AC_LIBTOOL_TAGS()
+ AC_LIBTOOL_WIN32_DLL
+ AC_LIBTOOL_RC
+-AM_PROG_LIBTOOL
+-
++AC_PROG_LIBTOOL
++AC_SYS_LARGEFILE
+ 
+ ##########################
+ ## General definitions. ##
+@@ -199,24 +200,6 @@
+         AC_DEFINE(HAVE_DOSISH_SYSTEM)
+         ;;
+ 
+-    *-*-freebsd*)
+-       # FreeBSD
+-       CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+-       LDFLAGS="$LDFLAGS -L/usr/local/lib"
+-       ;;
+-
+-    *-*-hpux*)
+-        if test -z "$GCC" ; then
+-            CFLAGS="$CFLAGS -Ae -D_HPUX_SOURCE"
+-        fi
+-        ;;
+-    *-dec-osf4*)
+-        if test -z "$GCC" ; then
+-            # Suppress all warnings
+-            # to get rid of the unsigned/signed char mismatch warnings.
+-            CFLAGS="$CFLAGS -w"
+-        fi
+-        ;;
+     m68k-atari-mint)
+         ;;
+     *)
+@@ -511,11 +494,8 @@
+ #
+ # gpg-error is required.
+ #
+-AM_PATH_GPG_ERROR("$NEED_GPG_ERROR_VERSION")
+-if test "x$GPG_ERROR_LIBS" = "x"; then
+-  AC_MSG_ERROR([libgpg-error is needed.
+-                See ftp://ftp.gnupg.org/gcrypt/libgpg-error/ .])
+-fi
++PKG_CHECK_MODULES(GPG_ERROR, libgpg-error >= $NEED_GPG_ERROR_VERSION,,
++                [AC_MSG_ERROR([libgpg-error is needed])])
+ 
+ AC_DEFINE(GPG_ERR_SOURCE_DEFAULT, GPG_ERR_SOURCE_GCRYPT,
+           [The default error source for libgcrypt.])
+@@ -1121,6 +1101,7 @@
+ src/Makefile
+ src/gcrypt.h
+ src/libgcrypt-config
++src/libgcrypt.pc
+ src/versioninfo.rc
+ tests/Makefile
+ ])
+Index: src/Makefile.am
+===================================================================
+--- src/Makefile.am.orig	2008-10-17 18:26:32.727414044 +0000
++++ src/Makefile.am	2008-10-22 05:07:57.585210198 +0000
+@@ -26,6 +26,9 @@
+ m4datadir = $(datadir)/aclocal
+ m4data_DATA = libgcrypt.m4
+ include_HEADERS = gcrypt.h gcrypt-module.h
++pkgconfigdir = $(libdir)/pkgconfig
++pkgconfig_DATA = libgcrypt.pc
++
+ 
+ lib_LTLIBRARIES = libgcrypt.la
+ bin_PROGRAMS = dumpsexp hmac256
+Index: src/secmem.c
+===================================================================
+--- src/secmem.c.orig	2008-10-17 18:26:32.721920815 +0000
++++ src/secmem.c	2008-10-17 18:26:34.778844645 +0000
+@@ -34,6 +34,9 @@
+ #ifdef USE_CAPABILITIES
+ #include <sys/capability.h>
+ #endif
++#ifdef HAVE_PLOCK
++#include <sys/lock.h>
++#endif
+ #endif
+ 
+ #include "ath.h"
+@@ -272,6 +275,11 @@
+      noch checked whether mlock does really work under AIX where we
+      also detected a broken nlock.  Note further, that using plock ()
+      is not a good idea under AIX. */ 
++#ifdef HAVE_PLOCK
++    err = plock( DATLOCK );
++    if( err && errno )
++        err = errno;
++#else /* !HAVE_PLOCK */
+   if (uid)
+     {
+       errno = EPERM;
+@@ -283,6 +291,7 @@
+       if (err && errno)
+ 	err = errno;
+     }
++#endif /* !HAVE_PLOCK */
+ #else /* !HAVE_BROKEN_MLOCK */
+   err = mlock (p, n);
+   if (err && errno)
+Index: src/libgcrypt.pc.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ src/libgcrypt.pc.in	2008-10-22 05:04:09.317192730 +0000
+@@ -0,0 +1,16 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++# Ciphers
++symmetric_ciphers="@LIBGCRYPT_CIPHERS@"
++asymmetric_ciphers="@LIBGCRYPT_PUBKEY_CIPHERS@"
++digests="@LIBGCRYPT_DIGESTS@"
++
++Name: libgcrypt
++Description: General-purpose crypto library
++Version: @VERSION@
++Requires: libgpg-error
++Libs: -L${libdir} -lgcrypt
++Cflags: -I${includedir}
+Index: cipher/ac.c
+===================================================================
+--- cipher/ac.c.orig	2008-10-17 18:26:32.777297223 +0000
++++ cipher/ac.c	2008-10-17 18:26:34.794304349 +0000
+@@ -2494,7 +2494,7 @@
+ typedef enum dencode_action
+   {
+     DATA_ENCODE,
+-    DATA_DECODE,
++    DATA_DECODE
+   }
+ dencode_action_t;
+ 
+Index: mpi/Makefile.am
+===================================================================
+--- mpi/Makefile.am.orig	2008-10-17 18:26:32.835218560 +0000
++++ mpi/Makefile.am	2008-10-17 18:26:34.862685438 +0000
+@@ -175,3 +175,16 @@
+ 	      mpih-mul.c     \
+ 	      mpiutil.c      \
+               ec.c
++
++.S.o:
++	$(CPP) $(INCLUDES) $(DEFS) $< | grep -v '^#' > $*.s
++	$(CPPASCOMPILE) -c `test -f '$*.s' || echo '$(srcdir)/'`$*.s
++	rm $*.s
++
++.S.obj:
++	$(CPPASCOMPILE) -c `if test -f '$<'; then $(CYGPATH_W) '$<'; else $(CYGPATH_W) '$(srcdir)/$<'; fi`
++
++.S.lo:
++	$(CPP) $(INCLUDES) $(DEFS) $< | grep -v '^#' > $*.s
++	$(LTCPPASCOMPILE) -c -o $@ `test -f '$*.s' || echo '$(srcdir)/'`$*.s
++	rm $*.s
+Index: src/cipher.h
+===================================================================
+--- src/cipher.h.orig	2008-10-17 18:26:32.733863542 +0000
++++ src/cipher.h	2008-10-17 18:26:34.962132657 +0000
+@@ -24,7 +24,7 @@
+ 
+ #define DBG_CIPHER _gcry_get_debug_flag( 1 )
+ 
+-#include "../random/random.h"
++#include "../random/gcry_random.h"
+ 
+ #define PUBKEY_FLAG_NO_BLINDING    (1 << 0)
+ #define PUBKEY_FLAG_TRANSIENT_KEY  (1 << 1)
+Index: cipher/gcry_random.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ cipher/gcry_random.h	2008-10-17 18:26:34.970764982 +0000
+@@ -0,0 +1,57 @@
++/* random.h - random functions
++ *	Copyright (C) 1998, 2002, 2006 Free Software Foundation, Inc.
++ *
++ * This file is part of Libgcrypt.
++ *
++ * Libgcrypt is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU Lesser General Public License as
++ * published by the Free Software Foundation; either version 2.1 of
++ * the License, or (at your option) any later version.
++ *
++ * Libgcrypt is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
++ */
++#ifndef G10_RANDOM_H
++#define G10_RANDOM_H
++
++#include "types.h"
++
++void _gcry_random_initialize (int full);
++void _gcry_register_random_progress (void (*cb)(void *,const char*,int,int,int),
++                                     void *cb_data );
++void _gcry_random_dump_stats(void);
++void _gcry_secure_random_alloc(void);
++void _gcry_enable_quick_random_gen (void);
++int  _gcry_random_is_faked(void);
++void _gcry_set_random_daemon_socket (const char *socketname);
++int  _gcry_use_random_daemon (int onoff);
++void _gcry_set_random_seed_file (const char *name);
++void _gcry_update_random_seed_file (void);
++
++byte *_gcry_get_random_bits( size_t nbits, int level, int secure );
++void _gcry_fast_random_poll( void );
++
++/*-- rndegd.c --*/
++gpg_error_t _gcry_rndegd_set_socket_name (const char *name);
++
++/*-- random-daemon.c (only used from random.c) --*/
++#ifdef USE_RANDOM_DAEMON
++void _gcry_daemon_initialize_basics (void);
++int _gcry_daemon_randomize (const char *socketname,
++                            void *buffer, size_t length,
++                            enum gcry_random_level level);
++int _gcry_daemon_create_nonce (const char *socketname,
++                               void *buffer, size_t length);
++#endif /*USE_RANDOM_DAEMON*/
++
++#endif /*G10_RANDOM_H*/
++
++
++
++
+Index: cipher/camellia.c
+===================================================================
+--- cipher/camellia.c.orig	2008-10-17 18:26:32.792361977 +0000
++++ cipher/camellia.c	2008-10-17 18:26:34.976905555 +0000
+@@ -23,11 +23,11 @@
+  *  http://info.isl.ntt.co.jp/crypt/eng/camellia/specifications.html
+  */
+ 
++#include "camellia.h"
++
+ #include <string.h>
+ #include <stdlib.h>
+ 
+-#include "camellia.h"
+-
+ /* u32 must be 32bit word */
+ typedef unsigned int u32;
+ typedef unsigned char u8;
+Index: random/gcry_random.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ random/gcry_random.h	2008-10-17 18:26:34.985960654 +0000
+@@ -0,0 +1,72 @@
++/* random.h - random functions
++ *	Copyright (C) 1998, 2002, 2006 Free Software Foundation, Inc.
++ *
++ * This file is part of Libgcrypt.
++ *
++ * Libgcrypt is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU Lesser General Public License as
++ * published by the Free Software Foundation; either version 2.1 of
++ * the License, or (at your option) any later version.
++ *
++ * Libgcrypt is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
++ */
++#ifndef G10_RANDOM_H
++#define G10_RANDOM_H
++
++#include "types.h"
++
++/*-- random.c --*/
++void _gcry_register_random_progress (void (*cb)(void *,const char*,int,int,int),
++                                     void *cb_data );
++
++void _gcry_random_initialize (int full);
++void _gcry_random_dump_stats(void);
++void _gcry_secure_random_alloc(void);
++void _gcry_enable_quick_random_gen (void);
++int  _gcry_random_is_faked(void);
++void _gcry_set_random_daemon_socket (const char *socketname);
++int  _gcry_use_random_daemon (int onoff);
++void _gcry_set_random_seed_file (const char *name);
++void _gcry_update_random_seed_file (void);
++
++byte *_gcry_get_random_bits( size_t nbits, int level, int secure );
++void _gcry_fast_random_poll( void );
++
++gcry_err_code_t _gcry_random_init_external_test (void **r_context,
++                                                 unsigned int flags,
++                                                 const void *key,
++                                                 size_t keylen,
++                                                 const void *seed,
++                                                 size_t seedlen,
++                                                 const void *dt,
++                                                 size_t dtlen);
++gcry_err_code_t _gcry_random_run_external_test (void *context,
++                                                char *buffer, size_t buflen);
++void            _gcry_random_deinit_external_test (void *context);
++
++
++/*-- rndegd.c --*/
++gpg_error_t _gcry_rndegd_set_socket_name (const char *name);
++
++/*-- random-daemon.c (only used from random.c) --*/
++#ifdef USE_RANDOM_DAEMON
++void _gcry_daemon_initialize_basics (void);
++int _gcry_daemon_randomize (const char *socketname,
++                            void *buffer, size_t length,
++                            enum gcry_random_level level);
++int _gcry_daemon_create_nonce (const char *socketname,
++                               void *buffer, size_t length);
++#endif /*USE_RANDOM_DAEMON*/
++
++#endif /*G10_RANDOM_H*/
++
++
++
++
+Index: random/random.h
+===================================================================
+--- random/random.h	2008-10-17 18:26:32.762681011 +0000
++++ random/random.h	1970-01-01 00:00:00.000000000 +0000
+@@ -1,72 +0,0 @@
+-/* random.h - random functions
+- *	Copyright (C) 1998, 2002, 2006 Free Software Foundation, Inc.
+- *
+- * This file is part of Libgcrypt.
+- *
+- * Libgcrypt is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU Lesser General Public License as
+- * published by the Free Software Foundation; either version 2.1 of
+- * the License, or (at your option) any later version.
+- *
+- * Libgcrypt is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+- * GNU Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public
+- * License along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+- */
+-#ifndef G10_RANDOM_H
+-#define G10_RANDOM_H
+-
+-#include "types.h"
+-
+-/*-- random.c --*/
+-void _gcry_register_random_progress (void (*cb)(void *,const char*,int,int,int),
+-                                     void *cb_data );
+-
+-void _gcry_random_initialize (int full);
+-void _gcry_random_dump_stats(void);
+-void _gcry_secure_random_alloc(void);
+-void _gcry_enable_quick_random_gen (void);
+-int  _gcry_random_is_faked(void);
+-void _gcry_set_random_daemon_socket (const char *socketname);
+-int  _gcry_use_random_daemon (int onoff);
+-void _gcry_set_random_seed_file (const char *name);
+-void _gcry_update_random_seed_file (void);
+-
+-byte *_gcry_get_random_bits( size_t nbits, int level, int secure );
+-void _gcry_fast_random_poll( void );
+-
+-gcry_err_code_t _gcry_random_init_external_test (void **r_context, 
+-                                                 unsigned int flags,
+-                                                 const void *key,
+-                                                 size_t keylen,
+-                                                 const void *seed,
+-                                                 size_t seedlen,
+-                                                 const void *dt, 
+-                                                 size_t dtlen);
+-gcry_err_code_t _gcry_random_run_external_test (void *context,
+-                                                char *buffer, size_t buflen);
+-void            _gcry_random_deinit_external_test (void *context);
+-
+-
+-/*-- rndegd.c --*/
+-gpg_error_t _gcry_rndegd_set_socket_name (const char *name);
+-
+-/*-- random-daemon.c (only used from random.c) --*/
+-#ifdef USE_RANDOM_DAEMON
+-void _gcry_daemon_initialize_basics (void);
+-int _gcry_daemon_randomize (const char *socketname,
+-                            void *buffer, size_t length,
+-                            enum gcry_random_level level);
+-int _gcry_daemon_create_nonce (const char *socketname,
+-                               void *buffer, size_t length);
+-#endif /*USE_RANDOM_DAEMON*/
+-
+-#endif /*G10_RANDOM_H*/
+-
+-
+-
+-
+Index: random/random-daemon.c
+===================================================================
+--- random/random-daemon.c.orig	2008-10-17 18:26:32.771917605 +0000
++++ random/random-daemon.c	2008-10-17 18:26:34.993509465 +0000
+@@ -40,7 +40,7 @@
+ #include <unistd.h>
+ 
+ #include "g10lib.h"
+-#include "random.h"
++#include "gcry_random.h"
+ #include "ath.h"
+ 
+ 
+Index: random/random.c
+===================================================================
+--- random/random.c.orig	2008-10-17 18:26:32.749302613 +0000
++++ random/random.c	2008-10-17 18:26:34.999740069 +0000
+@@ -28,7 +28,7 @@
+ #include <errno.h>
+ 
+ #include "g10lib.h"
+-#include "random.h"
++#include "gcry_random.h"
+ #include "rand-internal.h"
+ #include "ath.h"
+ 
+@@ -319,5 +319,5 @@
+ _gcry_random_deinit_external_test (void *context)
+ {
+   if (fips_mode ())
+-    return _gcry_rngfips_deinit_external_test (context);
++    _gcry_rngfips_deinit_external_test (context);
+ }
+Index: random/rndegd.c
+===================================================================
+--- random/rndegd.c.orig	2008-10-17 18:26:32.758348321 +0000
++++ random/rndegd.c	2008-10-17 18:26:35.006245762 +0000
+@@ -170,6 +170,17 @@
+           return -1;
+         }
+     }
++  else if (getenv("EGD_SOCKET_PATH"))
++    {
++      name = gcry_xstrdup(getenv("EGD_SOCKET_PATH"));
++      if (!name)
++        {
++          if (!nofail)
++            log_fatal ("error allocating memory in rndegd: %s\n",
++                       strerror(errno) );
++          return -1;
++        }
++    }
+   else if ( !bname || !*bname )
+     name = my_make_filename ("~/.gnupg", "entropy");
+   else
+@@ -257,15 +268,9 @@
+ 	}
+       (*add)( buffer, n, origin );
+       length -= n;
++      nbytes -= n;
+     }
+ 
+-  if( length )
+-    {
+-      log_info (
+-      _("Please wait, entropy is being gathered. Do some work if it would\n"
+-        "keep you from getting bored, because it will improve the quality\n"
+-        "of the entropy.\n") );
+-    }
+   while( length )
+     {
+       nbytes = length < 255? length : 255;
+Index: m4/noexecstack.m4
+===================================================================
+--- m4/noexecstack.m4.orig	2008-10-17 18:26:32.809072183 +0000
++++ m4/noexecstack.m4	2008-10-17 18:26:35.014143443 +0000
+@@ -37,7 +37,7 @@
+ EOF
+   if AC_TRY_COMMAND([${CC} $CFLAGS $CPPFLAGS
+                      -S -o conftest.s conftest.c >/dev/null]) \
+-     && grep -q .note.GNU-stack conftest.s \
++     && grep .note.GNU-stack conftest.s >/dev/null \
+      && AC_TRY_COMMAND([${CCAS} $CCASFLAGS $CPPFLAGS -Wa,--noexecstack
+                        -c -o conftest.o conftest.s >/dev/null])
+   then
+Index: random/random-csprng.c
+===================================================================
+--- random/random-csprng.c.orig	2008-09-03 10:04:43.000000000 +0000
++++ random/random-csprng.c	2008-10-17 18:26:44.657278561 +0000
+@@ -51,7 +51,7 @@
+ #endif
+ #include "g10lib.h"
+ #include "../cipher/rmd.h"
+-#include "random.h"
++#include "gcry_random.h"
+ #include "rand-internal.h"
+ #include "cipher.h" /* Required for the rmd160_hash_buffer() prototype.  */
+ #include "ath.h"
+Index: random/random-fips.c
+===================================================================
+--- random/random-fips.c.orig	2008-09-16 18:35:57.000000000 +0000
++++ random/random-fips.c	2008-10-17 18:27:37.468249428 +0000
+@@ -64,7 +64,7 @@
+ #endif
+ 
+ #include "g10lib.h"
+-#include "random.h"
++#include "gcry_random.h"
+ #include "rand-internal.h"
+ #include "ath.h"
+ 
+Index: cipher/ecc.c
+===================================================================
+--- cipher/ecc.c.orig	2008-09-16 16:42:16.000000000 +0000
++++ cipher/ecc.c	2008-10-17 19:04:35.382534715 +0000
+@@ -1189,7 +1189,7 @@
+ {
+   gpg_err_code_t ec = 0;
+   gcry_sexp_t l1;
+-  static const char const names[] = "pabgnq";
++  static const char names[] = "pabgnq";
+   gcry_mpi_t values[6];
+   int idx;
+ 
+Index: src/fips.c
+===================================================================
+--- src/fips.c.orig	2008-09-18 10:20:27.000000000 +0000
++++ src/fips.c	2008-10-17 19:06:42.249867283 +0000
+@@ -133,7 +133,7 @@
+   {
+     FILE *fp;
+     int saved_errno;
+-    static const char const procfname[] = "/proc/sys/crypto/fips_enabled";
++    static const char procfname[] = "/proc/sys/crypto/fips_enabled";
+ 
+     fp = fopen (procfname, "r");
+     if (fp)
+Index: src/hmac256.c
+===================================================================
+--- src/hmac256.c.orig	2008-09-03 10:04:42.000000000 +0000
++++ src/hmac256.c	2008-10-17 19:08:57.031967959 +0000
+@@ -526,7 +526,7 @@
+     const char * const desc;
+     const char * const data;
+     const char * const key;
+-    const char const expect[32];
++    const char expect[32];
+   } tv[] =
+     {
+       { "data-28 key-4",
+Index: src/libgcrypt-config.in
+===================================================================
+--- src/libgcrypt-config.in.orig	2008-10-22 05:02:50.000000000 +0000
++++ src/libgcrypt-config.in	2008-10-22 05:21:43.003507322 +0000
+@@ -17,8 +17,6 @@
+ version="@VERSION@"
+ includedir="@includedir@"
+ libdir="@libdir@"
+-gpg_error_libs="@GPG_ERROR_LIBS@"
+-gpg_error_cflags="@GPG_ERROR_CFLAGS@"
+ 
+ # libgcrypt values.
+ libs="@LIBGCRYPT_CONFIG_LIBS@"
+@@ -126,11 +124,10 @@
+     cflags_final="$cflags"
+ 
+     # Set up `includes'.
+-    if test "x$includedir" != "x/usr/include" -a "x$includedir" != "x/include"; then
++    if test "x$includedir" != "x/usr/include" -a \
++    "x$includedir" != "x/include"; then
+ 	includes="-I$includedir"
+     fi
+-    # Set up `cflags_final'.
+-    cflags_final="$cflags_final $gpg_error_cflags"
+ 
+     tmp=""
+     for i in $includes $cflags_final; do
+@@ -150,9 +147,6 @@
+ 	libdirs="-L$libdir"
+     fi
+ 
+-    # Set up `libs_final'.
+-    libs_final="$libs_final $gpg_error_libs"
+-
+     tmp=""
+     for i in $libdirs $libs_final; do
+        if echo "$tmp" | fgrep -v -- "$i" >/dev/null; then

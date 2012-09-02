@@ -1,0 +1,277 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="tcl" version="8.4.6" revision="2">
+    <build-name>${SB_PROG_NAME}${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}84</install-name>
+
+    <sources>
+      <source checksum="9009a92dc648775fb8a9b0789b995756"
+        checksum-type="md5" size="3448711"
+        path="src/tcl8.4.6-src.tar.gz"/>
+      <patch checksum="22ca5645ab441e358bac88759e73440e"
+        checksum-type="md5" size="35456"
+        path="src/tcl8.4.6-src.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  ARGS="--enable-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ARGS="--enable-threads" ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  ARGS="--enable-threads" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-threads" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  ARGS="--enable-threads" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^TCL_CFLAGS_OPTIMIZE=.*!TCL_CFLAGS_OPTIMIZE='${CFLAGS:--O2}'!" \
+unix/tclConfig.sh
+
+(cd unix && gmake CFLAGS="${CFLAGS:--O2}")
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend var="TCLP" install-name="tcl84p"
+          set-var-only="1"/>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+cd unix
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--enable-shared --enable-langinfo ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+(cd unix && gmake install)
+
+# Fix runtime path to tcl shared library
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  (cd unix
+  rm tclsh
+  gmake TCL_BUILD_LIB_SPEC="-L${SB_INSTALL_PREFIX}/lib -ltcl8.4" tclsh)
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 unix/tclsh \
+  ${SB_INSTALL_PREFIX}/bin/tclsh8.4 ;;
+esac
+
+# Fix path to ldAix
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!${SB_BUILD_PREFIX}/unix/ldAix!${SB_INSTALL_PREFIX}/lib/tcl8.4/ldAix!" \
+${SB_INSTALL_PREFIX}/lib/tclConfig.sh
+  ${SB_PATH_GCHMOD} 755 ${SB_INSTALL_PREFIX}/lib/tcl8.4/ldAix
+  ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${TCLP} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="static">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+cd unix
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--disable-shared --enable-langinfo ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/lib
+
+${SB_PATH_INSTALL} -o root -g 0 unix/libtcl8.4.a \
+${SB_INSTALL_PREFIX}/lib
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/libtcl8.4.a
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="8.4.5" to="8.4.6">
+        <items name="Bug Fixes">
+          <item><para>[851747] object sharing fix in [binary
+scan]</para></item>
+          <item><para>[858937] fix for [file normalize ~nobody]
+</para></item>
+          <item><para>[839519] fixed two memory leaks</para></item>
+          <item><para>[873311] fixed infinite loop in
+TclFinalizeFilesystem</para></item>
+          <item><para>[405995] Tcl_Ungets buffer filling
+fix</para></item>
+          <item><para>[833910] tcltest command line option parsing error
+=&gt; tcltest 2.4.5</para></item>
+          <item><para>[833637] code error in tcltest -preservecore
+operation</para></item>
+          <item><para>[849514,859251] corrected [file normailze] of
+$link/.. </para></item>
+          <item><para>[772288] Unix std channels forced to exist at
+startup</para></item>
+          <item><para>init.tcl search path with unusual
+--libdir</para></item>
+          <item><para>[554068] stopped broken [exec] quoting of
+{</para></item>
+          <item><para>[888777] plugged memory leak with long host
+names</para></item>
+          <item><para>[462580] corrected level interpretation of
+Tcl_CreateTrace</para></item>
+        </items>
+
+        <items name="Feature Enhancements">
+          <item><para>update HP-11 build libs setup</para></item>
+        </items>
+
+        <items name="Platform Support">
+          <item><para>[852369] update errno usage
+for recent glibc</para></item>
+          <item><para>[218561] Allow 64-bit
+configure on IRIX64-6.5*</para></item>
+        </items>
+
+        <items name="New Defaults">
+          <item><para>tcltest::configure -verbose {body
+error}</para></item>
+        </items>
+      </change>
+
+      <change from="8.4.4" to="8.4.5">
+        <items name="Bug Fixes">
+          <item><para>[775976] fix registry compilation for
+VC7</para></item>
+          <item><para>[781609] prevent non-Windows platforms
+from trying to use the registry package inside msgcat</para></item>
+          <item><para>[411825] Fix TclNeedSpace to handle
+non-breaking space (\u00A0) and backslash escapes
+correctly</para></item>
+          <item><para>[788780] Fix thread-safety issues in
+filesystem records</para></item>
+          <item><para>[804681] Protect ::errorInfo and
+::errorCode traces from corrupting stack</para></item>
+          <item><para>[218871] Fix handling of glob-sensitive
+chars in auto_load and auto_import</para></item>
+          <item><para>[811483] Fixed refcount management for
+command and execution traces.</para></item>
+          <item><para>[789040] Fixed exec command.com error for
+Win9x.</para></item>
+          <item><para>[767834, 813273] Fixed volumerelative
+file normalization and 'file join' inconsistencies</para></item>
+          <item><para>[769812] Fix Tcl_NumUtfChars string
+length calculation when negative parameter is given</para></item>
+          <item><para>[800106] Handle VFS mountpoints inside
+glob'd dirs</para></item>
+          <item><para>[599468] Watch for FD_CLOSE too on
+Windows when asked for writable events by the generic
+layer</para></item>
+          <item><para>[813606] Detect OS X pipes
+correctly</para></item>
+          <item><para>[832657] Allow .. in libpath
+initialization</para></item>
+          <item><para>Improve AIX-64 build
+configuration</para></item>
+          <item><para>[230589, 504785, 505048, 703709, 840258]
+fixes to various odd regexp "can't happen" bugs</para></item>
+        </items>
+
+        <items name="Feature Enhancements">
+          <item><para>[781585] Use Tcl_ResetResult in bytecodes to
+prevent potential costly Tcl_Obj duplication</para></item>
+        </items>
+      </change>
+
+      <note type="build">
+        <para>64-bit binaries and libraries are available for AIX 5.x,
+HP-UX 11.x, IRIX 6.5, and Solaris 7+. They can be found in:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/bin/64
+${SB_INSTALL_PREFIX}/lib/64
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The default Tcl module search path directories are:</para>
+        <screen>
+${SB_INSTALL_BASE}/tcl84p/lib/itcl3.2
+${SB_INSTALL_BASE}/tcl84p/lib/itk3.2
+${SB_INSTALL_BASE}/tcl84p/lib/iwidgets4.0.1
+${SB_INSTALL_BASE}/tcl84p/lib/tclcurl0.11
+${SB_INSTALL_BASE}/tcl84p/lib/tcllib1.6
+${SB_INSTALL_BASE}/tcl84p/lib/tclx8.4
+        </screen>
+
+        <para>The default search path is set by the
+<command>TCLLIBPATH</command> environment variable. The executable
+wrapper for <command>tclsh8.4</command> sets the variable to the paths
+above.</para>
+
+        <para>The following 3rd-party modules are provided: TclCurl
+0.11.0, itcl 3.2.1, tcllib 1.6, tclX 8.4.</para>
+
+        <para>Package dependencies for some modules:</para>
+        <unorderedlist>
+          <item><para>The TclCurl 0.11.0 module needs v7.11.1 of the
+curl package</para></item>
+        </unorderedlist>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 12" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Create lib directory for "static" module when
+installing so we don't assume "default" module installed
+first</para></item>
+      </change>
+
+      <change date="2004 June 17" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64bit and 64bit-static modules</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

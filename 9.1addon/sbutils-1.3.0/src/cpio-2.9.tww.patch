@@ -1,0 +1,107 @@
+Index: src/main.c
+===================================================================
+--- src/main.c.orig
++++ src/main.c
+@@ -782,7 +782,9 @@ initialize_buffers ()
+ int
+ main (int argc, char *argv[])
+ {
++#if HAVE_LOCALE_H
+   setlocale (LC_ALL, "");
++#endif
+   bindtextdomain (PACKAGE, LOCALEDIR);
+   textdomain (PACKAGE);
+ 
+Index: src/mt.c
+===================================================================
+--- src/mt.c.orig
++++ src/mt.c
+@@ -239,7 +239,9 @@ main (int argc, char **argv)
+   int i;
+   char *rsh_command_option = NULL;
+ 
++#if HAVE_LOCALE_H
+   setlocale (LC_ALL, "");
++#endif
+   bindtextdomain (PACKAGE, LOCALEDIR);
+   textdomain (PACKAGE);
+   
+Index: configure.ac
+===================================================================
+--- configure.ac.orig
++++ configure.ac
+@@ -45,7 +45,7 @@ AC_CHECK_TYPE(gid_t, int)
+ AC_HEADER_STDC
+ AC_HEADER_DIRENT
+ 
+-AC_CHECK_FUNCS([fchmod fchown])
++AC_CHECK_FUNCS([fchmod fchown setlocale])
+ 
+ # gnulib modules
+ gl_INIT
+Index: lib/Makefile.am
+===================================================================
+--- lib/Makefile.am.orig
++++ lib/Makefile.am
+@@ -17,6 +17,19 @@
+ ## Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ ## 02110-1301, USA.
+ 
++CLEANFILES		=
++DISTCLEANFILES		=
++MOSTLYCLEANFILES	=
++MAINTAINERCLEANFILES	=
++MOSTLYCLEANDIRS		=
++
++noinst_LIBRARIES	=
++noinst_HEADERS		=
++
++EXTRA_DIST	=
++BUILT_SOURCES	=
++AM_CPPFLAGS	=
++
+ include gnulib.mk
+ 
+ noinst_HEADERS += \
+Index: src/makepath.c
+===================================================================
+--- src/makepath.c.orig
++++ src/makepath.c
+@@ -65,10 +65,11 @@ make_path (char *argpath,
+ 
+   if (stat (dirpath, &stats))
+     {
++      char *slash = dirpath;
++
+       tmpmode = MODE_RWX & ~ newdir_umask;
+       invert_permissions = we_are_root ? 0 : MODE_WXUSR & ~ tmpmode;
+ 
+-      char *slash = dirpath;
+       while (*slash == '/')
+ 	slash++;
+       while ((slash = strchr (slash, '/')))
+Index: src/copyout.c
+===================================================================
+--- src/copyout.c.orig
++++ src/copyout.c
+@@ -338,7 +338,7 @@ write_out_new_ascii_header (const char *
+   char ascii_header[110];
+   char *p;
+ 
+-  p = stpcpy (ascii_header, magic_string);
++  p = (char *) stpcpy (ascii_header, magic_string);
+   to_ascii_or_warn (p, file_hdr->c_ino, 8, LG_16,
+ 		    file_hdr->c_name, _("inode number"));
+   p += 8;
+Index: tests/argcv.c
+===================================================================
+--- tests/argcv.c.orig
++++ tests/argcv.c
+@@ -15,6 +15,7 @@
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA  */
+ 
++#include <config.h>
+ #include <ctype.h>
+ 
+ #include <argcv.h>

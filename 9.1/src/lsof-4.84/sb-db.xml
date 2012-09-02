@@ -1,0 +1,282 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="lsof" version="4.84" revision="1"
+  systype="*-aix*|*-hpux11.11|*-hpux11.[23]*|*-linux*|*-solaris*">
+    <build-name>${SB_PROG_NAME}_${SB_PROG_VER}_src</build-name>
+
+    <install-name>${SB_PROG_NAME}48</install-name>
+
+    <sources>
+      <source checksum="1c20851666cd1fdc0b5440d51be41ac8"
+        checksum-type="md5" size="4264448"
+        path="src/lsof_4.84_src.tar"/>
+      <patch checksum="bab71edd603f84780448da1f9d13cf4a"
+        checksum-type="md5" size="1101"
+        path="src/lsof_4.84_src.tww.patch"/>
+    </sources>
+
+    <module name="default">
+      <validate>
+        <depend program="lsof" module="64bit"
+          systype="*-aix5*|*-solaris*">v==4.84</depend>
+      </validate>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=cc OS=aix AIX_KERNBITS=32 ;;
+*-aix*)
+  CC=cc OS=aix AIX_KERNBITS=64 ;;
+ia64*-hpux*)
+  CC=cc OS=hpux
+
+  ${SB_PATH_SED} -i -e "\
+s! +DAportable!!; \
+s! +DD32!!; \
+/hpux\|hpuxgcc)/ {
+n
+s!LSOF_CFGL=\"\"!LSOF_CFGL=\"-Wl,+nodefaultrpath\"!;
+}" Configure ;;
+*-hpux11.11)
+  CC=cc OS=hpux ;;
+*-linux*)
+  OS=linux ;;
+*-hpux*)
+  CC=cc OS=hpux
+
+  ${SB_PATH_SED} -i -e "\
+s! +DAportable!!; \
+s! +DD32!!;" Configure ;;
+*-osf*)
+  CC=cc OS=digital_unix ;;
+*-solaris*)
+  CC=cc OS=solaris SOLARIS_KERNBITS=32 ;;
+esac
+
+LSOF_CC="${CC:-gcc}" \
+SOLARIS_KERNBITS="${SOLARIS_KERNBITS+${SOLARIS_KERNBITS}}" \
+AIX_KERNBITS="${AIX_KERNBITS+${AIX_KERNBITS}}" \
+./Configure -n ${OS}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/man/man8 ${SB_INSTALL_PREFIX}/contrib
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lsof.8 ${SB_INSTALL_PREFIX}/man/man8
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_INSTALL} -m 2555 -o root -g system lsof \
+  ${SB_INSTALL_PREFIX}/bin ;;
+*-hpux*)
+  ${SB_PATH_INSTALL} -m 4555 -o root -g sys lsof \
+  ${SB_INSTALL_PREFIX}/bin ;;
+*-linux*)
+  ${SB_PATH_INSTALL} -m 4555 -o root -g root lsof \
+  ${SB_INSTALL_PREFIX}/bin ;;
+*-osf*)
+  ${SB_PATH_INSTALL} -m 2555 -o root -g mem lsof \
+  ${SB_INSTALL_PREFIX}/bin ;;
+*-solaris*)
+  ${SB_PATH_INSTALL} -m 2555 -o root -g sys lsof \
+  ${SB_INSTALL_PREFIX}/bin ;;
+esac
+
+${SB_PATH_INSTALL} -m 555 -o root -g 0 scripts/*perl* \
+scripts/xusers.awk ${SB_INSTALL_PREFIX}/contrib
+${SB_PATH_INSTALL} -m 444 -o root -g 0 scripts/list_fields.awk \
+scripts/00MANIFEST scripts/00README ${SB_INSTALL_PREFIX}/contrib
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix5*|*-solaris*">
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=cc OS=aix AIX_KERNBITS=64 ;;
+i?86*-solaris*)
+  CC=cc
+  OS=solaris SOLARIS_KERNBITS=64 ;;
+*-solaris*)
+  CC=cc
+  OS=solaris SOLARIS_KERNBITS=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+LSOF_CC="${CC:-gcc}" \
+SOLARIS_KERNBITS="${SOLARIS_KERNBITS+${SOLARIS_KERNBITS}}" \
+AIX_KERNBITS="${AIX_KERNBITS+${AIX_KERNBITS}}" \
+./Configure -n ${OS}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_INSTALL} -m 755 -o root -g sys -d \
+  ${SB_INSTALL_PREFIX}/bin/ppc64
+  ${SB_PATH_INSTALL} -m 2555 -o root -g system lsof \
+  ${SB_INSTALL_PREFIX}/bin/ppc64 ;;
+i?86*-solaris*)
+  ${SB_PATH_INSTALL} -m 755 -o root -g sys -d \
+  ${SB_INSTALL_PREFIX}/bin/amd64 
+  ${SB_PATH_INSTALL} -m 2555 -o root -g sys lsof \
+  ${SB_INSTALL_PREFIX}/bin/amd64 ;;
+*-solaris*)
+  ${SB_PATH_INSTALL} -m 755 -o root -g sys -d \
+  ${SB_INSTALL_PREFIX}/bin/sparcv9 
+  ${SB_PATH_INSTALL} -m 2555 -o root -g sys lsof \
+  ${SB_INSTALL_PREFIX}/bin/sparcv9 ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  rm -rf ${SB_INSTALL_PREFIX}/bin/ppc64 ;;
+i?86*-solaris*)
+  rm -rf ${SB_INSTALL_PREFIX}/bin/amd64 ;;
+*-solaris*)
+  rm -rf ${SB_INSTALL_PREFIX}/bin/sparcv9 ;;
+esac
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="4.83" to="4.84">
+        <item><para>corrects a man page nroff command
+error</para></item>
+        <item><para>recognizes FreeBSD 7.3</para></item>
+        <item><para>adds improved task support, initially for
+Linux</para></item>
+        <item><para>updates for Solaris 11 b134</para></item>
+        <item><para>makes provisions for ZFS changes</para></item>
+        <item><para>recognizes and documents LTnlink won't run on
+ZFS</para></item>
+        <item><para>corrects typo in Configure script</para></item>
+      </change>
+
+      <change from="4.82" to="4.83">
+        <item><para>converts Solaris 10 and above ZFS support to use
+the CTF library, libctf</para></item>
+        <item><para>fixes a typo with the LINUX_HASSELUNIX Configure
+variable</para></item>
+        <item><para>accepts LSOF_RANLIB from the
+environment</para></item>
+        <item><para>enables Solaris 10 compilation after a recent PC
+file system patch</para></item>
+        <item><para>ported to Solaris 11</para></item>
+        <item><para>adjusts to disappearance of &lt;nfs/rpcv2.h&gt;
+from FreeBSD 8.0-BETA</para></item>
+        <item><para>improves Solaris node type lookup</para></item>
+        <item><para>supports FreeBSD 9.0-CURRENT</para></item>
+        <item><para>extends a FreeBSD 9 fix to FreeBSD 6 and
+above</para></item>
+        <item><para>added Linux test for __UCLIBC__</para></item>
+      </change>
+
+      <change from="4.81" to="4.82">
+        <item><para>corrects an over-zealous test that causes lsof to
+produce no ouput</para></item>
+        <item><para>when the HASSECURITY and HASNOSOCKSECURITTY have
+been specified at</para></item>
+        <item><para>lsof build time</para></item>
+        <item><para>corrects Solaris 10 and above
+&lt;sys/utsname.h&gt;</para></item>
+        <item><para>include/compilation problem and eliminates other
+Solaris 10</para></item>
+        <item><para>compilation warnings</para></item>
+        <item><para>supports FreeBSD 7.1-PRELEASE</para></item>
+        <item><para>incorporates changes to Darwin lsof, supplied by
+Apple</para></item>
+        <item><para>enables FreeBSD use of the ${MAKE}
+variable</para></item>
+        <item><para>improves Solaris VxFS library location
+test</para></item>
+        <item><para>updates Solaris 10 ZFS support to ZFS pool version
+10</para></item>
+        <item><para>updates interpretation of Solaris 10 device
+numbers</para></item>
+        <item><para>adds rudimentary Solaris 10 sharedfs
+support</para></item>
+        <item><para>fixes a bug in Solaris 10 zone
+handling</para></item>
+        <item><para>adapts to changes in FreeBSD 8.0-CURRENT device
+number computation</para></item>
+        <item><para>selects correct Solaris VxFS library when
+configuring for gcc</para></item>
+        <item><para>adapts to loss of FreeBSD KAME IPv6
+accommodations</para></item>
+        <item><para>adapts to FreeBSD 7.2</para></item>
+      </change>
+
+      <change from="4.80" to="4.81">
+        <item><para>updates the Darwin libproc sources</para></item>
+        <item><para>changes dummy declarations in lib source
+file</para></item>
+        <item><para>adds support for Linux /proc/net/packet
+files</para></item>
+        <item><para>improves socket file only processing for Linux and
+PSTAT-based HP-UX</para></item>
+        <item><para>adds htonl call around INADDR_LOOPBACK
+usage</para></item>
+        <item><para>adjusts for a change in FreeBSD 8.0 device number
+handling</para></item>
+        <item><para>added -i speed improvements for AIX, Darwin,
+FreeBSD, PSTAT-based HP-UX, Linux and Solaris</para></item>
+        <item><para>fixes a PSTAT-based HP-UX 11.31 stat(2)
+problem</para></item>
+        <item><para>adjusts for kernel header file changes in FreeBSD
+8.0-CURRENT</para></item>
+        <item><para>adds a Solaris VxFS warning, where
+appropriate</para></item>
+        <item><para>corrects mishandling of trailing slashes on path
+name arguments with more than one character</para></item>
+      </change>
+
+      <change from="4.79" to="4.80">
+        <item><para>adjusts to a change in FreeBSD 6.0 and above byte
+level locking</para></item>
+        <item><para>issues a warning for unsupported dialects or
+versions</para></item>
+        <item><para>supports Linux UDPLITE protocol</para></item>
+        <item><para>adds a missing quote to the FreeBSD Configure
+stanza</para></item>
+        <item><para>restores the usage.o rule to the HP-UX PSTAT-
+based Makefile</para></item>
+      </change>
+
+      <platform name="AIX">
+        <para>On AIX systems with a 64-bit kernel, a wrapper script is
+installed for lsof to execute the 64-bit version in
+<command>${SB_INSTALL_PREFIX}/bin/ppc64</command>. If the system is
+running a 32-bit kernel, the 32-bit version in
+<command>${SB_INSTALL_PREFIX}/bin</command> is run.</para>
+      </platform>
+
+      <platform name="Solaris">
+        <para>On Solaris systems with a 64-bit kernel, a wrapper
+script is installed for lsof to execute the 64-bit version in
+<command>${SB_INSTALL_PREFIX}/bin/sparcv9</command> and
+<command>${SB_INSTALL_PREFIX}/bin/amd64</command>. If the system is
+running a 32-bit kernel, the 32-bit version in
+<command>${SB_INSTALL_PREFIX}/bin</command> is run.</para>
+      </platform>
+    </notes>
+  </program>
+</programs>

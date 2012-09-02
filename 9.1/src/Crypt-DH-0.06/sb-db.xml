@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Crypt-DH" version="0.06" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="eabecac024d427c670a6e0edbadcec5d"
+        checksum-type="md5" size="18088"
+        path="src/Crypt-DH-0.06.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Crypt/DH/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Crypt/DH/.packlist
+rmdir ${_installsitearch}/auto/Crypt 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Crypt::DH|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Crypt-Random"
+          module="5.12.2">v&gt;=1.25</depend>
+        <depend program="Math-BigInt"
+          module="5.12.2">v&gt;=1.89</depend>
+        <depend program="gmp" var="LIBGMP" install-name="libgmp43"
+          module="Math-BigInt-GMP-5.12.2">v&gt;=4.3.2</depend>
+        <depend program="pari" var="LIBPARI" install-name="libpari23"
+          module="Math-Pari-5.12.2">v&gt;=2.3.5</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+export PERL5LIB="${SB_VAR_LIBGMP}/lib/perl5122:\
+${SB_VAR_LIBPARI}/lib/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Crypt/DH/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Crypt/DH/.packlist
+rmdir ${_installsitearch}/auto/Crypt 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Crypt::DH|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+      </uninstall>
+    </module>
+  </program>
+</programs>

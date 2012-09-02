@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="HTML-Parser" version="3.31" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="143e38e18c6166fb1c8950a037139454"
+        checksum-type="md5" size="73132"
+        path="src/HTML-Parser-3.31.tar.gz"/>
+      <patch checksum="d169f5efc582663dabff0e32cb62e6e0"
+        checksum-type="md5" size="742"
+        path="src/HTML-Parser-3.31.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <module name="5.8.2">
+      <install-name>perl582p</install-name>
+
+      <dependencies>
+        <depend program="HTML-Tagset"
+          module="5.8.2">v&gt;=3.03</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="perl" var="PERL">v==5.8.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2003 November 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Perl 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

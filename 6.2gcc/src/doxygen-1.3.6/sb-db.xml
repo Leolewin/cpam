@@ -1,0 +1,329 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="doxygen" version="1.3.6" revision="1"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="74d3cfb6463bfd4ed1d051153375156d"
+        checksum-type="md5" size="2391375"
+        path="src/doxygen-1.3.6.src.tar.gz"/>
+      <patch checksum="43d8fe2a2753f5b244fb4b0196a2bbb6"
+        checksum-type="md5" size="7270"
+        path="src/doxygen-1.3.6.src.patch"/>
+      <source checksum="00b3c98ebb1449823452d17fe4ac31ea"
+        checksum-type="md5" size="461907"
+        path="src/doxygen_manual-1.3.6.pdf.zip"
+        noop="1" var="DOC"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="ghostscript" install-name="ghostscript70"
+        add-path="prepend" type="build">v&gt;=7.07</depend>
+      <depend program="tetex" install-name="tetex20"
+        add-path="prepend" type="build">v&gt;=2.0.2</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="graphviz" install-name="graphviz112"
+        add-path="prepend" type="build">v==1.12</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  PLATFORM=aix-xlc ;;
+*-aix*)
+  PLATFORM=aix-g++ ;;
+*-osf*)
+  PLATFORM=osf1-cxx ;;
+*-hpux11*)
+  PLATFORM=hpux-acc ;;
+*-irix6*)
+  PLATFORM=irix-n32 ;;
+*-linux*)
+  PLATFORM=linux-g++ ;;
+*-solaris2.5.1)
+  PLATFORM=solaris-g++ ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  PLATFORM=solaris-g++ ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--perl ${SB_VAR_PERL}/bin/perl --install ginstall \
+--platform ${PLATFORM} --docdir "${_docdir}" ${ARGS+${ARGS}} \
+--prefix ${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl,-bnortllib,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+gmake LIBPNG_INC="${SB_VAR_LIBPNG_INC} -I${SB_VAR_ZLIB_INC}" \
+LIBPNG_LIB="-L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPNG_LIB}:${SB_VAR_ZLIB_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_GCC_RT+LFLAGS="${CC_LD_RT}${SB_VAR_GCC_RT_LIB} \
+${LDFLAGS+${LDFLAGS}}"}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install install_docs
+
+(cd ${_docdir}
+unzip ${SB_SRC_DOC}
+mv doxygen_manual-${SB_PROG_VER}.pdf doxygen_manual.pdf)
+]]>
+    </install>
+
+    <notes>
+      <change from="1.3.5" to="1.3.6">
+        <items name="Change">
+          <item><para>For projects with many nested classes,
+namespaces, typedefs and using statements, doxygen could become very
+slow. This should now be improved significantly.</para></item>
+          <item><para>Made some cosmetic changes to the HTML
+output</para></item>
+          <item><para>STRIP_FROM_PATH now by default strips the path
+from which doxygen is run (i.e. $(PWD)/ on Unix)</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Make a start with adding support for
+Objective-C. Doxygen can now parse Objective-C header files (including
+protocols and categories).</para></item>
+          <item><para>Include a patch by Hauke Duden which adds
+preliminary support for the D programming language (see
+http://www.digitalmars.com/d)</para></item>
+          <item><para>C Comments inside #defines are now preserved.
+This could be useful to document boilerplate code</para></item>
+          <item><para>Included patch to replace tabs by the proper
+amount of spaced inside code fragments in the XML output</para></item>
+          <item><para>Included Gerik Rhoden's fixes for the .dsp/.dsw
+files found in the wintools dir</para></item>
+          <item><para>Examples (documented via \example) are now
+included in the XML output</para></item>
+          <item><para>New option SORT_BRIEF_DOCS which when enabled
+will list the declaration section of the documentation (with the brief
+descriptions) in alpabetical order, instead of declaration
+order</para></item>
+          <item><para>Included patch for Hungarian translation and for
+the Serbian language. Added support for mixed Korean/english. The
+translator report script was also updated.</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>id 120070: Included workaround for build
+problems with RedHat 9</para></item>
+          <item><para>id 128054: Fixed rare case where doxygen crashed
+due to a recursive lock-up</para></item>
+          <item><para>id 131404: Fixed problem cross-referencing PHP
+member functions</para></item>
+          <item><para>id 131434: Clarified confusing warning
+message</para></item>
+          <item><para>id 131446: Extra attributes of a &lt;a href&gt;
+tag (like target) are now copied to the HTML output</para></item>
+          <item><para>id 132535: Fixed problem with generating man
+page output for groups with brief descriptions</para></item>
+          <item><para>id 132772: Fixed compile problems on HP-UX using
+acc compiler</para></item>
+          <item><para>id 133300: Fixed missing cross-reference to "c"
+in constructs such as "a[b].c"</para></item>
+          <item><para>id 133482: Fixed spurious cross-references to
+member function which was shadowed by a parameter name</para></item>
+          <item><para>id 133986: Attributes of the &lt;img&gt; tag
+where not written to the HTML output</para></item>
+          <item><para>id 134123: Fixed problem with multiple arrows
+between nodes in the graphical class hierarchy</para></item>
+          <item><para>\ref in dot graphs was not working
+correctly</para></item>
+          <item><para>Grouped pages in the XML output did have the
+same id as their group</para></item>
+          <item><para>Fixed problem handling environment variables
+inside a quoted string in the config file (e.g. "$(HOME)/My
+Path/")</para></item>
+          <item><para>Using "\mainpage notitle" caused the "notitle"
+to appear in the treeview</para></item>
+          <item><para>Page references where wrong in the latex output
+when PDF_HYPERLINKS was disabled</para></item>
+          <item><para>Words inside a hyperlink could be hyperlinked,
+resulting in invalid HTML</para></item>
+          <item><para>Fixed parse error handling function pointer
+arguments in K&amp;R-style code</para></item>
+          <item><para>Doxygen could crash when it failed to enter a
+directory</para></item>
+        </items>
+      </change>
+
+      <change from="1.3.4" to="1.3.5">
+        <items name="Change">
+          <item><para>Doxygen now only regenerates a dot image if it
+has actually changed! This could significantly reduce the time of any
+run after the first. Checking if a graph has changed is done by
+computing an md5 hash for the graph description which is then stored
+along with the image generated by dot and compared in subsequent
+runs.</para></item>
+          <item><para>Improved the way lists look in the man
+pages</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Added support for parsing Kamp;R style function
+prototypes. Please try it on your favourite legacy C project and
+report any problems</para></item>
+          <item><para>Included languages updates for Traditional
+Chinese, Danish, German, Korian translation</para></item>
+          <item><para>id 120464: doxygen's XML output does now assign
+a prot="..." attribute for nested classes</para></item>
+          <item><para>Added new configuration switch
+XML_PROGRAMLISTING to enable/disable generating source code listings
+as part of the XML output</para></item>
+          <item><para>Added new config option ABBREVIATE_BRIEF which
+makes the abbration process of brief descriptions configurable and
+language independent</para></item>
+          <item><para>The alphabetical class list now comes with a
+quick index</para></item>
+          <item><para>An XSLT script "combine.xslt" is now generated
+in the XML output directory. It can be used to combine XML files into
+one big file.</para></item>
+          <item><para>The source code is now indexed and thus
+searchable when the source browser and search engine options are
+enabled</para></item>
+          <item><para>Added "dist" target to the
+makefile</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>id 119778, 123385: Documentation in the body of
+a function could not be combined with a detailed description before
+the declaration</para></item>
+          <item><para>id 122852: References to grouped functions were
+wrong in certain cases</para></item>
+          <item><para>id 123031: problem matching f(const char) with
+f(const char cc)</para></item>
+          <item><para>id 123140: typedef'ed enums whose tag name was
+the same as the typedef name did not appear in a group</para></item>
+          <item><para>id 123145: Under certain circumstances an
+assertion failed message was produced</para></item>
+          <item><para>id 123206: Fixed problem in qtools when opening
+files in text mode</para></item>
+          <item><para>id 123322: The search page did not honor
+DISABLE_INDEX</para></item>
+          <item><para>id 123420: Functions with a brief description
+caused bugus &lt;/em&gt; tags in the HTML output</para></item>
+          <item><para>id 124114: typo in the generated PHP search
+script could cause errors in the search result page</para></item>
+          <item><para>id 124187: Setting EXTRACT_LOCAL_CLASSES to NO,
+could result in a broken "More..." link in documented local classes
+inside a namespace</para></item>
+          <item><para>id 124214: Fixed problem in search indexer,
+which could crash doxygen</para></item>
+          <item><para>id 124545: fixed a number of problems in the
+generated search script</para></item>
+          <item><para>id 124815: Fixed compile problem in filedef.h
+for aCC on HP-UX</para></item>
+          <item><para>id 125369: Fixed inconsistency of showing files
+in the tree view</para></item>
+          <item><para>id 125424: Font size was not reset after
+@endcode or verbatim block in the latex output</para></item>
+          <item><para>id 125654: Character encoding was not correct
+for html help treeview</para></item>
+          <item><para>id 125367: Fixed problem with producing links in
+case files with the same name (but in different
+directories)</para></item>
+          <item><para>id 126968: Fixed problem parsing verbatim string
+literals such as @"\" in C#</para></item>
+          <item><para>id 127094: Fixed character encoding problem in
+the XML output</para></item>
+          <item><para>id 131364: Fixed parse problem when initializing
+a function pointer</para></item>
+          <item><para>Links to classes, files, namespaces and groups
+in the search results were broken (missing file
+extension)</para></item>
+          <item><para>Doxygen logo is now transparent even when viewed
+with IE</para></item>
+          <item><para>Using a character with ascii code 0x06 in a
+comment block could crash doxygen if the preprocessor was
+enabled</para></item>
+          <item><para>Fixed problem handling conditional commands and
+grouping</para></item>
+          <item><para>Fixed problem using \dotfile in combination with
+RTF output</para></item>
+          <item><para>Fixed several problems related to the new md5
+hash feature</para></item>
+          <item><para>Undocumented functions referenced in a comment
+block were linked to anyway</para></item>
+          <item><para>Fixed a number of typos in the config file
+documentation</para></item>
+          <item><para>Workaround for toupper() bug for
+Russian</para></item>
+          <item><para>Fixed problem that HTML image maps ended up in
+the RTF output</para></item>
+          <item><para>Fixed bug in code fragment parser that could
+cause memory corruption in certain cases</para></item>
+          <item><para>Fixed problem matching definition and declation
+of functions, which could cause bogus warnings for functions with the
+same name but in different namespaces</para></item>
+          <item><para>Using "/// @file" to document a file quickly was
+not possible, while "/** @file */" did work. Now both
+work.</para></item>
+        </items>
+      </change>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>

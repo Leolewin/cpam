@@ -1,0 +1,480 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="xz" version="5.0.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}50</install-name>
+
+    <sources>
+      <source checksum="8d900b742b94fa9e708ca4f5a4b29003"
+        checksum-type="md5" size="1025913"
+        path="src/xz-5.0.3.tar.bz2"/>
+      <patch checksum="b6b718db5507ea2b1edbff1fc5ecf6cc"
+        checksum-type="md5" size="3075"
+        path="src/xz-5.0.3.tww.patch"/>
+      <patch checksum="f89755906f6619d52542a9df2ae2c544"
+        checksum-type="md5" size="1687537"
+        path="src/xz-5.0.3.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="hppa*-hpux*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="hppa*-hpux*"/>
+      </dependencies>
+
+      <validate>
+        <depend program="xz"
+          module="Compress-Raw-Lzma-5.12.2">v==5.0.3</depend>
+        <depend program="xz"
+          module="IO-Compress-Lzma-5.12.2">v==5.0.3</depend>
+        <depend program="xz" module="pyliblzma-2.6.7">v==5.0.3</depend>
+        <depend program="xz" module="pyliblzma-2.7.2">v==5.0.3</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--enable-shared --enable-static --docdir=${_docdir} \
+--disable-dependency-tracking --infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" src/liblzma/liblzma.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+    </module>
+
+    <module name="pyliblzma-2.6.7">
+      <build-name>pyliblzma-0.5.3</build-name>
+
+      <sources>
+        <source checksum="500f61116ee1ab4063b49c121786863a"
+          checksum-type="md5" size="43498"
+          path="src/pyliblzma-0.5.3.tar.bz2"/>
+        <patch checksum="b5d4bd23309caa5e78e92191a5bc6614"
+          checksum-type="md5" size="1387"
+          path="src/pyliblzma-0.5.3.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="distribute" var="SETUPTOOLS"
+          install-name="distribute06"
+          module="2.6.7">v&gt;=0.6.21</depend>
+        <depend program="xz" var="XZ">v==5.0.3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+export PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}"
+export PKG_CONFIG_PATH="${SB_VAR_XZ_LIB}/pkgconfig"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py test || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Compress-Raw-Lzma-5.12.2">
+      <build-name>Compress-Raw-Lzma-2.043</build-name>
+
+      <sources>
+        <source checksum="eeb0c746fb8c48e846037565666ebb08"
+          checksum-type="md5" size="99796"
+          path="src/Compress-Raw-Lzma-2.043.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="xz" var="XZ">v==5.0.3</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+LIBLZMA_INCLUDE=${SB_VAR_XZ_INC} \
+LIBLZMA_LIB=${SB_VAR_XZ_LIB} \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+PATH=${SB_VAR_XZ}/bin:$PATH gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_perl_libdir}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_perl_libdir}/include.paths.d
+cat >${_perl_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_perl_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_perl_libdir}
+
+rm -f ${SB_INSTALL_PREFIX}/man/man3/Compress::Raw::Lzma.3
+rmdir ${SB_INSTALL_PREFIX}/man/man3 || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="IO-Compress-Lzma-5.12.2">
+      <build-name>IO-Compress-Lzma-2.043</build-name>
+
+      <sources>
+        <source checksum="19861571fb299f4c0fc65503f8990306"
+          checksum-type="md5" size="90779"
+          path="src/IO-Compress-Lzma-2.043.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="xz" var="XZ">v==5.0.3</depend>
+        <depend program="xz"
+          module="Compress-Raw-Lzma-5.12.2">v==5.0.3</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+export PERLLIB=${_perl_libdir}
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+LIBLZMA_INCLUDE=${SB_VAR_XZ_INC} \
+LIBLZMA_LIB=${SB_VAR_XZ_LIB} \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+PATH="${SB_VAR_XZ}/bin:$PATH" gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_perl_libdir}/perllocal.pod
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_perl_libdir}/IO ${_perl_libdir}/auto/IO
+rmdir ${_perl_libdir}/auto || :
+rmdir ${_perl_libdir} || :
+
+rm ${SB_INSTALL_PREFIX}/man/man3/IO*
+rmdir ${SB_INSTALL_PREFIX}/man/man3 || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="pyliblzma-2.7.2">
+      <build-name>pyliblzma-0.5.3</build-name>
+
+      <sources>
+        <source checksum="500f61116ee1ab4063b49c121786863a"
+          checksum-type="md5" size="43498"
+          path="src/pyliblzma-0.5.3.tar.bz2"/>
+        <patch checksum="b5d4bd23309caa5e78e92191a5bc6614"
+          checksum-type="md5" size="1387"
+          path="src/pyliblzma-0.5.3.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="distribute" var="SETUPTOOLS"
+          install-name="distribute06"
+          module="2.7.2">v&gt;=0.6.21</depend>
+        <depend program="xz" var="XZ">v==5.0.3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+export PYTHONPATH="${SB_VAR_SETUPTOOLS}/lib/${_pysubdir}"
+export PKG_CONFIG_PATH="${SB_VAR_XZ_LIB}/pkgconfig"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py test || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>XZ Utils Licensing</para>
+        <para>Different licenses apply to different files in this
+package. Here is a rough summary of which licenses apply to which
+parts of this package (but check the individual files to be
+sure!):</para>
+        <unorderedlist>
+          <item><para>liblzma is in the public domain.</para></item>
+          <item><para>xz, xzdec, and lzmadec command line tools are
+in the public domain unless GNU getopt_long had to be compiled and
+linked in from the lib directory. The getopt_long code is under GNU
+LGPLv2.1+.</para></item>
+          <item><para>The scripts to grep, diff, and view compressed
+files have been adapted from gzip. These scripts and their
+documentation are under GNU GPLv2+.</para></item>
+          <item><para>All the documentation in the doc directory and
+most of the XZ Utils specific documentation files in other directories
+are in the public domain.</para></item>
+          <item><para>Translated messages are in the public
+domain.</para></item>
+          <item><para>The build system contains public domain files,
+and files that are under GNU GPLv2+ or GNU GPLv3+. None of these files
+end up in the binaries being built.</para></item>
+          <item><para>Test files and test code in the tests directory,
+and debugging utilities in the debug directory are in the public
+domain.</para></item>
+          <item><para>The extra directory may contain public domain
+files, and files that are under various free software
+licenses.</para></item>
+        </unorderedlist>
+
+        <para>You can do whatever you want with the files that have
+been put into the public domain. If you find public domain legally
+problematic, take the previous sentence as a license grant. If you
+still find the lack of copyright legally problematic, you have too
+many lawyers.</para>
+        <para>As usual, this software is provided "as is", without
+any warranty.</para>
+        <para>If you copy significant amounts of public domain code
+from XZ Utils into your project, acknowledging this somewhere in your
+software is polite (especially if it is proprietary, non-free
+software), but naturally it is not legally required. Here is an
+example of a good notice to put into "about box" or into
+documentation:</para>
+        <screen>
+This software includes code from XZ Utils &lt;http://tukaani.org/xz/&gt;.
+        </screen>
+
+        <para>Note that the toolchain (compiler, linker etc.) may
+add some code pieces that are copyrighted. Thus, it is possible that
+e.g. liblzma binary wouldn't actually be in the public domain in its
+entirety even though it contains no copyrighted code from the XZ Utils
+source package.</para>
+        <para>If you have questions, don't hesitate to ask the
+author(s) for more information.</para>
+      </license>
+
+      <license path="lgpl-2.1.license"/>
+
+      <license path="gpl-3.license"/>
+
+      <license path="gpl-2.license"/>
+
+      <license module="pyliblzma" path="lgpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>The Compress::Raw::Lzma and IO::Compress::Lzma Perl
+modules are available in the following directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+        <para>The pyliblzma Python module is available in the
+following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

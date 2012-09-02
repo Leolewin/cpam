@@ -1,0 +1,6599 @@
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/vasnprintf.c	2005-01-09 20:12:59.000000000 -0600
+@@ -0,0 +1,896 @@
++/* vsprintf with automatic memory allocation.
++   Copyright (C) 1999, 2002-2004 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++/* Tell glibc's <stdio.h> to provide a prototype for snprintf().
++   This must come before <config.h> because <config.h> may include
++   <features.h>, and once <features.h> has been included, it's too late.  */
++#ifndef _GNU_SOURCE
++# define _GNU_SOURCE    1
++#endif
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++#ifndef IN_LIBINTL
++# include <alloca.h>
++#endif
++
++/* Specification.  */
++#if WIDE_CHAR_VERSION
++# include "vasnwprintf.h"
++#else
++# include "vasnprintf.h"
++#endif
++
++#include <stdio.h>	/* snprintf(), sprintf() */
++#include <stdlib.h>	/* abort(), malloc(), realloc(), free() */
++#include <string.h>	/* memcpy(), strlen() */
++#include <errno.h>	/* errno */
++#include <limits.h>	/* CHAR_BIT, INT_MAX */
++#include <float.h>	/* DBL_MAX_EXP, LDBL_MAX_EXP */
++#if WIDE_CHAR_VERSION
++# include "wprintf-parse.h"
++#else
++# include "printf-parse.h"
++#endif
++
++/* Checked size_t computations.  */
++#include "xsize.h"
++
++#ifdef HAVE_WCHAR_T
++# ifdef HAVE_WCSLEN
++#  define local_wcslen wcslen
++# else
++   /* Solaris 2.5.1 has wcslen() in a separate library libw.so. To avoid
++      a dependency towards this library, here is a local substitute.
++      Define this substitute only once, even if this file is included
++      twice in the same compilation unit.  */
++#  ifndef local_wcslen_defined
++#   define local_wcslen_defined 1
++static size_t
++local_wcslen (const wchar_t *s)
++{
++  const wchar_t *ptr;
++
++  for (ptr = s; *ptr != (wchar_t) 0; ptr++)
++    ;
++  return ptr - s;
++}
++#  endif
++# endif
++#endif
++
++#if WIDE_CHAR_VERSION
++# define VASNPRINTF vasnwprintf
++# define CHAR_T wchar_t
++# define DIRECTIVE wchar_t_directive
++# define DIRECTIVES wchar_t_directives
++# define PRINTF_PARSE wprintf_parse
++# define USE_SNPRINTF 1
++# if HAVE_DECL__SNWPRINTF
++   /* On Windows, the function swprintf() has a different signature than
++      on Unix; we use the _snwprintf() function instead.  */
++#  define SNPRINTF _snwprintf
++# else
++   /* Unix.  */
++#  define SNPRINTF swprintf
++# endif
++#else
++# define VASNPRINTF vasnprintf
++# define CHAR_T char
++# define DIRECTIVE char_directive
++# define DIRECTIVES char_directives
++# define PRINTF_PARSE printf_parse
++# define USE_SNPRINTF (HAVE_DECL__SNPRINTF || HAVE_SNPRINTF)
++# if HAVE_DECL__SNPRINTF
++   /* Windows.  */
++#  define SNPRINTF _snprintf
++# else
++   /* Unix.  */
++#  define SNPRINTF snprintf
++# endif
++#endif
++
++CHAR_T *
++VASNPRINTF (CHAR_T *resultbuf, size_t *lengthp, const CHAR_T *format, va_list args)
++{
++  DIRECTIVES d;
++  arguments a;
++
++  if (PRINTF_PARSE (format, &d, &a) < 0)
++    {
++      errno = EINVAL;
++      return NULL;
++    }
++
++#define CLEANUP() \
++  free (d.dir);								\
++  if (a.arg)								\
++    free (a.arg);
++
++  if (printf_fetchargs (args, &a) < 0)
++    {
++      CLEANUP ();
++      errno = EINVAL;
++      return NULL;
++    }
++
++  {
++    size_t buf_neededlength;
++    CHAR_T *buf;
++    CHAR_T *buf_malloced;
++    const CHAR_T *cp;
++    size_t i;
++    DIRECTIVE *dp;
++    /* Output string accumulator.  */
++    CHAR_T *result;
++    size_t allocated;
++    size_t length;
++
++    /* Allocate a small buffer that will hold a directive passed to
++       sprintf or snprintf.  */
++    buf_neededlength =
++      xsum4 (7, d.max_width_length, d.max_precision_length, 6);
++#if HAVE_ALLOCA
++    if (buf_neededlength < 4000 / sizeof (CHAR_T))
++      {
++	buf = (CHAR_T *) alloca (buf_neededlength * sizeof (CHAR_T));
++	buf_malloced = NULL;
++      }
++    else
++#endif
++      {
++	size_t buf_memsize = xtimes (buf_neededlength, sizeof (CHAR_T));
++	if (size_overflow_p (buf_memsize))
++	  goto out_of_memory_1;
++	buf = (CHAR_T *) malloc (buf_memsize);
++	if (buf == NULL)
++	  goto out_of_memory_1;
++	buf_malloced = buf;
++      }
++
++    if (resultbuf != NULL)
++      {
++	result = resultbuf;
++	allocated = *lengthp;
++      }
++    else
++      {
++	result = NULL;
++	allocated = 0;
++      }
++    length = 0;
++    /* Invariants:
++       result is either == resultbuf or == NULL or malloc-allocated.
++       If length > 0, then result != NULL.  */
++
++    /* Ensures that allocated >= needed.  Aborts through a jump to
++       out_of_memory if needed is SIZE_MAX or otherwise too big.  */
++#define ENSURE_ALLOCATION(needed) \
++    if ((needed) > allocated)						     \
++      {									     \
++	size_t memory_size;						     \
++	CHAR_T *memory;							     \
++									     \
++	allocated = (allocated > 0 ? xtimes (allocated, 2) : 12);	     \
++	if ((needed) > allocated)					     \
++	  allocated = (needed);						     \
++	memory_size = xtimes (allocated, sizeof (CHAR_T));		     \
++	if (size_overflow_p (memory_size))				     \
++	  goto out_of_memory;						     \
++	if (result == resultbuf || result == NULL)			     \
++	  memory = (CHAR_T *) malloc (memory_size);			     \
++	else								     \
++	  memory = (CHAR_T *) realloc (result, memory_size);		     \
++	if (memory == NULL)						     \
++	  goto out_of_memory;						     \
++	if (result == resultbuf && length > 0)				     \
++	  memcpy (memory, result, length * sizeof (CHAR_T));		     \
++	result = memory;						     \
++      }
++
++    for (cp = format, i = 0, dp = &d.dir[0]; ; cp = dp->dir_end, i++, dp++)
++      {
++	if (cp != dp->dir_start)
++	  {
++	    size_t n = dp->dir_start - cp;
++	    size_t augmented_length = xsum (length, n);
++
++	    ENSURE_ALLOCATION (augmented_length);
++	    memcpy (result + length, cp, n * sizeof (CHAR_T));
++	    length = augmented_length;
++	  }
++	if (i == d.count)
++	  break;
++
++	/* Execute a single directive.  */
++	if (dp->conversion == '%')
++	  {
++	    size_t augmented_length;
++
++	    if (!(dp->arg_index == ARG_NONE))
++	      abort ();
++	    augmented_length = xsum (length, 1);
++	    ENSURE_ALLOCATION (augmented_length);
++	    result[length] = '%';
++	    length = augmented_length;
++	  }
++	else
++	  {
++	    if (!(dp->arg_index != ARG_NONE))
++	      abort ();
++
++	    if (dp->conversion == 'n')
++	      {
++		switch (a.arg[dp->arg_index].type)
++		  {
++		  case TYPE_COUNT_SCHAR_POINTER:
++		    *a.arg[dp->arg_index].a.a_count_schar_pointer = length;
++		    break;
++		  case TYPE_COUNT_SHORT_POINTER:
++		    *a.arg[dp->arg_index].a.a_count_short_pointer = length;
++		    break;
++		  case TYPE_COUNT_INT_POINTER:
++		    *a.arg[dp->arg_index].a.a_count_int_pointer = length;
++		    break;
++		  case TYPE_COUNT_LONGINT_POINTER:
++		    *a.arg[dp->arg_index].a.a_count_longint_pointer = length;
++		    break;
++#ifdef HAVE_LONG_LONG
++		  case TYPE_COUNT_LONGLONGINT_POINTER:
++		    *a.arg[dp->arg_index].a.a_count_longlongint_pointer = length;
++		    break;
++#endif
++		  default:
++		    abort ();
++		  }
++	      }
++	    else
++	      {
++		arg_type type = a.arg[dp->arg_index].type;
++		CHAR_T *p;
++		unsigned int prefix_count;
++		int prefixes[2];
++#if !USE_SNPRINTF
++		size_t tmp_length;
++		CHAR_T tmpbuf[700];
++		CHAR_T *tmp;
++
++		/* Allocate a temporary buffer of sufficient size for calling
++		   sprintf.  */
++		{
++		  size_t width;
++		  size_t precision;
++
++		  width = 0;
++		  if (dp->width_start != dp->width_end)
++		    {
++		      if (dp->width_arg_index != ARG_NONE)
++			{
++			  int arg;
++
++			  if (!(a.arg[dp->width_arg_index].type == TYPE_INT))
++			    abort ();
++			  arg = a.arg[dp->width_arg_index].a.a_int;
++			  width = (arg < 0 ? (unsigned int) (-arg) : arg);
++			}
++		      else
++			{
++			  const CHAR_T *digitp = dp->width_start;
++
++			  do
++			    width = xsum (xtimes (width, 10), *digitp++ - '0');
++			  while (digitp != dp->width_end);
++			}
++		    }
++
++		  precision = 6;
++		  if (dp->precision_start != dp->precision_end)
++		    {
++		      if (dp->precision_arg_index != ARG_NONE)
++			{
++			  int arg;
++
++			  if (!(a.arg[dp->precision_arg_index].type == TYPE_INT))
++			    abort ();
++			  arg = a.arg[dp->precision_arg_index].a.a_int;
++			  precision = (arg < 0 ? 0 : arg);
++			}
++		      else
++			{
++			  const CHAR_T *digitp = dp->precision_start + 1;
++
++			  precision = 0;
++			  while (digitp != dp->precision_end)
++			    precision = xsum (xtimes (precision, 10), *digitp++ - '0');
++			}
++		    }
++
++		  switch (dp->conversion)
++		    {
++
++		    case 'd': case 'i': case 'u':
++# ifdef HAVE_LONG_LONG
++		      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
++					  * 0.30103 /* binary -> decimal */
++					  * 2 /* estimate for FLAG_GROUP */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 1; /* account for leading sign */
++		      else
++# endif
++		      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned long) * CHAR_BIT
++					  * 0.30103 /* binary -> decimal */
++					  * 2 /* estimate for FLAG_GROUP */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 1; /* account for leading sign */
++		      else
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned int) * CHAR_BIT
++					  * 0.30103 /* binary -> decimal */
++					  * 2 /* estimate for FLAG_GROUP */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 1; /* account for leading sign */
++		      break;
++
++		    case 'o':
++# ifdef HAVE_LONG_LONG
++		      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
++					  * 0.333334 /* binary -> octal */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 1; /* account for leading sign */
++		      else
++# endif
++		      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned long) * CHAR_BIT
++					  * 0.333334 /* binary -> octal */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 1; /* account for leading sign */
++		      else
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned int) * CHAR_BIT
++					  * 0.333334 /* binary -> octal */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 1; /* account for leading sign */
++		      break;
++
++		    case 'x': case 'X':
++# ifdef HAVE_LONG_LONG
++		      if (type == TYPE_LONGLONGINT || type == TYPE_ULONGLONGINT)
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned long long) * CHAR_BIT
++					  * 0.25 /* binary -> hexadecimal */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 2; /* account for leading sign or alternate form */
++		      else
++# endif
++		      if (type == TYPE_LONGINT || type == TYPE_ULONGINT)
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned long) * CHAR_BIT
++					  * 0.25 /* binary -> hexadecimal */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 2; /* account for leading sign or alternate form */
++		      else
++			tmp_length =
++			  (unsigned int) (sizeof (unsigned int) * CHAR_BIT
++					  * 0.25 /* binary -> hexadecimal */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 2; /* account for leading sign or alternate form */
++		      break;
++
++		    case 'f': case 'F':
++# ifdef HAVE_LONG_DOUBLE
++		      if (type == TYPE_LONGDOUBLE)
++			tmp_length =
++			  (unsigned int) (LDBL_MAX_EXP
++					  * 0.30103 /* binary -> decimal */
++					  * 2 /* estimate for FLAG_GROUP */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 10; /* sign, decimal point etc. */
++		      else
++# endif
++			tmp_length =
++			  (unsigned int) (DBL_MAX_EXP
++					  * 0.30103 /* binary -> decimal */
++					  * 2 /* estimate for FLAG_GROUP */
++					 )
++			  + 1 /* turn floor into ceil */
++			  + 10; /* sign, decimal point etc. */
++		      tmp_length = xsum (tmp_length, precision);
++		      break;
++
++		    case 'e': case 'E': case 'g': case 'G':
++		    case 'a': case 'A':
++		      tmp_length =
++			12; /* sign, decimal point, exponent etc. */
++		      tmp_length = xsum (tmp_length, precision);
++		      break;
++
++		    case 'c':
++# if defined HAVE_WINT_T && !WIDE_CHAR_VERSION
++		      if (type == TYPE_WIDE_CHAR)
++			tmp_length = MB_CUR_MAX;
++		      else
++# endif
++			tmp_length = 1;
++		      break;
++
++		    case 's':
++# ifdef HAVE_WCHAR_T
++		      if (type == TYPE_WIDE_STRING)
++			{
++			  tmp_length =
++			    local_wcslen (a.arg[dp->arg_index].a.a_wide_string);
++
++#  if !WIDE_CHAR_VERSION
++			  tmp_length = xtimes (tmp_length, MB_CUR_MAX);
++#  endif
++			}
++		      else
++# endif
++			tmp_length = strlen (a.arg[dp->arg_index].a.a_string);
++		      break;
++
++		    case 'p':
++		      tmp_length =
++			(unsigned int) (sizeof (void *) * CHAR_BIT
++					* 0.25 /* binary -> hexadecimal */
++				       )
++			  + 1 /* turn floor into ceil */
++			  + 2; /* account for leading 0x */
++		      break;
++
++		    default:
++		      abort ();
++		    }
++
++		  if (tmp_length < width)
++		    tmp_length = width;
++
++		  tmp_length = xsum (tmp_length, 1); /* account for trailing NUL */
++		}
++
++		if (tmp_length <= sizeof (tmpbuf) / sizeof (CHAR_T))
++		  tmp = tmpbuf;
++		else
++		  {
++		    size_t tmp_memsize = xtimes (tmp_length, sizeof (CHAR_T));
++
++		    if (size_overflow_p (tmp_memsize))
++		      /* Overflow, would lead to out of memory.  */
++		      goto out_of_memory;
++		    tmp = (CHAR_T *) malloc (tmp_memsize);
++		    if (tmp == NULL)
++		      /* Out of memory.  */
++		      goto out_of_memory;
++		  }
++#endif
++
++		/* Construct the format string for calling snprintf or
++		   sprintf.  */
++		p = buf;
++		*p++ = '%';
++		if (dp->flags & FLAG_GROUP)
++		  *p++ = '\'';
++		if (dp->flags & FLAG_LEFT)
++		  *p++ = '-';
++		if (dp->flags & FLAG_SHOWSIGN)
++		  *p++ = '+';
++		if (dp->flags & FLAG_SPACE)
++		  *p++ = ' ';
++		if (dp->flags & FLAG_ALT)
++		  *p++ = '#';
++		if (dp->flags & FLAG_ZERO)
++		  *p++ = '0';
++		if (dp->width_start != dp->width_end)
++		  {
++		    size_t n = dp->width_end - dp->width_start;
++		    memcpy (p, dp->width_start, n * sizeof (CHAR_T));
++		    p += n;
++		  }
++		if (dp->precision_start != dp->precision_end)
++		  {
++		    size_t n = dp->precision_end - dp->precision_start;
++		    memcpy (p, dp->precision_start, n * sizeof (CHAR_T));
++		    p += n;
++		  }
++
++		switch (type)
++		  {
++#ifdef HAVE_LONG_LONG
++		  case TYPE_LONGLONGINT:
++		  case TYPE_ULONGLONGINT:
++		    *p++ = 'l';
++		    /*FALLTHROUGH*/
++#endif
++		  case TYPE_LONGINT:
++		  case TYPE_ULONGINT:
++#ifdef HAVE_WINT_T
++		  case TYPE_WIDE_CHAR:
++#endif
++#ifdef HAVE_WCHAR_T
++		  case TYPE_WIDE_STRING:
++#endif
++		    *p++ = 'l';
++		    break;
++#ifdef HAVE_LONG_DOUBLE
++		  case TYPE_LONGDOUBLE:
++		    *p++ = 'L';
++		    break;
++#endif
++		  default:
++		    break;
++		  }
++		*p = dp->conversion;
++#if USE_SNPRINTF
++		p[1] = '%';
++		p[2] = 'n';
++		p[3] = '\0';
++#else
++		p[1] = '\0';
++#endif
++
++		/* Construct the arguments for calling snprintf or sprintf.  */
++		prefix_count = 0;
++		if (dp->width_arg_index != ARG_NONE)
++		  {
++		    if (!(a.arg[dp->width_arg_index].type == TYPE_INT))
++		      abort ();
++		    prefixes[prefix_count++] = a.arg[dp->width_arg_index].a.a_int;
++		  }
++		if (dp->precision_arg_index != ARG_NONE)
++		  {
++		    if (!(a.arg[dp->precision_arg_index].type == TYPE_INT))
++		      abort ();
++		    prefixes[prefix_count++] = a.arg[dp->precision_arg_index].a.a_int;
++		  }
++
++#if USE_SNPRINTF
++		/* Prepare checking whether snprintf returns the count
++		   via %n.  */
++		ENSURE_ALLOCATION (xsum (length, 1));
++		result[length] = '\0';
++#endif
++
++		for (;;)
++		  {
++		    size_t maxlen;
++		    int count;
++		    int retcount;
++
++		    maxlen = allocated - length;
++		    count = -1;
++		    retcount = 0;
++
++#if USE_SNPRINTF
++# define SNPRINTF_BUF(arg) \
++		    switch (prefix_count)				    \
++		      {							    \
++		      case 0:						    \
++			retcount = SNPRINTF (result + length, maxlen, buf,  \
++					     arg, &count);		    \
++			break;						    \
++		      case 1:						    \
++			retcount = SNPRINTF (result + length, maxlen, buf,  \
++					     prefixes[0], arg, &count);	    \
++			break;						    \
++		      case 2:						    \
++			retcount = SNPRINTF (result + length, maxlen, buf,  \
++					     prefixes[0], prefixes[1], arg, \
++					     &count);			    \
++			break;						    \
++		      default:						    \
++			abort ();					    \
++		      }
++#else
++# define SNPRINTF_BUF(arg) \
++		    switch (prefix_count)				    \
++		      {							    \
++		      case 0:						    \
++			count = sprintf (tmp, buf, arg);		    \
++			break;						    \
++		      case 1:						    \
++			count = sprintf (tmp, buf, prefixes[0], arg);	    \
++			break;						    \
++		      case 2:						    \
++			count = sprintf (tmp, buf, prefixes[0], prefixes[1],\
++					 arg);				    \
++			break;						    \
++		      default:						    \
++			abort ();					    \
++		      }
++#endif
++
++		    switch (type)
++		      {
++		      case TYPE_SCHAR:
++			{
++			  int arg = a.arg[dp->arg_index].a.a_schar;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_UCHAR:
++			{
++			  unsigned int arg = a.arg[dp->arg_index].a.a_uchar;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_SHORT:
++			{
++			  int arg = a.arg[dp->arg_index].a.a_short;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_USHORT:
++			{
++			  unsigned int arg = a.arg[dp->arg_index].a.a_ushort;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_INT:
++			{
++			  int arg = a.arg[dp->arg_index].a.a_int;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_UINT:
++			{
++			  unsigned int arg = a.arg[dp->arg_index].a.a_uint;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_LONGINT:
++			{
++			  long int arg = a.arg[dp->arg_index].a.a_longint;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_ULONGINT:
++			{
++			  unsigned long int arg = a.arg[dp->arg_index].a.a_ulongint;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#ifdef HAVE_LONG_LONG
++		      case TYPE_LONGLONGINT:
++			{
++			  long long int arg = a.arg[dp->arg_index].a.a_longlongint;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      case TYPE_ULONGLONGINT:
++			{
++			  unsigned long long int arg = a.arg[dp->arg_index].a.a_ulonglongint;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#endif
++		      case TYPE_DOUBLE:
++			{
++			  double arg = a.arg[dp->arg_index].a.a_double;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#ifdef HAVE_LONG_DOUBLE
++		      case TYPE_LONGDOUBLE:
++			{
++			  long double arg = a.arg[dp->arg_index].a.a_longdouble;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#endif
++		      case TYPE_CHAR:
++			{
++			  int arg = a.arg[dp->arg_index].a.a_char;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#ifdef HAVE_WINT_T
++		      case TYPE_WIDE_CHAR:
++			{
++			  wint_t arg = a.arg[dp->arg_index].a.a_wide_char;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#endif
++		      case TYPE_STRING:
++			{
++			  const char *arg = a.arg[dp->arg_index].a.a_string;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#ifdef HAVE_WCHAR_T
++		      case TYPE_WIDE_STRING:
++			{
++			  const wchar_t *arg = a.arg[dp->arg_index].a.a_wide_string;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++#endif
++		      case TYPE_POINTER:
++			{
++			  void *arg = a.arg[dp->arg_index].a.a_pointer;
++			  SNPRINTF_BUF (arg);
++			}
++			break;
++		      default:
++			abort ();
++		      }
++
++#if USE_SNPRINTF
++		    /* Portability: Not all implementations of snprintf()
++		       are ISO C 99 compliant.  Determine the number of
++		       bytes that snprintf() has produced or would have
++		       produced.  */
++		    if (count >= 0)
++		      {
++			/* Verify that snprintf() has NUL-terminated its
++			   result.  */
++			if (count < maxlen && result[length + count] != '\0')
++			  abort ();
++			/* Portability hack.  */
++			if (retcount > count)
++			  count = retcount;
++		      }
++		    else
++		      {
++			/* snprintf() doesn't understand the '%n'
++			   directive.  */
++			if (p[1] != '\0')
++			  {
++			    /* Don't use the '%n' directive; instead, look
++			       at the snprintf() return value.  */
++			    p[1] = '\0';
++			    continue;
++			  }
++			else
++			  {
++			    /* Look at the snprintf() return value.  */
++			    if (retcount < 0)
++			      {
++				/* HP-UX 10.20 snprintf() is doubly deficient:
++				   It doesn't understand the '%n' directive,
++				   *and* it returns -1 (rather than the length
++				   that would have been required) when the
++				   buffer is too small.  */
++				size_t bigger_need =
++				  xsum (xtimes (allocated, 2), 12);
++				ENSURE_ALLOCATION (bigger_need);
++				continue;
++			      }
++			    else
++			      count = retcount;
++			  }
++		      }
++#endif
++
++		    /* Attempt to handle failure.  */
++		    if (count < 0)
++		      {
++			if (!(result == resultbuf || result == NULL))
++			  free (result);
++			if (buf_malloced != NULL)
++			  free (buf_malloced);
++			CLEANUP ();
++			errno = EINVAL;
++			return NULL;
++		      }
++
++#if !USE_SNPRINTF
++		    if (count >= tmp_length)
++		      /* tmp_length was incorrectly calculated - fix the
++			 code above!  */
++		      abort ();
++#endif
++
++		    /* Make room for the result.  */
++		    if (count >= maxlen)
++		      {
++			/* Need at least count bytes.  But allocate
++			   proportionally, to avoid looping eternally if
++			   snprintf() reports a too small count.  */
++			size_t n =
++			  xmax (xsum (length, count), xtimes (allocated, 2));
++
++			ENSURE_ALLOCATION (n);
++#if USE_SNPRINTF
++			continue;
++#endif
++		      }
++
++#if USE_SNPRINTF
++		    /* The snprintf() result did fit.  */
++#else
++		    /* Append the sprintf() result.  */
++		    memcpy (result + length, tmp, count * sizeof (CHAR_T));
++		    if (tmp != tmpbuf)
++		      free (tmp);
++#endif
++
++		    length += count;
++		    break;
++		  }
++	      }
++	  }
++      }
++
++    /* Add the final NUL.  */
++    ENSURE_ALLOCATION (xsum (length, 1));
++    result[length] = '\0';
++
++    if (result != resultbuf && length + 1 < allocated)
++      {
++	/* Shrink the allocated memory if possible.  */
++	CHAR_T *memory;
++
++	memory = (CHAR_T *) realloc (result, (length + 1) * sizeof (CHAR_T));
++	if (memory != NULL)
++	  result = memory;
++      }
++
++    if (buf_malloced != NULL)
++      free (buf_malloced);
++    CLEANUP ();
++    *lengthp = length;
++    if (length > INT_MAX)
++      goto length_overflow;
++    return result;
++
++  length_overflow:
++    /* We could produce such a big string, but its length doesn't fit into
++       an 'int'.  POSIX says that snprintf() fails with errno = EOVERFLOW in
++       this case.  */
++    if (result != resultbuf)
++      free (result);
++    errno = EOVERFLOW;
++    return NULL;
++
++  out_of_memory:
++    if (!(result == resultbuf || result == NULL))
++      free (result);
++    if (buf_malloced != NULL)
++      free (buf_malloced);
++  out_of_memory_1:
++    CLEANUP ();
++    errno = ENOMEM;
++    return NULL;
++  }
++}
++
++#undef SNPRINTF
++#undef USE_SNPRINTF
++#undef PRINTF_PARSE
++#undef DIRECTIVES
++#undef DIRECTIVE
++#undef CHAR_T
++#undef VASNPRINTF
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/vasnprintf.h	2005-01-09 20:12:57.000000000 -0600
+@@ -0,0 +1,77 @@
++/* vsprintf with automatic memory allocation.
++   Copyright (C) 2002-2004 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifndef _VASNPRINTF_H
++#define _VASNPRINTF_H
++
++/* Get va_list.  */
++#include <stdarg.h>
++
++/* Get size_t.  */
++#include <stddef.h>
++
++#ifndef __attribute__
++/* This feature is available in gcc versions 2.5 and later.  */
++# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5) || __STRICT_ANSI__
++#  define __attribute__(Spec) /* empty */
++# endif
++/* The __-protected variants of `format' and `printf' attributes
++   are accepted by gcc versions 2.6.4 (effectively 2.7) and later.  */
++# if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
++#  define __format__ format
++#  define __printf__ printf
++# endif
++#endif
++
++#ifdef	__cplusplus
++extern "C" {
++#endif
++
++/* Write formatted output to a string dynamically allocated with malloc().
++   You can pass a preallocated buffer for the result in RESULTBUF and its
++   size in *LENGTHP; otherwise you pass RESULTBUF = NULL.
++   If successful, return the address of the string (this may be = RESULTBUF
++   if no dynamic memory allocation was necessary) and set *LENGTHP to the
++   number of resulting bytes, excluding the trailing NUL.  Upon error, set
++   errno and return NULL.
++
++   When dynamic memory allocation occurs, the preallocated buffer is left
++   alone (with possibly modified contents).  This makes it possible to use
++   a statically allocated or stack-allocated buffer, like this:
++
++          char buf[100];
++          size_t len = sizeof (buf);
++          char *output = vasnprintf (buf, &len, format, args);
++          if (output == NULL)
++            ... error handling ...;
++          else
++            {
++              ... use the output string ...;
++              if (output != buf)
++                free (output);
++            }
++  */
++extern char * asnprintf (char *resultbuf, size_t *lengthp, const char *format, ...)
++       __attribute__ ((__format__ (__printf__, 3, 4)));
++extern char * vasnprintf (char *resultbuf, size_t *lengthp, const char *format, va_list args)
++       __attribute__ ((__format__ (__printf__, 3, 0)));
++
++#ifdef	__cplusplus
++}
++#endif
++
++#endif /* _VASNPRINTF_H */
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/asnprintf.c	2005-01-09 20:37:05.000000000 -0600
+@@ -0,0 +1,37 @@
++/* Formatted output to strings.
++   Copyright (C) 1999, 2002 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++
++/* Specification.  */
++#include "vasnprintf.h"
++
++#include <stdarg.h>
++
++char *
++asnprintf (char *resultbuf, size_t *lengthp, const char *format, ...)
++{
++  va_list args;
++  char *result;
++
++  va_start (args, format);
++  result = vasnprintf (resultbuf, lengthp, format, args);
++  va_end (args);
++  return result;
++}
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/printf-args.c	2005-01-09 20:37:16.000000000 -0600
+@@ -0,0 +1,118 @@
++/* Decomposed printf argument list.
++   Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++
++/* Specification.  */
++#include "printf-args.h"
++
++#ifdef STATIC
++STATIC
++#endif
++int
++printf_fetchargs (va_list args, arguments *a)
++{
++  size_t i;
++  argument *ap;
++
++  for (i = 0, ap = &a->arg[0]; i < a->count; i++, ap++)
++    switch (ap->type)
++      {
++      case TYPE_SCHAR:
++	ap->a.a_schar = va_arg (args, /*signed char*/ int);
++	break;
++      case TYPE_UCHAR:
++	ap->a.a_uchar = va_arg (args, /*unsigned char*/ int);
++	break;
++      case TYPE_SHORT:
++	ap->a.a_short = va_arg (args, /*short*/ int);
++	break;
++      case TYPE_USHORT:
++	ap->a.a_ushort = va_arg (args, /*unsigned short*/ int);
++	break;
++      case TYPE_INT:
++	ap->a.a_int = va_arg (args, int);
++	break;
++      case TYPE_UINT:
++	ap->a.a_uint = va_arg (args, unsigned int);
++	break;
++      case TYPE_LONGINT:
++	ap->a.a_longint = va_arg (args, long int);
++	break;
++      case TYPE_ULONGINT:
++	ap->a.a_ulongint = va_arg (args, unsigned long int);
++	break;
++#ifdef HAVE_LONG_LONG
++      case TYPE_LONGLONGINT:
++	ap->a.a_longlongint = va_arg (args, long long int);
++	break;
++      case TYPE_ULONGLONGINT:
++	ap->a.a_ulonglongint = va_arg (args, unsigned long long int);
++	break;
++#endif
++      case TYPE_DOUBLE:
++	ap->a.a_double = va_arg (args, double);
++	break;
++#ifdef HAVE_LONG_DOUBLE
++      case TYPE_LONGDOUBLE:
++	ap->a.a_longdouble = va_arg (args, long double);
++	break;
++#endif
++      case TYPE_CHAR:
++	ap->a.a_char = va_arg (args, int);
++	break;
++#ifdef HAVE_WINT_T
++      case TYPE_WIDE_CHAR:
++	ap->a.a_wide_char = va_arg (args, wint_t);
++	break;
++#endif
++      case TYPE_STRING:
++	ap->a.a_string = va_arg (args, const char *);
++	break;
++#ifdef HAVE_WCHAR_T
++      case TYPE_WIDE_STRING:
++	ap->a.a_wide_string = va_arg (args, const wchar_t *);
++	break;
++#endif
++      case TYPE_POINTER:
++	ap->a.a_pointer = va_arg (args, void *);
++	break;
++      case TYPE_COUNT_SCHAR_POINTER:
++	ap->a.a_count_schar_pointer = va_arg (args, signed char *);
++	break;
++      case TYPE_COUNT_SHORT_POINTER:
++	ap->a.a_count_short_pointer = va_arg (args, short *);
++	break;
++      case TYPE_COUNT_INT_POINTER:
++	ap->a.a_count_int_pointer = va_arg (args, int *);
++	break;
++      case TYPE_COUNT_LONGINT_POINTER:
++	ap->a.a_count_longint_pointer = va_arg (args, long int *);
++	break;
++#ifdef HAVE_LONG_LONG
++      case TYPE_COUNT_LONGLONGINT_POINTER:
++	ap->a.a_count_longlongint_pointer = va_arg (args, long long int *);
++	break;
++#endif
++      default:
++	/* Unknown type.  */
++	return -1;
++      }
++  return 0;
++}
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/printf-args.h	2005-01-09 20:37:16.000000000 -0600
+@@ -0,0 +1,136 @@
++/* Decomposed printf argument list.
++   Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifndef _PRINTF_ARGS_H
++#define _PRINTF_ARGS_H
++
++/* Get size_t.  */
++#include <stddef.h>
++
++/* Get wchar_t.  */
++#ifdef HAVE_WCHAR_T
++# include <stddef.h>
++#endif
++
++/* Get wint_t.  */
++#ifdef HAVE_WINT_T
++# include <wchar.h>
++#endif
++
++/* Get va_list.  */
++#include <stdarg.h>
++
++
++/* Argument types */
++typedef enum
++{
++  TYPE_NONE,
++  TYPE_SCHAR,
++  TYPE_UCHAR,
++  TYPE_SHORT,
++  TYPE_USHORT,
++  TYPE_INT,
++  TYPE_UINT,
++  TYPE_LONGINT,
++  TYPE_ULONGINT,
++#ifdef HAVE_LONG_LONG
++  TYPE_LONGLONGINT,
++  TYPE_ULONGLONGINT,
++#endif
++  TYPE_DOUBLE,
++#ifdef HAVE_LONG_DOUBLE
++  TYPE_LONGDOUBLE,
++#endif
++  TYPE_CHAR,
++#ifdef HAVE_WINT_T
++  TYPE_WIDE_CHAR,
++#endif
++  TYPE_STRING,
++#ifdef HAVE_WCHAR_T
++  TYPE_WIDE_STRING,
++#endif
++  TYPE_POINTER,
++  TYPE_COUNT_SCHAR_POINTER,
++  TYPE_COUNT_SHORT_POINTER,
++  TYPE_COUNT_INT_POINTER,
++  TYPE_COUNT_LONGINT_POINTER
++#ifdef HAVE_LONG_LONG
++, TYPE_COUNT_LONGLONGINT_POINTER
++#endif
++} arg_type;
++
++/* Polymorphic argument */
++typedef struct
++{
++  arg_type type;
++  union
++  {
++    signed char			a_schar;
++    unsigned char		a_uchar;
++    short			a_short;
++    unsigned short		a_ushort;
++    int				a_int;
++    unsigned int		a_uint;
++    long int			a_longint;
++    unsigned long int		a_ulongint;
++#ifdef HAVE_LONG_LONG
++    long long int		a_longlongint;
++    unsigned long long int	a_ulonglongint;
++#endif
++    float			a_float;
++    double			a_double;
++#ifdef HAVE_LONG_DOUBLE
++    long double			a_longdouble;
++#endif
++    int				a_char;
++#ifdef HAVE_WINT_T
++    wint_t			a_wide_char;
++#endif
++    const char*			a_string;
++#ifdef HAVE_WCHAR_T
++    const wchar_t*		a_wide_string;
++#endif
++    void*			a_pointer;
++    signed char *		a_count_schar_pointer;
++    short *			a_count_short_pointer;
++    int *			a_count_int_pointer;
++    long int *			a_count_longint_pointer;
++#ifdef HAVE_LONG_LONG
++    long long int *		a_count_longlongint_pointer;
++#endif
++  }
++  a;
++}
++argument;
++
++typedef struct
++{
++  size_t count;
++  argument *arg;
++}
++arguments;
++
++
++/* Fetch the arguments, putting them into a. */
++#ifdef STATIC
++STATIC
++#else
++extern
++#endif
++int printf_fetchargs (va_list args, arguments *a);
++
++#endif /* _PRINTF_ARGS_H */
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/printf-parse.c	2005-01-09 20:37:22.000000000 -0600
+@@ -0,0 +1,536 @@
++/* Formatted output to strings.
++   Copyright (C) 1999-2000, 2002-2003 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++
++/* Specification.  */
++#if WIDE_CHAR_VERSION
++# include "wprintf-parse.h"
++#else
++# include "printf-parse.h"
++#endif
++
++/* Get size_t, NULL.  */
++#include <stddef.h>
++
++/* Get intmax_t.  */
++#if HAVE_STDINT_H_WITH_UINTMAX
++# include <stdint.h>
++#endif
++#if HAVE_INTTYPES_H_WITH_UINTMAX
++# include <inttypes.h>
++#endif
++
++/* malloc(), realloc(), free().  */
++#include <stdlib.h>
++
++/* Checked size_t computations.  */
++#include "xsize.h"
++
++#if WIDE_CHAR_VERSION
++# define PRINTF_PARSE wprintf_parse
++# define CHAR_T wchar_t
++# define DIRECTIVE wchar_t_directive
++# define DIRECTIVES wchar_t_directives
++#else
++# define PRINTF_PARSE printf_parse
++# define CHAR_T char
++# define DIRECTIVE char_directive
++# define DIRECTIVES char_directives
++#endif
++
++#ifdef STATIC
++STATIC
++#endif
++int
++PRINTF_PARSE (const CHAR_T *format, DIRECTIVES *d, arguments *a)
++{
++  const CHAR_T *cp = format;		/* pointer into format */
++  size_t arg_posn = 0;		/* number of regular arguments consumed */
++  size_t d_allocated;			/* allocated elements of d->dir */
++  size_t a_allocated;			/* allocated elements of a->arg */
++  size_t max_width_length = 0;
++  size_t max_precision_length = 0;
++
++  d->count = 0;
++  d_allocated = 1;
++  d->dir = malloc (d_allocated * sizeof (DIRECTIVE));
++  if (d->dir == NULL)
++    /* Out of memory.  */
++    return -1;
++
++  a->count = 0;
++  a_allocated = 0;
++  a->arg = NULL;
++
++#define REGISTER_ARG(_index_,_type_) \
++  {									\
++    size_t n = (_index_);						\
++    if (n >= a_allocated)						\
++      {									\
++	size_t memory_size;						\
++	argument *memory;						\
++									\
++	a_allocated = xtimes (a_allocated, 2);				\
++	if (a_allocated <= n)						\
++	  a_allocated = xsum (n, 1);					\
++	memory_size = xtimes (a_allocated, sizeof (argument));		\
++	if (size_overflow_p (memory_size))				\
++	  /* Overflow, would lead to out of memory.  */			\
++	  goto error;							\
++	memory = (a->arg						\
++		  ? realloc (a->arg, memory_size)			\
++		  : malloc (memory_size));				\
++	if (memory == NULL)						\
++	  /* Out of memory.  */						\
++	  goto error;							\
++	a->arg = memory;						\
++      }									\
++    while (a->count <= n)						\
++      a->arg[a->count++].type = TYPE_NONE;				\
++    if (a->arg[n].type == TYPE_NONE)					\
++      a->arg[n].type = (_type_);					\
++    else if (a->arg[n].type != (_type_))				\
++      /* Ambiguous type for positional argument.  */			\
++      goto error;							\
++  }
++
++  while (*cp != '\0')
++    {
++      CHAR_T c = *cp++;
++      if (c == '%')
++	{
++	  size_t arg_index = ARG_NONE;
++	  DIRECTIVE *dp = &d->dir[d->count];/* pointer to next directive */
++
++	  /* Initialize the next directive.  */
++	  dp->dir_start = cp - 1;
++	  dp->flags = 0;
++	  dp->width_start = NULL;
++	  dp->width_end = NULL;
++	  dp->width_arg_index = ARG_NONE;
++	  dp->precision_start = NULL;
++	  dp->precision_end = NULL;
++	  dp->precision_arg_index = ARG_NONE;
++	  dp->arg_index = ARG_NONE;
++
++	  /* Test for positional argument.  */
++	  if (*cp >= '0' && *cp <= '9')
++	    {
++	      const CHAR_T *np;
++
++	      for (np = cp; *np >= '0' && *np <= '9'; np++)
++		;
++	      if (*np == '$')
++		{
++		  size_t n = 0;
++
++		  for (np = cp; *np >= '0' && *np <= '9'; np++)
++		    n = xsum (xtimes (n, 10), *np - '0');
++		  if (n == 0)
++		    /* Positional argument 0.  */
++		    goto error;
++		  if (size_overflow_p (n))
++		    /* n too large, would lead to out of memory later.  */
++		    goto error;
++		  arg_index = n - 1;
++		  cp = np + 1;
++		}
++	    }
++
++	  /* Read the flags.  */
++	  for (;;)
++	    {
++	      if (*cp == '\'')
++		{
++		  dp->flags |= FLAG_GROUP;
++		  cp++;
++		}
++	      else if (*cp == '-')
++		{
++		  dp->flags |= FLAG_LEFT;
++		  cp++;
++		}
++	      else if (*cp == '+')
++		{
++		  dp->flags |= FLAG_SHOWSIGN;
++		  cp++;
++		}
++	      else if (*cp == ' ')
++		{
++		  dp->flags |= FLAG_SPACE;
++		  cp++;
++		}
++	      else if (*cp == '#')
++		{
++		  dp->flags |= FLAG_ALT;
++		  cp++;
++		}
++	      else if (*cp == '0')
++		{
++		  dp->flags |= FLAG_ZERO;
++		  cp++;
++		}
++	      else
++		break;
++	    }
++
++	  /* Parse the field width.  */
++	  if (*cp == '*')
++	    {
++	      dp->width_start = cp;
++	      cp++;
++	      dp->width_end = cp;
++	      if (max_width_length < 1)
++		max_width_length = 1;
++
++	      /* Test for positional argument.  */
++	      if (*cp >= '0' && *cp <= '9')
++		{
++		  const CHAR_T *np;
++
++		  for (np = cp; *np >= '0' && *np <= '9'; np++)
++		    ;
++		  if (*np == '$')
++		    {
++		      size_t n = 0;
++
++		      for (np = cp; *np >= '0' && *np <= '9'; np++)
++			n = xsum (xtimes (n, 10), *np - '0');
++		      if (n == 0)
++			/* Positional argument 0.  */
++			goto error;
++		      if (size_overflow_p (n))
++			/* n too large, would lead to out of memory later.  */
++			goto error;
++		      dp->width_arg_index = n - 1;
++		      cp = np + 1;
++		    }
++		}
++	      if (dp->width_arg_index == ARG_NONE)
++		{
++		  dp->width_arg_index = arg_posn++;
++		  if (dp->width_arg_index == ARG_NONE)
++		    /* arg_posn wrapped around.  */
++		    goto error;
++		}
++	      REGISTER_ARG (dp->width_arg_index, TYPE_INT);
++	    }
++	  else if (*cp >= '0' && *cp <= '9')
++	    {
++	      size_t width_length;
++
++	      dp->width_start = cp;
++	      for (; *cp >= '0' && *cp <= '9'; cp++)
++		;
++	      dp->width_end = cp;
++	      width_length = dp->width_end - dp->width_start;
++	      if (max_width_length < width_length)
++		max_width_length = width_length;
++	    }
++
++	  /* Parse the precision.  */
++	  if (*cp == '.')
++	    {
++	      cp++;
++	      if (*cp == '*')
++		{
++		  dp->precision_start = cp - 1;
++		  cp++;
++		  dp->precision_end = cp;
++		  if (max_precision_length < 2)
++		    max_precision_length = 2;
++
++		  /* Test for positional argument.  */
++		  if (*cp >= '0' && *cp <= '9')
++		    {
++		      const CHAR_T *np;
++
++		      for (np = cp; *np >= '0' && *np <= '9'; np++)
++			;
++		      if (*np == '$')
++			{
++			  size_t n = 0;
++
++			  for (np = cp; *np >= '0' && *np <= '9'; np++)
++			    n = xsum (xtimes (n, 10), *np - '0');
++			  if (n == 0)
++			    /* Positional argument 0.  */
++			    goto error;
++			  if (size_overflow_p (n))
++			    /* n too large, would lead to out of memory
++			       later.  */
++			    goto error;
++			  dp->precision_arg_index = n - 1;
++			  cp = np + 1;
++			}
++		    }
++		  if (dp->precision_arg_index == ARG_NONE)
++		    {
++		      dp->precision_arg_index = arg_posn++;
++		      if (dp->precision_arg_index == ARG_NONE)
++			/* arg_posn wrapped around.  */
++			goto error;
++		    }
++		  REGISTER_ARG (dp->precision_arg_index, TYPE_INT);
++		}
++	      else
++		{
++		  size_t precision_length;
++
++		  dp->precision_start = cp - 1;
++		  for (; *cp >= '0' && *cp <= '9'; cp++)
++		    ;
++		  dp->precision_end = cp;
++		  precision_length = dp->precision_end - dp->precision_start;
++		  if (max_precision_length < precision_length)
++		    max_precision_length = precision_length;
++		}
++	    }
++
++	  {
++	    arg_type type;
++
++	    /* Parse argument type/size specifiers.  */
++	    {
++	      int flags = 0;
++
++	      for (;;)
++		{
++		  if (*cp == 'h')
++		    {
++		      flags |= (1 << (flags & 1));
++		      cp++;
++		    }
++		  else if (*cp == 'L')
++		    {
++		      flags |= 4;
++		      cp++;
++		    }
++		  else if (*cp == 'l')
++		    {
++		      flags += 8;
++		      cp++;
++		    }
++#ifdef HAVE_INTMAX_T
++		  else if (*cp == 'j')
++		    {
++		      if (sizeof (intmax_t) > sizeof (long))
++			{
++			  /* intmax_t = long long */
++			  flags += 16;
++			}
++		      else if (sizeof (intmax_t) > sizeof (int))
++			{
++			  /* intmax_t = long */
++			  flags += 8;
++			}
++		      cp++;
++		    }
++#endif
++		  else if (*cp == 'z' || *cp == 'Z')
++		    {
++		      /* 'z' is standardized in ISO C 99, but glibc uses 'Z'
++			 because the warning facility in gcc-2.95.2 understands
++			 only 'Z' (see gcc-2.95.2/gcc/c-common.c:1784).  */
++		      if (sizeof (size_t) > sizeof (long))
++			{
++			  /* size_t = long long */
++			  flags += 16;
++			}
++		      else if (sizeof (size_t) > sizeof (int))
++			{
++			  /* size_t = long */
++			  flags += 8;
++			}
++		      cp++;
++		    }
++		  else if (*cp == 't')
++		    {
++		      if (sizeof (ptrdiff_t) > sizeof (long))
++			{
++			  /* ptrdiff_t = long long */
++			  flags += 16;
++			}
++		      else if (sizeof (ptrdiff_t) > sizeof (int))
++			{
++			  /* ptrdiff_t = long */
++			  flags += 8;
++			}
++		      cp++;
++		    }
++		  else
++		    break;
++		}
++
++	      /* Read the conversion character.  */
++	      c = *cp++;
++	      switch (c)
++		{
++		case 'd': case 'i':
++#ifdef HAVE_LONG_LONG
++		  if (flags >= 16 || (flags & 4))
++		    type = TYPE_LONGLONGINT;
++		  else
++#endif
++		  if (flags >= 8)
++		    type = TYPE_LONGINT;
++		  else if (flags & 2)
++		    type = TYPE_SCHAR;
++		  else if (flags & 1)
++		    type = TYPE_SHORT;
++		  else
++		    type = TYPE_INT;
++		  break;
++		case 'o': case 'u': case 'x': case 'X':
++#ifdef HAVE_LONG_LONG
++		  if (flags >= 16 || (flags & 4))
++		    type = TYPE_ULONGLONGINT;
++		  else
++#endif
++		  if (flags >= 8)
++		    type = TYPE_ULONGINT;
++		  else if (flags & 2)
++		    type = TYPE_UCHAR;
++		  else if (flags & 1)
++		    type = TYPE_USHORT;
++		  else
++		    type = TYPE_UINT;
++		  break;
++		case 'f': case 'F': case 'e': case 'E': case 'g': case 'G':
++		case 'a': case 'A':
++#ifdef HAVE_LONG_DOUBLE
++		  if (flags >= 16 || (flags & 4))
++		    type = TYPE_LONGDOUBLE;
++		  else
++#endif
++		  type = TYPE_DOUBLE;
++		  break;
++		case 'c':
++		  if (flags >= 8)
++#ifdef HAVE_WINT_T
++		    type = TYPE_WIDE_CHAR;
++#else
++		    goto error;
++#endif
++		  else
++		    type = TYPE_CHAR;
++		  break;
++#ifdef HAVE_WINT_T
++		case 'C':
++		  type = TYPE_WIDE_CHAR;
++		  c = 'c';
++		  break;
++#endif
++		case 's':
++		  if (flags >= 8)
++#ifdef HAVE_WCHAR_T
++		    type = TYPE_WIDE_STRING;
++#else
++		    goto error;
++#endif
++		  else
++		    type = TYPE_STRING;
++		  break;
++#ifdef HAVE_WCHAR_T
++		case 'S':
++		  type = TYPE_WIDE_STRING;
++		  c = 's';
++		  break;
++#endif
++		case 'p':
++		  type = TYPE_POINTER;
++		  break;
++		case 'n':
++#ifdef HAVE_LONG_LONG
++		  if (flags >= 16 || (flags & 4))
++		    type = TYPE_COUNT_LONGLONGINT_POINTER;
++		  else
++#endif
++		  if (flags >= 8)
++		    type = TYPE_COUNT_LONGINT_POINTER;
++		  else if (flags & 2)
++		    type = TYPE_COUNT_SCHAR_POINTER;
++		  else if (flags & 1)
++		    type = TYPE_COUNT_SHORT_POINTER;
++		  else
++		    type = TYPE_COUNT_INT_POINTER;
++		  break;
++		case '%':
++		  type = TYPE_NONE;
++		  break;
++		default:
++		  /* Unknown conversion character.  */
++		  goto error;
++		}
++	    }
++
++	    if (type != TYPE_NONE)
++	      {
++		dp->arg_index = arg_index;
++		if (dp->arg_index == ARG_NONE)
++		  {
++		    dp->arg_index = arg_posn++;
++		    if (dp->arg_index == ARG_NONE)
++		      /* arg_posn wrapped around.  */
++		      goto error;
++		  }
++		REGISTER_ARG (dp->arg_index, type);
++	      }
++	    dp->conversion = c;
++	    dp->dir_end = cp;
++	  }
++
++	  d->count++;
++	  if (d->count >= d_allocated)
++	    {
++	      size_t memory_size;
++	      DIRECTIVE *memory;
++
++	      d_allocated = xtimes (d_allocated, 2);
++	      memory_size = xtimes (d_allocated, sizeof (DIRECTIVE));
++	      if (size_overflow_p (memory_size))
++		/* Overflow, would lead to out of memory.  */
++		goto error;
++	      memory = realloc (d->dir, memory_size);
++	      if (memory == NULL)
++		/* Out of memory.  */
++		goto error;
++	      d->dir = memory;
++	    }
++	}
++    }
++  d->dir[d->count].dir_start = cp;
++
++  d->max_width_length = max_width_length;
++  d->max_precision_length = max_precision_length;
++  return 0;
++
++error:
++  if (a->arg)
++    free (a->arg);
++  if (d->dir)
++    free (d->dir);
++  return -1;
++}
++
++#undef DIRECTIVES
++#undef DIRECTIVE
++#undef CHAR_T
++#undef PRINTF_PARSE
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/printf-parse.h	2005-01-09 20:37:22.000000000 -0600
+@@ -0,0 +1,74 @@
++/* Parse printf format string.
++   Copyright (C) 1999, 2002-2003 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifndef _PRINTF_PARSE_H
++#define _PRINTF_PARSE_H
++
++#include "printf-args.h"
++
++
++/* Flags */
++#define FLAG_GROUP	 1	/* ' flag */
++#define FLAG_LEFT	 2	/* - flag */
++#define FLAG_SHOWSIGN	 4	/* + flag */
++#define FLAG_SPACE	 8	/* space flag */
++#define FLAG_ALT	16	/* # flag */
++#define FLAG_ZERO	32
++
++/* arg_index value indicating that no argument is consumed.  */
++#define ARG_NONE	(~(size_t)0)
++
++/* A parsed directive.  */
++typedef struct
++{
++  const char* dir_start;
++  const char* dir_end;
++  int flags;
++  const char* width_start;
++  const char* width_end;
++  size_t width_arg_index;
++  const char* precision_start;
++  const char* precision_end;
++  size_t precision_arg_index;
++  char conversion; /* d i o u x X f e E g G c s p n U % but not C S */
++  size_t arg_index;
++}
++char_directive;
++
++/* A parsed format string.  */
++typedef struct
++{
++  size_t count;
++  char_directive *dir;
++  size_t max_width_length;
++  size_t max_precision_length;
++}
++char_directives;
++
++
++/* Parses the format string.  Fills in the number N of directives, and fills
++   in directives[0], ..., directives[N-1], and sets directives[N].dir_start
++   to the end of the format string.  Also fills in the arg_type fields of the
++   arguments and the needed count of arguments.  */
++#ifdef STATIC
++STATIC
++#else
++extern
++#endif
++int printf_parse (const char *format, char_directives *d, arguments *a);
++
++#endif /* _PRINTF_PARSE_H */
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/xsize.h	2005-01-09 20:37:27.000000000 -0600
+@@ -0,0 +1,108 @@
++/* xsize.h -- Checked size_t computations.
++
++   Copyright (C) 2003 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifndef _XSIZE_H
++#define _XSIZE_H
++
++/* Get size_t.  */
++#include <stddef.h>
++
++/* Get SIZE_MAX.  */
++#include <limits.h>
++#if HAVE_STDINT_H
++# include <stdint.h>
++#endif
++
++/* The size of memory objects is often computed through expressions of
++   type size_t. Example:
++      void* p = malloc (header_size + n * element_size).
++   These computations can lead to overflow.  When this happens, malloc()
++   returns a piece of memory that is way too small, and the program then
++   crashes while attempting to fill the memory.
++   To avoid this, the functions and macros in this file check for overflow.
++   The convention is that SIZE_MAX represents overflow.
++   malloc (SIZE_MAX) is not guaranteed to fail -- think of a malloc
++   implementation that uses mmap --, it's recommended to use size_overflow_p()
++   or size_in_bounds_p() before invoking malloc().
++   The example thus becomes:
++      size_t size = xsum (header_size, xtimes (n, element_size));
++      void *p = (size_in_bounds_p (size) ? malloc (size) : NULL);
++*/
++
++/* Convert an arbitrary value >= 0 to type size_t.  */
++#define xcast_size_t(N) \
++  ((N) <= SIZE_MAX ? (size_t) (N) : SIZE_MAX)
++
++/* Sum of two sizes, with overflow check.  */
++static inline size_t
++#if __GNUC__ >= 3
++__attribute__ ((__pure__))
++#endif
++xsum (size_t size1, size_t size2)
++{
++  size_t sum = size1 + size2;
++  return (sum >= size1 ? sum : SIZE_MAX);
++}
++
++/* Sum of three sizes, with overflow check.  */
++static inline size_t
++#if __GNUC__ >= 3
++__attribute__ ((__pure__))
++#endif
++xsum3 (size_t size1, size_t size2, size_t size3)
++{
++  return xsum (xsum (size1, size2), size3);
++}
++
++/* Sum of four sizes, with overflow check.  */
++static inline size_t
++#if __GNUC__ >= 3
++__attribute__ ((__pure__))
++#endif
++xsum4 (size_t size1, size_t size2, size_t size3, size_t size4)
++{
++  return xsum (xsum (xsum (size1, size2), size3), size4);
++}
++
++/* Maximum of two sizes, with overflow check.  */
++static inline size_t
++#if __GNUC__ >= 3
++__attribute__ ((__pure__))
++#endif
++xmax (size_t size1, size_t size2)
++{
++  /* No explicit check is needed here, because for any n:
++     max (SIZE_MAX, n) == SIZE_MAX and max (n, SIZE_MAX) == SIZE_MAX.  */
++  return (size1 >= size2 ? size1 : size2);
++}
++
++/* Multiplication of a count with an element size, with overflow check.
++   The count must be >= 0 and the element size must be > 0.
++   This is a macro, not an inline function, so that it works correctly even
++   when N is of a wider tupe and N > SIZE_MAX.  */
++#define xtimes(N, ELSIZE) \
++  ((N) <= SIZE_MAX / (ELSIZE) ? (size_t) (N) * (ELSIZE) : SIZE_MAX)
++
++/* Check for overflow.  */
++#define size_overflow_p(SIZE) \
++  ((SIZE) == SIZE_MAX)
++/* Check against overflow.  */
++#define size_in_bounds_p(SIZE) \
++  ((SIZE) != SIZE_MAX)
++
++#endif /* _XSIZE_H */
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/vsnprintf.c	2005-01-09 20:44:25.000000000 -0600
+@@ -0,0 +1,58 @@
++/* Formatted output to strings.
++   Copyright (C) 2004 Free Software Foundation, Inc.
++   Written by Simon Josefsson and Yoann Vandoorselaere <yoann@prelude-ids.org>.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifdef HAVE_CONFIG_H
++# include <config.h>
++#endif
++
++/* Specification.  */
++#include "vsnprintf.h"
++
++#include <stdarg.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++
++#include "vasnprintf.h"
++
++/* Print formatted output to string STR.  Similar to vsprintf, but
++   additional length SIZE limit how much is written into STR.  Returns
++   string length of formatted string (which may be larger than SIZE).
++   STR may be NULL, in which case nothing will be written.  On error,
++   return a negative value. */
++int
++vsnprintf (char *str, size_t size, const char *format, va_list args)
++{
++  char *output;
++  size_t len;
++
++  len = size;
++  output = vasnprintf (str, &len, format, args);
++
++  if (!output)
++    return -1;
++
++  if (str != NULL)
++    if (len > size - 1) /* equivalent to: (size > 0 && len >= size) */
++      str[size - 1] = '\0';
++
++  if (output != str)
++    free (output);
++
++  return len;
++}
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ lib/vsnprintf.h	2005-01-09 20:44:25.000000000 -0600
+@@ -0,0 +1,31 @@
++/* Formatted output to strings.
++   Copyright (C) 2004 Free Software Foundation, Inc.
++   Written by Simon Josefsson and Yoann Vandoorselaere <yoann@prelude-ids.org>.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation,
++   Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
++
++#ifndef VSNPRINTF_H
++#define VSNPRINTF_H
++
++#include <stdarg.h>
++
++/* Get vsnprintf declaration, if available.  */
++#include <stdio.h>
++
++#if defined HAVE_DECL_VSNPRINTF && !HAVE_DECL_VSNPRINTF
++int vsnprintf (char *str, size_t size, const char *format, va_list args);
++#endif
++
++#endif /* VSNPRINTF_H */
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/vasnprintf.m4	2005-01-09 20:21:37.000000000 -0600
+@@ -0,0 +1,60 @@
++# vasnprintf.m4 serial 5
++dnl Copyright (C) 2002-2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++AC_DEFUN([gl_FUNC_VASNPRINTF],
++[
++  AC_REQUIRE([gl_EOVERFLOW])
++  AC_REPLACE_FUNCS(vasnprintf)
++  if test $ac_cv_func_vasnprintf = no; then
++    AC_LIBOBJ(printf-args)
++    AC_LIBOBJ(printf-parse)
++    AC_LIBOBJ(asnprintf)
++    gl_PREREQ_PRINTF_ARGS
++    gl_PREREQ_PRINTF_PARSE
++    gl_PREREQ_VASNPRINTF
++    gl_PREREQ_ASNPRINTF
++  fi
++])
++
++# Prequisites of lib/printf-args.h, lib/printf-args.c.
++AC_DEFUN([gl_PREREQ_PRINTF_ARGS],
++[
++  AC_REQUIRE([bh_C_SIGNED])
++  AC_REQUIRE([gl_AC_TYPE_LONG_LONG])
++  AC_REQUIRE([gt_TYPE_LONGDOUBLE])
++  AC_REQUIRE([gt_TYPE_WCHAR_T])
++  AC_REQUIRE([gt_TYPE_WINT_T])
++])
++
++# Prequisites of lib/printf-parse.h, lib/printf-parse.c.
++AC_DEFUN([gl_PREREQ_PRINTF_PARSE],
++[
++  AC_REQUIRE([gl_AC_TYPE_LONG_LONG])
++  AC_REQUIRE([gt_TYPE_LONGDOUBLE])
++  AC_REQUIRE([gt_TYPE_WCHAR_T])
++  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_REQUIRE([AC_TYPE_SIZE_T])
++  AC_CHECK_TYPES(ptrdiff_t)
++  AC_REQUIRE([gt_AC_TYPE_INTMAX_T])
++])
++
++# Prerequisites of lib/vasnprintf.c.
++AC_DEFUN([gl_PREREQ_VASNPRINTF],
++[
++  AC_REQUIRE([AC_FUNC_ALLOCA])
++  AC_REQUIRE([gl_AC_TYPE_LONG_LONG])
++  AC_REQUIRE([gt_TYPE_LONGDOUBLE])
++  AC_REQUIRE([gt_TYPE_WCHAR_T])
++  AC_REQUIRE([gt_TYPE_WINT_T])
++  AC_CHECK_FUNCS(snprintf wcslen)
++])
++
++# Prerequisites of lib/asnprintf.c.
++AC_DEFUN([gl_PREREQ_ASNPRINTF],
++[
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/eoverflow.m4	2005-01-09 20:22:58.000000000 -0600
+@@ -0,0 +1,66 @@
++# eoverflow.m4 serial 1
++dnl Copyright (C) 2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Bruno Haible.
++
++# The EOVERFLOW errno value ought to be defined in <errno.h>, according to
++# POSIX.  But some systems (like AIX 3) don't define it, and some systems
++# (like OSF/1) define it when _XOPEN_SOURCE_EXTENDED is defined.
++
++# Define EOVERFLOW as a C macro and as a substituted macro in such a way that
++# 1. on all systems, after inclusion of <errno.h>, EOVERFLOW is usable,
++# 2. on systems where EOVERFLOW is defined elsewhere, we use the same numeric
++#    value.
++
++AC_DEFUN([gl_EOVERFLOW],
++[
++  AC_REQUIRE([AC_PROG_CC])dnl
++
++  AC_CACHE_CHECK([for EOVERFLOW], ac_cv_decl_EOVERFLOW, [
++    AC_EGREP_CPP(yes,[
++#include <errno.h>
++#ifdef EOVERFLOW
++yes
++#endif
++      ], have_eoverflow=1)
++    if test -n "$have_eoverflow"; then
++      dnl EOVERFLOW exists in <errno.h>. Don't need to define EOVERFLOW ourselves.
++      ac_cv_decl_EOVERFLOW=yes
++    else
++      AC_EGREP_CPP(yes,[
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++#ifdef EOVERFLOW
++yes
++#endif
++        ], have_eoverflow=1)
++      if test -n "$have_eoverflow"; then
++        dnl EOVERFLOW exists but is hidden.
++        dnl Define it to the same value.
++        _AC_COMPUTE_INT([EOVERFLOW], ac_cv_decl_EOVERFLOW, [
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++])
++      else
++        dnl EOVERFLOW isn't defined by the system. Define EOVERFLOW ourselves, but
++        dnl don't define it as EINVAL, because snprintf() callers want to
++        dnl distinguish EINVAL and EOVERFLOW.
++        ac_cv_decl_EOVERFLOW=E2BIG
++      fi
++    fi
++  ])
++  if test "$ac_cv_decl_EOVERFLOW" != yes; then
++    AC_DEFINE_UNQUOTED([EOVERFLOW], [$ac_cv_decl_EOVERFLOW],
++                       [Define as good substitute value for EOVERFLOW.])
++    EOVERFLOW="$ac_cv_decl_EOVERFLOW"
++    AC_SUBST(EOVERFLOW)
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/signed.m4	2005-01-09 20:23:26.000000000 -0600
+@@ -0,0 +1,19 @@
++# signed.m4 serial 1 (gettext-0.10.40)
++dnl Copyright (C) 2001-2002 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Bruno Haible.
++
++AC_DEFUN([bh_C_SIGNED],
++[
++  AC_CACHE_CHECK([for signed], bh_cv_c_signed,
++   [AC_TRY_COMPILE(, [signed char x;], bh_cv_c_signed=yes, bh_cv_c_signed=no)])
++  if test $bh_cv_c_signed = no; then
++    AC_DEFINE(signed, ,
++              [Define to empty if the C compiler doesn't support this keyword.])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/longlong.m4	2005-01-09 20:23:50.000000000 -0600
+@@ -0,0 +1,25 @@
++# longlong.m4 serial 5
++dnl Copyright (C) 1999-2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Paul Eggert.
++
++# Define HAVE_LONG_LONG if 'long long' works.
++
++AC_DEFUN([gl_AC_TYPE_LONG_LONG],
++[
++  AC_CACHE_CHECK([for long long], ac_cv_type_long_long,
++  [AC_TRY_LINK([long long ll = 1LL; int i = 63;],
++    [long long llmax = (long long) -1;
++     return ll << i | ll >> i | llmax / ll | llmax % ll;],
++    ac_cv_type_long_long=yes,
++    ac_cv_type_long_long=no)])
++  if test $ac_cv_type_long_long = yes; then
++    AC_DEFINE(HAVE_LONG_LONG, 1,
++      [Define if you have the 'long long' type.])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/longdouble.m4	2005-01-09 20:24:13.000000000 -0600
+@@ -0,0 +1,30 @@
++# longdouble.m4 serial 1 (gettext-0.12)
++dnl Copyright (C) 2002-2003 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Bruno Haible.
++dnl Test whether the compiler supports the 'long double' type.
++dnl Prerequisite: AC_PROG_CC
++
++AC_DEFUN([gt_TYPE_LONGDOUBLE],
++[
++  AC_CACHE_CHECK([for long double], gt_cv_c_long_double,
++    [if test "$GCC" = yes; then
++       gt_cv_c_long_double=yes
++     else
++       AC_TRY_COMPILE([
++         /* The Stardent Vistra knows sizeof(long double), but does not support it.  */
++         long double foo = 0.0;
++         /* On Ultrix 4.3 cc, long double is 4 and double is 8.  */
++         int array [2*(sizeof(long double) >= sizeof(double)) - 1];
++         ], ,
++         gt_cv_c_long_double=yes, gt_cv_c_long_double=no)
++     fi])
++  if test $gt_cv_c_long_double = yes; then
++    AC_DEFINE(HAVE_LONG_DOUBLE, 1, [Define if you have the 'long double' type.])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/wchar_t.m4	2005-01-09 20:24:32.000000000 -0600
+@@ -0,0 +1,22 @@
++# wchar_t.m4 serial 1 (gettext-0.12)
++dnl Copyright (C) 2002-2003 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Bruno Haible.
++dnl Test whether <stddef.h> has the 'wchar_t' type.
++dnl Prerequisite: AC_PROG_CC
++
++AC_DEFUN([gt_TYPE_WCHAR_T],
++[
++  AC_CACHE_CHECK([for wchar_t], gt_cv_c_wchar_t,
++    [AC_TRY_COMPILE([#include <stddef.h>
++       wchar_t foo = (wchar_t)'\0';], ,
++       gt_cv_c_wchar_t=yes, gt_cv_c_wchar_t=no)])
++  if test $gt_cv_c_wchar_t = yes; then
++    AC_DEFINE(HAVE_WCHAR_T, 1, [Define if you have the 'wchar_t' type.])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/wint_t.m4	2005-01-09 20:24:46.000000000 -0600
+@@ -0,0 +1,22 @@
++# wint_t.m4 serial 1 (gettext-0.12)
++dnl Copyright (C) 2003 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Bruno Haible.
++dnl Test whether <wchar.h> has the 'wint_t' type.
++dnl Prerequisite: AC_PROG_CC
++
++AC_DEFUN([gt_TYPE_WINT_T],
++[
++  AC_CACHE_CHECK([for wint_t], gt_cv_c_wint_t,
++    [AC_TRY_COMPILE([#include <wchar.h>
++       wint_t foo = (wchar_t)'\0';], ,
++       gt_cv_c_wint_t=yes, gt_cv_c_wint_t=no)])
++  if test $gt_cv_c_wint_t = yes; then
++    AC_DEFINE(HAVE_WINT_T, 1, [Define if you have the 'wint_t' type.])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/intmax_t.m4	2005-01-09 20:25:04.000000000 -0600
+@@ -0,0 +1,63 @@
++# intmax_t.m4 serial 4
++dnl Copyright (C) 1997-2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Paul Eggert.
++
++AC_PREREQ(2.13)
++
++# Define intmax_t to 'long' or 'long long'
++# if it is not already defined in <stdint.h> or <inttypes.h>.
++
++AC_DEFUN([gl_AC_TYPE_INTMAX_T],
++[
++  dnl For simplicity, we assume that a header file defines 'intmax_t' if and
++  dnl only if it defines 'uintmax_t'.
++  AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
++  AC_REQUIRE([gl_AC_HEADER_STDINT_H])
++  if test $gl_cv_header_inttypes_h = no && test $gl_cv_header_stdint_h = no; then
++    AC_REQUIRE([gl_AC_TYPE_LONG_LONG])
++    test $ac_cv_type_long_long = yes \
++      && ac_type='long long' \
++      || ac_type='long'
++    AC_DEFINE_UNQUOTED(intmax_t, $ac_type,
++     [Define to long or long long if <inttypes.h> and <stdint.h> don't define.])
++  else
++    AC_DEFINE(HAVE_INTMAX_T, 1,
++      [Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>.])
++  fi
++])
++
++dnl An alternative would be to explicitly test for 'intmax_t'.
++
++AC_DEFUN([gt_AC_TYPE_INTMAX_T],
++[
++  AC_REQUIRE([gl_AC_HEADER_INTTYPES_H])
++  AC_REQUIRE([gl_AC_HEADER_STDINT_H])
++  AC_CACHE_CHECK(for intmax_t, gt_cv_c_intmax_t,
++    [AC_TRY_COMPILE([
++#include <stddef.h>
++#include <stdlib.h>
++#if HAVE_STDINT_H_WITH_UINTMAX
++#include <stdint.h>
++#endif
++#if HAVE_INTTYPES_H_WITH_UINTMAX
++#include <inttypes.h>
++#endif
++], [intmax_t x = -1;], gt_cv_c_intmax_t=yes, gt_cv_c_intmax_t=no)])
++  if test $gt_cv_c_intmax_t = yes; then
++    AC_DEFINE(HAVE_INTMAX_T, 1,
++      [Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>.])
++  else
++    AC_REQUIRE([gl_AC_TYPE_LONG_LONG])
++    test $ac_cv_type_long_long = yes \
++      && ac_type='long long' \
++      || ac_type='long'
++    AC_DEFINE_UNQUOTED(intmax_t, $ac_type,
++     [Define to long or long long if <stdint.h> and <inttypes.h> don't define.])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/inttypes_h.m4	2005-01-09 20:25:29.000000000 -0600
+@@ -0,0 +1,28 @@
++# inttypes_h.m4 serial 6
++dnl Copyright (C) 1997-2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Paul Eggert.
++
++# Define HAVE_INTTYPES_H_WITH_UINTMAX if <inttypes.h> exists,
++# doesn't clash with <sys/types.h>, and declares uintmax_t.
++
++AC_DEFUN([gl_AC_HEADER_INTTYPES_H],
++[
++  AC_CACHE_CHECK([for inttypes.h], gl_cv_header_inttypes_h,
++  [AC_TRY_COMPILE(
++    [#include <sys/types.h>
++#include <inttypes.h>],
++    [uintmax_t i = (uintmax_t) -1;],
++    gl_cv_header_inttypes_h=yes,
++    gl_cv_header_inttypes_h=no)])
++  if test $gl_cv_header_inttypes_h = yes; then
++    AC_DEFINE_UNQUOTED(HAVE_INTTYPES_H_WITH_UINTMAX, 1,
++      [Define if <inttypes.h> exists, doesn't clash with <sys/types.h>,
++       and declares uintmax_t. ])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/stdint_h.m4	2005-01-09 20:25:45.000000000 -0600
+@@ -0,0 +1,28 @@
++# stdint_h.m4 serial 5
++dnl Copyright (C) 1997-2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Paul Eggert.
++
++# Define HAVE_STDINT_H_WITH_UINTMAX if <stdint.h> exists,
++# doesn't clash with <sys/types.h>, and declares uintmax_t.
++
++AC_DEFUN([gl_AC_HEADER_STDINT_H],
++[
++  AC_CACHE_CHECK([for stdint.h], gl_cv_header_stdint_h,
++  [AC_TRY_COMPILE(
++    [#include <sys/types.h>
++#include <stdint.h>],
++    [uintmax_t i = (uintmax_t) -1;],
++    gl_cv_header_stdint_h=yes,
++    gl_cv_header_stdint_h=no)])
++  if test $gl_cv_header_stdint_h = yes; then
++    AC_DEFINE_UNQUOTED(HAVE_STDINT_H_WITH_UINTMAX, 1,
++      [Define if <stdint.h> exists, doesn't clash with <sys/types.h>,
++       and declares uintmax_t. ])
++  fi
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/vsnprintf.m4	2005-01-09 20:44:14.000000000 -0600
+@@ -0,0 +1,17 @@
++# vsnprintf.m4 serial 1
++dnl Copyright (C) 2002, 2003, 2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++AC_DEFUN([gl_FUNC_VSNPRINTF],
++[
++  AC_REPLACE_FUNCS(vsnprintf)
++  AC_CHECK_DECLS_ONCE(vsnprintf)
++  gl_PREREQ_VSNPRINTF
++])
++
++# Prerequisites of lib/vsnprintf.c.
++AC_DEFUN([gl_PREREQ_VSNPRINTF], [:])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/xsize.m4	2005-01-09 21:53:10.000000000 -0600
+@@ -0,0 +1,15 @@
++# xsize.m4 serial 3
++dnl Copyright (C) 2003-2004 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++AC_DEFUN([gl_XSIZE],
++[
++  dnl Prerequisites of lib/xsize.h.
++  AC_REQUIRE([gl_SIZE_MAX])
++  AC_REQUIRE([AC_C_INLINE])
++  AC_CHECK_HEADERS(stdint.h)
++])
+--- /dev/null	2004-11-12 10:15:27.000000000 -0600
++++ m4/size_max.m4	2005-01-09 21:53:25.000000000 -0600
+@@ -0,0 +1,61 @@
++# size_max.m4 serial 2
++dnl Copyright (C) 2003 Free Software Foundation, Inc.
++dnl This file is free software, distributed under the terms of the GNU
++dnl General Public License.  As a special exception to the GNU General
++dnl Public License, this file may be distributed as part of a program
++dnl that contains a configuration script generated by Autoconf, under
++dnl the same distribution terms as the rest of that program.
++
++dnl From Bruno Haible.
++
++AC_DEFUN([gl_SIZE_MAX],
++[
++  AC_CHECK_HEADERS(stdint.h)
++  dnl First test whether the system already has SIZE_MAX.
++  AC_MSG_CHECKING([for SIZE_MAX])
++  result=
++  AC_EGREP_CPP([Found it], [
++#include <limits.h>
++#if HAVE_STDINT_H
++#include <stdint.h>
++#endif
++#ifdef SIZE_MAX
++Found it
++#endif
++], result=yes)
++  if test -z "$result"; then
++    dnl Define it ourselves. Here we assume that the type 'size_t' is not wider
++    dnl than the type 'unsigned long'.
++    dnl The _AC_COMPUTE_INT macro works up to LONG_MAX, since it uses 'expr',
++    dnl which is guaranteed to work from LONG_MIN to LONG_MAX.
++    _AC_COMPUTE_INT([~(size_t)0 / 10], res_hi,
++      [#include <stddef.h>], result=?)
++    _AC_COMPUTE_INT([~(size_t)0 % 10], res_lo,
++      [#include <stddef.h>], result=?)
++    _AC_COMPUTE_INT([sizeof (size_t) <= sizeof (unsigned int)], fits_in_uint,
++      [#include <stddef.h>], result=?)
++    if test "$fits_in_uint" = 1; then
++      dnl Even though SIZE_MAX fits in an unsigned int, it must be of type
++      dnl 'unsigned long' if the type 'size_t' is the same as 'unsigned long'.
++      AC_TRY_COMPILE([#include <stddef.h>
++        extern size_t foo;
++        extern unsigned long foo;
++        ], [], fits_in_uint=0)
++    fi
++    if test -z "$result"; then
++      if test "$fits_in_uint" = 1; then
++        result="$res_hi$res_lo"U
++      else
++        result="$res_hi$res_lo"UL
++      fi
++    else
++      dnl Shouldn't happen, but who knows...
++      result='~(size_t)0'
++    fi
++  fi
++  AC_MSG_RESULT([$result])
++  if test "$result" != yes; then
++    AC_DEFINE_UNQUOTED([SIZE_MAX], [$result],
++      [Define as the maximum value of type 'size_t', if the system doesn't define it.])
++  fi
++])
+--- lib/argp-parse.c.orig	2004-12-23 08:54:29.000000000 -0600
++++ lib/argp-parse.c	2004-12-23 08:56:44.000000000 -0600
+@@ -482,9 +482,9 @@
+     return ENOMEM;
+ 
+   parser->groups = parser->storage;
+-  parser->child_inputs = parser->storage + GLEN;
+-  parser->long_opts = parser->storage + GLEN + CLEN;
+-  parser->short_opts = parser->storage + GLEN + CLEN + LLEN;
++  parser->child_inputs = (void **)((char*) parser->storage + GLEN);
++  parser->long_opts = (struct option *)((char*) parser->storage + GLEN + CLEN);
++  parser->short_opts = (char*) parser->storage + GLEN + CLEN + LLEN;
+   parser->opt_data = opt_data;
+ 
+   memset (parser->child_inputs, 0, szs.num_child_inputs * sizeof (void *));
+--- lib/argp-help.c.orig	2005-01-09 19:35:40.000000000 -0600
++++ lib/argp-help.c	2005-01-10 14:52:16.000000000 -0600
+@@ -1055,7 +1055,12 @@
+   int old_wm = __argp_fmtstream_wmargin (stream);
+   /* PEST is a state block holding some of our variables that we'd like to
+      share with helper functions.  */
+-  struct pentry_state pest = { entry, stream, hhstate, 1, state };
++  struct pentry_state pest = { NULL, NULL, NULL, 1, NULL };
++
++  pest.entry = entry;
++  pest.stream = stream;
++  pest.hhstate = hhstate;
++  pest.state = state;
+ 
+   if (! odoc (real))
+     for (opt = real, num = entry->num; num > 0; opt++, num--)
+--- src/util.c.orig	2005-01-09 19:54:33.000000000 -0600
++++ src/util.c	2005-01-09 19:59:23.000000000 -0600
+@@ -241,7 +241,7 @@
+ 	{
+ 	  if (bytes_left < space_left)
+ 	    space_left = bytes_left;
+-	  bcopy (in_buf, out_buff, (unsigned) space_left);
++	  memcpy (out_buff, in_buf, (unsigned) space_left);
+ 	  out_buff += space_left;
+ 	  output_size += space_left;
+ 	  in_buf += space_left;
+@@ -268,7 +268,7 @@
+ 	{
+ 	  if (bytes_left < space_left)
+ 	    space_left = bytes_left;
+-	  bcopy (in_buf, out_buff, (unsigned) space_left);
++	  memcpy (out_buff, in_buf, (unsigned) space_left);
+ 	  out_buff += space_left;
+ 	  output_size += space_left;
+ 	  in_buf += space_left;
+@@ -295,7 +295,7 @@
+ 	space_left = bytes_left;
+       else
+ 	space_left = input_size;
+-      bcopy (in_buff, in_buf, (unsigned) space_left);
++      memcpy (in_buf, in_buff, (unsigned) space_left);
+       in_buff += space_left;
+       in_buf += space_left;
+       input_size -= space_left;
+@@ -345,7 +345,7 @@
+ 	     first block to make room.  */
+ 	  int half;
+ 	  half = input_buffer_size / 2;
+-	  bcopy (input_buffer + half, input_buffer, half);
++	  memcpy (input_buffer, input_buffer + half, half);
+ 	  in_buff = in_buff - half;
+ 	  append_buf = append_buf - half;
+ 	}
+@@ -369,7 +369,7 @@
+     got_bytes = num_bytes;
+   else
+     got_bytes = input_size;
+-  bcopy (in_buff, peek_buf, (unsigned) got_bytes);
++  memcpy (peek_buf, in_buff, (unsigned) got_bytes);
+   return got_bytes;
+ }
+ 
+--- src/userspec.c.orig	2005-01-09 19:48:57.000000000 -0600
++++ src/userspec.c	2005-01-09 19:51:39.000000000 -0600
+@@ -72,7 +72,7 @@
+    otherwise return 0. */
+ 
+ static int
+-isnumber (const char *str)
++is_number (const char *str)
+ {
+   for (; *str; str++)
+     if (!isdigit (*str))
+@@ -111,9 +111,9 @@
+   V_STRDUP (spec, spec_arg);
+ 
+   /* Find the separator if there is one.  */
+-  separator = index (spec, ':');
++  separator = strchr (spec, ':');
+   if (separator == NULL)
+-    separator = index (spec, '.');
++    separator = strchr (spec, '.');
+ 
+   /* Replace separator with a NUL.  */
+   if (separator != NULL)
+@@ -136,7 +136,7 @@
+       if (pwd == NULL)
+ 	{
+ 
+-	  if (!isnumber (u))
++	  if (!is_number (u))
+ 	    error_msg = _("invalid user");
+ 	  else
+ 	    {
+@@ -182,7 +182,7 @@
+       grp = getgrnam (g);
+       if (grp == NULL)
+ 	{
+-	  if (!isnumber (g))
++	  if (!is_number (g))
+ 	    error_msg = _("invalid group");
+ 	  else
+ 	    *gid = atoi (g);
+--- src/tar.c.orig	2005-01-09 20:00:44.000000000 -0600
++++ src/tar.c	2005-01-09 20:01:53.000000000 -0600
+@@ -142,7 +142,7 @@
+   union tar_record tar_rec;
+   struct tar_header *tar_hdr = (struct tar_header *) &tar_rec;
+ 
+-  bzero ((char *) &tar_rec, TARRECORDSIZE);
++  memset ((char *) &tar_rec, 0, TARRECORDSIZE);
+ 
+   /* process_copy_out must ensure that file_hdr->c_name is short enough,
+      or we will lose here.  */
+--- src/main.c.orig	2005-01-09 20:01:59.000000000 -0600
++++ src/main.c	2005-02-02 16:39:19.000000000 -0600
+@@ -727,20 +727,17 @@
+   output_bytes = 0;
+ 
+   /* Clear the block of zeros.  */
+-  bzero (zeros_512, 512);
++  memset (zeros_512, 0, 512);
+ }
+ 
+ int
+ main (int argc, char *argv[])
+ {
+-#ifdef HAVE_LOCALE_H
+   setlocale (LC_ALL, "");
+-#endif
+   bindtextdomain (PACKAGE, LOCALEDIR);
+   textdomain (PACKAGE);
+ 
+   program_name = argv[0];
+-  umask (0);
+ 
+ #ifdef __TURBOC__
+   _fmode = O_BINARY;		/* Put stdin and stdout in binary mode.  */
+@@ -751,6 +748,7 @@
+ #endif
+ 
+   process_args (argc, argv);
++  umask (0);
+ 
+   initialize_buffers ();
+ 
+--- src/copypass.c.orig	2005-01-09 20:02:13.000000000 -0600
++++ src/copypass.c	2005-01-09 20:02:19.000000000 -0600
+@@ -59,7 +59,7 @@
+   output_name.ds_string[dirname_len] = '/';
+   output_is_seekable = true;
+   /* Initialize this in case it has members we don't know to set.  */
+-  bzero (&times, sizeof (struct utimbuf));
++  memset (&times, 0, sizeof (struct utimbuf));
+ 
+   /* Copy files with names read from stdin.  */
+   while (ds_fgetstr (stdin, &input_name, name_end) != NULL)
+--- src/copyout.c.orig	2005-01-09 20:02:27.000000000 -0600
++++ src/copyout.c	2005-01-09 20:02:38.000000000 -0600
+@@ -213,7 +213,7 @@
+   struct new_cpio_header file_hdr;
+   struct utimbuf times;		/* For setting file times.  */
+   /* Initialize this in case it has members we don't know to set.  */
+-  bzero (&times, sizeof (struct utimbuf));
++  memset (&times, 0, sizeof (struct utimbuf));
+ 
+   file_hdr = *header;
+ 
+@@ -457,7 +457,7 @@
+   /* Initialize the copy out.  */
+   ds_init (&input_name, 128);
+   /* Initialize this in case it has members we don't know to set.  */
+-  bzero (&times, sizeof (struct utimbuf));
++  memset (&times, 0, sizeof (struct utimbuf));
+   file_hdr.c_magic = 070707;
+ 
+   /* Check whether the output file might be a tape.  */
+--- src/copyin.c.orig	2005-01-09 20:02:54.000000000 -0600
++++ src/copyin.c	2005-01-10 14:54:56.000000000 -0600
+@@ -357,7 +357,7 @@
+   int	out_file_des;
+   struct utimbuf times;		/* For setting file times.  */
+   /* Initialize this in case it has members we don't know to set.  */
+-  bzero (&times, sizeof (struct utimbuf));
++  memset (&times, 0, sizeof (struct utimbuf));
+   
+   for (d = deferments; d != NULL; d = d->next)
+     {
+@@ -583,7 +583,7 @@
+     {
+       struct utimbuf times;		/* For setting file times.  */
+       /* Initialize this in case it has members we don't know to set.  */
+-      bzero (&times, sizeof (struct utimbuf));
++      memset (&times, 0, sizeof (struct utimbuf));
+ 
+       times.actime = times.modtime = file_hdr->c_mtime;
+       if (utime (file_hdr->c_name, &times) < 0)
+@@ -690,7 +690,7 @@
+     {
+       struct utimbuf times;		/* For setting file times.  */
+       /* Initialize this in case it has members we don't know to set.  */
+-      bzero (&times, sizeof (struct utimbuf));
++      memset (&times, 0, sizeof (struct utimbuf));
+ 
+       times.actime = times.modtime = file_hdr->c_mtime;
+       if (utime (file_hdr->c_name, &times) < 0)
+@@ -768,7 +768,7 @@
+     {
+       struct utimbuf times;		/* For setting file times.  */
+       /* Initialize this in case it has members we don't know to set.  */
+-      bzero (&times, sizeof (struct utimbuf));
++      memset (&times, 0, sizeof (struct utimbuf));
+ 
+       times.actime = times.modtime = file_hdr->c_mtime;
+       if (utime (file_hdr->c_name, &times) < 0)
+@@ -1134,7 +1134,7 @@
+ 	  break;
+ 	}
+       bytes_skipped++;
+-      bcopy ((char *) file_hdr + 1, (char *) file_hdr, 5);
++      memcpy ((char *) file_hdr, (char *) file_hdr + 1, 5);
+       tape_buffered_read ((char *) file_hdr + 5, in_des, 1L);
+     }
+ }
+--- src/mt.c.orig	2005-01-10 14:57:21.000000000 -0600
++++ src/mt.c	2005-01-10 14:57:26.000000000 -0600
+@@ -238,9 +238,7 @@
+   int i;
+   char *rsh_command_option = NULL;
+ 
+-#ifdef HAVE_LOCALE_H
+   setlocale (LC_ALL, "");
+-#endif
+   bindtextdomain (PACKAGE, LOCALEDIR);
+   textdomain (PACKAGE);
+   
+--- configure.orig	2005-01-09 20:11:05.000000000 -0600
++++ configure	2005-01-10 15:04:32.000000000 -0600
+@@ -313,7 +313,7 @@
+ 
+ gl_func_list=
+ gl_header_list=
+-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP EGREP RANLIB ac_ct_RANLIB ALLOCA ALLOCA_H LIBOBJS GETOPT_H FNMATCH_H STDBOOL_H HAVE__BOOL SYSEXITS_H CPIO_MT_PROG PU_RMT_PROG DEFAULT_RMT_DIR DEFAULT_RMT_COMMAND MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE build build_cpu build_vendor build_os host host_cpu host_vendor host_os LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB AUTOM4TE LTLIBOBJS'
++ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE CPP GREP EGREP RANLIB ac_ct_RANLIB ALLOCA ALLOCA_H LIBOBJS GETOPT_H FNMATCH_H STDBOOL_H HAVE__BOOL SYSEXITS_H CPIO_MT_PROG PU_RMT_PROG DEFAULT_RMT_DIR DEFAULT_RMT_COMMAND EOVERFLOW MKINSTALLDIRS USE_NLS MSGFMT GMSGFMT XGETTEXT MSGMERGE build build_cpu build_vendor build_os host host_cpu host_vendor host_os LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB AUTOM4TE LTLIBOBJS SED'
+ ac_subst_files=''
+ 
+ # Initialize some variables set by options.
+@@ -2218,6 +2218,10 @@
+ echo "$as_me:$LINENO: checking for C compiler default output file name" >&5
+ echo $ECHO_N "checking for C compiler default output file name... $ECHO_C" >&6
+ ac_link_default=`echo "$ac_link" | sed 's/ -o *conftest[^ ]*//'`
++# The IRIX 6 linker writes into existing a.out or similar files which may
++# not be executable, retaining their permissions.  Remove them first so
++# a subsequent execution test works.
++rm -f a.out a.exe b.out
+ if { (eval echo "$as_me:$LINENO: \"$ac_link_default\"") >&5
+   (eval $ac_link_default) 2>&5
+   ac_status=$?
+@@ -2457,13 +2461,103 @@
+ GCC=`test $ac_compiler_gnu = yes && echo yes`
+ ac_test_CFLAGS=${CFLAGS+set}
+ ac_save_CFLAGS=$CFLAGS
+-CFLAGS="-g"
+ echo "$as_me:$LINENO: checking whether $CC accepts -g" >&5
+ echo $ECHO_N "checking whether $CC accepts -g... $ECHO_C" >&6
+ if test "${ac_cv_prog_cc_g+set}" = set; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+-  cat >conftest.$ac_ext <<_ACEOF
++  ac_save_c_werror_flag=$ac_c_werror_flag
++   ac_c_werror_flag=yes
++   ac_cv_prog_cc_g=no
++   CFLAGS="-g"
++   cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_prog_cc_g=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++CFLAGS=""
++      cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  :
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_c_werror_flag=$ac_save_c_werror_flag
++	 CFLAGS="-g"
++	 cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+ _ACEOF
+ cat confdefs.h >>conftest.$ac_ext
+@@ -2505,10 +2599,14 @@
+   echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5
+ 
+-ac_cv_prog_cc_g=no
+ fi
+ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+ fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++   ac_c_werror_flag=$ac_save_c_werror_flag
++fi
+ echo "$as_me:$LINENO: result: $ac_cv_prog_cc_g" >&5
+ echo "${ECHO_T}$ac_cv_prog_cc_g" >&6
+ if test "$ac_test_CFLAGS" = set; then
+@@ -2565,10 +2663,10 @@
+ /* OSF 4.0 Compaq cc is some sort of almost-ANSI by default.  It has
+    function prototypes and stuff, but not '\xHH' hex character constants.
+    These don't provoke an error unfortunately, instead are silently treated
+-   as 'x'.  The following induces an error, until -std1 is added to get
++   as 'x'.  The following induces an error, until -std is added to get
+    proper ANSI mode.  Curiously '\x00'!='x' always comes out true, for an
+    array size at least.  It's necessary to write '\x00'==0 to get something
+-   that's true only with -std1.  */
++   that's true only with -std.  */
+ int osf4_cc_array ['\x00' == 0 ? 1 : -1];
+ 
+ int test (int i, double x);
+@@ -2587,12 +2685,14 @@
+ _ACEOF
+ # Don't try gcc -ansi; that turns off useful extensions and
+ # breaks some systems' header files.
+-# AIX			-qlanglvl=ansi
+-# Ultrix and OSF/1	-std1
++# AIX circa 2003 	-qlanglvl=extc89
++# old AIX		-qlanglvl=ansi
++# Ultrix, OSF/1, Tru64	-std
+ # HP-UX 10.20 and later	-Ae
+ # HP-UX older versions	-Aa -D_HPUX_SOURCE
+ # SVR4			-Xc -D__EXTENSIONS__
+-for ac_arg in "" -qlanglvl=ansi -std1 -Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
++for ac_arg in "" -qlanglvl=extc89 -qlanglvl=ansi -std \
++	-Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
+ do
+   CC="$ac_save_CC $ac_arg"
+   rm -f conftest.$ac_objext
+@@ -3135,19 +3235,164 @@
+ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ 
+ 
++echo "$as_me:$LINENO: checking for grep that handles long lines and -e" >&5
++echo $ECHO_N "checking for grep that handles long lines and -e... $ECHO_C" >&6
++if test "${ac_cv_path_GREP+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  # Extract the first word of "grep ggrep" to use in msg output
++if test -z "$GREP"; then
++set dummy grep ggrep; ac_prog_name=$2
++if test "${ac_cv_path_GREP+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  ac_path_GREP_found=false
++# Loop through the user's path and test for each of PROGNAME-LIST
++as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++as_dummy="$PATH:/usr/xpg4/bin"
++for as_dir in $as_dummy
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++  for ac_prog in grep ggrep; do
++  for ac_exec_ext in '' $ac_executable_extensions; do
++    ac_path_GREP="$as_dir/$ac_prog$ac_exec_ext"
++    $as_executable_p "$ac_path_GREP" || continue
++    # Check for GNU ac_path_GREP and select it if it is found.
++  # Check for GNU $ac_path_GREP
++if "$ac_path_GREP" --version 2>&1 < /dev/null | grep 'GNU' >/dev/null; then
++  ac_cv_path_GREP="$ac_path_GREP" ac_path_GREP_found=:
++else
++  ac_count=0
++  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
++  while :
++  do
++    cat "conftest.in" "conftest.in" >"conftest.tmp"
++    mv "conftest.tmp" "conftest.in"
++    cp "conftest.in" "conftest.nl"
++    echo 'GREP' >> "conftest.nl"
++    "$ac_path_GREP" -e 'GREP$' -e '-(cannot match)-' < "conftest.nl" >"conftest.out" 2>/dev/null || break
++    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
++    ac_count=`expr $ac_count + 1`
++    if test $ac_count -gt ${ac_path_GREP_max-0}; then
++      # Best one so far, save it but keep looking for a better one
++      ac_cv_path_GREP="$ac_path_GREP"
++      ac_path_GREP_max=$ac_count
++    fi
++    # 10*(2^10) chars as input seems more than enough
++    test $ac_count -gt 10 && break
++  done
++  rm -f conftest.*
++fi
++
++
++    $ac_path_GREP_found && break 3
++  done
++done
++
++done
++
++
++fi
++
++GREP="$ac_cv_path_GREP"
++if test -z "$GREP"; then
++  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&5
++echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&2;}
++   { (exit 1); exit 1; }; }
++fi
++
++else
++  ac_cv_path_GREP=$GREP
++fi
++
++
++fi
++echo "$as_me:$LINENO: result: $ac_cv_path_GREP" >&5
++echo "${ECHO_T}$ac_cv_path_GREP" >&6
++ GREP="$ac_cv_path_GREP"
++
++
+ echo "$as_me:$LINENO: checking for egrep" >&5
+ echo $ECHO_N "checking for egrep... $ECHO_C" >&6
+-if test "${ac_cv_prog_egrep+set}" = set; then
++if test "${ac_cv_path_EGREP+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  if echo a | ($GREP -E '(a|b)') >/dev/null 2>&1
++   then ac_cv_path_EGREP="$GREP -E"
++   else
++     # Extract the first word of "egrep" to use in msg output
++if test -z "$EGREP"; then
++set dummy egrep; ac_prog_name=$2
++if test "${ac_cv_path_EGREP+set}" = set; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+-  if echo a | (grep -E '(a|b)') >/dev/null 2>&1
+-    then ac_cv_prog_egrep='grep -E'
+-    else ac_cv_prog_egrep='egrep'
++  ac_path_EGREP_found=false
++# Loop through the user's path and test for each of PROGNAME-LIST
++as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++as_dummy="$PATH:/usr/xpg4/bin"
++for as_dir in $as_dummy
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++  for ac_prog in egrep; do
++  for ac_exec_ext in '' $ac_executable_extensions; do
++    ac_path_EGREP="$as_dir/$ac_prog$ac_exec_ext"
++    $as_executable_p "$ac_path_EGREP" || continue
++    # Check for GNU ac_path_EGREP and select it if it is found.
++  # Check for GNU $ac_path_EGREP
++if "$ac_path_EGREP" --version 2>&1 < /dev/null | grep 'GNU' >/dev/null; then
++  ac_cv_path_EGREP="$ac_path_EGREP" ac_path_EGREP_found=:
++else
++  ac_count=0
++  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
++  while :
++  do
++    cat "conftest.in" "conftest.in" >"conftest.tmp"
++    mv "conftest.tmp" "conftest.in"
++    cp "conftest.in" "conftest.nl"
++    echo 'EGREP' >> "conftest.nl"
++    "$ac_path_EGREP" 'EGREP$' < "conftest.nl" >"conftest.out" 2>/dev/null || break
++    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
++    ac_count=`expr $ac_count + 1`
++    if test $ac_count -gt ${ac_path_EGREP_max-0}; then
++      # Best one so far, save it but keep looking for a better one
++      ac_cv_path_EGREP="$ac_path_EGREP"
++      ac_path_EGREP_max=$ac_count
+     fi
++    # 10*(2^10) chars as input seems more than enough
++    test $ac_count -gt 10 && break
++  done
++  rm -f conftest.*
++fi
++
++
++    $ac_path_EGREP_found && break 3
++  done
++done
++
++done
++
++
++fi
++
++EGREP="$ac_cv_path_EGREP"
++if test -z "$EGREP"; then
++  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&5
++echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&2;}
++   { (exit 1); exit 1; }; }
+ fi
+-echo "$as_me:$LINENO: result: $ac_cv_prog_egrep" >&5
+-echo "${ECHO_T}$ac_cv_prog_egrep" >&6
+- EGREP=$ac_cv_prog_egrep
++
++else
++  ac_cv_path_EGREP=$EGREP
++fi
++
++
++   fi
++fi
++echo "$as_me:$LINENO: result: $ac_cv_path_EGREP" >&5
++echo "${ECHO_T}$ac_cv_path_EGREP" >&6
++ EGREP="$ac_cv_path_EGREP"
+ 
+ 
+ 
+@@ -3990,13 +4235,103 @@
+ GCC=`test $ac_compiler_gnu = yes && echo yes`
+ ac_test_CFLAGS=${CFLAGS+set}
+ ac_save_CFLAGS=$CFLAGS
+-CFLAGS="-g"
+ echo "$as_me:$LINENO: checking whether $CC accepts -g" >&5
+ echo $ECHO_N "checking whether $CC accepts -g... $ECHO_C" >&6
+ if test "${ac_cv_prog_cc_g+set}" = set; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+-  cat >conftest.$ac_ext <<_ACEOF
++  ac_save_c_werror_flag=$ac_c_werror_flag
++   ac_c_werror_flag=yes
++   ac_cv_prog_cc_g=no
++   CFLAGS="-g"
++   cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_prog_cc_g=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++CFLAGS=""
++      cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  :
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_c_werror_flag=$ac_save_c_werror_flag
++	 CFLAGS="-g"
++	 cat >conftest.$ac_ext <<_ACEOF
+ /* confdefs.h.  */
+ _ACEOF
+ cat confdefs.h >>conftest.$ac_ext
+@@ -4038,10 +4373,14 @@
+   echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5
+ 
+-ac_cv_prog_cc_g=no
+ fi
+ rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+ fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++   ac_c_werror_flag=$ac_save_c_werror_flag
++fi
+ echo "$as_me:$LINENO: result: $ac_cv_prog_cc_g" >&5
+ echo "${ECHO_T}$ac_cv_prog_cc_g" >&6
+ if test "$ac_test_CFLAGS" = set; then
+@@ -4098,10 +4437,10 @@
+ /* OSF 4.0 Compaq cc is some sort of almost-ANSI by default.  It has
+    function prototypes and stuff, but not '\xHH' hex character constants.
+    These don't provoke an error unfortunately, instead are silently treated
+-   as 'x'.  The following induces an error, until -std1 is added to get
++   as 'x'.  The following induces an error, until -std is added to get
+    proper ANSI mode.  Curiously '\x00'!='x' always comes out true, for an
+    array size at least.  It's necessary to write '\x00'==0 to get something
+-   that's true only with -std1.  */
++   that's true only with -std.  */
+ int osf4_cc_array ['\x00' == 0 ? 1 : -1];
+ 
+ int test (int i, double x);
+@@ -4120,12 +4459,14 @@
+ _ACEOF
+ # Don't try gcc -ansi; that turns off useful extensions and
+ # breaks some systems' header files.
+-# AIX			-qlanglvl=ansi
+-# Ultrix and OSF/1	-std1
++# AIX circa 2003 	-qlanglvl=extc89
++# old AIX		-qlanglvl=ansi
++# Ultrix, OSF/1, Tru64	-std
+ # HP-UX 10.20 and later	-Ae
+ # HP-UX older versions	-Aa -D_HPUX_SOURCE
+ # SVR4			-Xc -D__EXTENSIONS__
+-for ac_arg in "" -qlanglvl=ansi -std1 -Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
++for ac_arg in "" -qlanglvl=extc89 -qlanglvl=ansi -std \
++	-Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
+ do
+   CC="$ac_save_CC $ac_arg"
+   rm -f conftest.$ac_objext
+@@ -6698,6 +7039,7 @@
+ cat confdefs.h >>conftest.$ac_ext
+ cat >>conftest.$ac_ext <<_ACEOF
+ /* end confdefs.h.  */
++$ac_includes_default
+ int
+ find_stack_direction ()
+ {
+@@ -12838,7 +13180,9 @@
+ 
+ 
+ 
+-for ac_func in lchown endpwent endgrent
++
++
++for ac_func in lchown lstat endpwent endgrent setlocale
+ do
+ as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ echo "$as_me:$LINENO: checking for $ac_func" >&5
+@@ -12940,12 +13284,2623 @@
+ done
+ 
+ 
+-for ac_func in vprintf
++
++for ac_header in stdint.h
+ do
+-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+-echo "$as_me:$LINENO: checking for $ac_func" >&5
+-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+-if eval "test \"\${$as_ac_var+set}\" = set"; then
++as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
++if eval "test \"\${$as_ac_Header+set}\" = set"; then
++  echo "$as_me:$LINENO: checking for $ac_header" >&5
++echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++if eval "test \"\${$as_ac_Header+set}\" = set"; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++fi
++echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++else
++  # Is the header compilable?
++echo "$as_me:$LINENO: checking $ac_header usability" >&5
++echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++$ac_includes_default
++#include <$ac_header>
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_header_compiler=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_header_compiler=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
++echo "${ECHO_T}$ac_header_compiler" >&6
++
++# Is the header present?
++echo "$as_me:$LINENO: checking $ac_header presence" >&5
++echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <$ac_header>
++_ACEOF
++if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
++  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } >/dev/null; then
++  if test -s conftest.err; then
++    ac_cpp_err=$ac_c_preproc_warn_flag
++    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
++  else
++    ac_cpp_err=
++  fi
++else
++  ac_cpp_err=yes
++fi
++if test -z "$ac_cpp_err"; then
++  ac_header_preproc=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++  ac_header_preproc=no
++fi
++rm -f conftest.err conftest.$ac_ext
++echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
++echo "${ECHO_T}$ac_header_preproc" >&6
++
++# So?  What about this header?
++case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
++  yes:no: )
++    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
++echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
++echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
++    ac_header_preproc=yes
++    ;;
++  no:yes:* )
++    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
++echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
++echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
++echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
++echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
++echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
++echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
++    (
++      cat <<\_ASBOX
++## ------------------------------- ##
++## Report this to bug-cpio@gnu.org ##
++## ------------------------------- ##
++_ASBOX
++    ) |
++      sed "s/^/$as_me: WARNING:     /" >&2
++    ;;
++esac
++echo "$as_me:$LINENO: checking for $ac_header" >&5
++echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++if eval "test \"\${$as_ac_Header+set}\" = set"; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  eval "$as_ac_Header=\$ac_header_preproc"
++fi
++echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++
++fi
++if test `eval echo '${'$as_ac_Header'}'` = yes; then
++  cat >>confdefs.h <<_ACEOF
++#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
++_ACEOF
++
++fi
++
++done
++
++    echo "$as_me:$LINENO: checking for SIZE_MAX" >&5
++echo $ECHO_N "checking for SIZE_MAX... $ECHO_C" >&6
++  result=
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#include <limits.h>
++#if HAVE_STDINT_H
++#include <stdint.h>
++#endif
++#ifdef SIZE_MAX
++Found it
++#endif
++
++_ACEOF
++if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
++  $EGREP "Found it" >/dev/null 2>&1; then
++  result=yes
++fi
++rm -f conftest*
++
++  if test -z "$result"; then
++                    if test "$cross_compiling" = yes; then
++  # Depending upon the size, compute the lo and hi bounds.
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 / 10) >= 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=0 ac_mid=0
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 / 10) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr $ac_mid + 1`
++		    if test $ac_lo -le $ac_mid; then
++		      ac_lo= ac_hi=
++		      break
++		    fi
++		    ac_mid=`expr 2 '*' $ac_mid + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 / 10) < 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=-1 ac_mid=-1
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 / 10) >= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_hi=`expr '(' $ac_mid ')' - 1`
++		       if test $ac_mid -le $ac_hi; then
++			 ac_lo= ac_hi=
++			 break
++		       fi
++		       ac_mid=`expr 2 '*' $ac_mid`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo= ac_hi=
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++# Binary search between lo and hi bounds.
++while test "x$ac_lo" != "x$ac_hi"; do
++  ac_mid=`expr '(' $ac_hi - $ac_lo ')' / 2 + $ac_lo`
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 / 10) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr '(' $ac_mid ')' + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++done
++case $ac_lo in
++?*) res_hi=$ac_lo;;
++'') result=? ;;
++esac
++else
++  if test "$cross_compiling" = yes; then
++  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&5
++echo "$as_me: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&2;}
++   { (exit 1); exit 1; }; }
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++long int longval () { return ~(size_t)0 / 10; }
++unsigned long int ulongval () { return ~(size_t)0 / 10; }
++#include <stdio.h>
++#include <stdlib.h>
++int
++main ()
++{
++
++  FILE *f = fopen ("conftest.val", "w");
++  if (! f)
++    exit (1);
++  if ((~(size_t)0 / 10) < 0)
++    {
++      long int i = longval ();
++      if (i != (~(size_t)0 / 10))
++	exit (1);
++      fprintf (f, "%ld\n", i);
++    }
++  else
++    {
++      unsigned long int i = ulongval ();
++      if (i != (~(size_t)0 / 10))
++	exit (1);
++      fprintf (f, "%lu\n", i);
++    }
++  exit (ferror (f) || fclose (f) != 0);
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest$ac_exeext
++if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++  (eval $ac_link) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  res_hi=`cat conftest.val`
++else
++  echo "$as_me: program exited with status $ac_status" >&5
++echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++( exit $ac_status )
++result=?
++fi
++rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
++fi
++fi
++rm -f conftest.val
++    if test "$cross_compiling" = yes; then
++  # Depending upon the size, compute the lo and hi bounds.
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 % 10) >= 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=0 ac_mid=0
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 % 10) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr $ac_mid + 1`
++		    if test $ac_lo -le $ac_mid; then
++		      ac_lo= ac_hi=
++		      break
++		    fi
++		    ac_mid=`expr 2 '*' $ac_mid + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 % 10) < 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=-1 ac_mid=-1
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 % 10) >= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_hi=`expr '(' $ac_mid ')' - 1`
++		       if test $ac_mid -le $ac_hi; then
++			 ac_lo= ac_hi=
++			 break
++		       fi
++		       ac_mid=`expr 2 '*' $ac_mid`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo= ac_hi=
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++# Binary search between lo and hi bounds.
++while test "x$ac_lo" != "x$ac_hi"; do
++  ac_mid=`expr '(' $ac_hi - $ac_lo ')' / 2 + $ac_lo`
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((~(size_t)0 % 10) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr '(' $ac_mid ')' + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++done
++case $ac_lo in
++?*) res_lo=$ac_lo;;
++'') result=? ;;
++esac
++else
++  if test "$cross_compiling" = yes; then
++  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&5
++echo "$as_me: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&2;}
++   { (exit 1); exit 1; }; }
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++long int longval () { return ~(size_t)0 % 10; }
++unsigned long int ulongval () { return ~(size_t)0 % 10; }
++#include <stdio.h>
++#include <stdlib.h>
++int
++main ()
++{
++
++  FILE *f = fopen ("conftest.val", "w");
++  if (! f)
++    exit (1);
++  if ((~(size_t)0 % 10) < 0)
++    {
++      long int i = longval ();
++      if (i != (~(size_t)0 % 10))
++	exit (1);
++      fprintf (f, "%ld\n", i);
++    }
++  else
++    {
++      unsigned long int i = ulongval ();
++      if (i != (~(size_t)0 % 10))
++	exit (1);
++      fprintf (f, "%lu\n", i);
++    }
++  exit (ferror (f) || fclose (f) != 0);
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest$ac_exeext
++if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++  (eval $ac_link) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  res_lo=`cat conftest.val`
++else
++  echo "$as_me: program exited with status $ac_status" >&5
++echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++( exit $ac_status )
++result=?
++fi
++rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
++fi
++fi
++rm -f conftest.val
++    if test "$cross_compiling" = yes; then
++  # Depending upon the size, compute the lo and hi bounds.
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((sizeof (size_t) <= sizeof (unsigned int)) >= 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=0 ac_mid=0
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((sizeof (size_t) <= sizeof (unsigned int)) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr $ac_mid + 1`
++		    if test $ac_lo -le $ac_mid; then
++		      ac_lo= ac_hi=
++		      break
++		    fi
++		    ac_mid=`expr 2 '*' $ac_mid + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((sizeof (size_t) <= sizeof (unsigned int)) < 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=-1 ac_mid=-1
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((sizeof (size_t) <= sizeof (unsigned int)) >= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_hi=`expr '(' $ac_mid ')' - 1`
++		       if test $ac_mid -le $ac_hi; then
++			 ac_lo= ac_hi=
++			 break
++		       fi
++		       ac_mid=`expr 2 '*' $ac_mid`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo= ac_hi=
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++# Binary search between lo and hi bounds.
++while test "x$ac_lo" != "x$ac_hi"; do
++  ac_mid=`expr '(' $ac_hi - $ac_lo ')' / 2 + $ac_lo`
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++int
++main ()
++{
++static int test_array [1 - 2 * !((sizeof (size_t) <= sizeof (unsigned int)) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr '(' $ac_mid ')' + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++done
++case $ac_lo in
++?*) fits_in_uint=$ac_lo;;
++'') result=? ;;
++esac
++else
++  if test "$cross_compiling" = yes; then
++  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&5
++echo "$as_me: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&2;}
++   { (exit 1); exit 1; }; }
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++long int longval () { return sizeof (size_t) <= sizeof (unsigned int); }
++unsigned long int ulongval () { return sizeof (size_t) <= sizeof (unsigned int); }
++#include <stdio.h>
++#include <stdlib.h>
++int
++main ()
++{
++
++  FILE *f = fopen ("conftest.val", "w");
++  if (! f)
++    exit (1);
++  if ((sizeof (size_t) <= sizeof (unsigned int)) < 0)
++    {
++      long int i = longval ();
++      if (i != (sizeof (size_t) <= sizeof (unsigned int)))
++	exit (1);
++      fprintf (f, "%ld\n", i);
++    }
++  else
++    {
++      unsigned long int i = ulongval ();
++      if (i != (sizeof (size_t) <= sizeof (unsigned int)))
++	exit (1);
++      fprintf (f, "%lu\n", i);
++    }
++  exit (ferror (f) || fclose (f) != 0);
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest$ac_exeext
++if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++  (eval $ac_link) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  fits_in_uint=`cat conftest.val`
++else
++  echo "$as_me: program exited with status $ac_status" >&5
++echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++( exit $ac_status )
++result=?
++fi
++rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
++fi
++fi
++rm -f conftest.val
++    if test "$fits_in_uint" = 1; then
++                  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++        extern size_t foo;
++        extern unsigned long foo;
++
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  fits_in_uint=0
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++    fi
++    if test -z "$result"; then
++      if test "$fits_in_uint" = 1; then
++        result="$res_hi$res_lo"U
++      else
++        result="$res_hi$res_lo"UL
++      fi
++    else
++            result='~(size_t)0'
++    fi
++  fi
++  echo "$as_me:$LINENO: result: $result" >&5
++echo "${ECHO_T}$result" >&6
++  if test "$result" != yes; then
++
++cat >>confdefs.h <<_ACEOF
++#define SIZE_MAX $result
++_ACEOF
++
++  fi
++
++
++
++
++
++for ac_header in stdint.h
++do
++as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
++if eval "test \"\${$as_ac_Header+set}\" = set"; then
++  echo "$as_me:$LINENO: checking for $ac_header" >&5
++echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++if eval "test \"\${$as_ac_Header+set}\" = set"; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++fi
++echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++else
++  # Is the header compilable?
++echo "$as_me:$LINENO: checking $ac_header usability" >&5
++echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++$ac_includes_default
++#include <$ac_header>
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_header_compiler=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_header_compiler=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
++echo "${ECHO_T}$ac_header_compiler" >&6
++
++# Is the header present?
++echo "$as_me:$LINENO: checking $ac_header presence" >&5
++echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <$ac_header>
++_ACEOF
++if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
++  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } >/dev/null; then
++  if test -s conftest.err; then
++    ac_cpp_err=$ac_c_preproc_warn_flag
++    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
++  else
++    ac_cpp_err=
++  fi
++else
++  ac_cpp_err=yes
++fi
++if test -z "$ac_cpp_err"; then
++  ac_header_preproc=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++  ac_header_preproc=no
++fi
++rm -f conftest.err conftest.$ac_ext
++echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
++echo "${ECHO_T}$ac_header_preproc" >&6
++
++# So?  What about this header?
++case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
++  yes:no: )
++    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
++echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
++echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
++    ac_header_preproc=yes
++    ;;
++  no:yes:* )
++    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
++echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
++echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
++echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
++echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
++echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
++    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
++echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
++    (
++      cat <<\_ASBOX
++## ------------------------------- ##
++## Report this to bug-cpio@gnu.org ##
++## ------------------------------- ##
++_ASBOX
++    ) |
++      sed "s/^/$as_me: WARNING:     /" >&2
++    ;;
++esac
++echo "$as_me:$LINENO: checking for $ac_header" >&5
++echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6
++if eval "test \"\${$as_ac_Header+set}\" = set"; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  eval "$as_ac_Header=\$ac_header_preproc"
++fi
++echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_Header'}'`" >&5
++echo "${ECHO_T}`eval echo '${'$as_ac_Header'}'`" >&6
++
++fi
++if test `eval echo '${'$as_ac_Header'}'` = yes; then
++  cat >>confdefs.h <<_ACEOF
++#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
++_ACEOF
++
++fi
++
++done
++
++
++
++      echo "$as_me:$LINENO: checking whether vsnprintf is declared" >&5
++echo $ECHO_N "checking whether vsnprintf is declared... $ECHO_C" >&6
++if test "${ac_cv_have_decl_vsnprintf+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++$ac_includes_default
++int
++main ()
++{
++#ifndef vsnprintf
++  char *p = (char *) vsnprintf;
++#endif
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_have_decl_vsnprintf=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_cv_have_decl_vsnprintf=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $ac_cv_have_decl_vsnprintf" >&5
++echo "${ECHO_T}$ac_cv_have_decl_vsnprintf" >&6
++if test $ac_cv_have_decl_vsnprintf = yes; then
++
++cat >>confdefs.h <<_ACEOF
++#define HAVE_DECL_VSNPRINTF 1
++_ACEOF
++
++
++else
++  cat >>confdefs.h <<_ACEOF
++#define HAVE_DECL_VSNPRINTF 0
++_ACEOF
++
++
++fi
++
++
++
++
++
++for ac_func in vsnprintf
++do
++as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
++echo "$as_me:$LINENO: checking for $ac_func" >&5
++echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
++if eval "test \"\${$as_ac_var+set}\" = set"; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
++   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
++#define $ac_func innocuous_$ac_func
++
++/* System header to define __stub macros and hopefully few prototypes,
++    which can conflict with char $ac_func (); below.
++    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
++    <limits.h> exists even on freestanding compilers.  */
++
++#ifdef __STDC__
++# include <limits.h>
++#else
++# include <assert.h>
++#endif
++
++#undef $ac_func
++
++/* Override any gcc2 internal prototype to avoid an error.  */
++#ifdef __cplusplus
++extern "C"
++{
++#endif
++/* We use char because int might match the return type of a gcc2
++   builtin and then its argument prototype would still apply.  */
++char $ac_func ();
++/* The GNU C library defines this for functions which it implements
++    to always fail with ENOSYS.  Some functions are actually named
++    something starting with __ and the normal name is an alias.  */
++#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
++choke me
++#else
++char (*f) () = $ac_func;
++#endif
++#ifdef __cplusplus
++}
++#endif
++
++int
++main ()
++{
++return f != $ac_func;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext conftest$ac_exeext
++if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++  (eval $ac_link) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest$ac_exeext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  eval "$as_ac_var=yes"
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++eval "$as_ac_var=no"
++fi
++rm -f conftest.err conftest.$ac_objext \
++      conftest$ac_exeext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
++echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
++if test `eval echo '${'$as_ac_var'}'` = yes; then
++  cat >>confdefs.h <<_ACEOF
++#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
++_ACEOF
++
++else
++  case $LIBOBJS in
++    "$ac_func.$ac_objext"   | \
++  *" $ac_func.$ac_objext"   | \
++    "$ac_func.$ac_objext "* | \
++  *" $ac_func.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS $ac_func.$ac_objext" ;;
++esac
++
++fi
++done
++
++
++
++  :
++
++
++
++
++
++  :
++
++
++
++  echo "$as_me:$LINENO: checking for EOVERFLOW" >&5
++echo $ECHO_N "checking for EOVERFLOW... $ECHO_C" >&6
++if test "${ac_cv_decl_EOVERFLOW+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#include <errno.h>
++#ifdef EOVERFLOW
++yes
++#endif
++
++_ACEOF
++if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
++  $EGREP "yes" >/dev/null 2>&1; then
++  have_eoverflow=1
++fi
++rm -f conftest*
++
++    if test -n "$have_eoverflow"; then
++            ac_cv_decl_EOVERFLOW=yes
++    else
++      cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++#ifdef EOVERFLOW
++yes
++#endif
++
++_ACEOF
++if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
++  $EGREP "yes" >/dev/null 2>&1; then
++  have_eoverflow=1
++fi
++rm -f conftest*
++
++      if test -n "$have_eoverflow"; then
++                        if test "$cross_compiling" = yes; then
++  # Depending upon the size, compute the lo and hi bounds.
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++
++int
++main ()
++{
++static int test_array [1 - 2 * !((EOVERFLOW) >= 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=0 ac_mid=0
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++
++int
++main ()
++{
++static int test_array [1 - 2 * !((EOVERFLOW) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr $ac_mid + 1`
++		    if test $ac_lo -le $ac_mid; then
++		      ac_lo= ac_hi=
++		      break
++		    fi
++		    ac_mid=`expr 2 '*' $ac_mid + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++
++int
++main ()
++{
++static int test_array [1 - 2 * !((EOVERFLOW) < 0)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=-1 ac_mid=-1
++  while :; do
++    cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++
++int
++main ()
++{
++static int test_array [1 - 2 * !((EOVERFLOW) >= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_lo=$ac_mid; break
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_hi=`expr '(' $ac_mid ')' - 1`
++		       if test $ac_mid -le $ac_hi; then
++			 ac_lo= ac_hi=
++			 break
++		       fi
++		       ac_mid=`expr 2 '*' $ac_mid`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++  done
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo= ac_hi=
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++# Binary search between lo and hi bounds.
++while test "x$ac_lo" != "x$ac_hi"; do
++  ac_mid=`expr '(' $ac_hi - $ac_lo ')' / 2 + $ac_lo`
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++
++int
++main ()
++{
++static int test_array [1 - 2 * !((EOVERFLOW) <= $ac_mid)];
++test_array [0] = 0
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_hi=$ac_mid
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_lo=`expr '(' $ac_mid ')' + 1`
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++done
++case $ac_lo in
++?*) ac_cv_decl_EOVERFLOW=$ac_lo;;
++'')  ;;
++esac
++else
++  if test "$cross_compiling" = yes; then
++  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&5
++echo "$as_me: error: cannot run test program while cross compiling
++See \`config.log' for more details." >&2;}
++   { (exit 1); exit 1; }; }
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#define _XOPEN_SOURCE_EXTENDED 1
++#include <errno.h>
++/* The following two lines are a workaround against an autoconf-2.52 bug.  */
++#include <stdio.h>
++#include <stdlib.h>
++
++long int longval () { return EOVERFLOW; }
++unsigned long int ulongval () { return EOVERFLOW; }
++#include <stdio.h>
++#include <stdlib.h>
++int
++main ()
++{
++
++  FILE *f = fopen ("conftest.val", "w");
++  if (! f)
++    exit (1);
++  if ((EOVERFLOW) < 0)
++    {
++      long int i = longval ();
++      if (i != (EOVERFLOW))
++	exit (1);
++      fprintf (f, "%ld\n", i);
++    }
++  else
++    {
++      unsigned long int i = ulongval ();
++      if (i != (EOVERFLOW))
++	exit (1);
++      fprintf (f, "%lu\n", i);
++    }
++  exit (ferror (f) || fclose (f) != 0);
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest$ac_exeext
++if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++  (eval $ac_link) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_decl_EOVERFLOW=`cat conftest.val`
++else
++  echo "$as_me: program exited with status $ac_status" >&5
++echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++fi
++rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
++fi
++fi
++rm -f conftest.val
++      else
++                                ac_cv_decl_EOVERFLOW=E2BIG
++      fi
++    fi
++
++fi
++echo "$as_me:$LINENO: result: $ac_cv_decl_EOVERFLOW" >&5
++echo "${ECHO_T}$ac_cv_decl_EOVERFLOW" >&6
++  if test "$ac_cv_decl_EOVERFLOW" != yes; then
++
++cat >>confdefs.h <<_ACEOF
++#define EOVERFLOW $ac_cv_decl_EOVERFLOW
++_ACEOF
++
++    EOVERFLOW="$ac_cv_decl_EOVERFLOW"
++
++  fi
++
++
++  echo "$as_me:$LINENO: checking for signed" >&5
++echo $ECHO_N "checking for signed... $ECHO_C" >&6
++if test "${bh_cv_c_signed+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++int
++main ()
++{
++signed char x;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  bh_cv_c_signed=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++bh_cv_c_signed=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $bh_cv_c_signed" >&5
++echo "${ECHO_T}$bh_cv_c_signed" >&6
++  if test $bh_cv_c_signed = no; then
++
++cat >>confdefs.h <<\_ACEOF
++#define signed
++_ACEOF
++
++  fi
++
++
++  echo "$as_me:$LINENO: checking for long long" >&5
++echo $ECHO_N "checking for long long... $ECHO_C" >&6
++if test "${ac_cv_type_long_long+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++long long ll = 1LL; int i = 63;
++int
++main ()
++{
++long long llmax = (long long) -1;
++     return ll << i | ll >> i | llmax / ll | llmax % ll;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext conftest$ac_exeext
++if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
++  (eval $ac_link) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest$ac_exeext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_type_long_long=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_cv_type_long_long=no
++fi
++rm -f conftest.err conftest.$ac_objext \
++      conftest$ac_exeext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $ac_cv_type_long_long" >&5
++echo "${ECHO_T}$ac_cv_type_long_long" >&6
++  if test $ac_cv_type_long_long = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define HAVE_LONG_LONG 1
++_ACEOF
++
++  fi
++
++
++  echo "$as_me:$LINENO: checking for long double" >&5
++echo $ECHO_N "checking for long double... $ECHO_C" >&6
++if test "${gt_cv_c_long_double+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  if test "$GCC" = yes; then
++       gt_cv_c_long_double=yes
++     else
++       cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++         /* The Stardent Vistra knows sizeof(long double), but does not support it.  */
++         long double foo = 0.0;
++         /* On Ultrix 4.3 cc, long double is 4 and double is 8.  */
++         int array [2*(sizeof(long double) >= sizeof(double)) - 1];
++
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  gt_cv_c_long_double=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++gt_cv_c_long_double=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++     fi
++fi
++echo "$as_me:$LINENO: result: $gt_cv_c_long_double" >&5
++echo "${ECHO_T}$gt_cv_c_long_double" >&6
++  if test $gt_cv_c_long_double = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define HAVE_LONG_DOUBLE 1
++_ACEOF
++
++  fi
++
++
++  echo "$as_me:$LINENO: checking for wchar_t" >&5
++echo $ECHO_N "checking for wchar_t... $ECHO_C" >&6
++if test "${gt_cv_c_wchar_t+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <stddef.h>
++       wchar_t foo = (wchar_t)'\0';
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  gt_cv_c_wchar_t=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++gt_cv_c_wchar_t=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $gt_cv_c_wchar_t" >&5
++echo "${ECHO_T}$gt_cv_c_wchar_t" >&6
++  if test $gt_cv_c_wchar_t = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define HAVE_WCHAR_T 1
++_ACEOF
++
++  fi
++
++
++  echo "$as_me:$LINENO: checking for wint_t" >&5
++echo $ECHO_N "checking for wint_t... $ECHO_C" >&6
++if test "${gt_cv_c_wint_t+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <wchar.h>
++       wint_t foo = (wchar_t)'\0';
++int
++main ()
++{
++
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  gt_cv_c_wint_t=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++gt_cv_c_wint_t=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $gt_cv_c_wint_t" >&5
++echo "${ECHO_T}$gt_cv_c_wint_t" >&6
++  if test $gt_cv_c_wint_t = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define HAVE_WINT_T 1
++_ACEOF
++
++  fi
++
++echo "$as_me:$LINENO: checking for size_t" >&5
++echo $ECHO_N "checking for size_t... $ECHO_C" >&6
++if test "${ac_cv_type_size_t+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++$ac_includes_default
++int
++main ()
++{
++if ((size_t *) 0)
++  return 0;
++if (sizeof (size_t))
++  return 0;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_type_size_t=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_cv_type_size_t=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $ac_cv_type_size_t" >&5
++echo "${ECHO_T}$ac_cv_type_size_t" >&6
++if test $ac_cv_type_size_t = yes; then
++  :
++else
++
++cat >>confdefs.h <<_ACEOF
++#define size_t unsigned
++_ACEOF
++
++fi
++
++
++  echo "$as_me:$LINENO: checking for inttypes.h" >&5
++echo $ECHO_N "checking for inttypes.h... $ECHO_C" >&6
++if test "${gl_cv_header_inttypes_h+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <sys/types.h>
++#include <inttypes.h>
++int
++main ()
++{
++uintmax_t i = (uintmax_t) -1;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  gl_cv_header_inttypes_h=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++gl_cv_header_inttypes_h=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $gl_cv_header_inttypes_h" >&5
++echo "${ECHO_T}$gl_cv_header_inttypes_h" >&6
++  if test $gl_cv_header_inttypes_h = yes; then
++
++cat >>confdefs.h <<_ACEOF
++#define HAVE_INTTYPES_H_WITH_UINTMAX 1
++_ACEOF
++
++  fi
++
++
++  echo "$as_me:$LINENO: checking for stdint.h" >&5
++echo $ECHO_N "checking for stdint.h... $ECHO_C" >&6
++if test "${gl_cv_header_stdint_h+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++#include <sys/types.h>
++#include <stdint.h>
++int
++main ()
++{
++uintmax_t i = (uintmax_t) -1;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  gl_cv_header_stdint_h=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++gl_cv_header_stdint_h=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $gl_cv_header_stdint_h" >&5
++echo "${ECHO_T}$gl_cv_header_stdint_h" >&6
++  if test $gl_cv_header_stdint_h = yes; then
++
++cat >>confdefs.h <<_ACEOF
++#define HAVE_STDINT_H_WITH_UINTMAX 1
++_ACEOF
++
++  fi
++
++
++
++
++  echo "$as_me:$LINENO: checking for intmax_t" >&5
++echo $ECHO_N "checking for intmax_t... $ECHO_C" >&6
++if test "${gt_cv_c_intmax_t+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++
++#include <stddef.h>
++#include <stdlib.h>
++#if HAVE_STDINT_H_WITH_UINTMAX
++#include <stdint.h>
++#endif
++#if HAVE_INTTYPES_H_WITH_UINTMAX
++#include <inttypes.h>
++#endif
++
++int
++main ()
++{
++intmax_t x = -1;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  gt_cv_c_intmax_t=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++gt_cv_c_intmax_t=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $gt_cv_c_intmax_t" >&5
++echo "${ECHO_T}$gt_cv_c_intmax_t" >&6
++  if test $gt_cv_c_intmax_t = yes; then
++
++cat >>confdefs.h <<\_ACEOF
++#define HAVE_INTMAX_T 1
++_ACEOF
++
++  else
++
++    test $ac_cv_type_long_long = yes \
++      && ac_type='long long' \
++      || ac_type='long'
++
++cat >>confdefs.h <<_ACEOF
++#define intmax_t $ac_type
++_ACEOF
++
++  fi
++
++
++
++
++for ac_func in vasnprintf
++do
++as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
++echo "$as_me:$LINENO: checking for $ac_func" >&5
++echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
++if eval "test \"\${$as_ac_var+set}\" = set"; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+@@ -13038,9 +15993,138 @@
+ #define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+ _ACEOF
+ 
+-echo "$as_me:$LINENO: checking for _doprnt" >&5
+-echo $ECHO_N "checking for _doprnt... $ECHO_C" >&6
+-if test "${ac_cv_func__doprnt+set}" = set; then
++else
++  case $LIBOBJS in
++    "$ac_func.$ac_objext"   | \
++  *" $ac_func.$ac_objext"   | \
++    "$ac_func.$ac_objext "* | \
++  *" $ac_func.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS $ac_func.$ac_objext" ;;
++esac
++
++fi
++done
++
++
++  if test $ac_cv_func_vasnprintf = no; then
++    case $LIBOBJS in
++    "printf-args.$ac_objext"   | \
++  *" printf-args.$ac_objext"   | \
++    "printf-args.$ac_objext "* | \
++  *" printf-args.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS printf-args.$ac_objext" ;;
++esac
++
++    case $LIBOBJS in
++    "printf-parse.$ac_objext"   | \
++  *" printf-parse.$ac_objext"   | \
++    "printf-parse.$ac_objext "* | \
++  *" printf-parse.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS printf-parse.$ac_objext" ;;
++esac
++
++    case $LIBOBJS in
++    "asnprintf.$ac_objext"   | \
++  *" asnprintf.$ac_objext"   | \
++    "asnprintf.$ac_objext "* | \
++  *" asnprintf.$ac_objext "* ) ;;
++  *) LIBOBJS="$LIBOBJS asnprintf.$ac_objext" ;;
++esac
++
++
++
++
++
++
++
++
++
++
++
++
++
++
++  echo "$as_me:$LINENO: checking for ptrdiff_t" >&5
++echo $ECHO_N "checking for ptrdiff_t... $ECHO_C" >&6
++if test "${ac_cv_type_ptrdiff_t+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  cat >conftest.$ac_ext <<_ACEOF
++/* confdefs.h.  */
++_ACEOF
++cat confdefs.h >>conftest.$ac_ext
++cat >>conftest.$ac_ext <<_ACEOF
++/* end confdefs.h.  */
++$ac_includes_default
++int
++main ()
++{
++if ((ptrdiff_t *) 0)
++  return 0;
++if (sizeof (ptrdiff_t))
++  return 0;
++  ;
++  return 0;
++}
++_ACEOF
++rm -f conftest.$ac_objext
++if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
++  (eval $ac_compile) 2>conftest.er1
++  ac_status=$?
++  grep -v '^ *+' conftest.er1 >conftest.err
++  rm -f conftest.er1
++  cat conftest.err >&5
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); } &&
++	 { ac_try='test -z "$ac_c_werror_flag"
++			 || test ! -s conftest.err'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; } &&
++	 { ac_try='test -s conftest.$ac_objext'
++  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
++  (eval $ac_try) 2>&5
++  ac_status=$?
++  echo "$as_me:$LINENO: \$? = $ac_status" >&5
++  (exit $ac_status); }; }; then
++  ac_cv_type_ptrdiff_t=yes
++else
++  echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++ac_cv_type_ptrdiff_t=no
++fi
++rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
++fi
++echo "$as_me:$LINENO: result: $ac_cv_type_ptrdiff_t" >&5
++echo "${ECHO_T}$ac_cv_type_ptrdiff_t" >&6
++if test $ac_cv_type_ptrdiff_t = yes; then
++
++cat >>confdefs.h <<_ACEOF
++#define HAVE_PTRDIFF_T 1
++_ACEOF
++
++
++fi
++
++
++
++
++
++
++
++
++
++
++
++for ac_func in snprintf wcslen
++do
++as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
++echo "$as_me:$LINENO: checking for $ac_func" >&5
++echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
++if eval "test \"\${$as_ac_var+set}\" = set"; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   cat >conftest.$ac_ext <<_ACEOF
+@@ -13049,12 +16133,12 @@
+ cat confdefs.h >>conftest.$ac_ext
+ cat >>conftest.$ac_ext <<_ACEOF
+ /* end confdefs.h.  */
+-/* Define _doprnt to an innocuous variant, in case <limits.h> declares _doprnt.
++/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+    For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define _doprnt innocuous__doprnt
++#define $ac_func innocuous_$ac_func
+ 
+ /* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char _doprnt (); below.
++    which can conflict with char $ac_func (); below.
+     Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+     <limits.h> exists even on freestanding compilers.  */
+ 
+@@ -13064,7 +16148,7 @@
+ # include <assert.h>
+ #endif
+ 
+-#undef _doprnt
++#undef $ac_func
+ 
+ /* Override any gcc2 internal prototype to avoid an error.  */
+ #ifdef __cplusplus
+@@ -13073,14 +16157,14 @@
+ #endif
+ /* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+-char _doprnt ();
++char $ac_func ();
+ /* The GNU C library defines this for functions which it implements
+     to always fail with ENOSYS.  Some functions are actually named
+     something starting with __ and the normal name is an alias.  */
+-#if defined (__stub__doprnt) || defined (__stub____doprnt)
++#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+ choke me
+ #else
+-char (*f) () = _doprnt;
++char (*f) () = $ac_func;
+ #endif
+ #ifdef __cplusplus
+ }
+@@ -13089,7 +16173,7 @@
+ int
+ main ()
+ {
+-return f != _doprnt;
++return f != $ac_func;
+   ;
+   return 0;
+ }
+@@ -13116,30 +16200,31 @@
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&5
+   (exit $ac_status); }; }; then
+-  ac_cv_func__doprnt=yes
++  eval "$as_ac_var=yes"
+ else
+   echo "$as_me: failed program was:" >&5
+ sed 's/^/| /' conftest.$ac_ext >&5
+ 
+-ac_cv_func__doprnt=no
++eval "$as_ac_var=no"
+ fi
+ rm -f conftest.err conftest.$ac_objext \
+       conftest$ac_exeext conftest.$ac_ext
+ fi
+-echo "$as_me:$LINENO: result: $ac_cv_func__doprnt" >&5
+-echo "${ECHO_T}$ac_cv_func__doprnt" >&6
+-if test $ac_cv_func__doprnt = yes; then
+-
+-cat >>confdefs.h <<\_ACEOF
+-#define HAVE_DOPRNT 1
++echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
++echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
++if test `eval echo '${'$as_ac_var'}'` = yes; then
++  cat >>confdefs.h <<_ACEOF
++#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+ _ACEOF
+ 
+ fi
+-
+-fi
+ done
+ 
+ 
++
++
++  fi
++
+ # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
+ # for constant arguments.  Useless!
+ echo "$as_me:$LINENO: checking for working alloca.h" >&5
+@@ -13446,6 +16531,7 @@
+ cat confdefs.h >>conftest.$ac_ext
+ cat >>conftest.$ac_ext <<_ACEOF
+ /* end confdefs.h.  */
++$ac_includes_default
+ int
+ find_stack_direction ()
+ {
+@@ -15547,6 +18633,83 @@
+ : ${CONFIG_STATUS=./config.status}
+ ac_clean_files_save=$ac_clean_files
+ ac_clean_files="$ac_clean_files $CONFIG_STATUS"
++echo "$as_me:$LINENO: checking for a sed that does not truncate output" >&5
++echo $ECHO_N "checking for a sed that does not truncate output... $ECHO_C" >&6
++if test "${ac_cv_path_SED+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  # Extract the first word of "sed gsed" to use in msg output
++if test -z "$SED"; then
++set dummy sed gsed; ac_prog_name=$2
++if test "${ac_cv_path_SED+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  ac_path_SED_found=false
++# Loop through the user's path and test for each of PROGNAME-LIST
++as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++as_dummy="$PATH:/usr/xpg4/bin"
++for as_dir in $as_dummy
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++  for ac_prog in sed gsed; do
++  for ac_exec_ext in '' $ac_executable_extensions; do
++    ac_path_SED="$as_dir/$ac_prog$ac_exec_ext"
++    $as_executable_p "$ac_path_SED" || continue
++    # Check for GNU ac_path_SED and select it if it is found.
++  # Check for GNU $ac_path_SED
++if "$ac_path_SED" --version 2>&1 < /dev/null | grep 'GNU' >/dev/null; then
++  ac_cv_path_SED="$ac_path_SED" ac_path_SED_found=:
++else
++  ac_count=0
++  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
++  while :
++  do
++    cat "conftest.in" "conftest.in" >"conftest.tmp"
++    mv "conftest.tmp" "conftest.in"
++    cp "conftest.in" "conftest.nl"
++    echo '' >> "conftest.nl"
++    "$ac_path_SED" -e 's/a$//' < "conftest.nl" >"conftest.out" 2>/dev/null || break
++    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
++    ac_count=`expr $ac_count + 1`
++    if test $ac_count -gt ${ac_path_SED_max-0}; then
++      # Best one so far, save it but keep looking for a better one
++      ac_cv_path_SED="$ac_path_SED"
++      ac_path_SED_max=$ac_count
++    fi
++    # 10*(2^10) chars as input seems more than enough
++    test $ac_count -gt 10 && break
++  done
++  rm -f conftest.*
++fi
++
++
++    $ac_path_SED_found && break 3
++  done
++done
++
++done
++
++
++fi
++
++SED="$ac_cv_path_SED"
++if test -z "$SED"; then
++  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&5
++echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&2;}
++   { (exit 1); exit 1; }; }
++fi
++
++else
++  ac_cv_path_SED=$SED
++fi
++
++fi
++echo "$as_me:$LINENO: result: $ac_cv_path_SED" >&5
++echo "${ECHO_T}$ac_cv_path_SED" >&6
++ SED="$ac_cv_path_SED"
++
++
+ { echo "$as_me:$LINENO: creating $CONFIG_STATUS" >&5
+ echo "$as_me: creating $CONFIG_STATUS" >&6;}
+ cat >$CONFIG_STATUS <<_ACEOF
+@@ -15559,6 +18722,7 @@
+ debug=false
+ ac_cs_recheck=false
+ ac_cs_silent=false
++SED="$SED"
+ SHELL=\${CONFIG_SHELL-$SHELL}
+ _ACEOF
+ 
+@@ -16136,6 +19300,7 @@
+ s,@am__fastdepCC_TRUE@,$am__fastdepCC_TRUE,;t t
+ s,@am__fastdepCC_FALSE@,$am__fastdepCC_FALSE,;t t
+ s,@CPP@,$CPP,;t t
++s,@GREP@,$GREP,;t t
+ s,@EGREP@,$EGREP,;t t
+ s,@RANLIB@,$RANLIB,;t t
+ s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
+@@ -16151,6 +19316,7 @@
+ s,@PU_RMT_PROG@,$PU_RMT_PROG,;t t
+ s,@DEFAULT_RMT_DIR@,$DEFAULT_RMT_DIR,;t t
+ s,@DEFAULT_RMT_COMMAND@,$DEFAULT_RMT_COMMAND,;t t
++s,@EOVERFLOW@,$EOVERFLOW,;t t
+ s,@MKINSTALLDIRS@,$MKINSTALLDIRS,;t t
+ s,@USE_NLS@,$USE_NLS,;t t
+ s,@MSGFMT@,$MSGFMT,;t t
+@@ -16173,6 +19339,7 @@
+ s,@POSUB@,$POSUB,;t t
+ s,@AUTOM4TE@,$AUTOM4TE,;t t
+ s,@LTLIBOBJS@,$LTLIBOBJS,;t t
++s,@SED@,$SED,;t t
+ CEOF
+ 
+ _ACEOF
+@@ -16180,7 +19347,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.
+@@ -16202,9 +19369,9 @@
+       (echo ':t
+   /@[a-zA-Z_][a-zA-Z_0-9]*@/!b' && cat $tmp/subs.frag) >$tmp/subs-$ac_sed_frag.sed
+       if test -z "$ac_sed_cmds"; then
+-	ac_sed_cmds="sed -f $tmp/subs-$ac_sed_frag.sed"
++	ac_sed_cmds="$SED -f $tmp/subs-$ac_sed_frag.sed"
+       else
+-	ac_sed_cmds="$ac_sed_cmds | sed -f $tmp/subs-$ac_sed_frag.sed"
++	ac_sed_cmds="$ac_sed_cmds | $SED -f $tmp/subs-$ac_sed_frag.sed"
+       fi
+       ac_sed_frag=`expr $ac_sed_frag + 1`
+       ac_beg=$ac_end
+@@ -16384,7 +19551,7 @@
+     done` || { (exit 1); exit 1; }
+ _ACEOF
+ cat >>$CONFIG_STATUS <<_ACEOF
+-  sed "$ac_vpsub
++  \$SED "$ac_vpsub
+ $extrasub
+ _ACEOF
+ cat >>$CONFIG_STATUS <<\_ACEOF
+--- configure.ac.orig	2005-01-09 20:11:09.000000000 -0600
++++ configure.ac	2005-01-10 15:04:25.000000000 -0600
+@@ -92,8 +92,10 @@
+   AC_CONFIG_LINKS(src/fnmatch.h:headers/fnmatch.h)
+ fi
+ 
+-AC_CHECK_FUNCS(lchown endpwent endgrent)
+-AC_FUNC_VPRINTF
++AC_CHECK_FUNCS(lchown lstat endpwent endgrent setlocale)
++gl_XSIZE
++gl_FUNC_VSNPRINTF
++gl_FUNC_VASNPRINTF
+ AC_FUNC_ALLOCA
+ AC_CHECK_LIB(nsl, gethostname, [LIBS="$LIBS -lnsl"])
+ AC_CHECK_LIB(socket, setsockopt, [LIBS="$LIBS -lsocket"])
+--- config.h.in.orig	2005-01-09 20:12:29.000000000 -0600
++++ config.h.in	2005-01-10 15:04:35.000000000 -0600
+@@ -18,6 +18,9 @@
+    language is requested. */
+ #undef ENABLE_NLS
+ 
++/* Define as good substitute value for EOVERFLOW. */
++#undef EOVERFLOW
++
+ /* Define on systems for which file names may have a so-called `drive letter'
+    prefix, define this to compute the length of that prefix, including the
+    colon. */
+@@ -163,13 +166,14 @@
+    don't. */
+ #undef HAVE_DECL_SYS_NERR
+ 
++/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
++   don't. */
++#undef HAVE_DECL_VSNPRINTF
++
+ /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+    */
+ #undef HAVE_DIRENT_H
+ 
+-/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+-#undef HAVE_DOPRNT
+-
+ /* Define to 1 if you have the `endgrent' function. */
+ #undef HAVE_ENDGRENT
+ 
+@@ -200,9 +204,16 @@
+ /* Define if you have the iconv() function. */
+ #undef HAVE_ICONV
+ 
++/* Define if you have the 'intmax_t' type in <stdint.h> or <inttypes.h>. */
++#undef HAVE_INTMAX_T
++
+ /* Define to 1 if you have the <inttypes.h> header file. */
+ #undef HAVE_INTTYPES_H
+ 
++/* Define if <inttypes.h> exists, doesn't clash with <sys/types.h>, and
++   declares uintmax_t. */
++#undef HAVE_INTTYPES_H_WITH_UINTMAX
++
+ /* Define to 1 if you have the `iswprint' function. */
+ #undef HAVE_ISWPRINT
+ 
+@@ -218,6 +229,15 @@
+ /* Define to 1 if you have the <locale.h> header file. */
+ #undef HAVE_LOCALE_H
+ 
++/* Define if you have the 'long double' type. */
++#undef HAVE_LONG_DOUBLE
++
++/* Define if you have the 'long long' type. */
++#undef HAVE_LONG_LONG
++
++/* Define to 1 if you have the `lstat' function. */
++#undef HAVE_LSTAT
++
+ /* Define to 1 if mbrtowc and mbstate_t are properly declared. */
+ #undef HAVE_MBRTOWC
+ 
+@@ -242,12 +262,25 @@
+ /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+ #undef HAVE_NDIR_H
+ 
++/* Define to 1 if the system has the type `ptrdiff_t'. */
++#undef HAVE_PTRDIFF_T
++
++/* Define to 1 if you have the `setlocale' function. */
++#undef HAVE_SETLOCALE
++
++/* Define to 1 if you have the `snprintf' function. */
++#undef HAVE_SNPRINTF
++
+ /* Define to 1 if stdbool.h conforms to C99. */
+ #undef HAVE_STDBOOL_H
+ 
+ /* Define to 1 if you have the <stdint.h> header file. */
+ #undef HAVE_STDINT_H
+ 
++/* Define if <stdint.h> exists, doesn't clash with <sys/types.h>, and declares
++   uintmax_t. */
++#undef HAVE_STDINT_H_WITH_UINTMAX
++
+ /* Define to 1 if you have the <stdlib.h> header file. */
+ #undef HAVE_STDLIB_H
+ 
+@@ -316,15 +349,27 @@
+ /* Define to 1 if you have the <utmp.h> header file. */
+ #undef HAVE_UTMP_H
+ 
+-/* Define to 1 if you have the `vprintf' function. */
+-#undef HAVE_VPRINTF
++/* Define to 1 if you have the `vasnprintf' function. */
++#undef HAVE_VASNPRINTF
++
++/* Define to 1 if you have the `vsnprintf' function. */
++#undef HAVE_VSNPRINTF
+ 
+ /* Define to 1 if you have the <wchar.h> header file. */
+ #undef HAVE_WCHAR_H
+ 
++/* Define if you have the 'wchar_t' type. */
++#undef HAVE_WCHAR_T
++
++/* Define to 1 if you have the `wcslen' function. */
++#undef HAVE_WCSLEN
++
+ /* Define to 1 if you have the <wctype.h> header file. */
+ #undef HAVE_WCTYPE_H
+ 
++/* Define if you have the 'wint_t' type. */
++#undef HAVE_WINT_T
++
+ /* Define to 1 if you have the `wmemchr' function. */
+ #undef HAVE_WMEMCHR
+ 
+@@ -378,6 +423,10 @@
+ /* Define as the return type of signal handlers (`int' or `void'). */
+ #undef RETSIGTYPE
+ 
++/* Define as the maximum value of type 'size_t', if the system doesn't define
++   it. */
++#undef SIZE_MAX
++
+ /* If using the C implementation of alloca, define if you know the
+    direction of stack growth for your system; otherwise it will be
+    automatically deduced at run-time.
+@@ -455,6 +504,9 @@
+ #undef inline
+ #endif
+ 
++/* Define to long or long long if <stdint.h> and <inttypes.h> don't define. */
++#undef intmax_t
++
+ /* Define to a type if <wchar.h> does not define. */
+ #undef mbstate_t
+ 
+@@ -462,6 +514,12 @@
+    supported. Do not define if restrict is supported directly. */
+ #undef restrict
+ 
++/* Define to empty if the C compiler doesn't support this keyword. */
++#undef signed
++
++/* Define to `unsigned' if <sys/types.h> does not define. */
++#undef size_t
++
+ /* Define as a signed type of the same size as size_t. */
+ #undef ssize_t
+ 
+--- aclocal.m4.orig	2005-01-09 20:14:08.000000000 -0600
++++ aclocal.m4	2005-01-09 21:58:59.000000000 -0600
+@@ -1022,6 +1022,7 @@
+ m4_include([m4/argp.m4])
+ m4_include([m4/dirname.m4])
+ m4_include([m4/dos.m4])
++m4_include([m4/eoverflow.m4])
+ m4_include([m4/error.m4])
+ m4_include([m4/exitfail.m4])
+ m4_include([m4/extensions.m4])
+@@ -1030,9 +1031,13 @@
+ m4_include([m4/gettext_gl.m4])
+ m4_include([m4/gnulib.m4])
+ m4_include([m4/iconv.m4])
++m4_include([m4/intmax_t.m4])
++m4_include([m4/inttypes_h.m4])
+ m4_include([m4/lib-ld_gl.m4])
+ m4_include([m4/lib-link.m4])
+ m4_include([m4/lib-prefix_gl.m4])
++m4_include([m4/longdouble.m4])
++m4_include([m4/longlong.m4])
+ m4_include([m4/mbrtowc.m4])
+ m4_include([m4/mbstate_t.m4])
+ m4_include([m4/mempcpy.m4])
+@@ -1047,12 +1052,20 @@
+ m4_include([m4/safe-read.m4])
+ m4_include([m4/safe-write.m4])
+ m4_include([m4/savedir.m4])
++m4_include([m4/signed.m4])
++m4_include([m4/size_max.m4])
+ m4_include([m4/ssize_t.m4])
+ m4_include([m4/stdbool.m4])
++m4_include([m4/stdint_h.m4])
+ m4_include([m4/strcase.m4])
+ m4_include([m4/strchrnul.m4])
+ m4_include([m4/strndup.m4])
+ m4_include([m4/strnlen.m4])
+ m4_include([m4/sysexits.m4])
+ m4_include([m4/unlocked-io.m4])
++m4_include([m4/vasnprintf.m4])
++m4_include([m4/vsnprintf.m4])
++m4_include([m4/wchar_t.m4])
++m4_include([m4/wint_t.m4])
+ m4_include([m4/xalloc.m4])
++m4_include([m4/xsize.m4])

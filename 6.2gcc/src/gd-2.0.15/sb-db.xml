@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gd" version="2.0.15" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}20</install-name>
+
+    <sources>
+      <source checksum="6ededf633b4fd054662ec123c7825fbb"
+        checksum-type="md5" size="526904"
+        path="src/gd-2.0.15.tar.gz"/>
+      <patch checksum="7fab0338d5e9c1ba68c1502fbe9b6cc4"
+        checksum-type="md5" size="1045160"
+        path="src/gd-2.0.15.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/docs"
+]]>
+    </script-header>
+
+    <module name="default">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit \
++DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s -Wl,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib64" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO1 -xtarget=generic"
+  CPPFLAGS="-I/usr/openwin/include" LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO1 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${CPPFLAGS+CPPFLAGS=${CPPFLAGS}} PERL=${PERL}/bin/perl \
+LDFLAGS="${CC_LD_RT}${XPM_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--enable-shared --enable-static --with-jpeg=${JPEG} \
+--with-libfreetype=${LIBTTF} --with-xpm=${XPM} \
+--with-png=${LIBPNG} --with-zlib=${ZLIB} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 index.html ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="2.0.14" to="2.0.15">
+        <item><para>gd.c in 2.0.14 contained an instance of declaring
+variables after the first line of executable code appears. This is of
+course not allowed by ANSI C, although many compilers accept
+it.</para></item>
+      </change>
+
+      <change from="2.0.13" to="2.0.14">
+        <item><para>2.0.13 was available for mere minutes due to a
+typo in the new bounds-checking code for antialiased line drawing.
+Fixed.</para></item>
+        <item><para>Not all platforms -- notably msys/mingw -- have an
+ssize_t type. We now call an int an int in gd_jpeg.c, with good
+results. (Note: ssize_t is signed, unlike size_t, and it needs to be
+here).</para></item>
+      </change>
+
+      <change from="2.0.12" to="2.0.13">
+        <item><para>The main() function of one of the test programs was accidentally included in the gd shared library, causing problems on some platforms. This has been corrected.</para></item>
+        <item><para>The antialiased drawing functions now have proper bounds checking</para></item>
+        <item><para>A void function returned a value in gd_png.c, causing warnings and, on some platforms, compilation errors but no reported runtime problems</para></item>
+        <item><para>Autohinting was being forced ON for freetype text output. This is apparently meant only for testing freetype and does not look as good as the default behavior (FT_LOAD_DEFAULT).</para></item>
+        <item><para>penf.x is properly reset when newlines are encountered in freetype text output</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Search for X11 libraries on RHEL 3.0/AMD64 in
+/usr/X11R6/lib64</para></item>
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 January 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

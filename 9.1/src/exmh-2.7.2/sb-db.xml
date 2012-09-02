@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="exmh" version="2.7.2" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}27</install-name>
+
+    <sources>
+      <source checksum="fdb7c6ff26d0429ea950590a36f1369f"
+        checksum-type="md5" size="1081601"
+        path="src/exmh-2.7.2.tar.gz"/>
+      <patch checksum="95027c4de399fcdaecfdc35b615ca52d"
+        checksum-type="md5" size="10036"
+        path="src/exmh-2.7.2.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="expect" var="EXPECT"
+        install-name="expect54">v&gt;=5.45</depend>
+      <depend program="gnupg" var="GNUPG"
+        install-name="gnupg14">v&gt;=1.4.11</depend>
+      <depend program="tcl" var="TCL"
+        install-name="tcl85">v&gt;=8.5.10</depend>
+      <depend program="tk" var="TK"
+        install-name="tk85">v&gt;=8.5.10</depend>
+      <depend program="metamail" var="METAMAIL"
+        install-name="metamail27">v&gt;=2.7</depend>
+      <depend program="nmh" var="NMH"
+        install-name="nmh13">v&gt;=1.3</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+cat >exmh.conf <<_EOT_
+set wish ${TK}/bin/wish8.5
+set exmh(version) {version 2.7.2 11/01/2005}
+set exmh(name) exmh
+set exmh(maintainer) welch@acm.org
+set mh_path ${SB_INSTALL_PREFIX}/bin
+set exmh(slocal) ${SB_VAR_NMH}/lib/slocal
+set mime(dir) ${SB_VAR_METAMAIL}/bin
+set mailcap_default ${SB_VAR_METAMAIL}/etc/mailcap
+set mimetypes_default ${SB_INSTALL_PREFIX}/lib/mime.types
+set exmh(expect) ${SB_VAR_EXPECT}/bin/expect
+set exmh(expectk) ${SB_VAR_EXPECT}/bin/expectk
+set faces(dir) ${_datadir}/faces
+set faces(set,user) {local users usenix misc}
+set faces(set,unknown) {domains unknown}
+set faces(set,news) news
+set faces(defaultDomain) default.domain
+set faces(suffix) {xpm gif xbm}
+set pgp(pgp,path) ${SB_INSTALL_PREFIX}/bin
+set pgp(pgp5,path) ${SB_INSTALL_PREFIX}/bin
+set pgp(gpg,path) ${SB_VAR_GNUPG}/bin
+set pgp(pgp6,path) ${SB_INSTALL_PREFIX}/bin
+set glimpse(path) ${SB_INSTALL_PREFIX}/bin
+set sound(cmd) {/usr/demo/SOUND/play -v 38}
+set exmh(library) ${SB_INSTALL_PREFIX}/lib
+set install(dir,bin) ${SB_INSTALL_PREFIX}/bin
+set install(dir,man) ${SB_INSTALL_PREFIX}/man/man1
+set install(dir,lib) ${SB_INSTALL_PREFIX}/lib
+_EOT_
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+for _script in exmh exmh-bg exmh-strip; do
+  ${SB_PATH_SED} -e "\
+1 s!wish!${SB_VAR_TK}/bin/wish8.5!" \
+-e "/^#CONFIGURATION/ {
+a\\
+source "${_sysconfdir}/exmh.conf"
+}" ${_script}.MASTER >${_script}
+done
+
+${SB_PATH_SED} -e "\
+1 s!wish!${TK}/bin/wish8.5!" \
+exmh-async.MASTER >exmh-async
+
+${SB_PATH_SED} -e "\
+s!expect -f!${SB_VAR_EXPECT}/bin/expect -f!" ftp.expect.MASTER >ftp.expect
+${SB_PATH_SED} -e "\
+s!expect -f!${SB_VAR_EXPECT}/bin/expect -f!" inc.expect.MASTER >inc.expect
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/man/man1 \
+${SB_INSTALL_PREFIX}/lib/bitmaps ${SB_INSTALL_PREFIX}/lib/html \
+${_datadir}/faces ${_sysconfdir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 exmh exmh-bg exmh-async \
+ftp.expect inc.expect exmh-strip ${SB_INSTALL_PREFIX}/bin
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/* \
+${SB_INSTALL_PREFIX}/lib
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/bitmaps/* \
+${SB_INSTALL_PREFIX}/lib/bitmaps
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/html/* \
+${SB_INSTALL_PREFIX}/lib/html
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 exmh.l \
+${SB_INSTALL_PREFIX}/man/man1/exmh.1
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 exmh.conf ${_sysconfdir}
+]]>
+    </install>
+
+    <notes>
+      <note type="installation">
+        <para>Exmh depends on Tk and nmh to run. They are the only
+dependencies included in the exmh package. However, various 3rd-party
+programs are also used by exmh which have not been marked as
+dependencies in the package. Among them are GnuPG and Metamail.</para>
+      </note>
+
+      <note type="usage">
+        <para>The configuration file
+<command>${SB_INSTALL_PREFIX}/etc/exmh.conf</command> contains default paths to
+various 3rd-party programs such as Expect, GnuPG, and Metamail.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 February 29" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade gnupg dependency from 1.4.10 to
+1.4.11</para></item>
+        <item><para>Upgrade tcl dependency from 8.5.9 to
+8.5.10</para></item>
+        <item><para>Upgrade tk dependency from 8.5.9 to
+8.5.10</para></item>
+      </change>
+
+      <change date="2011 January 13" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Upgrade expect dependency from 5.43 to
+5.45</para></item>
+        <item><para>Upgrade perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Upgrade tcl dependency from 8.5.6 to
+8.5.9</para></item>
+        <item><para>Upgrade tk dependency from 8.5.6 to
+8.5.9</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

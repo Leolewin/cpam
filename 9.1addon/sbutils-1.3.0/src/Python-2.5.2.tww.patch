@@ -1,0 +1,2444 @@
+Index: Lib/site.py
+===================================================================
+--- Lib/site.py.orig	2009-04-25 17:57:06.705202345 +0000
++++ Lib/site.py	2009-05-01 23:14:44.956049634 +0000
+@@ -173,7 +173,7 @@
+ 
+ def addsitepackages(known_paths):
+     """Add site-packages (and possibly site-python) to sys.path"""
+-    prefixes = [sys.prefix]
++    prefixes = [sys.prefix, sys.prefix + 'p']
+     if sys.exec_prefix != sys.prefix:
+         prefixes.append(sys.exec_prefix)
+     for prefix in prefixes:
+Index: Modules/getaddrinfo.c
+===================================================================
+--- Modules/getaddrinfo.c.orig	2009-04-25 17:57:06.674650244 +0000
++++ Modules/getaddrinfo.c	2009-05-01 23:14:44.990662734 +0000
+@@ -57,6 +57,10 @@
+ #include "addrinfo.h"
+ #endif
+ 
++#if defined(NEED_H_ERRNO_DECL)
++extern int h_errno;
++#endif
++
+ #if defined(__KAME__) && defined(ENABLE_IPV6)
+ # define FAITH
+ #endif
+Index: Modules/getnameinfo.c
+===================================================================
+--- Modules/getnameinfo.c.orig	2009-04-25 17:57:06.638907758 +0000
++++ Modules/getnameinfo.c	2009-05-01 23:14:45.025458853 +0000
+@@ -48,6 +48,10 @@
+ #include "addrinfo.h"
+ #endif
+ 
++#if defined(NEED_H_ERRNO_DECL)
++extern int h_errno;
++#endif
++
+ #define SUCCESS 0
+ #define YES 1
+ #define NO  0
+Index: Modules/getpath.c
+===================================================================
+--- Modules/getpath.c.orig	2009-04-25 17:57:06.653816808 +0000
++++ Modules/getpath.c	2009-05-02 03:32:52.123741985 +0000
+@@ -5,6 +5,7 @@
+ 
+ #include <sys/types.h>
+ #include <string.h>
++#include <fcntl.h>
+ 
+ #ifdef __APPLE__
+ #include <mach-o/dyld.h>
+@@ -372,6 +373,7 @@
+     static char separator[2] = {SEP, '\0'};
+     char *pythonpath = PYTHONPATH;
+     char *rtpypath = Py_GETENV("PYTHONPATH");
++    char *incpath = SYSCONFDIR "/include.paths";
+     char *home = Py_GetPythonHome();
+     char *path = getenv("PATH");
+     char *prog = Py_GetProgramName();
+@@ -382,6 +384,8 @@
+     size_t bufsz;
+     size_t prefixsz;
+     char *defpath = pythonpath;
++    struct stat s_incpath;
++    char *s_buf, *s_buf_cp;
+ #ifdef WITH_NEXT_FRAMEWORK
+     NSModule pythonModule;
+ #endif
+@@ -549,6 +553,29 @@
+     if (rtpypath)
+         bufsz += strlen(rtpypath) + 1;
+ 
++    if (stat (incpath, &s_incpath) == 0) {
++        int f_incpath;
++
++        /* This is the first of two malloc calls in this file */
++        s_buf = s_buf_cp = PyMem_Malloc(s_incpath.st_size + 1);
++        f_incpath = open(incpath, O_RDONLY);
++        if (read(f_incpath, s_buf, s_incpath.st_size) == s_incpath.st_size) {
++            off_t index;
++
++            bufsz += s_incpath.st_size + 1;
++
++            for (index = 0; index < s_incpath.st_size; index++)
++                if (s_buf[index] == '\n')
++                    bufsz++;
++
++            /* In the event the last path is not newline terminated */
++            bufsz++;
++        } else
++            s_incpath.st_size = 0;
++        close(f_incpath);
++    } else
++        s_incpath.st_size = 0;
++
+     prefixsz = strlen(prefix) + 1;
+ 
+     while (1) {
+@@ -570,7 +597,7 @@
+     bufsz += strlen(zip_path) + 1;
+     bufsz += strlen(exec_prefix) + 1;
+ 
+-    /* This is the only malloc call in this file */
++    /* This is the second of two malloc calls in this file */
+     buf = (char *)PyMem_Malloc(bufsz);
+ 
+     if (buf == NULL) {
+@@ -588,6 +615,30 @@
+         else
+             buf[0] = '\0';
+ 
++        /* Run-time paths in module config file goes second */
++        if (s_incpath.st_size) {
++            char *s_path = NULL;
++
++            s_buf[s_incpath.st_size] = '\0';
++            while (s_path = strstr(s_buf, "\n")) {
++                *s_path = '\0';
++
++                if (isdir(s_buf)) {
++                    strcat(buf, s_buf);
++                    strcat(buf, delimiter);
++                }
++                s_buf = s_path + 1;
++            }
++
++            /* last path might not be newline terminated */
++            if (strlen(s_buf) && isdir(s_buf)) {
++                strcat(buf, s_buf);
++                strcat(buf, delimiter);
++            }
++
++            PyMem_Free(s_buf_cp);
++        }
++
+         /* Next is the default zip path */
+         strcat(buf, zip_path);
+         strcat(buf, delimiter);
+Index: Modules/ld_so_aix
+===================================================================
+--- Modules/ld_so_aix.orig	2009-04-25 17:57:06.607024763 +0000
++++ Modules/ld_so_aix	2009-05-01 23:14:46.006416180 +0000
+@@ -167,12 +167,13 @@
+ #echo "  -> CC arguments: $args"
+ 
+ CCOPT="-Wl,-e$entry -Wl,-bE:$expfile -Wl,-bI:$impfile -Wl,-bhalt:4"
+-CCOPT="$CCOPT -Wl,-bM:SRE -Wl,-T512 -Wl,-H512 -lm -o $objfile"
+-# Note: to use dynamic libraries like libtcl8.4.so and libtk8.4.so 
+-# you may need to replace the second CCOPT line above with the following:
+-# CCOPT="$CCOPT -Wl,-bM:SRE -Wl,-T512 -Wl,-H512 -brtl -bnortllib -lm -o $objfile"
+-
+-CCARGS="$args"
++CCOPT="$CCOPT -Wl,-T512 -Wl,-H512 -lm -o $objfile"
++case "${CC}" in
++gcc|g++)
++  CCARGS="$args -Wl,-G" ;;
++*)
++  CCARGS="$args -G" ;;
++esac
+ 
+ # Export list generation.
+ #echo $makexp $expfile "$objfile" $objs
+Index: Modules/makesetup
+===================================================================
+--- Modules/makesetup.orig	2009-04-25 17:57:06.618606676 +0000
++++ Modules/makesetup	2009-05-01 23:16:19.911930691 +0000
+@@ -163,7 +163,12 @@
+ 			-Xlinker)	libs="$libs $arg"; skip=libs;;
+ 			-rpath)		libs="$libs $arg"; skip=libs;;
+ 			--rpath)	libs="$libs $arg"; skip=libs;;
++			-B)		libs="$libs $arg"; skip=libs;;
++			-brtl)		libs="$libs $arg";;
++			-blibpath*)	libs="$libs $arg";;
+ 			-[A-Zl]*)	libs="$libs $arg";;
++			+s)		libs="$libs $arg";;
++			+b)		libs="$libs $arg"; skip=libs;;
+ 			*.a)		libs="$libs $arg";;
+ 			*.so)		libs="$libs $arg";;
+ 			*.sl)		libs="$libs $arg";;
+Index: Modules/makexp_aix
+===================================================================
+--- Modules/makexp_aix.orig	2009-04-25 17:57:06.644232034 +0000
++++ Modules/makexp_aix	2009-05-01 23:14:46.078994114 +0000
+@@ -76,6 +76,6 @@
+ xopt=-X32_64
+ $NM -e $xopt $1 >/dev/null 2>&1 || xopt=""
+ 
+-$NM -Bex $xopt $inputFiles					\
+-| sed -e '/ [^BDT] /d' -e '/\./d' -e 's/.* [BDT] //' -e '/::/d'	\
+-| sort | uniq >> $expFileName
++$NM -BCpg $xopt $inputFiles | \
++awk '{ if ((($1 == "T") || ($2 == "D") || ($2 == "B")) && (substr($3,1,1) != ".")) { print $3 } }' | sort -u >> $expFileName
++
+Index: Modules/nismodule.c
+===================================================================
+--- Modules/nismodule.c.orig	2009-04-25 17:57:06.601843115 +0000
++++ Modules/nismodule.c	2009-05-01 23:14:46.238477025 +0000
+@@ -18,11 +18,14 @@
+ #include <rpcsvc/yp_prot.h>
+ #include <rpcsvc/ypclnt.h>
+ 
+-#ifdef __sgi
+-/* This is missing from rpcsvc/ypclnt.h */
++#ifndef HAVE_YP_GET_DEFAULT_DOMAIN_PROTO
+ extern int yp_get_default_domain(char **);
+ #endif
+ 
++#ifndef HAVE_YPERR_STRING_PROTO
++extern char *yperr_string(int);
++#endif
++
+ PyDoc_STRVAR(get_default_domain__doc__, 
+ "get_default_domain() -> str\n\
+ Corresponds to the C library yp_get_default_domain() call, returning\n\
+Index: Python/dynload_aix.c
+===================================================================
+--- Python/dynload_aix.c.orig	2009-04-25 17:57:06.546921742 +0000
++++ Python/dynload_aix.c	2009-05-01 23:14:46.313479193 +0000
+@@ -12,7 +12,7 @@
+ 
+ 
+ #ifdef AIX_GENUINE_CPLUSPLUS
+-#include "/usr/lpp/xlC/include/load.h"
++#include <load.h>
+ #define aix_load loadAndInit
+ #else
+ #define aix_load load
+Index: Python/dynload_hpux.c
+===================================================================
+--- Python/dynload_hpux.c.orig	2009-04-25 17:57:06.541263880 +0000
++++ Python/dynload_hpux.c	2009-05-01 23:14:46.342078573 +0000
+@@ -1,10 +1,11 @@
+ 
+ /* Support for dynamic loading of extension modules */
+ 
++#include "Python.h"
++
+ #include "dl.h"
+ #include <errno.h>
+ 
+-#include "Python.h"
+ #include "importdl.h"
+ 
+ #if defined(__hp9000s300)
+Index: setup.py
+===================================================================
+--- setup.py.orig	2009-05-01 23:14:41.297110429 +0000
++++ setup.py	2009-05-01 23:14:46.366996842 +0000
+@@ -243,10 +243,6 @@
+         return sys.platform
+ 
+     def detect_modules(self):
+-        # Ensure that /usr/local is always used
+-        add_dir_to_list(self.compiler.library_dirs, '/usr/local/lib')
+-        add_dir_to_list(self.compiler.include_dirs, '/usr/local/include')
+-
+         # Add paths specified in the environment variables LDFLAGS and
+         # CPPFLAGS for header and library files.
+         # We must get the values from the Makefile and not the environment
+@@ -410,7 +406,11 @@
+         # supported...)
+ 
+         # fcntl(2) and ioctl(2)
+-        exts.append( Extension('fcntl', ['fcntlmodule.c']) )
++        if platform in ['aix6']:
++            exts.append( Extension('fcntl', ['fcntlmodule.c'],
++                                   libraries=['bsd']) )
++        else:
++            exts.append( Extension('fcntl', ['fcntlmodule.c']) )
+         if platform not in ['mac']:
+             # pwd(3)
+             exts.append( Extension('pwd', ['pwdmodule.c']) )
+@@ -468,439 +468,9 @@
+             # Read SGI RGB image files (but coded portably)
+             exts.append( Extension('rgbimg', ['rgbimgmodule.c']) )
+ 
+-        # readline
+-        do_readline = self.compiler.find_library_file(lib_dirs, 'readline')
+-        if platform == 'darwin':
+-            # MacOSX 10.4 has a broken readline. Don't try to build
+-            # the readline module unless the user has installed a fixed
+-            # readline package
+-            if find_file('readline/rlconf.h', inc_dirs, []) is None:
+-                do_readline = False
+-        if do_readline:
+-            if sys.platform == 'darwin':
+-                # In every directory on the search path search for a dynamic
+-                # library and then a static library, instead of first looking
+-                # for dynamic libraries on the entiry path.
+-                # This way a staticly linked custom readline gets picked up
+-                # before the (broken) dynamic library in /usr/lib.
+-                readline_extra_link_args = ('-Wl,-search_paths_first',)
+-            else:
+-                readline_extra_link_args = ()
+-
+-            readline_libs = ['readline']
+-            if self.compiler.find_library_file(lib_dirs,
+-                                                 'ncursesw'):
+-                readline_libs.append('ncursesw')
+-            elif self.compiler.find_library_file(lib_dirs,
+-                                                 'ncurses'):
+-                readline_libs.append('ncurses')
+-            elif self.compiler.find_library_file(lib_dirs, 'curses'):
+-                readline_libs.append('curses')
+-            elif self.compiler.find_library_file(lib_dirs +
+-                                               ['/usr/lib/termcap'],
+-                                               'termcap'):
+-                readline_libs.append('termcap')
+-            exts.append( Extension('readline', ['readline.c'],
+-                                   library_dirs=['/usr/lib/termcap'],
+-                                   extra_link_args=readline_extra_link_args,
+-                                   libraries=readline_libs) )
+-        if platform not in ['mac']:
+-            # crypt module.
+-
+-            if self.compiler.find_library_file(lib_dirs, 'crypt'):
+-                libs = ['crypt']
+-            else:
+-                libs = []
+-            exts.append( Extension('crypt', ['cryptmodule.c'], libraries=libs) )
+-
+-        # CSV files
+-        exts.append( Extension('_csv', ['_csv.c']) )
+-
+         # socket(2)
+         exts.append( Extension('_socket', ['socketmodule.c'],
+                                depends = ['socketmodule.h']) )
+-        # Detect SSL support for the socket module (via _ssl)
+-        search_for_ssl_incs_in = [
+-                              '/usr/local/ssl/include',
+-                              '/usr/contrib/ssl/include/'
+-                             ]
+-        ssl_incs = find_file('openssl/ssl.h', inc_dirs,
+-                             search_for_ssl_incs_in
+-                             )
+-        if ssl_incs is not None:
+-            krb5_h = find_file('krb5.h', inc_dirs,
+-                               ['/usr/kerberos/include'])
+-            if krb5_h:
+-                ssl_incs += krb5_h
+-        ssl_libs = find_library_file(self.compiler, 'ssl',lib_dirs,
+-                                     ['/usr/local/ssl/lib',
+-                                      '/usr/contrib/ssl/lib/'
+-                                     ] )
+-
+-        if (ssl_incs is not None and
+-            ssl_libs is not None):
+-            exts.append( Extension('_ssl', ['_ssl.c'],
+-                                   include_dirs = ssl_incs,
+-                                   library_dirs = ssl_libs,
+-                                   libraries = ['ssl', 'crypto'],
+-                                   depends = ['socketmodule.h']), )
+-
+-        # find out which version of OpenSSL we have
+-        openssl_ver = 0
+-        openssl_ver_re = re.compile(
+-            '^\s*#\s*define\s+OPENSSL_VERSION_NUMBER\s+(0x[0-9a-fA-F]+)' )
+-        for ssl_inc_dir in inc_dirs + search_for_ssl_incs_in:
+-            name = os.path.join(ssl_inc_dir, 'openssl', 'opensslv.h')
+-            if os.path.isfile(name):
+-                try:
+-                    incfile = open(name, 'r')
+-                    for line in incfile:
+-                        m = openssl_ver_re.match(line)
+-                        if m:
+-                            openssl_ver = eval(m.group(1))
+-                            break
+-                except IOError:
+-                    pass
+-
+-            # first version found is what we'll use (as the compiler should)
+-            if openssl_ver:
+-                break
+-
+-        #print 'openssl_ver = 0x%08x' % openssl_ver
+-
+-        if (ssl_incs is not None and
+-            ssl_libs is not None and
+-            openssl_ver >= 0x00907000):
+-            # The _hashlib module wraps optimized implementations
+-            # of hash functions from the OpenSSL library.
+-            exts.append( Extension('_hashlib', ['_hashopenssl.c'],
+-                                   include_dirs = ssl_incs,
+-                                   library_dirs = ssl_libs,
+-                                   libraries = ['ssl', 'crypto']) )
+-        else:
+-            # The _sha module implements the SHA1 hash algorithm.
+-            exts.append( Extension('_sha', ['shamodule.c']) )
+-            # The _md5 module implements the RSA Data Security, Inc. MD5
+-            # Message-Digest Algorithm, described in RFC 1321.  The
+-            # necessary files md5.c and md5.h are included here.
+-            exts.append( Extension('_md5',
+-                            sources = ['md5module.c', 'md5.c'],
+-                            depends = ['md5.h']) )
+-
+-        if (openssl_ver < 0x00908000):
+-            # OpenSSL doesn't do these until 0.9.8 so we'll bring our own hash
+-            exts.append( Extension('_sha256', ['sha256module.c']) )
+-            exts.append( Extension('_sha512', ['sha512module.c']) )
+-
+-
+-        # Modules that provide persistent dictionary-like semantics.  You will
+-        # probably want to arrange for at least one of them to be available on
+-        # your machine, though none are defined by default because of library
+-        # dependencies.  The Python module anydbm.py provides an
+-        # implementation independent wrapper for these; dumbdbm.py provides
+-        # similar functionality (but slower of course) implemented in Python.
+-
+-        # Sleepycat^WOracle Berkeley DB interface.
+-        #  http://www.oracle.com/database/berkeley-db/db/index.html
+-        #
+-        # This requires the Sleepycat^WOracle DB code. The supported versions
+-        # are set below.  Visit the URL above to download
+-        # a release.  Most open source OSes come with one or more
+-        # versions of BerkeleyDB already installed.
+-
+-        max_db_ver = (4, 7)
+-        # NOTE: while the _bsddb.c code links against BerkeleyDB 4.6.x
+-        # we leave that version disabled by default as it has proven to be
+-        # quite a buggy library release on many platforms.
+-        min_db_ver = (3, 3)
+-        db_setup_debug = True   # verbose debug prints from this script?
+-
+-        # construct a list of paths to look for the header file in on
+-        # top of the normal inc_dirs.
+-        db_inc_paths = [
+-            '/usr/include/db4',
+-            '/usr/local/include/db4',
+-            '/opt/sfw/include/db4',
+-            '/sw/include/db4',
+-            '/usr/include/db3',
+-            '/usr/local/include/db3',
+-            '/opt/sfw/include/db3',
+-            '/sw/include/db3',
+-        ]
+-        # 4.x minor number specific paths
+-        for x in range(max_db_ver[1]+1):
+-            db_inc_paths.append('/usr/include/db4%d' % x)
+-            db_inc_paths.append('/usr/include/db4.%d' % x)
+-            db_inc_paths.append('/usr/local/BerkeleyDB.4.%d/include' % x)
+-            db_inc_paths.append('/usr/local/include/db4%d' % x)
+-            db_inc_paths.append('/pkg/db-4.%d/include' % x)
+-            db_inc_paths.append('/opt/db-4.%d/include' % x)
+-        # 3.x minor number specific paths
+-        for x in (3,):
+-            db_inc_paths.append('/usr/include/db3%d' % x)
+-            db_inc_paths.append('/usr/local/BerkeleyDB.3.%d/include' % x)
+-            db_inc_paths.append('/usr/local/include/db3%d' % x)
+-            db_inc_paths.append('/pkg/db-3.%d/include' % x)
+-            db_inc_paths.append('/opt/db-3.%d/include' % x)
+-
+-        # Add some common subdirectories for Sleepycat DB to the list,
+-        # based on the standard include directories. This way DB3/4 gets
+-        # picked up when it is installed in a non-standard prefix and
+-        # the user has added that prefix into inc_dirs.
+-        std_variants = []
+-        for dn in inc_dirs:
+-            std_variants.append(os.path.join(dn, 'db3'))
+-            std_variants.append(os.path.join(dn, 'db4'))
+-            for x in range(max_db_ver[1]+1):
+-                std_variants.append(os.path.join(dn, "db4%d"%x))
+-                std_variants.append(os.path.join(dn, "db4.%d"%x))
+-            for x in (2,3):
+-                std_variants.append(os.path.join(dn, "db3%d"%x))
+-                std_variants.append(os.path.join(dn, "db3.%d"%x))
+-
+-        db_inc_paths = std_variants + db_inc_paths
+-
+-
+-        db_ver_inc_map = {}
+-
+-        class db_found(Exception): pass
+-        try:
+-            # See whether there is a Sleepycat header in the standard
+-            # search path.
+-            for d in inc_dirs + db_inc_paths:
+-                f = os.path.join(d, "db.h")
+-                if db_setup_debug: print "db: looking for db.h in", f
+-                if os.path.exists(f):
+-                    f = open(f).read()
+-                    m = re.search(r"#define\WDB_VERSION_MAJOR\W(\d+)", f)
+-                    if m:
+-                        db_major = int(m.group(1))
+-                        m = re.search(r"#define\WDB_VERSION_MINOR\W(\d+)", f)
+-                        db_minor = int(m.group(1))
+-                        db_ver = (db_major, db_minor)
+-
+-                        # Avoid 4.6 prior to 4.6.21 due to a BerkeleyDB bug
+-                        if db_ver == (4, 6):
+-                            m = re.search(r"#define\WDB_VERSION_PATCH\W(\d+)", f)
+-                            db_patch = int(m.group(1))
+-                            if db_patch < 21:
+-                                print "db.h:", db_ver, "patch", db_patch,
+-                                print "being ignored (4.6.x must be >= 4.6.21)"
+-                                continue
+-
+-                        if ( (not db_ver_inc_map.has_key(db_ver)) and
+-                           (db_ver <= max_db_ver and db_ver >= min_db_ver) ):
+-                            # save the include directory with the db.h version
+-                            # (first occurrance only)
+-                            db_ver_inc_map[db_ver] = d
+-                            print "db.h: found", db_ver, "in", d
+-                        else:
+-                            # we already found a header for this library version
+-                            if db_setup_debug: print "db.h: ignoring", d
+-                    else:
+-                        # ignore this header, it didn't contain a version number
+-                        if db_setup_debug: print "db.h: unsupported version", db_ver, "in", d
+-
+-            db_found_vers = db_ver_inc_map.keys()
+-            db_found_vers.sort()
+-
+-            while db_found_vers:
+-                db_ver = db_found_vers.pop()
+-                db_incdir = db_ver_inc_map[db_ver]
+-
+-                # check lib directories parallel to the location of the header
+-                db_dirs_to_check = [
+-                    os.path.join(db_incdir, '..', 'lib64'),
+-                    os.path.join(db_incdir, '..', 'lib'),
+-                    os.path.join(db_incdir, '..', '..', 'lib64'),
+-                    os.path.join(db_incdir, '..', '..', 'lib'),
+-                ]
+-                db_dirs_to_check = filter(os.path.isdir, db_dirs_to_check)
+-
+-                # Look for a version specific db-X.Y before an ambiguoius dbX
+-                # XXX should we -ever- look for a dbX name?  Do any
+-                # systems really not name their library by version and
+-                # symlink to more general names?
+-                for dblib in (('db-%d.%d' % db_ver),
+-                              ('db%d%d' % db_ver),
+-                              ('db%d' % db_ver[0])):
+-                    dblib_file = self.compiler.find_library_file(
+-                                    db_dirs_to_check + lib_dirs, dblib )
+-                    if dblib_file:
+-                        dblib_dir = [ os.path.abspath(os.path.dirname(dblib_file)) ]
+-                        raise db_found
+-                    else:
+-                        if db_setup_debug: print "db lib: ", dblib, "not found"
+-
+-        except db_found:
+-            print "db lib: using", db_ver, dblib
+-            if db_setup_debug: print "db: lib dir", dblib_dir, "inc dir", db_incdir
+-            db_incs = [db_incdir]
+-            dblibs = [dblib]
+-            # We add the runtime_library_dirs argument because the
+-            # BerkeleyDB lib we're linking against often isn't in the
+-            # system dynamic library search path.  This is usually
+-            # correct and most trouble free, but may cause problems in
+-            # some unusual system configurations (e.g. the directory
+-            # is on an NFS server that goes away).
+-            exts.append(Extension('_bsddb', ['_bsddb.c'],
+-                                  library_dirs=dblib_dir,
+-                                  runtime_library_dirs=dblib_dir,
+-                                  include_dirs=db_incs,
+-                                  libraries=dblibs))
+-        else:
+-            if db_setup_debug: print "db: no appropriate library found"
+-            db_incs = None
+-            dblibs = []
+-            dblib_dir = None
+-
+-        # The sqlite interface
+-        sqlite_setup_debug = False # verbose debug prints from this script?
+-
+-        # We hunt for #define SQLITE_VERSION "n.n.n"
+-        # We need to find >= sqlite version 3.0.8
+-        sqlite_incdir = sqlite_libdir = None
+-        sqlite_inc_paths = [ '/usr/include',
+-                             '/usr/include/sqlite',
+-                             '/usr/include/sqlite3',
+-                             '/usr/local/include',
+-                             '/usr/local/include/sqlite',
+-                             '/usr/local/include/sqlite3',
+-                           ]
+-        MIN_SQLITE_VERSION_NUMBER = (3, 0, 8)
+-        MIN_SQLITE_VERSION = ".".join([str(x)
+-                                    for x in MIN_SQLITE_VERSION_NUMBER])
+-
+-        # Scan the default include directories before the SQLite specific
+-        # ones. This allows one to override the copy of sqlite on OSX,
+-        # where /usr/include contains an old version of sqlite.
+-        for d in inc_dirs + sqlite_inc_paths:
+-            f = os.path.join(d, "sqlite3.h")
+-            if os.path.exists(f):
+-                if sqlite_setup_debug: print "sqlite: found %s"%f
+-                incf = open(f).read()
+-                m = re.search(
+-                    r'\s*.*#\s*.*define\s.*SQLITE_VERSION\W*"(.*)"', incf)
+-                if m:
+-                    sqlite_version = m.group(1)
+-                    sqlite_version_tuple = tuple([int(x)
+-                                        for x in sqlite_version.split(".")])
+-                    if sqlite_version_tuple >= MIN_SQLITE_VERSION_NUMBER:
+-                        # we win!
+-                        print "%s/sqlite3.h: version %s"%(d, sqlite_version)
+-                        sqlite_incdir = d
+-                        break
+-                    else:
+-                        if sqlite_setup_debug:
+-                            print "%s: version %d is too old, need >= %s"%(d,
+-                                        sqlite_version, MIN_SQLITE_VERSION)
+-                elif sqlite_setup_debug:
+-                    print "sqlite: %s had no SQLITE_VERSION"%(f,)
+-
+-        if sqlite_incdir:
+-            sqlite_dirs_to_check = [
+-                os.path.join(sqlite_incdir, '..', 'lib64'),
+-                os.path.join(sqlite_incdir, '..', 'lib'),
+-                os.path.join(sqlite_incdir, '..', '..', 'lib64'),
+-                os.path.join(sqlite_incdir, '..', '..', 'lib'),
+-            ]
+-            sqlite_libfile = self.compiler.find_library_file(
+-                                sqlite_dirs_to_check + lib_dirs, 'sqlite3')
+-            sqlite_libdir = [os.path.abspath(os.path.dirname(sqlite_libfile))]
+-
+-        if sqlite_incdir and sqlite_libdir:
+-            sqlite_srcs = ['_sqlite/cache.c',
+-                '_sqlite/connection.c',
+-                '_sqlite/cursor.c',
+-                '_sqlite/microprotocols.c',
+-                '_sqlite/module.c',
+-                '_sqlite/prepare_protocol.c',
+-                '_sqlite/row.c',
+-                '_sqlite/statement.c',
+-                '_sqlite/util.c', ]
+-
+-            sqlite_defines = []
+-            if sys.platform != "win32":
+-                sqlite_defines.append(('MODULE_NAME', '"sqlite3"'))
+-            else:
+-                sqlite_defines.append(('MODULE_NAME', '\\"sqlite3\\"'))
+-
+-
+-            if sys.platform == 'darwin':
+-                # In every directory on the search path search for a dynamic
+-                # library and then a static library, instead of first looking
+-                # for dynamic libraries on the entiry path.
+-                # This way a staticly linked custom sqlite gets picked up
+-                # before the dynamic library in /usr/lib.
+-                sqlite_extra_link_args = ('-Wl,-search_paths_first',)
+-            else:
+-                sqlite_extra_link_args = ()
+-
+-            exts.append(Extension('_sqlite3', sqlite_srcs,
+-                                  define_macros=sqlite_defines,
+-                                  include_dirs=["Modules/_sqlite",
+-                                                sqlite_incdir],
+-                                  library_dirs=sqlite_libdir,
+-                                  runtime_library_dirs=sqlite_libdir,
+-                                  extra_link_args=sqlite_extra_link_args,
+-                                  libraries=["sqlite3",]))
+-
+-        # Look for Berkeley db 1.85.   Note that it is built as a different
+-        # module name so it can be included even when later versions are
+-        # available.  A very restrictive search is performed to avoid
+-        # accidentally building this module with a later version of the
+-        # underlying db library.  May BSD-ish Unixes incorporate db 1.85
+-        # symbols into libc and place the include file in /usr/include.
+-        #
+-        # If the better bsddb library can be built (db_incs is defined)
+-        # we do not build this one.  Otherwise this build will pick up
+-        # the more recent berkeleydb's db.h file first in the include path
+-        # when attempting to compile and it will fail.
+-        f = "/usr/include/db.h"
+-        if os.path.exists(f) and not db_incs:
+-            data = open(f).read()
+-            m = re.search(r"#s*define\s+HASHVERSION\s+2\s*", data)
+-            if m is not None:
+-                # bingo - old version used hash file format version 2
+-                ### XXX this should be fixed to not be platform-dependent
+-                ### but I don't have direct access to an osf1 platform and
+-                ### seemed to be muffing the search somehow
+-                libraries = platform == "osf1" and ['db'] or None
+-                if libraries is not None:
+-                    exts.append(Extension('bsddb185', ['bsddbmodule.c'],
+-                                          libraries=libraries))
+-                else:
+-                    exts.append(Extension('bsddb185', ['bsddbmodule.c']))
+-
+-        # The standard Unix dbm module:
+-        if platform not in ['cygwin']:
+-            if find_file("ndbm.h", inc_dirs, []) is not None:
+-                # Some systems have -lndbm, others don't
+-                if self.compiler.find_library_file(lib_dirs, 'ndbm'):
+-                    ndbm_libs = ['ndbm']
+-                else:
+-                    ndbm_libs = []
+-                exts.append( Extension('dbm', ['dbmmodule.c'],
+-                                       define_macros=[('HAVE_NDBM_H',None)],
+-                                       libraries = ndbm_libs ) )
+-            elif (self.compiler.find_library_file(lib_dirs, 'gdbm')
+-                  and find_file("gdbm/ndbm.h", inc_dirs, []) is not None):
+-                exts.append( Extension('dbm', ['dbmmodule.c'],
+-                                       define_macros=[('HAVE_GDBM_NDBM_H',None)],
+-                                       libraries = ['gdbm'] ) )
+-            elif db_incs is not None:
+-                exts.append( Extension('dbm', ['dbmmodule.c'],
+-                                       library_dirs=dblib_dir,
+-                                       runtime_library_dirs=dblib_dir,
+-                                       include_dirs=db_incs,
+-                                       define_macros=[('HAVE_BERKDB_H',None),
+-                                                      ('DB_DBM_HSEARCH',None)],
+-                                       libraries=dblibs))
+-
+-        # Anthony Baxter's gdbm module.  GNU dbm(3) will require -lgdbm:
+-        if (self.compiler.find_library_file(lib_dirs, 'gdbm')):
+-            exts.append( Extension('gdbm', ['gdbmmodule.c'],
+-                                   libraries = ['gdbm'] ) )
+ 
+         # Unix-only modules
+         if platform not in ['mac', 'win32']:
+@@ -910,95 +480,6 @@
+             if platform not in ['atheos']:
+                 exts.append( Extension('resource', ['resource.c']) )
+ 
+-            # Sun yellow pages. Some systems have the functions in libc.
+-            if platform not in ['cygwin', 'atheos']:
+-                if (self.compiler.find_library_file(lib_dirs, 'nsl')):
+-                    libs = ['nsl']
+-                else:
+-                    libs = []
+-                exts.append( Extension('nis', ['nismodule.c'],
+-                                       libraries = libs) )
+-
+-        # Curses support, requiring the System V version of curses, often
+-        # provided by the ncurses library.
+-        panel_library = 'panel'
+-        if (self.compiler.find_library_file(lib_dirs, 'ncursesw')):
+-            curses_libs = ['ncursesw']
+-            # Bug 1464056: If _curses.so links with ncursesw,
+-            # _curses_panel.so must link with panelw.
+-            panel_library = 'panelw'
+-            exts.append( Extension('_curses', ['_cursesmodule.c'],
+-                                   libraries = curses_libs) )
+-        elif (self.compiler.find_library_file(lib_dirs, 'ncurses')):
+-            curses_libs = ['ncurses']
+-            exts.append( Extension('_curses', ['_cursesmodule.c'],
+-                                   libraries = curses_libs) )
+-        elif (self.compiler.find_library_file(lib_dirs, 'curses')
+-              and platform != 'darwin'):
+-                # OSX has an old Berkeley curses, not good enough for
+-                # the _curses module.
+-            if (self.compiler.find_library_file(lib_dirs, 'terminfo')):
+-                curses_libs = ['curses', 'terminfo']
+-            elif (self.compiler.find_library_file(lib_dirs, 'termcap')):
+-                curses_libs = ['curses', 'termcap']
+-            else:
+-                curses_libs = ['curses']
+-
+-            exts.append( Extension('_curses', ['_cursesmodule.c'],
+-                                   libraries = curses_libs) )
+-
+-        # If the curses module is enabled, check for the panel module
+-        if (module_enabled(exts, '_curses') and
+-            self.compiler.find_library_file(lib_dirs, panel_library)):
+-            exts.append( Extension('_curses_panel', ['_curses_panel.c'],
+-                                   libraries = [panel_library] + curses_libs) )
+-
+-
+-        # Andrew Kuchling's zlib module.  Note that some versions of zlib
+-        # 1.1.3 have security problems.  See CERT Advisory CA-2002-07:
+-        # http://www.cert.org/advisories/CA-2002-07.html
+-        #
+-        # zlib 1.1.4 is fixed, but at least one vendor (RedHat) has decided to
+-        # patch its zlib 1.1.3 package instead of upgrading to 1.1.4.  For
+-        # now, we still accept 1.1.3, because we think it's difficult to
+-        # exploit this in Python, and we'd rather make it RedHat's problem
+-        # than our problem <wink>.
+-        #
+-        # You can upgrade zlib to version 1.1.4 yourself by going to
+-        # http://www.gzip.org/zlib/
+-        zlib_inc = find_file('zlib.h', [], inc_dirs)
+-        if zlib_inc is not None:
+-            zlib_h = zlib_inc[0] + '/zlib.h'
+-            version = '"0.0.0"'
+-            version_req = '"1.1.3"'
+-            fp = open(zlib_h)
+-            while 1:
+-                line = fp.readline()
+-                if not line:
+-                    break
+-                if line.startswith('#define ZLIB_VERSION'):
+-                    version = line.split()[2]
+-                    break
+-            if version >= version_req:
+-                if (self.compiler.find_library_file(lib_dirs, 'z')):
+-                    if sys.platform == "darwin":
+-                        zlib_extra_link_args = ('-Wl,-search_paths_first',)
+-                    else:
+-                        zlib_extra_link_args = ()
+-                    exts.append( Extension('zlib', ['zlibmodule.c'],
+-                                           libraries = ['z'],
+-                                           extra_link_args = zlib_extra_link_args))
+-
+-        # Gustavo Niemeyer's bz2 module.
+-        if (self.compiler.find_library_file(lib_dirs, 'bz2')):
+-            if sys.platform == "darwin":
+-                bz2_extra_link_args = ('-Wl,-search_paths_first',)
+-            else:
+-                bz2_extra_link_args = ()
+-            exts.append( Extension('bz2', ['bz2module.c'],
+-                                   libraries = ['bz2'],
+-                                   extra_link_args = bz2_extra_link_args) )
+-
+         # Interface to the Expat XML parser
+         #
+         # Expat was written by James Clark and is now maintained by a
+@@ -1010,6 +491,7 @@
+         #
+         # More information on Expat can be found at www.libexpat.org.
+         #
++
+         expatinc = os.path.join(os.getcwd(), srcdir, 'Modules', 'expat')
+         define_macros = [
+             ('HAVE_EXPAT_CONFIG_H', '1'),
+@@ -1151,179 +633,6 @@
+ 
+         self.extensions.extend(exts)
+ 
+-        # Call the method for detecting whether _tkinter can be compiled
+-        self.detect_tkinter(inc_dirs, lib_dirs)
+-
+-    def detect_tkinter_darwin(self, inc_dirs, lib_dirs):
+-        # The _tkinter module, using frameworks. Since frameworks are quite
+-        # different the UNIX search logic is not sharable.
+-        from os.path import join, exists
+-        framework_dirs = [
+-            '/System/Library/Frameworks/',
+-            '/Library/Frameworks',
+-            join(os.getenv('HOME'), '/Library/Frameworks')
+-        ]
+-
+-        # Find the directory that contains the Tcl.framework and Tk.framework
+-        # bundles.
+-        # XXX distutils should support -F!
+-        for F in framework_dirs:
+-            # both Tcl.framework and Tk.framework should be present
+-            for fw in 'Tcl', 'Tk':
+-                if not exists(join(F, fw + '.framework')):
+-                    break
+-            else:
+-                # ok, F is now directory with both frameworks. Continure
+-                # building
+-                break
+-        else:
+-            # Tk and Tcl frameworks not found. Normal "unix" tkinter search
+-            # will now resume.
+-            return 0
+-
+-        # For 8.4a2, we must add -I options that point inside the Tcl and Tk
+-        # frameworks. In later release we should hopefully be able to pass
+-        # the -F option to gcc, which specifies a framework lookup path.
+-        #
+-        include_dirs = [
+-            join(F, fw + '.framework', H)
+-            for fw in 'Tcl', 'Tk'
+-            for H in 'Headers', 'Versions/Current/PrivateHeaders'
+-        ]
+-
+-        # For 8.4a2, the X11 headers are not included. Rather than include a
+-        # complicated search, this is a hard-coded path. It could bail out
+-        # if X11 libs are not found...
+-        include_dirs.append('/usr/X11R6/include')
+-        frameworks = ['-framework', 'Tcl', '-framework', 'Tk']
+-
+-        ext = Extension('_tkinter', ['_tkinter.c', 'tkappinit.c'],
+-                        define_macros=[('WITH_APPINIT', 1)],
+-                        include_dirs = include_dirs,
+-                        libraries = [],
+-                        extra_compile_args = frameworks,
+-                        extra_link_args = frameworks,
+-                        )
+-        self.extensions.append(ext)
+-        return 1
+-
+-
+-    def detect_tkinter(self, inc_dirs, lib_dirs):
+-        # The _tkinter module.
+-
+-        # Rather than complicate the code below, detecting and building
+-        # AquaTk is a separate method. Only one Tkinter will be built on
+-        # Darwin - either AquaTk, if it is found, or X11 based Tk.
+-        platform = self.get_platform()
+-        if (platform == 'darwin' and
+-            self.detect_tkinter_darwin(inc_dirs, lib_dirs)):
+-            return
+-
+-        # Assume we haven't found any of the libraries or include files
+-        # The versions with dots are used on Unix, and the versions without
+-        # dots on Windows, for detection by cygwin.
+-        tcllib = tklib = tcl_includes = tk_includes = None
+-        for version in ['8.5', '85', '8.4', '84', '8.3', '83', '8.2',
+-                        '82', '8.1', '81', '8.0', '80']:
+-            tklib = self.compiler.find_library_file(lib_dirs, 'tk' + version)
+-            tcllib = self.compiler.find_library_file(lib_dirs, 'tcl' + version)
+-            if tklib and tcllib:
+-                # Exit the loop when we've found the Tcl/Tk libraries
+-                break
+-
+-        # Now check for the header files
+-        if tklib and tcllib:
+-            # Check for the include files on Debian and {Free,Open}BSD, where
+-            # they're put in /usr/include/{tcl,tk}X.Y
+-            dotversion = version
+-            if '.' not in dotversion and "bsd" in sys.platform.lower():
+-                # OpenBSD and FreeBSD use Tcl/Tk library names like libtcl83.a,
+-                # but the include subdirs are named like .../include/tcl8.3.
+-                dotversion = dotversion[:-1] + '.' + dotversion[-1]
+-            tcl_include_sub = []
+-            tk_include_sub = []
+-            for dir in inc_dirs:
+-                tcl_include_sub += [dir + os.sep + "tcl" + dotversion]
+-                tk_include_sub += [dir + os.sep + "tk" + dotversion]
+-            tk_include_sub += tcl_include_sub
+-            tcl_includes = find_file('tcl.h', inc_dirs, tcl_include_sub)
+-            tk_includes = find_file('tk.h', inc_dirs, tk_include_sub)
+-
+-        if (tcllib is None or tklib is None or
+-            tcl_includes is None or tk_includes is None):
+-            self.announce("INFO: Can't locate Tcl/Tk libs and/or headers", 2)
+-            return
+-
+-        # OK... everything seems to be present for Tcl/Tk.
+-
+-        include_dirs = [] ; libs = [] ; defs = [] ; added_lib_dirs = []
+-        for dir in tcl_includes + tk_includes:
+-            if dir not in include_dirs:
+-                include_dirs.append(dir)
+-
+-        # Check for various platform-specific directories
+-        if platform == 'sunos5':
+-            include_dirs.append('/usr/openwin/include')
+-            added_lib_dirs.append('/usr/openwin/lib')
+-        elif os.path.exists('/usr/X11R6/include'):
+-            include_dirs.append('/usr/X11R6/include')
+-            added_lib_dirs.append('/usr/X11R6/lib64')
+-            added_lib_dirs.append('/usr/X11R6/lib')
+-        elif os.path.exists('/usr/X11R5/include'):
+-            include_dirs.append('/usr/X11R5/include')
+-            added_lib_dirs.append('/usr/X11R5/lib')
+-        else:
+-            # Assume default location for X11
+-            include_dirs.append('/usr/X11/include')
+-            added_lib_dirs.append('/usr/X11/lib')
+-
+-        # If Cygwin, then verify that X is installed before proceeding
+-        if platform == 'cygwin':
+-            x11_inc = find_file('X11/Xlib.h', [], include_dirs)
+-            if x11_inc is None:
+-                return
+-
+-        # Check for BLT extension
+-        if self.compiler.find_library_file(lib_dirs + added_lib_dirs,
+-                                           'BLT8.0'):
+-            defs.append( ('WITH_BLT', 1) )
+-            libs.append('BLT8.0')
+-        elif self.compiler.find_library_file(lib_dirs + added_lib_dirs,
+-                                           'BLT'):
+-            defs.append( ('WITH_BLT', 1) )
+-            libs.append('BLT')
+-
+-        # Add the Tcl/Tk libraries
+-        libs.append('tk'+ version)
+-        libs.append('tcl'+ version)
+-
+-        if platform in ['aix3', 'aix4']:
+-            libs.append('ld')
+-
+-        # Finally, link with the X11 libraries (not appropriate on cygwin)
+-        if platform != "cygwin":
+-            libs.append('X11')
+-
+-        ext = Extension('_tkinter', ['_tkinter.c', 'tkappinit.c'],
+-                        define_macros=[('WITH_APPINIT', 1)] + defs,
+-                        include_dirs = include_dirs,
+-                        libraries = libs,
+-                        library_dirs = added_lib_dirs,
+-                        )
+-        self.extensions.append(ext)
+-
+-##         # Uncomment these lines if you want to play with xxmodule.c
+-##         ext = Extension('xx', ['xxmodule.c'])
+-##         self.extensions.append(ext)
+-
+-        # XXX handle these, but how to detect?
+-        # *** Uncomment and edit for PIL (TkImaging) extension only:
+-        #       -DWITH_PIL -I../Extensions/Imaging/libImaging  tkImaging.c \
+-        # *** Uncomment and edit for TOGL extension only:
+-        #       -DWITH_TOGL togl.c \
+-        # *** Uncomment these for TOGL extension only:
+-        #       -lGL -lGLU -lXext -lXmu \
+-
+     def configure_ctypes(self, ext):
+         if not self.use_system_libffi:
+             (srcdir,) = sysconfig.get_config_vars('srcdir')
+Index: Makefile.pre.in
+===================================================================
+--- Makefile.pre.in.orig	2009-04-25 17:57:06.579404845 +0000
++++ Makefile.pre.in	2009-05-02 03:34:18.733517882 +0000
+@@ -61,7 +61,9 @@
+ # Both CPPFLAGS and LDFLAGS need to contain the shell's value for setup.py to
+ # be able to build extension modules using the directories specified in the
+ # environment variables
+-CPPFLAGS=	-I. -IInclude -I$(srcdir)/Include @CPPFLAGS@
++BASECPPFLAGS=	@CPPFLAGS@ @DEBUGDEF@
++CPPFLAGS=	$(BASECPPFLAGS) -I. -I$(srcdir)/Include
++CXXFLAGS=	@CXXFLAGS@
+ LDFLAGS=	@LDFLAGS@
+ LDLAST=		@LDLAST@
+ SGI_ABI=	@SGI_ABI@
+@@ -71,6 +73,7 @@
+ CFLAGSFORSHARED=@CFLAGSFORSHARED@
+ # C flags used for building the interpreter object files
+ PY_CFLAGS=	$(CFLAGS) $(CPPFLAGS) $(CFLAGSFORSHARED) -DPy_BUILD_CORE
++PY_CXXFLAGS=	$(CXXFLAGS) $(CPPFLAGS) $(CFLAGSFORSHARED) -DPy_BUILD_CORE
+ 
+ 
+ # Machine-dependent subdirectories
+@@ -85,6 +88,9 @@
+ # Install prefix for data files
+ datarootdir=    @datarootdir@
+ 
++# Configuration files
++sysconfdir=	@sysconfdir@
++
+ # Expanded directories
+ BINDIR=		$(exec_prefix)/bin
+ LIBDIR=		$(exec_prefix)/lib
+@@ -92,6 +98,7 @@
+ INCLUDEDIR=	@includedir@
+ CONFINCLUDEDIR=	$(exec_prefix)/include
+ SCRIPTDIR=	$(prefix)/lib
++datarootdir=	@datarootdir@
+ 
+ # Detailed destination directories
+ BINLIBDEST=	$(LIBDIR)/python$(VERSION)
+@@ -464,6 +471,7 @@
+ 	$(CC) -c $(PY_CFLAGS) -DPYTHONPATH='"$(PYTHONPATH)"' \
+ 		-DPREFIX='"$(prefix)"' \
+ 		-DEXEC_PREFIX='"$(exec_prefix)"' \
++		-DSYSCONFDIR='"$(sysconfdir)"' \
+ 		-DVERSION='"$(VERSION)"' \
+ 		-DVPATH='"$(VPATH)"' \
+ 		-o $@ $(srcdir)/Modules/getpath.c
+@@ -473,7 +481,7 @@
+ 
+ 
+ $(GRAMMAR_H) $(GRAMMAR_C): $(PGEN) $(GRAMMAR_INPUT)
+-		-@ mkdir Include
++		-@test -d Include || mkdir Include
+ 		-$(PGEN) $(GRAMMAR_INPUT) $(GRAMMAR_H) $(GRAMMAR_C)
+ 
+ $(PGEN):	$(PGENOBJS)
+@@ -580,12 +588,10 @@
+ test:		all platform
+ 		-find $(srcdir)/Lib -name '*.py[co]' -print | xargs rm -f
+ 		-$(TESTPYTHON) $(TESTPROG) $(TESTOPTS)
+-		$(TESTPYTHON) $(TESTPROG) $(TESTOPTS)
+ 
+ testall:	all platform
+ 		-find $(srcdir)/Lib -name '*.py[co]' -print | xargs rm -f
+ 		-$(TESTPYTHON) $(TESTPROG) $(TESTOPTS) -uall
+-		$(TESTPYTHON) $(TESTPROG) $(TESTOPTS) -uall
+ 
+ #  Run the unitests for both architectures in a Universal build on OSX
+ #  Must be run on an Intel box.
+@@ -596,7 +602,6 @@
+ 		fi
+ 		-find $(srcdir)/Lib -name '*.py[co]' -print | xargs rm -f
+ 		-$(TESTPYTHON) $(TESTPROG) $(TESTOPTS) -uall
+-		$(TESTPYTHON) $(TESTPROG) $(TESTOPTS) -uall
+ 		$(RUNSHARED) /usr/libexec/oah/translate ./$(BUILDPYTHON) -E -tt $(TESTPROG) $(TESTOPTS) -uall
+ 
+ 
+@@ -614,14 +619,12 @@
+ quicktest:	all platform
+ 		-find $(srcdir)/Lib -name '*.py[co]' -print | xargs rm -f
+ 		-$(TESTPYTHON) $(TESTPROG) $(QUICKTESTOPTS)
+-		$(TESTPYTHON) $(TESTPROG) $(QUICKTESTOPTS)
+ 
+ MEMTESTOPTS=    $(QUICKTESTOPTS) -x test_dl test___all__ test_fork1 \
+ 		test_longexp
+ memtest:	all platform
+ 		-rm -f $(srcdir)/Lib/test/*.py[co]
+ 		-$(TESTPYTHON) $(TESTPROG) $(MEMTESTOPTS)
+-		$(TESTPYTHON) $(TESTPROG) $(MEMTESTOPTS)
+ 
+ # Install everything
+ install:	@FRAMEWORKINSTALLFIRST@ altinstall bininstall maninstall @FRAMEWORKINSTALLLAST@
+Index: configure.in
+===================================================================
+--- configure.in.orig	2009-04-25 17:57:07.525960707 +0000
++++ configure.in	2009-08-11 23:55:20.092798112 +0000
+@@ -198,6 +198,8 @@
+ # (which may remove their limitations).
+ dnl quadrigraphs "@<:@" and "@:>@" produce "[" and "]" in the output
+ case $ac_sys_system/$ac_sys_release in
++  AIX/@<:@45@:>@*)
++    define_xopen_source=no;;
+   # On OpenBSD, select(2) is not available if _XOPEN_SOURCE is defined,
+   # even though select is a POSIX function. Reported by J. Ribbens.
+   # Reconfirmed for OpenBSD 3.3 by Zachary Hamm, for 3.4 by Jason Ish.
+@@ -232,16 +234,6 @@
+   # This should hopefully be fixed in FreeBSD 4.9
+   FreeBSD/4.8* | Darwin/6* )
+     define_xopen_source=no;;
+-  # On AIX 4 and 5.1, mbstate_t is defined only when _XOPEN_SOURCE == 500 but
+-  # used in wcsnrtombs() and mbsnrtowcs() even if _XOPEN_SOURCE is not defined
+-  # or has another value. By not (re)defining it, the defaults come in place.
+-  AIX/4)
+-    define_xopen_source=no;;
+-  AIX/5)
+-    if test `uname -r` -eq 1; then
+-      define_xopen_source=no
+-    fi
+-    ;;
+   # On Mac OS X 10.4, defining _POSIX_C_SOURCE or _XOPEN_SOURCE
+   # disables platform specific features beyond repair.
+   # On Mac OS X 10.3, defining _POSIX_C_SOURCE or _XOPEN_SOURCE 
+@@ -249,6 +241,22 @@
+   Darwin/@<:@789@:>@.*)
+     define_xopen_source=no
+     ;;
++  IRIX*/6.5)
++    define_xopen_source=no
++    ;;
++  OSF1/V4.0|OSF1/V5.1)
++    define_xopen_source=no
++    ;;
++  HP-UX/B.10.20)
++    define_xopen_source=no
++    ;;
++  # On FreeBSD 4.8 and MacOS X 10.2, a bug in ncurses.h means that
++  # it craps out if _XOPEN_EXTENDED_SOURCE is defined.  Apparently,
++  # this is fixed in 10.3, which identifies itself as Darwin/7.*
++  # This should hopefully be fixed in FreeBSD 4.9
++  FreeBSD/* | Darwin/6*)
++    define_xopen_source=no
++    ;;
+ 
+ esac
+ 
+@@ -259,7 +267,7 @@
+   # Furthermore, on Solaris 10, XPG6 requires the use of a C99
+   # compiler
+   case $ac_sys_system/$ac_sys_release in
+-    SunOS/5.8|SunOS/5.9|SunOS/5.10)
++    SunOS/5.7|SunOS/5.8|SunOS/5.9|SunOS/5.10)
+       AC_DEFINE(_XOPEN_SOURCE, 500, 
+                 Define to the level of X/Open that your system supports)
+       ;;
+@@ -348,15 +356,14 @@
+             AC_HELP_STRING(--without-gcc,never use gcc),
+ [
+ 	case $withval in
+-	no)	CC=cc
+-		without_gcc=yes;;
++	no)	without_gcc=yes;;
+ 	yes)	CC=gcc
+ 		without_gcc=no;;
+ 	*)	CC=$withval
+ 		without_gcc=$withval;;
+ 	esac], [
+ 	case $ac_sys_system in
+-	AIX*)   CC=cc_r
++	AIX*)   CC=xlc_r
+ 		without_gcc=;;
+ 	BeOS*)
+ 		case $BE_HOST_CPU in
+@@ -656,13 +663,14 @@
+ 	  case `uname -m` in
+ 		ia64)
+ 			LDLIBRARY='libpython$(VERSION).so'
++	  		RUNSHARED=LD_LIBRARY_PATH=`pwd`:${LD_LIBRARY_PATH}
+ 			;;
+ 		*)
+ 			LDLIBRARY='libpython$(VERSION).sl'
++	  		RUNSHARED=SHLIB_PATH=`pwd`:${SHLIB_PATH}
+ 			;;
+ 	  esac
+ 	  BLDLIBRARY='-Wl,+b,$(LIBDIR) -L. -lpython$(VERSION)'
+-	  RUNSHARED=SHLIB_PATH=`pwd`:${SHLIB_PATH}
+ 	  ;;
+     OSF*)
+ 	  LDLIBRARY='libpython$(VERSION).so'
+@@ -851,10 +859,11 @@
+ esac
+ 
+ if test "$Py_DEBUG" = 'true'; then
+-  :
++  DEBUGDEF=""
+ else
+-  OPT="-DNDEBUG $OPT"
++  DEBUGDEF="-DNDEBUG"
+ fi
++AC_SUBST([DEBUGDEF])
+ 
+ if test "$ac_arch_flags"
+ then
+@@ -867,43 +876,6 @@
+   ac_cv_opt_olimit_ok=no
+ fi
+ 
+-AC_MSG_CHECKING(whether $CC accepts -OPT:Olimit=0)
+-AC_CACHE_VAL(ac_cv_opt_olimit_ok,
+-[ac_save_cc="$CC"
+-CC="$CC -OPT:Olimit=0"
+-AC_TRY_RUN([int main() { return 0; }],
+-  ac_cv_opt_olimit_ok=yes,
+-  ac_cv_opt_olimit_ok=no,
+-  ac_cv_opt_olimit_ok=no)
+-CC="$ac_save_cc"])
+-AC_MSG_RESULT($ac_cv_opt_olimit_ok)
+-if test $ac_cv_opt_olimit_ok = yes; then
+-    case $ac_sys_system in
+-	# XXX is this branch needed? On MacOSX 10.2.2 the result of the
+-	# olimit_ok test is "no".  Is it "yes" in some other Darwin-esque
+-	# environment?
+-        Darwin*)
+-	    ;;
+-        *)
+-	    BASECFLAGS="$BASECFLAGS -OPT:Olimit=0"
+-	    ;;
+-    esac
+-else
+-  AC_MSG_CHECKING(whether $CC accepts -Olimit 1500)
+-  AC_CACHE_VAL(ac_cv_olimit_ok,
+-  [ac_save_cc="$CC"
+-  CC="$CC -Olimit 1500"
+-  AC_TRY_RUN([int main() { return 0; }],
+-    ac_cv_olimit_ok=yes,
+-    ac_cv_olimit_ok=no,
+-    ac_cv_olimit_ok=no)
+-  CC="$ac_save_cc"])
+-  AC_MSG_RESULT($ac_cv_olimit_ok)
+-  if test $ac_cv_olimit_ok = yes; then
+-    BASECFLAGS="$BASECFLAGS -Olimit 1500"
+-  fi
+-fi
+-
+ # On some compilers, pthreads are available without further options
+ # (e.g. MacOS X). On some of these systems, the compiler will not
+ # complain if unaccepted options are passed (e.g. gcc on Mac OS X).
+@@ -1090,7 +1062,7 @@
+ sys/param.h sys/poll.h sys/select.h sys/socket.h sys/statvfs.h sys/stat.h \
+ sys/time.h \
+ sys/times.h sys/types.h sys/un.h sys/utsname.h sys/wait.h pty.h libutil.h \
+-sys/resource.h netpacket/packet.h sysexits.h bluetooth.h \
++sys/resource.h netpacket/packet.h sysexits.h nbdm.h bluetooth.h \
+ bluetooth/bluetooth.h)
+ AC_HEADER_DIRENT
+ AC_HEADER_MAJOR
+@@ -1283,10 +1255,9 @@
+ then CC="$CC -pthread"
+ fi
+ AC_MSG_CHECKING(for pthread_t)
+-have_pthread_t=no
+-AC_TRY_COMPILE([#include <pthread.h>], [pthread_t x; x = *(pthread_t*)0;], have_pthread_t=yes)
+-AC_MSG_RESULT($have_pthread_t)
+-if test "$have_pthread_t" = yes ; then
++AC_TRY_COMPILE([#include <pthread.h>],
++  [pthread_t x; x = *(pthread_t*)0;],
++  [AC_MSG_RESULT(yes)
+   # AC_CHECK_SIZEOF() doesn't include <pthread.h>.
+   AC_MSG_CHECKING(size of pthread_t)
+   AC_CACHE_VAL(ac_cv_sizeof_pthread_t,
+@@ -1305,8 +1276,8 @@
+   ])
+   AC_MSG_RESULT($ac_cv_sizeof_pthread_t)
+   AC_DEFINE_UNQUOTED(SIZEOF_PTHREAD_T, $ac_cv_sizeof_pthread_t,
+-   [The number of bytes in a pthread_t.])
+-fi
++   [The number of bytes in a pthread_t.])],
++  AC_MSG_RESULT(no))
+ CC="$ac_save_cc"
+ 
+ AC_MSG_CHECKING(for --enable-toolbox-glue)
+@@ -1450,14 +1421,26 @@
+ 		LDSHARED="\$(BINLIBDEST)/config/ld_so_beos \$(LIBDIR)/$LDLIBRARY"
+ 		;;
+ 	IRIX/5*) LDSHARED="ld -shared";;
+-	IRIX*/6*) LDSHARED="ld ${SGI_ABI} -shared -all";;
++	IRIX*/6*)
++		if test "$GCC" = "yes"
++		then LDSHARED='$(CC) -shared'
++		else LDSHARED="ld ${SGI_ABI} -shared -all"
++		fi ;;
+ 	SunOS/5*) 
+ 		if test "$GCC" = "yes"
+ 		then LDSHARED='$(CC) -shared'
+-		else LDSHARED='$(CC) -G';
++		else LDSHARED='$(CC) -G'
++		fi ;;
++	hp*|HP*)
++		if test "$GCC" = "yes"
++		then LDSHARED='$(CC) -shared -fPIC'
++		else LDSHARED="ld -b"
++		fi ;;
++	OSF*)
++		if test "$GCC" = "yes"
++		then LDSHARED='$(CC) -shared -Wl,-expect_unresolved,\*'
++		else LDSHARED="ld -shared -expect_unresolved \"*\""
+ 		fi ;;
+-	hp*|HP*) LDSHARED="ld -b";;
+-	OSF*) LDSHARED="ld -shared -expect_unresolved \"*\"";;
+ 	Darwin/1.3*)
+ 		LDSHARED='$(CC) $(LDFLAGS) -bundle'
+ 		if test "$enable_framework" ; then
+@@ -1600,8 +1583,10 @@
+ 	case $ac_sys_system/$ac_sys_release in
+ 	AIX*)	LINKFORSHARED='-Wl,-bE:Modules/python.exp -lld';;
+ 	hp*|HP*)
+-	    LINKFORSHARED="-Wl,-E -Wl,+s";;
+-#	    LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
++	    if test "`uname -m`" = "ia64"
++	    then LINKFORSHARED="-Wl,-E"
++	    else LINKFORSHARED="-Wl,-E -Wl,+s"
++	    fi ;;
+ 	BSD/OS/4*) LINKFORSHARED="-Xlinker -export-dynamic";;
+ 	Linux*|GNU*) LINKFORSHARED="-Xlinker -export-dynamic";;
+ 	# -u libsys_s pulls in all symbols in libsys
+@@ -1677,8 +1662,11 @@
+ 
+ 
+ # checks for libraries
+-AC_CHECK_LIB(dl, dlopen)	# Dynamic linking for SunOS/Solaris and SYSV
+-AC_CHECK_LIB(dld, shl_load)	# Dynamic linking for HP-UX
++AC_CHECK_FUNC(dlopen, , AC_CHECK_LIB(dl, dlopen,
++	LIBS="$LIBS -ldl"
++	AC_DEFINE_UNQUOTED(HAVE_DLOPEN, 1,
++	[Define if you have the dlopen function.])))
++AC_CHECK_FUNC(shl_load, , AC_CHECK_LIB(dld, shl_load))
+ 
+ # only check for sem_ini if thread support is requested
+ if test "$with_threads" = "yes" -o -z "$with_threads"; then
+@@ -1693,22 +1681,26 @@
+ 	[Define to 1 if libintl is needed for locale functions.]))
+ 
+ # checks for system dependent C++ extensions support
+-case "$ac_sys_system" in
++if test "x$with_cxx_main" = xyes; then
++	AC_LANG_PUSH(C++)
++	case "$ac_sys_system" in
+ 	AIX*)	AC_MSG_CHECKING(for genuine AIX C++ extensions support)
+-		AC_TRY_LINK([#include "/usr/lpp/xlC/include/load.h"],
++		AC_TRY_LINK([#include <load.h>],
+ 			    [loadAndInit("", 0, "")],
+ 			    [AC_DEFINE(AIX_GENUINE_CPLUSPLUS, 1,
+                       [Define for AIX if your compiler is a genuine IBM xlC/xlC_r
+                        and you want support for AIX C++ shared extension modules.])
+ 			     AC_MSG_RESULT(yes)],
+ 			    [AC_MSG_RESULT(no)]);;
+-	*) ;;
+-esac
++	esac
++	AC_LANG_POP(C++)
++fi
+ 
+ # Most SVR4 platforms (e.g. Solaris) need -lsocket and -lnsl.
+ # BeOS' sockets are stashed in libnet.
+-AC_CHECK_LIB(nsl, t_open, [LIBS="-lnsl $LIBS"]) # SVR4
+-AC_CHECK_LIB(socket, socket, [LIBS="-lsocket $LIBS"], [], $LIBS) # SVR4 sockets
++AC_CHECK_FUNC(gethostent, , AC_CHECK_LIB(nsl, gethostent))
++AC_CHECK_FUNC(getsockopt, , AC_CHECK_LIB(socket, setsockopt, ,
++  AC_CHECK_LIB(net, socket)))
+ 
+ case "$ac_sys_system" in
+ BeOS*)
+@@ -1858,17 +1850,18 @@
+     ], unistd_defines_pthreads=yes, unistd_defines_pthreads=no)
+     AC_MSG_RESULT($unistd_defines_pthreads)
+ 
+-    AC_DEFINE(_REENTRANT)
+-    AC_CHECK_HEADER(cthreads.h, [AC_DEFINE(WITH_THREAD)
++    AC_CHECK_HEADER(cthreads.h,[
++    AC_DEFINE(WITH_THREAD)
+     AC_DEFINE(C_THREADS)
+     AC_DEFINE(HURD_C_THREADS, 1,
+     [Define if you are using Mach cthreads directly under /include])
+     LIBS="$LIBS -lthreads"
+     THREADOBJ="Python/thread.o"],[
+-    AC_CHECK_HEADER(mach/cthreads.h, [AC_DEFINE(WITH_THREAD)
++    AC_CHECK_HEADER(mach/cthreads.h,[
++    AC_DEFINE(WITH_THREAD)
+     AC_DEFINE(C_THREADS)
+     AC_DEFINE(MACH_C_THREADS, 1,
+-    [Define if you are using Mach cthreads under mach /])
++    [Define if you are using Mach cthreads under mach])
+     THREADOBJ="Python/thread.o"],[
+     AC_MSG_CHECKING(for --with-pth)
+     AC_ARG_WITH([pth],
+@@ -1887,7 +1880,9 @@
+     _libs=$LIBS
+     LIBS="$LIBS -lpthread"
+     AC_MSG_CHECKING([for pthread_create in -lpthread])
+-    AC_TRY_LINK([#include <pthread.h>
++    AC_TRY_LINK([#include <stdio.h>
++#include <stdlib.h>
++#include <pthread.h>
+ 
+ void * start_routine (void *arg) { exit (0); }], [
+ pthread_create (NULL, NULL, start_routine, NULL)], [
+@@ -1895,6 +1890,7 @@
+     AC_DEFINE(WITH_THREAD)
+     posix_threads=yes
+     THREADOBJ="Python/thread.o"],[
++    AC_MSG_RESULT(no)
+     LIBS=$_libs
+     AC_CHECK_FUNC(pthread_detach, [AC_DEFINE(WITH_THREAD)
+     posix_threads=yes
+@@ -1943,7 +1939,7 @@
+         # If the above checks didn't disable threads, (at least) OSF1
+         # needs this '-threads' argument during linking.
+         case $ac_sys_system in
+-        OSF1) LDLAST=-threads;;
++        OSF1) LDLAST=-pthread;;
+         esac
+     fi
+ fi
+@@ -1957,7 +1953,10 @@
+ 
+       # Bug 662787: Using semaphores causes unexplicable hangs on Solaris 8.
+       case  $ac_sys_system/$ac_sys_release in
+-  SunOS/5.6) AC_DEFINE(HAVE_PTHREAD_DESTRUCTOR, 1,
++      AIX/5) AC_DEFINE(HAVE_BROKEN_POSIX_SEMAPHORES, 1,
++                       Define if the Posix semaphores do not work on your system)
++		       ;;
++      SunOS/5.6) AC_DEFINE(HAVE_PTHREAD_DESTRUCTOR, 1,
+                        Defined for Solaris 2.6 bug in pthread header.)
+ 		       ;;
+       SunOS/5.8) AC_DEFINE(HAVE_BROKEN_POSIX_SEMAPHORES, 1,
+@@ -2106,7 +2105,7 @@
+ 			;;
+ 		solaris)
+ 			if test -f /etc/netconfig; then
+-                          if /usr/xpg4/bin/grep -q tcp6 /etc/netconfig; then
++                          if (/usr/xpg4/bin/grep -q tcp6 /etc/netconfig) 2>/dev/null; then
+ 				ipv6type=$i
+ 				ipv6trylibc=yes
+                           fi
+@@ -2235,33 +2234,34 @@
+ 
+ # DYNLOADFILE specifies which dynload_*.o file we will use for dynamic
+ # loading of modules.
+-AC_SUBST(DYNLOADFILE)
+-AC_MSG_CHECKING(DYNLOADFILE)
+ if test -z "$DYNLOADFILE"
+ then
+ 	case $ac_sys_system/$ac_sys_release in
+ 	AIX*) # Use dynload_shlib.c and dlopen() if we have it; otherwise dynload_aix.c
+-	if test "$ac_cv_func_dlopen" = yes
+-	then DYNLOADFILE="dynload_shlib.o"
+-	else DYNLOADFILE="dynload_aix.o"
+-	fi
++	AC_CHECK_FUNC(dlopen, DYNLOADFILE="dynload_shlib.o",
++		DYNLOADFILE="dynload_aix.o")
+ 	;;
+ 	BeOS*) DYNLOADFILE="dynload_beos.o";;
+-	hp*|HP*) DYNLOADFILE="dynload_hpux.o";;
++	hp*|HP*)
++		if test "`uname -m`" = "ia64"
++		then DYNLOADFILE="dynload_shlib.o"
++		else DYNLOADFILE="dynload_hpux.o"
++		fi ;;
+ 	# Use dynload_next.c only on 10.2 and below, which don't have native dlopen()
+ 	Darwin/@<:@0156@:>@\..*) DYNLOADFILE="dynload_next.o";;
+ 	atheos*) DYNLOADFILE="dynload_atheos.o";;
+ 	*)
+ 	# use dynload_shlib.c and dlopen() if we have it; otherwise stub
+ 	# out any dynamic loading
+-	if test "$ac_cv_func_dlopen" = yes
+-	then DYNLOADFILE="dynload_shlib.o"
+-	else DYNLOADFILE="dynload_stub.o"
+-	fi
++	AC_CHECK_FUNC(dlopen, DYNLOADFILE="dynload_shlib.o",
++		AC_CHECK_LIB(dl, dlopen, DYNLOADFILE="dynload_shlib.o",
++			DYNLOADFILE="dynload_stub.o"))
+ 	;;
+ 	esac
+ fi
++AC_MSG_CHECKING(DYNLOADFILE)
+ AC_MSG_RESULT($DYNLOADFILE)
++AC_SUBST(DYNLOADFILE)
+ if test "$DYNLOADFILE" != "dynload_stub.o"
+ then
+ 	AC_DEFINE(HAVE_DYNAMIC_LOADING, 1,
+@@ -2361,12 +2361,22 @@
+ 
+ AC_MSG_CHECKING(for getpagesize)
+ AC_TRY_COMPILE([
+-#include "confdefs.h" 
+ #include <unistd.h>
+ ], void* p = getpagesize,
+   AC_DEFINE(HAVE_GETPAGESIZE, 1, Define if you have the 'getpagesize' function.)
+-  AC_MSG_RESULT(yes),
++  AC_DEFINE(HAVE_GETPAGESIZE_PROTO, 1,
++    [Define if you have the prototype for the 'getpagesize' function.])
++  AC_MSG_RESULT(yes),[
+   AC_MSG_RESULT(no)
++  AC_MSG_CHECKING([for getpagesize with custom prototype])
++  AC_TRY_COMPILE([
++#include <unistd.h>
++
++extern int getpagesize(void);], void* p = getpagesize,
++  AC_DEFINE(HAVE_GETPAGESIZE, 1,
++  [Define if you have the 'getpagesize' function.])
++  AC_MSG_RESULT(yes),
++  AC_MSG_RESULT(no))]
+ )
+ 
+ dnl check for true
+@@ -2432,7 +2442,6 @@
+ 
+ AC_MSG_CHECKING(for inet_pton)
+ AC_TRY_COMPILE([
+-#include "confdefs.h" 
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+@@ -2443,6 +2452,30 @@
+   AC_MSG_RESULT(no)
+ )
+ 
++AC_MSG_CHECKING(for inet_ntop)
++AC_TRY_COMPILE([
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++], void* p = inet_ntop,[
++  AC_MSG_RESULT(yes)
++  AC_MSG_CHECKING(for inet_ntop prototype)
++  AC_TRY_COMPILE([
++#include <sys/types.h>
++#include <sys/socket.h>
++#include <netinet/in.h>
++#include <arpa/inet.h>
++
++const char *inet_ntop(int, int, char *, size_t);],[
++inet_ntop (0, 0, NULL, 0);],[
++    AC_MSG_RESULT(no)],[
++    AC_DEFINE(HAVE_INET_NTOP_PROTO, 1,
++    [Define if you have the prototype for the 'inet_ntop' function.])
++    AC_MSG_RESULT(yes)])],[
++  AC_MSG_RESULT(no)]
++)
++
+ # On some systems, setgroups is in unistd.h, on others, in grp.h
+ AC_MSG_CHECKING(for setgroups)
+ AC_TRY_COMPILE([
+@@ -2522,6 +2555,7 @@
+ # On OSF/1 V5.1, getaddrinfo is available, but a define
+ # for [no]getaddrinfo in netdb.h. 
+ AC_MSG_CHECKING(for getaddrinfo)
++AC_CACHE_VAL(ac_cv_func_getaddrinfo,[
+ AC_TRY_LINK([
+ #include <sys/types.h>
+ #include <sys/socket.h>
+@@ -2530,9 +2564,14 @@
+ ],[
+ getaddrinfo(NULL, NULL, NULL, NULL);
+ ], [
+-AC_MSG_RESULT(yes)
+-AC_MSG_CHECKING(getaddrinfo bug)
+-AC_TRY_RUN([
++ac_cv_func_getaddrinfo=yes
++], [
++ac_cv_func_getaddrinfo=no])])
++AC_MSG_RESULT($ac_cv_func_getaddrinfo)
++
++if test "$ac_cv_func_getaddrinfo" = "yes"; then
++  AC_MSG_CHECKING(getaddrinfo bug)
++  AC_TRY_RUN([
+ #include <sys/types.h>
+ #include <netdb.h>
+ #include <string.h>
+@@ -2619,15 +2658,14 @@
+   exit(1);
+ }
+ ],
+-AC_MSG_RESULT(good)
+-buggygetaddrinfo=no,
+-AC_MSG_RESULT(buggy)
+-buggygetaddrinfo=yes,
+-AC_MSG_RESULT(buggy)
+-buggygetaddrinfo=yes)], [
+-AC_MSG_RESULT(no)
+-buggygetaddrinfo=yes
+-])
++  AC_MSG_RESULT(no)
++  buggygetaddrinfo=no,
++  AC_MSG_RESULT(yes)
++  buggygetaddrinfo=yes
++)
++else
++  buggygetaddrinfo=yes
++fi
+ 
+ if test "$buggygetaddrinfo" = "yes"; then
+ 	if test "$ipv6" = "yes"; then
+@@ -2783,87 +2821,38 @@
+ ])
+ AC_MSG_RESULT($va_list_is_array)
+ 
+-# sigh -- gethostbyname_r is a mess; it can have 3, 5 or 6 arguments :-(
+-AH_TEMPLATE(HAVE_GETHOSTBYNAME_R,
+-  [Define this if you have some version of gethostbyname_r()])
+-
+-AC_CHECK_FUNC(gethostbyname_r, [
+-  AC_DEFINE(HAVE_GETHOSTBYNAME_R)
+-  AC_MSG_CHECKING([gethostbyname_r with 6 args])
+-  OLD_CFLAGS=$CFLAGS
+-  CFLAGS="$CFLAGS $MY_CPPFLAGS $MY_THREAD_CPPFLAGS $MY_CFLAGS"
+-  AC_TRY_COMPILE([
+-#   include <netdb.h>
+-  ], [
+-    char *name;
+-    struct hostent *he, *res;
+-    char buffer[2048];
+-    int buflen = 2048;
+-    int h_errnop;
+-
+-    (void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop)
+-  ], [
+-    AC_DEFINE(HAVE_GETHOSTBYNAME_R)
+-    AC_DEFINE(HAVE_GETHOSTBYNAME_R_6_ARG, 1,
+-    [Define this if you have the 6-arg version of gethostbyname_r().])
+-    AC_MSG_RESULT(yes)
+-  ], [
+-    AC_MSG_RESULT(no)
+-    AC_MSG_CHECKING([gethostbyname_r with 5 args])
+-    AC_TRY_COMPILE([
+-#     include <netdb.h>
+-    ], [
+-      char *name;
+-      struct hostent *he;
+-      char buffer[2048];
+-      int buflen = 2048;
+-      int h_errnop;
+-
+-      (void) gethostbyname_r(name, he, buffer, buflen, &h_errnop)
+-    ], [
+-      AC_DEFINE(HAVE_GETHOSTBYNAME_R)
+-      AC_DEFINE(HAVE_GETHOSTBYNAME_R_5_ARG, 1,
+-      [Define this if you have the 5-arg version of gethostbyname_r().])
+-      AC_MSG_RESULT(yes)
+-    ], [
+-      AC_MSG_RESULT(no)
+-      AC_MSG_CHECKING([gethostbyname_r with 3 args])
+-      AC_TRY_COMPILE([
+-#       include <netdb.h>
+-      ], [
+-        char *name;
+-        struct hostent *he;
+-        struct hostent_data data;
+-
+-        (void) gethostbyname_r(name, he, &data);
+-      ], [
+-        AC_DEFINE(HAVE_GETHOSTBYNAME_R)
+-        AC_DEFINE(HAVE_GETHOSTBYNAME_R_3_ARG, 1,
+-        [Define this if you have the 3-arg version of gethostbyname_r().])
+-        AC_MSG_RESULT(yes)
+-      ], [
+-        AC_MSG_RESULT(no)
+-      ])
+-    ])
+-  ])
+-  CFLAGS=$OLD_CFLAGS
+-], [
+-  AC_CHECK_FUNCS(gethostbyname)
+-])
+-AC_SUBST(HAVE_GETHOSTBYNAME_R_6_ARG)
+-AC_SUBST(HAVE_GETHOSTBYNAME_R_5_ARG)
+-AC_SUBST(HAVE_GETHOSTBYNAME_R_3_ARG)
+-AC_SUBST(HAVE_GETHOSTBYNAME_R)
+-AC_SUBST(HAVE_GETHOSTBYNAME)
++GETHOSTBYADDR_R_NUM_ARGS
++GETHOSTBYNAME_R_NUM_ARGS
++AC_CHECK_FUNCS(gethostbyname gethostbyaddr)
++
++# Some platforms, like HP-UX 10.20, don't define h_errno. Make sure
++# variable exists so we can define it when needed
++AC_MSG_CHECKING([if we must declare h_errno])
++AC_TRY_LINK([#include <sys/socket.h>
++#include <netinet/in.h>
++#include <netdb.h>], [int h_error;
++gethostbyname(NULL);
++h_error = h_errno;],
++	AC_MSG_RESULT(no), [
++	AC_TRY_LINK([#include <sys/socket.h>
++#include <netinet/in.h>
++#include <netdb.h>
++
++extern int h_errno;], [int h_error;
++gethostbyname(NULL);
++h_error = h_errno;], [
++		AC_MSG_RESULT(yes)
++		AC_DEFINE_UNQUOTED(NEED_H_ERRNO_DECL, 1,
++			[if h_errno undeclared but available])],
++		AC_MSG_RESULT(unavailable))])
++
+ 
+ # checks for system services
+ # (none yet)
+ 
+ # Linux requires this for correct f.p. operations
+-AC_CHECK_FUNC(__fpu_control,
+-  [],
+-  [AC_CHECK_LIB(ieee, __fpu_control)
+-])
++AC_CHECK_FUNC(__fpu_control, ,
++       AC_CHECK_LIB(ieee, __fpu_control))
+ 
+ # Check for --with-fpectl
+ AC_MSG_CHECKING(for --with-fpectl)
+@@ -3101,31 +3090,29 @@
+   AC_CHECK_LIB(termcap, readline)
+ fi
+ 
+-# check for readline 2.1
+-AC_CHECK_LIB(readline, rl_callback_handler_install,
+-	AC_DEFINE(HAVE_RL_CALLBACK, 1,
+-        [Define if you have readline 2.1]), , )
+-
+-# check for readline 2.2
+-AC_TRY_CPP([#include <readline/readline.h>],
+-have_readline=yes, have_readline=no)
+-if test $have_readline = yes
+-then
+-  AC_EGREP_HEADER([extern int rl_completion_append_character;],
+-  [readline/readline.h],
+-  AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
+-  [Define if you have readline 2.2]), )
+-fi
+-
+-# check for readline 4.0
+-AC_CHECK_LIB(readline, rl_pre_input_hook,
+-	AC_DEFINE(HAVE_RL_PRE_INPUT_HOOK, 1,
+-        [Define if you have readline 4.0]), , )
+-
+-# check for readline 4.2
+-AC_CHECK_LIB(readline, rl_completion_matches,
+-	AC_DEFINE(HAVE_RL_COMPLETION_MATCHES, 1,
+-        [Define if you have readline 4.2]), , )
++# check for yperr_string prototype. missing on AIX
++AC_MSG_CHECKING([for yperr_string])
++AC_TRY_COMPILE([#include <sys/time.h>
++#include <sys/types.h>
++#include <rpc/rpc.h>
++#include <rpcsvc/ypclnt.h>
++#include <rpcsvc/yp_prot.h>],[
++char *res = yperr_string(0);],[
++	AC_MSG_RESULT([yes])
++	AC_DEFINE(HAVE_YPERR_STRING_PROTO, 1,
++	[Define if you have the yperr_string() prototype])],[
++	AC_MSG_RESULT([no])
++	AC_MSG_CHECKING([for yperr_string with custom prototype])
++	AC_TRY_COMPILE([#include <sys/time.h>
++#include <sys/types.h>
++#include <rpc/rpc.h>
++#include <rpcsvc/ypclnt.h>
++#include <rpcsvc/yp_prot.h>
++
++extern char *yperr_string (int);],[
++char *res = yperr_string(0);],[
++	AC_MSG_RESULT([yes])],[
++	AC_MSG_RESULT([no])])])
+ 
+ # also in readline 4.2
+ AC_TRY_CPP([#include <readline/readline.h>],
+@@ -3449,16 +3436,7 @@
+  AC_DEFINE(PY_FORMAT_SIZE_T, "z", [Define to printf format modifier for Py_ssize_t])],
+  AC_MSG_RESULT(no))
+ 
+-AC_CHECK_TYPE(socklen_t,,
+-  AC_DEFINE(socklen_t,int,
+-            Define to `int' if <sys/socket.h> does not define.),[
+-#ifdef HAVE_SYS_TYPES_H
+-#include <sys/types.h>
+-#endif
+-#ifdef HAVE_SYS_SOCKET_H
+-#include <sys/socket.h>
+-#endif
+-])
++TYPE_SOCKLEN_T
+ 
+ AC_SUBST(THREADHEADERS)
+ 
+Index: Lib/distutils/unixccompiler.py
+===================================================================
+--- Lib/distutils/unixccompiler.py.orig	2009-04-25 17:57:07.148767175 +0000
++++ Lib/distutils/unixccompiler.py	2009-08-11 23:56:01.912602014 +0000
+@@ -244,7 +244,10 @@
+                         while '=' in linker[i]:
+                             i = i + 1
+ 
+-                    linker[i] = self.compiler_cxx[i]
++                    if sys.platform[:3] == "aix":
++                        linker[i+1] = self.compiler_cxx[i]
++                    else:
++                        linker[i] = self.compiler_cxx[i]
+ 
+                 if sys.platform == 'darwin':
+                     linker = _darwin_compiler_fixup(linker, ld_args)
+@@ -276,17 +279,37 @@
+         # the configuration data stored in the Python installation, so
+         # we use this hack.
+         compiler = os.path.basename(sysconfig.get_config_var("CC"))
+-        if sys.platform[:6] == "darwin":
++        if sys.platform[:3] == "aix":
++            if compiler[:3] == "gcc" or compiler[:3] == "g++":
++                return ["-Wl,-blibpath:" + dir + ":/usr/lib"]
++            else:
++                return ["-blibpath:" + dir + ":/usr/lib"]
++        elif sys.platform[:6] == "darwin":
+             # MacOSX's linker doesn't understand the -R flag at all
+             return "-L" + dir
+         elif sys.platform[:5] == "hp-ux":
+-            return "+s -L" + dir
+-        elif sys.platform[:7] == "irix646" or sys.platform[:6] == "osf1V5":
+-            return ["-rpath", dir]
++            uname = os.uname()
++            if compiler[:3] == "gcc" or compiler[:3] == "g++":
++                if uname[4] == "ia64":
++                    return ["-Wl,+b," + dir]
++                else:
++                    return ["-Wl,+s,+b," + dir]
++            else:
++                if uname[4] == "ia64":
++                    return ["+b", dir]
++                else:
++                    return ["+s", "+b", dir, "-L" + dir ]
++        elif sys.platform[:4] == "irix" or sys.platform[:4] == "osf1":
++            if compiler[:3] == "gcc" or compiler[:3] == "g++":
++                return ["-Wl,-rpath," + dir]
++            else:
++                return ["-rpath", dir]
++        elif sys.platform[:5] == "linux":
++            return ["-Wl,-rpath," + dir]
+         elif compiler[:3] == "gcc" or compiler[:3] == "g++":
+-            return "-Wl,-R" + dir
++            return ["-Wl,-R" + dir]
+         else:
+-            return "-R" + dir
++            return ["-R" + dir]
+ 
+     def library_option(self, lib):
+         return "-l" + lib
+Index: Lib/distutils/util.py
+===================================================================
+--- Lib/distutils/util.py.orig	2009-04-25 17:57:07.156146397 +0000
++++ Lib/distutils/util.py	2009-05-01 23:14:46.771063203 +0000
+@@ -45,7 +45,7 @@
+     osname = string.lower(osname)
+     osname = string.replace(osname, '/', '')
+     machine = string.replace(machine, ' ', '_')
+-    machine = string.replace(machine, '/', '-')
++    machine = string.replace(machine, '/', '_')
+ 
+     if osname[:5] == "linux":
+         # At least on Linux/Intel, 'machine' is the processor --
+Index: aclocal.m4
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ aclocal.m4	2009-05-01 23:14:46.797294024 +0000
+@@ -0,0 +1,184 @@
++dnl Determine number of arguments to gethostbyaddr_r (5, 7, or 8).
++AC_DEFUN([GETHOSTBYADDR_R_NUM_ARGS],
++[
++  have_gethostbyaddr_r=no
++
++  AC_SEARCH_LIBS(gethostbyaddr_r, [nsl], [
++    have_gethostbyaddr_r=yes
++
++    AC_DEFINE(HAVE_GETHOSTBYADDR_R, 1,
++       [Define to 1 if you have the `gethostbyaddr_r' function.])
++    AC_MSG_CHECKING([if gethostbyaddr_r takes 5 arguments])
++    AC_TRY_COMPILE([
++#include <stdio.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++char *address;
++int length;
++int type;
++struct hostent h;
++struct hostent_data hdata;
++int rc;
++rc = gethostbyaddr_r(address, length, type, &h, &hdata);],[
++      AC_MSG_RESULT(yes)
++      AC_DEFINE(GETHOSTBYADDR_R_NARGS, 5,
++        [Number of arguments to gethostbyname_r()])], [
++      AC_MSG_RESULT(no)
++      AC_MSG_CHECKING([if gethostbyaddr_r with -D_REENTRANT takes 5 arguments])
++      AC_TRY_COMPILE([
++#define _REENTRANT
++
++#include <stdio.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++char *address;
++int length;
++int type;
++struct hostent h;
++struct hostent_data hdata;
++int rc;
++rc = gethostbyaddr_r(address, length, type, &h, &hdata);],[
++        AC_MSG_RESULT(yes)
++        AC_DEFINE(GETHOSTBYADDR_R_NARGS, 5,
++          [Number of arguments to gethostbyaddr_r()])
++        AC_DEFINE(GETHOSTBYADDR_R_NEEDS__REENTRANT, 1,
++          [gethostbyaddr_r() needs -D_REENTRANT])], [
++        AC_MSG_RESULT(no)
++        AC_MSG_CHECKING([if gethostbyaddr_r takes 7 arguments])
++        AC_TRY_COMPILE([
++#include <stdio.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++char *address;
++int length;
++int type;
++struct hostent h;
++char buffer[8192];
++int h_errnop;
++struct hostent * hp;
++
++hp = gethostbyaddr_r(address, length, type, &h,
++                     buffer, 8192, &h_errnop);], [
++          AC_MSG_RESULT(yes)
++          AC_DEFINE(GETHOSTBYADDR_R_NARGS, 7,
++            [Number of arguments to gethostbyaddr_r()])], [
++          AC_MSG_RESULT(no)
++          AC_MSG_CHECKING([if gethostbyaddr_r takes 8 arguments])
++          AC_TRY_COMPILE([
++#include <stdio.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++char *address;
++int length;
++int type;
++struct hostent h;
++char buffer[8192];
++int h_errnop;
++struct hostent * hp;
++int rc;
++rc = gethostbyaddr_r(address, length, type, &h,
++                     buffer, 8192, &hp, &h_errnop);],[
++            AC_MSG_RESULT(yes)
++            AC_DEFINE(GETHOSTBYADDR_R_NARGS, 8,
++              [Number of arguments to gethostbyaddr_r()])], [
++            AC_MSG_RESULT(no)])])])])])
++])
++AC_DEFUN([GETHOSTBYNAME_R_NUM_ARGS],
++[
++  have_gethostbyname_r=no
++
++  AC_SEARCH_LIBS(gethostbyname_r, [nsl], [
++    have_gethostbyname_r=yes
++
++    AC_DEFINE(HAVE_GETHOSTBYNAME_R, 1,
++      [Define to 1 if you have the `gethostbyname_r' function.])
++    AC_MSG_CHECKING([if gethostbyname_r takes 3 arguments])
++    AC_TRY_COMPILE([
++#include <stdio.h>
++#include <string.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++struct hostent_data data;
++gethostbyname_r (NULL, NULL, NULL);],[
++      AC_MSG_RESULT(yes)
++      AC_DEFINE(GETHOSTBYNAME_R_NARGS, 3,
++        [Number of arguments to gethostbyname_r()])],[
++      AC_MSG_RESULT(no)
++      AC_MSG_CHECKING([if gethostbyname_r with -D_REENTRANT takes 3 arguments])
++      AC_TRY_COMPILE([
++#define _REENTRANT
++
++#include <stdio.h>
++#include <string.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++struct hostent_data data;
++gethostbyname_r (NULL, NULL, NULL);],[
++        AC_MSG_RESULT(yes)
++        AC_DEFINE(GETHOSTBYNAME_R_NARGS, 3,
++          [Number of arguments to gethostbyname_r()])
++        AC_DEFINE(GETHOSTBYNAME_R_NEEDS__REENTRANT, 1,
++          [gethostbyname_r() needs -D_REENTRANT])],[
++        AC_MSG_RESULT(no)
++        AC_MSG_CHECKING([if gethostbyname_r takes 5 arguments])
++          AC_TRY_COMPILE([
++#include <stdio.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++gethostbyname_r (NULL, NULL, NULL, 0, NULL);],[
++          AC_MSG_RESULT(yes)
++          AC_DEFINE(GETHOSTBYNAME_R_NARGS, 5,
++            [Number of arguments to gethostbyname_r()])],[
++          AC_MSG_RESULT(no)
++          AC_MSG_CHECKING([if gethostbyname_r takes 6 arguments])
++          AC_TRY_COMPILE([
++#include <stdio.h>
++#include <sys/types.h>
++#include <netdb.h>],[
++gethostbyname_r (NULL, NULL, NULL, 0, NULL, NULL);],[
++            AC_MSG_RESULT(yes)
++            AC_DEFINE(GETHOSTBYNAME_R_NARGS, 6,
++              [Number of arguments to gethostbyname_r()])],[
++            AC_MSG_RESULT(no)
++            AC_MSG_ERROR([cannot determine arguments to gethostbyname_r])])])])])])
++])
++dnl Check for socklen_t: historically on BSD it is an int, and in
++dnl POSIX 1g it is a type of its own, but some platforms use different
++dnl types for the argument to getsockopt, getpeername, etc.  So we
++dnl have to test to find something that will work.
++AC_DEFUN([TYPE_SOCKLEN_T],
++[
++   AC_CHECK_TYPE([socklen_t], ,[
++      AC_MSG_CHECKING([for socklen_t equivalent])
++      AC_CACHE_VAL([_cv_socklen_t_equiv],
++      [
++         # Systems have either "struct sockaddr *" or
++         # "void *" as the second argument to getpeername
++         _cv_socklen_t_equiv=
++         for arg2 in "struct sockaddr" void; do
++            for t in int size_t unsigned long "unsigned long"; do
++               AC_TRY_COMPILE([
++                  #include <sys/types.h>
++                  #include <sys/socket.h>
++
++                  int getpeername (int, $arg2 *, $t *);
++               ],[
++                  $t len;
++                  getpeername(0,0,&len);
++               ],[
++                  _cv_socklen_t_equiv="$t"
++                  break
++               ])
++            done
++         done
++
++         if test "x$_cv_socklen_t_equiv" = x; then
++            AC_MSG_ERROR([Cannot find a type to use in place of socklen_t])
++         fi
++      ])
++      AC_MSG_RESULT($_cv_socklen_t_equiv)
++      AC_DEFINE_UNQUOTED(socklen_t, $_cv_socklen_t_equiv,
++			[type to use in place of socklen_t if not defined])],
++      [#include <sys/types.h>
++#include <sys/socket.h>])
++])
+Index: Modules/socketmodule.c
+===================================================================
+--- Modules/socketmodule.c.orig	2009-04-25 17:57:06.680508526 +0000
++++ Modules/socketmodule.c	2009-05-01 23:14:46.898607952 +0000
+@@ -121,31 +121,14 @@
+ /* XXX This is a terrible mess of platform-dependent preprocessor hacks.
+    I hope some day someone can clean this up please... */
+ 
+-/* Hacks for gethostbyname_r().  On some non-Linux platforms, the configure
+-   script doesn't get this right, so we hardcode some platform checks below.
+-   On the other hand, not all Linux versions agree, so there the settings
+-   computed by the configure script are needed! */
+-
+-#ifndef linux
+-# undef HAVE_GETHOSTBYNAME_R_3_ARG
+-# undef HAVE_GETHOSTBYNAME_R_5_ARG
+-# undef HAVE_GETHOSTBYNAME_R_6_ARG
++/* Tru64 UNIX needs -D_REENTRANT to expose gethostbyaddr_r() */
++#if defined(GETHOSTBYADDR_R_NEEDS__REENTRANT) && !defined(_REENTRANT)
++#define _REENTRANT
+ #endif
+ 
+-#ifndef WITH_THREAD
+-# undef HAVE_GETHOSTBYNAME_R
+-#endif
+-
+-#ifdef HAVE_GETHOSTBYNAME_R
+-# if defined(_AIX) || defined(__osf__)
+-#  define HAVE_GETHOSTBYNAME_R_3_ARG
+-# elif defined(__sun) || defined(__sgi)
+-#  define HAVE_GETHOSTBYNAME_R_5_ARG
+-# elif defined(linux)
+-/* Rely on the configure script */
+-# else
+-#  undef HAVE_GETHOSTBYNAME_R
+-# endif
++/* Tru64 UNIX needs -D_REENTRANT to expose gethostbyname_r() */
++#if defined(GETHOSTBYNAME_R_NEEDS__REENTRANT) && !defined(_REENTRANT)
++#define _REENTRANT
+ #endif
+ 
+ #if !defined(HAVE_GETHOSTBYNAME_R) && defined(WITH_THREAD) && \
+@@ -178,6 +161,10 @@
+ # include "pythread.h"
+ #endif
+ 
++#ifdef HAVE_UNISTD_H
++#include <unistd.h>
++#endif
++
+ #if defined(PYCC_VACPP)
+ # include <types.h>
+ # include <io.h>
+@@ -198,15 +185,6 @@
+ #endif
+ 
+ #if defined(__sgi) && _COMPILER_VERSION>700 && !_SGIAPI
+-/* make sure that the reentrant (gethostbyaddr_r etc)
+-   functions are declared correctly if compiling with
+-   MIPSPro 7.x in ANSI C mode (default) */
+-
+-/* XXX Using _SGIAPI is the wrong thing,
+-   but I don't know what the right thing is. */
+-#undef _SGIAPI /* to avoid warning */
+-#define _SGIAPI 1
+-
+ #undef _XOPEN_SOURCE
+ #include <sys/socket.h>
+ #include <sys/types.h>
+@@ -215,15 +193,9 @@
+ #define HAVE_GETADDRINFO 1
+ #define HAVE_GETNAMEINFO 1
+ #endif
+-
+-#define HAVE_INET_PTON
+-#include <netdb.h>
+ #endif
+ 
+-/* Irix 6.5 fails to define this variable at all. This is needed
+-   for both GCC and SGI's compiler. I'd say that the SGI headers
+-   are just busted. Same thing for Solaris. */
+-#if (defined(__sgi) || defined(sun)) && !defined(INET_ADDRSTRLEN)
++#ifndef INET_ADDRSTRLEN
+ #define INET_ADDRSTRLEN 16
+ #endif
+ 
+@@ -272,6 +244,10 @@
+ 
+ #endif
+ 
++#if defined(NEED_H_ERRNO_DECL)
++extern int h_errno;
++#endif
++
+ #include <stddef.h>
+ 
+ #ifndef offsetof
+@@ -282,22 +258,16 @@
+ # define O_NONBLOCK O_NDELAY
+ #endif
+ 
+-/* include Python's addrinfo.h unless it causes trouble */
+-#if defined(__sgi) && _COMPILER_VERSION>700 && defined(_SS_ALIGNSIZE)
+-  /* Do not include addinfo.h on some newer IRIX versions.
+-   * _SS_ALIGNSIZE is defined in sys/socket.h by 6.5.21,
+-   * for example, but not by 6.5.10.
+-   */
+-#elif defined(_MSC_VER) && _MSC_VER>1201
+-  /* Do not include addrinfo.h for MSVC7 or greater. 'addrinfo' and
+-   * EAI_* constants are defined in (the already included) ws2tcpip.h.
+-   */
+-#else
+-#  include "addrinfo.h"
++#ifndef MAXPATHLEN
++#define MAXPATHLEN 1024
+ #endif
+ 
++#include "addrinfo.h"
++
+ #ifndef HAVE_INET_PTON
+ int inet_pton(int af, const char *src, void *dst);
++#endif
++#ifndef HAVE_INET_NTOP_PROTO
+ const char *inet_ntop(int af, const void *src, char *dst, socklen_t size);
+ #endif
+ 
+@@ -3139,14 +3109,14 @@
+ 	PyObject *ret;
+ #ifdef HAVE_GETHOSTBYNAME_R
+ 	struct hostent hp_allocated;
+-#ifdef HAVE_GETHOSTBYNAME_R_3_ARG
++#if GETHOSTBYNAME_R_NARGS == 3
+ 	struct hostent_data data;
+ #else
+ 	char buf[16384];
+ 	int buf_len = (sizeof buf) - 1;
+ 	int errnop;
+ #endif
+-#if defined(HAVE_GETHOSTBYNAME_R_3_ARG) || defined(HAVE_GETHOSTBYNAME_R_6_ARG)
++#if (GETHOSTBYNAME_R_NARGS == 3) || (GETHOSTBYNAME_R_NARGS == 6)
+ 	int result;
+ #endif
+ #endif /* HAVE_GETHOSTBYNAME_R */
+@@ -3157,12 +3127,12 @@
+ 		return NULL;
+ 	Py_BEGIN_ALLOW_THREADS
+ #ifdef HAVE_GETHOSTBYNAME_R
+-#if   defined(HAVE_GETHOSTBYNAME_R_6_ARG)
++#if GETHOSTBYNAME_R_NARGS == 6
+ 	result = gethostbyname_r(name, &hp_allocated, buf, buf_len,
+ 				 &h, &errnop);
+-#elif defined(HAVE_GETHOSTBYNAME_R_5_ARG)
++#elif GETHOSTBYNAME_R_NARGS == 5
+ 	h = gethostbyname_r(name, &hp_allocated, buf, buf_len, &errnop);
+-#else /* HAVE_GETHOSTBYNAME_R_3_ARG */
++#elif GETHOSTBYNAME_R_NARGS == 3
+ 	memset((void *) &data, '\0', sizeof(data));
+ 	result = gethostbyname_r(name, &hp_allocated, &data);
+ 	h = (result != 0) ? NULL : &hp_allocated;
+@@ -3209,19 +3179,19 @@
+ 	char *ip_num;
+ 	struct hostent *h;
+ 	PyObject *ret;
+-#ifdef HAVE_GETHOSTBYNAME_R
++#ifdef HAVE_GETHOSTBYADDR_R
+ 	struct hostent hp_allocated;
+-#ifdef HAVE_GETHOSTBYNAME_R_3_ARG
++#if GETHOSTBYADDR_R_NARGS == 5
+ 	struct hostent_data data;
+ #else
+ 	char buf[16384];
+ 	int buf_len = (sizeof buf) - 1;
+ 	int errnop;
+ #endif
+-#if defined(HAVE_GETHOSTBYNAME_R_3_ARG) || defined(HAVE_GETHOSTBYNAME_R_6_ARG)
++#if GETHOSTBYADDR_R_NARGS == 5 || GETHOSTBYADDR_R_NARGS == 8
+ 	int result;
+ #endif
+-#endif /* HAVE_GETHOSTBYNAME_R */
++#endif /* HAVE_GETHOSTBYADDR_R */
+ 	char *ap;
+ 	int al;
+ 	int af;
+@@ -3239,7 +3209,7 @@
+ 		ap = (char *)&((struct sockaddr_in *)sa)->sin_addr;
+ 		al = sizeof(((struct sockaddr_in *)sa)->sin_addr);
+ 		break;
+-#ifdef ENABLE_IPV6
++#if defined(ENABLE_IPV6) && defined(AF_INET6)
+ 	case AF_INET6:
+ 		ap = (char *)&((struct sockaddr_in6 *)sa)->sin6_addr;
+ 		al = sizeof(((struct sockaddr_in6 *)sa)->sin6_addr);
+@@ -3250,25 +3220,25 @@
+ 		return NULL;
+ 	}
+ 	Py_BEGIN_ALLOW_THREADS
+-#ifdef HAVE_GETHOSTBYNAME_R
+-#if   defined(HAVE_GETHOSTBYNAME_R_6_ARG)
++#ifdef HAVE_GETHOSTBYADDR_R
++#if GETHOSTBYADDR_R_NARGS == 8
+ 	result = gethostbyaddr_r(ap, al, af,
+ 		&hp_allocated, buf, buf_len,
+ 		&h, &errnop);
+-#elif defined(HAVE_GETHOSTBYNAME_R_5_ARG)
++#elif GETHOSTBYADDR_R_NARGS == 7
+ 	h = gethostbyaddr_r(ap, al, af,
+ 			    &hp_allocated, buf, buf_len, &errnop);
+-#else /* HAVE_GETHOSTBYNAME_R_3_ARG */
++#elif GETHOSTBYADDR_R_NARGS == 5
+ 	memset((void *) &data, '\0', sizeof(data));
+ 	result = gethostbyaddr_r(ap, al, af, &hp_allocated, &data);
+ 	h = (result != 0) ? NULL : &hp_allocated;
+ #endif
+-#else /* not HAVE_GETHOSTBYNAME_R */
++#else /* not HAVE_GETHOSTBYADDR_R */
+ #ifdef USE_GETHOSTBYNAME_LOCK
+ 	PyThread_acquire_lock(netdb_lock, 1);
+ #endif
+ 	h = gethostbyaddr(ap, al, af);
+-#endif /* HAVE_GETHOSTBYNAME_R */
++#endif /* HAVE_GETHOSTBYADDR_R */
+ 	Py_END_ALLOW_THREADS
+ 	ret = gethost_common(h, (struct sockaddr *)&addr, sizeof(addr), af);
+ #ifdef USE_GETHOSTBYNAME_LOCK
+Index: Misc/python-config.in
+===================================================================
+--- Misc/python-config.in.orig	2009-04-25 17:57:06.530550921 +0000
++++ Misc/python-config.in	2009-05-01 23:14:46.949567798 +0000
+@@ -43,8 +43,7 @@
+     print ' '.join(flags)
+ 
+ elif opt in ('--libs', '--ldflags'):
+-    libs = getvar('LIBS').split() + getvar('SYSLIBS').split()
+-    libs.append('-lpython'+pyver)
++    libs = ['-lpython'+pyver]
+     # add the prefix/lib/pythonX.Y/config dir, but only if there is no
+     # shared library in prefix/lib/.
+     if opt == '--ldflags' and not getvar('Py_ENABLE_SHARED'):
+Index: Lib/ctypes/util.py
+===================================================================
+--- Lib/ctypes/util.py.orig	2009-04-25 17:57:06.770032346 +0000
++++ Lib/ctypes/util.py	2009-05-01 23:14:47.038984596 +0000
+@@ -82,8 +82,27 @@
+             # assuming GNU binutils / ELF
+             if not f:
+                 return None
+-            cmd = "objdump -p -j .dynamic 2>/dev/null " + f
+-            res = re.search(r'\sSONAME\s+([^\s]+)', os.popen(cmd).read())
++            if sys.platform[:5] == "hp-ux":
++              if os.uname()[4] == 'ia64':
++                cmd = "objdump -L 2>/dev/null " + f
++                res = re.search(r'Soname\s+([^\s]+)', os.popen(cmd).read())
++              else:
++                cmd = "chatr 2>/dev/null " + f
++                res = re.search(r'internal name:$\s+([^\s]+)', os.popen(cmd).read())
++            elif sys.platform[:4] == "irix":
++              cmd = "elfdump -L 2>/dev/null " + f
++              res = re.search(r'SONAME\s+([^\s]+)', os.popen(cmd).read())
++            elif sys.platform[:4] == "osf1":
++              cmd = "odump -D 2>/dev/null " + f
++              res = re.search(r'SONAME:\s([^\s]+)', os.popen(cmd).read())
++            elif sys.platform == "sunos5":
++              cmd = "elfdump -d 2>/dev/null " + f
++              res = re.search(r'SONAME\s+[^\s]+\s+([^\s]+)', os.popen(cmd).read())
++            elif sys.platform[:3] == "aix":
++              res = re.search(r'\s+([^\s]+)', ' ' + os.path.basename(f))
++            else:
++              cmd = "objdump -p -j .dynamic 2>/dev/null " + f
++              res = re.search(r'\sSONAME\s+([^\s]+)', os.popen(cmd).read())
+             if not res:
+                 return None
+             return res.group(1)
+Index: Modules/_cursesmodule.c
+===================================================================
+--- Modules/_cursesmodule.c.orig	2009-04-25 17:57:06.623538927 +0000
++++ Modules/_cursesmodule.c	2009-05-01 23:14:47.098911372 +0000
+@@ -117,9 +117,6 @@
+     curses module in other ways.  So the code will just specify 
+     explicit prototypes here. */
+ extern int setupterm(char *,int,int *);
+-#ifdef __sgi
+-#include <term.h>
+-#endif
+ 
+ #if !defined(HAVE_NCURSES_H) && (defined(sgi) || defined(__sun) || defined(SCO5))
+ #define STRICT_SYSV_CURSES       /* Don't use ncurses extensions */
+Index: Lib/test/regrtest.py
+===================================================================
+--- Lib/test/regrtest.py.orig	2009-05-01 23:14:40.920852686 +0000
++++ Lib/test/regrtest.py	2009-05-01 23:14:47.127933260 +0000
+@@ -1217,6 +1217,33 @@
+         test_winreg
+         test_winsound
+         """,
++    'aix4':
++        """
++        test_aepack
++        test_al
++        test_applesingle
++        test_bsddb
++        test_bsddb185
++        test_bsddb3
++        test_cd
++        test_cl
++        test_ctypes
++        test_dl
++        test_gdbm
++        test_gl
++        test_imgfile
++        test_linuxaudiodev
++        test_macfs
++        test_macostools
++        test_nis
++        test_ossaudiodev
++        test_sqlite
++        test_startfile
++        test_sunaudiodev
++        test_tcl
++        test_winreg
++        test_winsound
++        """,
+     'aix5':
+         """
+         test_aepack
+@@ -1225,13 +1252,12 @@
+         test_bsddb
+         test_bsddb185
+         test_bsddb3
+-        test_bz2
+         test_cd
+         test_cl
++        test_ctypes
+         test_dl
+         test_gdbm
+         test_gl
+-        test_gzip
+         test_imgfile
+         test_linuxaudiodev
+         test_macfs
+@@ -1244,8 +1270,6 @@
+         test_tcl
+         test_winreg
+         test_winsound
+-        test_zipimport
+-        test_zlib
+         """,
+     'openbsd3':
+         """
+Index: Modules/_ctypes/callbacks.c
+===================================================================
+--- Modules/_ctypes/callbacks.c.orig	2009-04-25 17:57:06.613681326 +0000
++++ Modules/_ctypes/callbacks.c	2009-05-01 23:14:47.162117297 +0000
+@@ -20,7 +20,7 @@
+ 	va_list marker;
+ 
+ 	va_start(marker, msg);
+-	vsnprintf(buf, sizeof(buf), msg, marker);
++	PyOS_vsnprintf(buf, sizeof(buf), msg, marker);
+ 	va_end(marker);
+ 	if (f)
+ 		PyFile_WriteString(buf, f);
+Index: Modules/mmapmodule.c
+===================================================================
+--- Modules/mmapmodule.c.orig	2009-04-25 17:57:06.649028088 +0000
++++ Modules/mmapmodule.c	2009-05-01 23:14:47.197116737 +0000
+@@ -36,6 +36,7 @@
+ #ifdef UNIX
+ #include <sys/mman.h>
+ #include <sys/stat.h>
++#include <fcntl.h>
+ 
+ #if defined(HAVE_SYSCONF) && defined(_SC_PAGESIZE)
+ static int
+Index: Include/Python.h
+===================================================================
+--- Include/Python.h.orig	2009-04-25 17:57:06.523961214 +0000
++++ Include/Python.h	2009-05-01 23:14:47.549158258 +0000
+@@ -156,11 +156,6 @@
+ #define Py_file_input 257
+ #define Py_eval_input 258
+ 
+-#ifdef HAVE_PTH
+-/* GNU pth user-space thread support */
+-#include <pth.h>
+-#endif
+-
+ /* Define macros for inline documentation. */
+ #define PyDoc_VAR(name) static char name[]
+ #define PyDoc_STRVAR(name,str) PyDoc_VAR(name) = PyDoc_STR(str)

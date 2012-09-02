@@ -1,0 +1,366 @@
+Index: gnulib/m4/stdarg.m4
+===================================================================
+--- gnulib/m4/stdarg.m4.orig	2008-12-26 23:23:29.717531310 +0000
++++ gnulib/m4/stdarg.m4	2008-12-26 23:33:21.226504777 +0000
+@@ -1,5 +1,5 @@
+-# stdarg.m4 serial 1
+-dnl Copyright (C) 2006 Free Software Foundation, Inc.
++# stdarg.m4 serial 2
++dnl Copyright (C) 2006, 2008 Free Software Foundation, Inc.
+ dnl This file is free software; the Free Software Foundation
+ dnl gives unlimited permission to copy and/or distribute it,
+ dnl with or without modifications, as long as this notice is preserved.
+@@ -9,6 +9,8 @@
+ 
+ AC_DEFUN([gl_STDARG_H],
+ [
++  STDARG_H='';                AC_SUBST([STDARG_H])
++  NEXT_STDARG_H='<stdarg.h>'; AC_SUBST([NEXT_STDARG_H])
+   AC_MSG_CHECKING([for va_copy])
+   AC_CACHE_VAL([gl_cv_func_va_copy], [
+     AC_TRY_COMPILE([#include <stdarg.h>], [
+@@ -19,22 +21,47 @@
+       [gl_cv_func_va_copy=yes], [gl_cv_func_va_copy=no])])
+   AC_MSG_RESULT([$gl_cv_func_va_copy])
+   if test $gl_cv_func_va_copy = no; then
+-    # Provide a substitute, either __va_copy or as a simple assignment.
+-    AC_CACHE_VAL([gl_cv_func___va_copy], [
+-      AC_TRY_COMPILE([#include <stdarg.h>], [
++    dnl Provide a substitute.
++    dnl Usually a simple definition in <config.h> is enough. Not so on AIX 5
++    dnl with some versions of the /usr/vac/bin/cc compiler. It has an <stdarg.h>
++    dnl which does '#undef va_copy', leading to a missing va_copy symbol. For
++    dnl this platform, we use an <stdarg.h> substitute. But we cannot use this
++    dnl approach on other platforms, because <stdarg.h> often defines only
++    dnl preprocessor macros and gl_ABSOLUTE_HEADER, gl_CHECK_NEXT_HEADERS do
++    dnl not work in this situation.
++    AC_EGREP_CPP([vaccine],
++      [#if defined _AIX && !defined __GNUC__
++        AIX vaccine
++       #endif
++      ], [gl_aixcc=yes], [gl_aixcc=no])
++    if test $gl_aixcc = yes; then
++      dnl Provide a substitute <stdarg.h> file.
++      STDARG_H=stdarg.h
++      gl_CHECK_NEXT_HEADERS([stdarg.h])
++      dnl Fallback for the case when <stdarg.h> contains only macro definitions.
++      if test "$gl_cv_next_stdarg_h" = '""'; then
++        gl_cv_next_stdarg_h='"///usr/include/stdarg.h"'
++        NEXT_STDARG_H="$gl_cv_next_stdarg_h"
++      fi
++    else
++      dnl Provide a substitute in <config.h>, either __va_copy or as a simple
++      dnl assignment.
++      AC_CACHE_VAL([gl_cv_func___va_copy], [
++        AC_TRY_COMPILE([#include <stdarg.h>], [
+ #ifndef __va_copy
+ error, bail out
+ #endif
+ ],
+-        [gl_cv_func___va_copy=yes], [gl_cv_func___va_copy=no])])
+-    if test $gl_cv_func___va_copy = yes; then
+-      AC_DEFINE([va_copy], [__va_copy],
+-        [Define as a macro for copying va_list variables.])
+-    else
+-      AH_VERBATIM([gl_VA_COPY], [/* A replacement for va_copy, if needed.  */
++          [gl_cv_func___va_copy=yes], [gl_cv_func___va_copy=no])])
++      if test $gl_cv_func___va_copy = yes; then
++        AC_DEFINE([va_copy], [__va_copy],
++          [Define as a macro for copying va_list variables.])
++      else
++        AH_VERBATIM([gl_VA_COPY], [/* A replacement for va_copy, if needed.  */
+ #define gl_va_copy(a,b) ((a) = (b))])
+-      AC_DEFINE([va_copy], [gl_va_copy],
+-        [Define as a macro for copying va_list variables.])
++        AC_DEFINE([va_copy], [gl_va_copy],
++          [Define as a macro for copying va_list variables.])
++      fi
+     fi
+   fi
+ ])
+Index: gnulib/lib/canonicalize-lgpl.c
+===================================================================
+--- gnulib/lib/canonicalize-lgpl.c.orig	2008-12-26 23:23:29.691646496 +0000
++++ gnulib/lib/canonicalize-lgpl.c	2008-12-26 23:33:21.234141552 +0000
+@@ -1,5 +1,5 @@
+ /* Return the canonical absolute name of a given file.
+-   Copyright (C) 1996-2003, 2005-2007 Free Software Foundation, Inc.
++   Copyright (C) 1996-2003, 2005-2008 Free Software Foundation, Inc.
+    This file is part of the GNU C Library.
+ 
+    This program is free software: you can redistribute it and/or modify
+@@ -78,7 +78,7 @@
+ # endif
+ # define __readlink readlink
+   /* On systems without symbolic links, call stat() instead of lstat().  */
+-# if !defined S_ISNLK && !HAVE_READLINK
++# if !defined S_ISLNK && !HAVE_READLINK
+ #  define lstat stat
+ # endif
+ #endif
+@@ -260,7 +260,7 @@
+ 		  goto error;
+ 		}
+ 
+-	      n = __readlink (rpath, buf, path_max);
++	      n = __readlink (rpath, buf, path_max - 1);
+ 	      if (n < 0)
+ 		{
+ 		  int saved_errno = errno;
+Index: gnulib/lib/canonicalize.c
+===================================================================
+--- gnulib/lib/canonicalize.c.orig	2008-12-26 23:23:29.684700509 +0000
++++ gnulib/lib/canonicalize.c	2008-12-26 23:33:21.240257498 +0000
+@@ -1,5 +1,5 @@
+ /* Return the canonical absolute name of a given file.
+-   Copyright (C) 1996-2007 Free Software Foundation, Inc.
++   Copyright (C) 1996-2008 Free Software Foundation, Inc.
+ 
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+@@ -48,7 +48,7 @@
+ #include "pathmax.h"
+ #include "areadlink.h"
+ 
+-#if !HAVE_CANONICALIZE_FILE_NAME
++#if !(HAVE_CANONICALIZE_FILE_NAME || GNULIB_CANONICALIZE_LGPL)
+ /* Return the canonical absolute name of file NAME.  A canonical name
+    does not contain any `.', `..' components nor any repeated file name
+    separators ('/') or symlinks.  All components must exist.
+Index: gnulib/m4/include_next.m4
+===================================================================
+--- gnulib/m4/include_next.m4.orig	2008-12-26 23:23:29.707701679 +0000
++++ gnulib/m4/include_next.m4	2008-12-26 23:33:21.246980357 +0000
+@@ -1,19 +1,46 @@
+-# include_next.m4 serial 4
+-dnl Copyright (C) 2006, 2007 Free Software Foundation, Inc.
++# include_next.m4 serial 10
++dnl Copyright (C) 2006-2008 Free Software Foundation, Inc.
+ dnl This file is free software; the Free Software Foundation
+ dnl gives unlimited permission to copy and/or distribute it,
+ dnl with or without modifications, as long as this notice is preserved.
+ 
+ dnl From Paul Eggert and Derek Price.
+ 
++dnl Sets INCLUDE_NEXT and PRAGMA_SYSTEM_HEADER.
++dnl
++dnl INCLUDE_NEXT expands to 'include_next' if the compiler supports it, or to
++dnl 'include' otherwise.
++dnl
++dnl INCLUDE_NEXT_AS_FIRST_DIRECTIVE expands to 'include_next' if the compiler
++dnl supports it in the special case that it is the first include directive in
++dnl the given file, or to 'include' otherwise.
++dnl
++dnl PRAGMA_SYSTEM_HEADER can be used in files that contain #include_next,
++dnl so as to avoid GCC warnings when the gcc option -pedantic is used.
++dnl '#pragma GCC system_header' has the same effect as if the file was found
++dnl through the include search path specified with '-isystem' options (as
++dnl opposed to the search path specified with '-I' options). Namely, gcc
++dnl does not warn about some things, and on some systems (Solaris and Interix)
++dnl __STDC__ evaluates to 0 instead of to 1. The latter is an undesired side
++dnl effect; we are therefore careful to use 'defined __STDC__' or '1' instead
++dnl of plain '__STDC__'.
++
+ AC_DEFUN([gl_INCLUDE_NEXT],
+ [
+   AC_LANG_PREPROC_REQUIRE()
+   AC_CACHE_CHECK([whether the preprocessor supports include_next],
+     [gl_cv_have_include_next],
+-    [rm -rf conftestd1 conftestd2
+-     mkdir conftestd1 conftestd2
+-     cat <<EOF > conftestd1/conftest.h
++    [rm -rf conftestd1a conftestd1b conftestd2
++     mkdir conftestd1a conftestd1b conftestd2
++     dnl The include of <stdio.h> is because IBM C 9.0 on AIX 6.1 supports
++     dnl include_next when used as first preprocessor directive in a file,
++     dnl but not when preceded by another include directive. Additionally,
++     dnl with this same compiler, include_next is a no-op when used in a
++     dnl header file that was included by specifying its absolute file name.
++     dnl Despite these two bugs, include_next is used in the compiler's
++     dnl <math.h>. By virtue of the second bug, we need to use include_next
++     dnl as well in this case.
++     cat <<EOF > conftestd1a/conftest.h
+ #define DEFINED_IN_CONFTESTD1
+ #include_next <conftest.h>
+ #ifdef DEFINED_IN_CONFTESTD2
+@@ -22,32 +49,53 @@
+ #error "include_next doesn't work"
+ #endif
+ EOF
++     cat <<EOF > conftestd1b/conftest.h
++#define DEFINED_IN_CONFTESTD1
++#include <stdio.h>
++#include_next <conftest.h>
++#ifdef DEFINED_IN_CONFTESTD2
++int foo;
++#else
++#error "include_next doesn't work"
++#endif
++EOF
+      cat <<EOF > conftestd2/conftest.h
+ #ifndef DEFINED_IN_CONFTESTD1
+ #error "include_next test doesn't work"
+ #endif
+ #define DEFINED_IN_CONFTESTD2
+ EOF
+-     save_CPPFLAGS="$CPPFLAGS"
+-     CPPFLAGS="$CPPFLAGS -Iconftestd1 -Iconftestd2"
++     gl_save_CPPFLAGS="$CPPFLAGS"
++     CPPFLAGS="$gl_save_CPPFLAGS -Iconftestd1b -Iconftestd2"
+      AC_COMPILE_IFELSE([#include <conftest.h>],
+        [gl_cv_have_include_next=yes],
+-       [gl_cv_have_include_next=no])
+-     CPPFLAGS="$save_CPPFLAGS"
+-     rm -rf conftestd1 conftestd2
++       [CPPFLAGS="$gl_save_CPPFLAGS -Iconftestd1a -Iconftestd2"
++        AC_COMPILE_IFELSE([#include <conftest.h>],
++          [gl_cv_have_include_next=buggy],
++          [gl_cv_have_include_next=no])
++       ])
++     CPPFLAGS="$gl_save_CPPFLAGS"
++     rm -rf conftestd1a conftestd1b conftestd2
+     ])
++  PRAGMA_SYSTEM_HEADER=
+   if test $gl_cv_have_include_next = yes; then
+-
+-    dnl FIXME: Remove HAVE_INCLUDE_NEXT and update everything that uses it
+-    dnl to use @INCLUDE_NEXT@ instead.
+-    AC_DEFINE([HAVE_INCLUDE_NEXT], 1,
+-	      [Define if your compiler supports the #include_next directive.])
+-
+     INCLUDE_NEXT=include_next
++    INCLUDE_NEXT_AS_FIRST_DIRECTIVE=include_next
++    if test -n "$GCC"; then
++      PRAGMA_SYSTEM_HEADER='#pragma GCC system_header'
++    fi
+   else
+-    INCLUDE_NEXT=include
++    if test $gl_cv_have_include_next = buggy; then
++      INCLUDE_NEXT=include
++      INCLUDE_NEXT_AS_FIRST_DIRECTIVE=include_next
++    else
++      INCLUDE_NEXT=include
++      INCLUDE_NEXT_AS_FIRST_DIRECTIVE=include
++    fi
+   fi
+   AC_SUBST([INCLUDE_NEXT])
++  AC_SUBST([INCLUDE_NEXT_AS_FIRST_DIRECTIVE])
++  AC_SUBST([PRAGMA_SYSTEM_HEADER])
+ ])
+ 
+ # gl_CHECK_NEXT_HEADERS(HEADER1 HEADER2 ...)
+@@ -63,12 +111,16 @@
+ # The three "///" are to pacify Sun C 5.8, which otherwise would say
+ # "warning: #include of /usr/include/... may be non-portable".
+ # Use `""', not `<>', so that the /// cannot be confused with a C99 comment.
++# Note: This macro assumes that the header file is not empty after
++# preprocessing, i.e. it does not only define preprocessor macros but also
++# provides some type/enum definitions or function/variable declarations.
+ AC_DEFUN([gl_CHECK_NEXT_HEADERS],
+ [
+   AC_REQUIRE([gl_INCLUDE_NEXT])
++  AC_REQUIRE([AC_CANONICAL_HOST])
+   AC_CHECK_HEADERS_ONCE([$1])
+ 
+-  AC_FOREACH([gl_HEADER_NAME], [$1],
++  m4_foreach_w([gl_HEADER_NAME], [$1],
+     [AS_VAR_PUSHDEF([gl_next_header],
+ 		    [gl_cv_next_]m4_quote(m4_defn([gl_HEADER_NAME])))
+      if test $gl_cv_have_include_next = yes; then
+@@ -84,11 +136,22 @@
+ 	      [AC_LANG_SOURCE(
+ 		 [[#include <]]m4_dquote(m4_defn([gl_HEADER_NAME]))[[>]]
+ 	       )])
+-	    dnl eval is necessary to expand ac_cpp.
++	    dnl AIX "xlc -E" and "cc -E" omit #line directives for header files
++	    dnl that contain only a #include of other header files and no
++	    dnl non-comment tokens of their own. This leads to a failure to
++	    dnl detect the absolute name of <dirent.h>, <signal.h>, <poll.h>
++	    dnl and others. The workaround is to force preservation of comments
++	    dnl through option -C. This ensures all necessary #line directives
++	    dnl are present. GCC supports option -C as well.
++	    case "$host_os" in
++	      aix*) gl_absname_cpp="$ac_cpp -C" ;;
++	      *)    gl_absname_cpp="$ac_cpp" ;;
++	    esac
++	    dnl eval is necessary to expand gl_absname_cpp.
+ 	    dnl Ultrix and Pyramid sh refuse to redirect output of eval,
+ 	    dnl so use subshell.
+ 	    AS_VAR_SET([gl_next_header],
+-	      ['"'`(eval "$ac_cpp conftest.$ac_ext") 2>&AS_MESSAGE_LOG_FD |
++	      ['"'`(eval "$gl_absname_cpp conftest.$ac_ext") 2>&AS_MESSAGE_LOG_FD |
+ 	       sed -n '\#/]m4_quote(m4_defn([gl_HEADER_NAME]))[#{
+ 		 s#.*"\(.*/]m4_quote(m4_defn([gl_HEADER_NAME]))[\)".*#\1#
+ 		 s#^/[^/]#//&#
+Index: gnulib/lib/stdarg.in.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gnulib/lib/stdarg.in.h	2008-12-26 23:33:59.549681577 +0000
+@@ -0,0 +1,35 @@
++/* Substitute for and wrapper around <stdarg.h>.
++   Copyright (C) 2008 Free Software Foundation, Inc.
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2, or (at your option)
++   any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program; if not, write to the Free Software Foundation,
++   Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.  */
++
++#ifndef _GL_STDARG_H
++
++#if __GNUC__ >= 3
++@PRAGMA_SYSTEM_HEADER@
++#endif
++
++/* The include_next requires a split double-inclusion guard.  */
++#@INCLUDE_NEXT@ @NEXT_STDARG_H@
++
++#ifndef _GL_STDARG_H
++#define _GL_STDARG_H
++
++#ifndef va_copy
++# define va_copy(a,b) ((a) = (b))
++#endif
++
++#endif /* _GL_STDARG_H */
++#endif /* _GL_STDARG_H */
+Index: gnulib/lib/Makefile.am
+===================================================================
+--- gnulib/lib/Makefile.am.orig	2008-02-13 23:31:32.000000000 +0000
++++ gnulib/lib/Makefile.am	2008-12-26 23:37:33.063602087 +0000
+@@ -1030,6 +1030,27 @@
+ 
+ ## end   gnulib module stat-time
+ 
++## begin gnulib module stdarg
++
++BUILT_SOURCES += $(STDARG_H)
++
++# We need the following in order to create <stdarg.h> when the system
++# doesn't have one that works with the given compiler.
++stdarg.h: stdarg.in.h
++	rm -f $@-t $@
++	{ echo '/* DO NOT EDIT! GENERATED AUTOMATICALLY! */' && \
++	  sed -e 's|@''INCLUDE_NEXT''@|$(INCLUDE_NEXT)|g' \
++	      -e 's|@''PRAGMA_SYSTEM_HEADER''@|@PRAGMA_SYSTEM_HEADER@|g' \
++	      -e 's|@''NEXT_STDARG_H''@|$(NEXT_STDARG_H)|g' \
++	       < $(srcdir)/stdarg.in.h; \
++	} > $@-t
++	mv $@-t $@
++MOSTLYCLEANFILES += stdarg.h stdarg.h-t
++
++EXTRA_DIST += stdarg.in.h
++
++## end   gnulib module stdarg
++
+ ## begin gnulib module stdbool
+ 
+ BUILT_SOURCES += $(STDBOOL_H)

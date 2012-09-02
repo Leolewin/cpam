@@ -1,0 +1,108 @@
+Index: gzexe.in
+===================================================================
+--- gzexe.in.orig	2002-09-28 01:18:11.000000000 -0500
++++ gzexe.in	2005-11-21 21:08:41.993919000 -0600
+@@ -42,8 +42,10 @@
+   exit 1
+ fi
+ 
++set -C
+ tmp=gz$$
+-trap "rm -f $tmp; exit 1" 1 2 3 5 10 13 15
++trap "rm -f $tmp; exit 1" HUP INT QUIT TRAP USR1 PIPE TERM
++: > $tmp || exit 1
+ 
+ decomp=0
+ res=0
+@@ -53,8 +55,8 @@
+   shift
+ fi
+ 
+-echo hi > zfoo1$$
+-echo hi > zfoo2$$
++echo hi > zfoo1$$ || exit 1
++echo hi > zfoo2$$ || exit 1
+ if test -z "`(${CPMOD-cpmod} zfoo1$$ zfoo2$$) 2>&1`"; then
+   cpmod=${CPMOD-cpmod}
+ fi
+@@ -110,26 +112,28 @@
+       writable=0
+       chmod u+w $tmp 2>/dev/null
+     fi
++    : >| $tmp  # truncate the file, ignoring set -C
+   fi
+   if test $decomp -eq 0; then
+-    sed 1q $0 > $tmp
++    sed 1q $0 >> $tmp
+     sed "s|^if tail|if $tail|" >> $tmp <<'EOF'
+-skip=22
++skip=23
+ set -C
+ umask=`umask`
+ umask 77
+-if tail +$skip "$0" | "BINDIR"/gzip -cd > /tmp/gztmp$$; then
++tmpfile=`mktemp -p /tmp gztmpXXXXXX` || exit 1
++if tail +$skip "$0" | "BINDIR"/gzip -cd >> $tmpfile; then
+   umask $umask
+-  /bin/chmod 700 /tmp/gztmp$$
++  /bin/chmod 700 $tmpfile
+   prog="`echo $0 | /bin/sed 's|^.*/||'`"
+-  if /bin/ln /tmp/gztmp$$ "/tmp/$prog" 2>/dev/null; then
+-    trap '/bin/rm -f /tmp/gztmp$$ "/tmp/$prog"; exit $res' 0
+-    (/bin/sleep 5; /bin/rm -f /tmp/gztmp$$ "/tmp/$prog") 2>/dev/null &
++  if /bin/ln -f $tmpfile "/tmp/$prog" 2>/dev/null; then
++    trap '/bin/rm -f $tmpfile "/tmp/$prog"; exit $res' EXIT
++    (/bin/sleep 5; /bin/rm -f $tmpfile "/tmp/$prog") 2>/dev/null &
+     /tmp/"$prog" ${1+"$@"}; res=$?
+   else
+-    trap '/bin/rm -f /tmp/gztmp$$; exit $res' 0
+-    (/bin/sleep 5; /bin/rm -f /tmp/gztmp$$) 2>/dev/null &
+-    /tmp/gztmp$$ ${1+"$@"}; res=$?
++    trap '/bin/rm -f $tmpfile; exit $res' EXIT
++    (/bin/sleep 5; /bin/rm -f $tmpfile) 2>/dev/null &
++    $tmpfile ${1+"$@"}; res=$?
+   fi
+ else
+   echo Cannot decompress $0; exit 1
+@@ -144,8 +148,8 @@
+ 
+   else
+     # decompression
+-    skip=22
+-    if sed -e 1d -e 2q "$i" | grep "^skip=[0-9][0-9]*$" >/dev/null; then
++    skip=23
++    if sed -e 1d -e 2q "$i" | grep "^skip=[0-9]*$" >/dev/null; then
+       eval `sed -e 1d -e 2q "$i"`
+     fi
+     if tail +$skip "$i" | gzip -cd > $tmp; then
+Index: zmore.in
+===================================================================
+--- zmore.in.orig	2002-09-28 03:19:37.000000000 -0500
++++ zmore.in	2005-11-21 21:08:42.133164000 -0600
+@@ -34,9 +34,9 @@
+   cb='min 1 -icanon'; ncb='icanon eof ^d'
+ fi
+ if test $? -eq 0 && test -n "$oldtty"; then
+-   trap 'stty $oldtty 2>/dev/null; exit' 0 2 3 5 10 13 15
++   trap 'stty $oldtty 2>/dev/null; exit' INT QUIT TRAP USR1 PIPE TERM
+ else
+-   trap 'stty $ncb echo 2>/dev/null; exit' 0 2 3 5 10 13 15
++   trap 'stty $ncb echo 2>/dev/null; exit' INT QUIT TRAP USR1 PIPE TERM
+ fi
+ 
+ if test $# = 0; then
+Index: znew.in
+===================================================================
+--- znew.in.orig	2002-09-27 01:17:09.000000000 -0500
++++ znew.in	2005-11-21 21:08:41.693768000 -0600
+@@ -16,8 +16,8 @@
+ warn="(does not preserve modes and timestamp)"
+ tmp=/tmp/zfoo.$$
+ set -C
+-echo hi > $tmp.1
+-echo hi > $tmp.2
++echo hi > $tmp.1 || exit 1
++echo hi > $tmp.2 || exit 1
+ if test -z "`(${CPMOD-cpmod} $tmp.1 $tmp.2) 2>&1`"; then
+   cpmod=${CPMOD-cpmod}
+   warn=""

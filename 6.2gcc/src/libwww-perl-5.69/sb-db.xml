@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libwww-perl" version="5.69" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="b4567b6fae2b1733415a746956826e0c"
+        checksum-type="md5" size="205846"
+        path="src/libwww-perl-5.69.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${PERL}/bin/perl Makefile.PL -n PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <module name="5.8.2">
+      <install-name>perl582p</install-name>
+
+      <dependencies>
+        <depend program="HTML-Parser"
+          module="5.8.2">v&gt;=3.31</depend>
+        <depend program="URI" module="5.8.2">v&gt;=1.27</depend>
+        <depend program="libnet" module="5.8.2">v&gt;=1.16</depend>
+        <depend program="perl" var="PERL">v==5.8.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2003 November 12" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Perl 5.8.2</para></item>
+      </change>
+
+      <change date="2003 July 15" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Added dependencies</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

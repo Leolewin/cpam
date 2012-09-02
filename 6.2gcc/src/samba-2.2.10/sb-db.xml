@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="samba" version="2.2.10" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}2210</install-name>
+
+    <sources>
+      <source checksum="14033253e9ebbf3d6c1612468ad8914b"
+        checksum-type="md5" size="5503115"
+        path="src/samba-2.2.10.tar.gz"/>
+      <patch checksum="e8adab3f9936c609161fa6cd1faa9339"
+        checksum-type="md5" size="3619"
+        path="src/samba-2.2.10.patch.rh9"
+        systype="*-linux9*"/>
+      <patch checksum="77c6ba7e7e6232f66b38e4e5d22995cf"
+        checksum-type="md5" size="250410"
+        path="src/samba-2.2.10.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="openldap" var="OPENLDAP">v==2.1.27</depend>
+      <depend program="readline" var="READLINE"
+        module="tww-static">v==4.3</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_localstatedir=/var${SB_INSTALL_PREFIX}
+_sysconfdir=/etc${SB_INSTALL_PREFIX}
+_configdir=${SB_INSTALL_PREFIX}/etc
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+cd source
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--with-acl-support" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ARGS="--with-acl-support --with-smbwrapper" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  ARGS="--with-smbwrapper --with-smbmount --with-pam \
+--with-pam_smbpass --without-krb5" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--with-acl-support" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ARGS="--with-acl-support --with-smbwrapper" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ARGS="--with-acl-support --with-smbwrapper" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_OPENLDAP_INC}" \
+LDFLAGS="-L${SB_VAR_OPENLDAP_LIB}/nossl \
+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB}/nossl ${LDFLAGS+${LDFLAGS}}" \
+./configure --enable-static --with-ldapsam \
+--without-pam --localstatedir=${_localstatedir} \
+--with-lockdir=${_localstatedir}/locks \
+--with-piddir=${_localstatedir}/run \
+--with-logfilebase=${_localstatedir}/log \
+--with-privatedir=${_sysconfdir}/private \
+--with-configdir=${_configdir} \
+--with-swatdir=${SB_INSTALL_PREFIX}/lib/swat \
+--with-automount --with-msdfs \
+--with-sambabook=${SB_INSTALL_PREFIX}/doc/using-samba \
+--with-readline=${SB_VAR_READLINE} --with-included-popt \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+(cd source; gmake)
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/doc ${SB_INSTALL_PREFIX}/doc/swat
+
+_config="${SB_INSTALL_PREFIX}/etc"
+_etc="/etc${SB_INSTALL_PREFIX}"
+_var="/var${SB_INSTALL_PREFIX}"
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_var} ${_var}/locks \
+${_var}/log ${_var}/run
+${SB_PATH_INSTALL} -m 700 -o root -g 0 -d ${_etc}/private
+
+(cd source; gmake install)
+
+# empty configuration file
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_config}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_config}/lmhosts
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_config}/printers.def
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_config}/smb.conf
+
+cp -r docs/* ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 swat/README \
+${SB_INSTALL_PREFIX}/doc/swat
+
+# copy examples
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/contrib/examples
+cp -r examples/* ${SB_INSTALL_PREFIX}/contrib/examples
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/contrib/examples
+
+# copy smbwrapper documentation
+case "${SB_SYSTYPE}" in
+*-irix6*|*-solaris2*)
+  ${SB_PATH_INSTALL} -o root -g 0 -m 644 source/smbwrapper/README \
+  ${SB_INSTALL_PREFIX}/doc/README.SMBWRAPPER ;;
+esac
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_configdir} ${SB_INSTALL_PREFIX} ${_localstatedir} ${_sysconfdir}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="2.2.9" to="2.2.10">
+        <item><para>Fix buffer overrun in the code used to support the
+'mangling method = hash' smb.conf option (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0686">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0686</ulink></para></item>
+      </change>
+
+      <change from="2.2.8a" to="2.2.9">
+        <item><para>Address the problem with user password changes
+after applying the Microsoft hotfix described in KB282741 to Windows
+NT 4.0/200x/XP clients</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The default location for log files and other runtime
+information is stored in <command>/var${SB_INSTALL_PREFIX}</command>. The
+configuration files, lmhosts, printers.def, and smb.conf are stored in
+<command>/etc${SB_INSTALL_PREFIX}</command>. The "<command>-s</command>" switch can
+be used to specify an alternate path to the configuration file.</para>
+
+        <para>The local configuration file installs startup scripts
+for smbd and nmbd into the <command>/etc/init.d</command> or
+<command>/sbin/init.d</command> directory, depending on the platform.
+The startup scripts will start Samba when the system is restarted and
+shut Samba down when the system is shut down.</para>
+
+        <para>ACL support has been compiled in for AIX, IRIX, Solaris,
+and Tru64 UNIX. <command>mmap(2)</command> support has been disabled
+on HP-UX because the page and buffer cache are not kept in sync. This
+causes corruption in the TDB database.</para>
+
+        <para>Smbwrapper support has been compiled in for IRIX, Redhat
+Linux, and Solaris.</para>
+
+        <para>Patch <command>PHKL_20349</command> or one of its
+successors is required for HP-UX 11.00. This patch introduces the
+<command>pread()</command> function call. Without it, the smbd daemon
+will core dump on startup. If <command>PHKL_20349</command> is
+installed and the following error message is reported then patch
+<command>PHCO_24723</command> (libc cumulative patch) or one of its
+successors needs to be installed:</para>
+        <screen>
+/usr/lib/dld.sl: Unresolved symbol: pread (code) ...
+        </screen>
+      </note>
+
+      <platform name="AIX 4.3.3">
+        <para>A newer version of the libc library might be required 
+for <command>mkstemp64()</command>. Version 4.3.3.93 of bos.rte.libc 
+or later is required.</para>
+      </platform>
+    </notes>
+  </program>
+</programs>

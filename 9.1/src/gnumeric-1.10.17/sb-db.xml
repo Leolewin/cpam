@@ -1,0 +1,398 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="gnumeric" version="1.10.17" revision="1">
+    <install-name>${SB_PROG_NAME}110</install-name>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="gtk-doc" install-name="gtkdoc116"
+        add-path="prepend" type="build">v&gt;=1.16</depend>
+      <depend program="intltool" install-name="intltool041"
+        add-path="prepend" type="build">v&gt;=0.41.1</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="hppa*-hpux*">v&gt;=4.4.6</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v==2.22.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend"
+        systype="!hppa*-hpux*">v&gt;=2.26.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        module="gcc44" add-path="prepend"
+        systype="hppa*-hpux*">v&gt;=2.26.1</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gtkspell" var="LIBGTKSPELL"
+        install-name="libgtkspell20">v&gt;=2.0.16</depend>
+      <depend program="libart_lgpl" var="LIBART"
+        install-name="libart23">v&gt;=2.3.21</depend>
+      <depend program="libglade" var="LIBGLADE"
+        install-name="libglade26">v&gt;=2.6.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v==2.7.8</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="popt" var="LIBPOPT"
+        install-name="libpopt116">v&gt;=1.16</depend>
+      <depend program="pcre" var="LIBPCRE" install-name="libpcre811"
+        add-path="prepend">v&gt;=8.11</depend>
+      <depend program="sunstudioruntime" var="SUNSTUDIORUNTIME"
+        install-name="sunstudioruntime10"
+        systype="*-solaris*">v&gt;=1.0</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="hppa*-hpux*"/>
+      <depend program="gnome" var="GNOME" install-name="gnome232"
+        module="libgsf">v&gt;=2.32</depend>
+      <depend program="gnome" install-name="gnome232" module="GConf"
+        add-path="prepend">v==2.32</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <install>
+<![CDATA[
+gmake install
+
+# Remove scrollkeeper files
+rm -rf "${SB_INSTALL_PREFIX}/var"
+]]>
+    </install>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="aacc0899222c98fa9cdd85c49a6840be"
+          checksum-type="md5" size="19010738"
+          path="src/gnumeric-1.10.17.tar.bz2"/>
+        <patch checksum="27ce74f3e27ebb6ddc436dfdad2bb505"
+          checksum-type="md5" size="69792"
+          path="src/gnumeric-1.10.17.tww.patch"/>
+        <patch checksum="d8f0773ddae3be5a68dc5ab9268c521b"
+          checksum-type="md5" size="2250112"
+          path="src/gnumeric-1.10.17.auto.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="gnumeric" module="goffice">v==1.10.17</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_LIBPCRE+-I${SB_VAR_LIBPCRE_INC}}" \
+LDFLAGS="${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_LIBPCRE+-L${SB_VAR_LIBPCRE_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_SUNSTUDIORUNTIME+-L${SB_VAR_SUNSTUDIORUNTIME_LIB}} \
+${SB_VAR_LIBPCRE+${CC_LD_RT}${SB_VAR_LIBPCRE_LIB}} \
+${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_SUNSTUDIORUNTIME+${CC_LD_RT}${SB_VAR_SUNSTUDIORUNTIME_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_GNOME+${SB_VAR_GNOME_LIB}/pkgconfig:}\
+${SB_VAR_LIBART+${SB_VAR_LIBART_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLADE+${SB_VAR_LIBGLADE_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}\
+${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTKSPELL+${SB_VAR_LIBGTKSPELL_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBOPENSSL+${SB_VAR_LIBOPENSSL_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBPOPT+${SB_VAR_LIBPOPT_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_INSTALL_PREFIX_LIB}/pkgconfig" \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--with-zlib=${SB_VAR_LIBZ} --with-gnome --with-gtk \
+--without-perl --without-python --without-gda --without-gb \
+--without-psiconv --without-paradox --without-long-double \
+--disable-dependency-tracking --disable-silent-rules \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# Remove scrollkeeper files
+rm -rf "${SB_INSTALL_PREFIX}/var"
+]]>
+      </install>
+    </module>
+
+    <module name="goffice">
+      <build-name>goffice-0.8.17</build-name>
+
+      <sources>
+        <source checksum="b4c924457163e02daf8a8d2428f51d10"
+          checksum-type="md5" size="2289608"
+          path="src/goffice-0.8.17.tar.bz2"/>
+        <patch checksum="1aaa748cbc82c58a4add147fdba842c4"
+          checksum-type="md5" size="6523"
+          path="src/goffice-0.8.17.tww.patch"/>
+        <patch checksum="19cad18a0913f7752e797d0d6c4901de"
+          checksum-type="md5" size="1958659"
+          path="src/goffice-0.8.17.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_LIBPCRE+-I${SB_VAR_LIBPCRE_INC}}" \
+LDFLAGS="${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_LIBPCRE+-L${SB_VAR_LIBPCRE_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_SUNSTUDIORUNTIME+-L${SB_VAR_SUNSTUDIORUNTIME_LIB}} \
+${SB_VAR_LIBPCRE+${CC_LD_RT}${SB_VAR_LIBPCRE_LIB}} \
+${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_SUNSTUDIORUNTIME+${CC_LD_RT}${SB_VAR_SUNSTUDIORUNTIME_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_GNOME+${SB_VAR_GNOME_LIB}/pkgconfig:}\
+${SB_VAR_LIBART+${SB_VAR_LIBART_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLADE+${SB_VAR_LIBGLADE_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTKSPELL+${SB_VAR_LIBGTKSPELL_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBOPENSSL+${SB_VAR_LIBOPENSSL_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBPOPT+${SB_VAR_LIBPOPT_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_INSTALL_PREFIX_LIB}/pkgconfig" \
+--datarootdir=${_datadir} --datadir=${_datadir} --with-gtk \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libgoffice.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# Remove scrollkeeper files
+rm -rf "${SB_INSTALL_PREFIX}/var"
+]]>
+      </install>
+    </module>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.8.x" to="1.10.x">
+        <item><para>Adjustable sheet size: sheets are no longer
+restricted to 256 columns of 65536 rows.</para></item>
+        <item><para>Graphs have been improved. For
+example:</para>
+        <unorderedlist>
+          <item><para>New plot types for surfaces and probability
+plots.</para></item>
+          <item><para>When an axis is a date or time axis, reasonable
+places for tick marks will be picked.</para></item>
+          <item><para>Cubic splines interpolation.</para></item>
+          <item><para>Error bars in polar and radar
+plots.</para></item>
+        </unorderedlist></item>
+        <item><para>ODF support has been improved. Note, that until
+and unless the syntax and semantics of ODF files are defined,
+interoperability between any two implementations will be limited. Five
+years with no action on that front suggests that it will not happen in
+the near term. My five years old assessment still
+applies.</para></item>
+        <item><para>Compatibility: we have improved function
+compatibility with Excel, mostly in border cases. Gnumeric also now
+supports almost all functions in the OpenFormla large function group.
+We have different names for a few of them, but remap on load and save
+from ODF files.</para></item>
+        <item><para>New functions are ACOT, ACOTH, ADTEST, ARABIC,
+ASCENSIONTHURSDAY, ASHWEDNESDAY, AVERAGEIF, BINOM.DIST.RANGE,
+CHOLESKY, COMBINA, COT, COTH, CSC, CSCH, CVMTEST, DAYS, EASTERSUNDAY,
+EIGEN, FINDB, FOURIER, GAMMA, GD, GET.LINK, GOODFRIDAY, HDATE,
+HDATE_DAY, HDATE_HEB, HDATE_JULIAN, HDATE_MONTH, HDATE_YEAR, IFNA,
+ISFORMULA, JIS, LEFTB, LKSTEST, MIDB, MUNIT, NUMBERVALUE,
+PENTECOSTSUNDAY, PERMUTATIONA, R.DSNORM, R.DST, R.PSNORM, RANDSNORM,
+RANDSTDIST, RANK.AVG, REPLACEB, RIGHTB, RRI, SEARCHB, SEC, SFTEST,
+SHEET, and SHEETS.</para></item>
+        <item><para>Faster evaluation: some fairly common sheets with
+large numbers of calls to the HLOOKUP or similar functions, over the
+same database have been improved from "rather slow" to "instant".
+Similar improvements have been implemented for farms of RANK or
+PERCENTILE calls.</para></item>
+        <item><para>Memory usage for large sheets is significantly
+down.</para></item>
+        <item><para>The statistical analysis tools have been improved
+and there are quite a few new ones, for example:</para>
+        <unorderedlist>
+          <item><para>Kaplan-Meier Estimates</para></item>
+          <item><para>Principal Component Analysis</para></item>
+          <item><para>Normality Tests</para></item>
+          <item><para>Sign Tests</para></item>
+        </unorderedlist></item>
+        <item><para>Trend and/or Season Corrected Exponential
+Smoothing</para></item>
+        <item><para>Support for sheet objects (lines, arrows, widgets,
+...) has been improved.</para></item>
+        <item><para>New utility: ssgrep allows searching collections
+of spreadsheet files in a manner similar to how grep searches text
+files.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

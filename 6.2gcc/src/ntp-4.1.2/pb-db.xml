@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="ntp" version="4.1.2" revision="1">
+    <package-manager name="pkgadd">
+      <category>System Environment/Daemons</category>
+      <title>Network Time Protocol v4</title>
+      <vendor>David L. Mills</vendor>
+
+      <description attribution="freshmeat.net">
+The Network Time Protocol Version 4 (NTP) distribution for Unix. The
+Network Time Protocol (NTP) is used to synchronize the time of a
+computer client or server to another server or reference time source,
+such as a radio or satellite receiver or modem. It provides client
+accuracies typically within a millisecond on LANs and up to a few tens
+of milliseconds on WANs relative to a primary server synchronized to
+Coordinated Universal Time (UTC) via a Global Positioning Service
+(GPS) receiver, for example.
+      </description>
+
+      <install-name>ntp412</install-name>
+
+      <pkgname-base>TWWnt412</pkgname-base>
+
+      <version>4.1.2</version>
+      <revision>1</revision>
+
+      <init name="/etc/init.d/TWWntp412"
+        path="pkg/init-sol"
+        checksum="63335cb3a4e80692e3a2e43c6cec9019"
+        checksum-type="md5" size="869"/>
+      <init link-src="/etc/rc2.d/S79TWWntp412"
+        link-dest="/etc/init.d/TWWntp412"/>
+      <init link-src="/etc/rc1.d/K19TWWntp412"
+        link-dest="/etc/init.d/TWWntp412"/>
+      <init link-src="/etc/rc0.d/K19TWWntp412"
+        link-dest="/etc/init.d/TWWntp412"/>
+
+      <config>/etc/init.d/TWWntp412</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ntp.conf</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ntp.keys</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWpl582"
+          title="Perl Programming Language"
+          subpkg="runtime">v&gt;=5.8.2</depend>
+      </subpkg>
+
+      <replace pkgname-base="TWWnt411"
+        install-name="ntp411"/>
+    </package-manager>
+
+    <changelog>
+      <change date="2004 January 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

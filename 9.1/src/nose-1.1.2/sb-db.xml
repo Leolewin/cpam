@@ -1,0 +1,181 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="nose" version="1.1.2" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}11</install-name>
+
+    <sources>
+      <source checksum="144f237b615e23f21f6a50b2183aa817"
+        checksum-type="md5" size="729206"
+        path="src/nose-1.1.2.tar.gz"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} selftest.py
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py install --skip-build \
+--root / --install-lib=${_libdir} \
+--prefix=${_binman-${SB_INSTALL_PREFIX}}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+    </install>
+
+    <module name="default">
+      <validate>
+        <depend program="nose" module="2.6.7">v==1.1.2</depend>
+        <depend program="nose" module="2.7.2">v==1.1.2</depend>
+      </validate>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="distribute" var="SETUPTOOLS" module="2.7.2"
+          type="build">v==0.6.21</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_libdir=${SB_INSTALL_PREFIX_LIB}/${_pysubdir}
+# Don't install binaries and man pages for non-default python
+_binman=${SB_BUILD_PREFIX}/_inst
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} selftest.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py install --skip-build \
+--root / --install-lib=${_libdir} \
+--prefix=${_binman-${SB_INSTALL_PREFIX}}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="distribute" var="SETUPTOOLS" module="2.6.7"
+          type="build">v==0.6.21</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_libdir=${SB_INSTALL_PREFIX_LIB}/${_pysubdir}
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} selftest.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+_pyexe=python
+[ -x ${SB_VAR_PYTHON}/bin/python3 ] && _pyexe=python3
+${SB_VAR_PYTHON}/bin/${_pyexe} setup.py install --skip-build \
+--root / --install-lib=${_libdir} \
+--prefix=${_binman-${SB_INSTALL_PREFIX}}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>The nose Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

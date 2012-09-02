@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="ntp" version="4.2.6" revision="1">
+    <build-name>${SB_PROG_NAME}-4.2.6p5</build-name>
+
+    <install-name>${SB_PROG_NAME}42</install-name>
+
+    <sources>
+      <source checksum="00df80a84ec9528fcfb09498075525bc"
+        checksum-type="md5" size="4202539"
+        path="src/ntp-4.2.6p5.tar.gz"/>
+      <patch checksum="da1de4ffb09a83a53966855e0b7c0035"
+        checksum-type="md5" size="2477"
+        path="src/ntp-4.2.6p5.tww.patch"/>
+      <patch checksum="5f32056c3920d1c43795967ffc4df491"
+        checksum-type="md5" size="3130783"
+        path="src/ntp-4.2.6p5.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="libedit" var="LIBEDIT"
+        install-name="libedit21">v&gt;=2.11</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--disable-linuxcaps" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--disable-ipv6" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure ${CPP+CPP="${CPP}"} CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2} -DCONFIG_FILE='\"${_sysconfdir}/ntp.conf\"' \
+-DKEYFILE='\"${_sysconfdir}/ntp.keys\"'" \
+LDFLAGS="${SB_VAR_LIBEDIT+${CC_LD_RT}${SB_VAR_LIBEDIT_LIB} \
+-L${SB_VAR_LIBEDIT_LIB}} \
+${SB_VAR_LIBOPENSSL+${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBEDIT+CPPFLAGS="-I${SB_VAR_LIBEDIT_INC}"} \
+--with-crypto \
+${SB_VAR_LIBOPENSSL+--with-openssl-incdir=${SB_VAR_LIBOPENSSL_INC}} \
+${SB_VAR_LIBOPENSSL+--with-openssl-libdir=${SB_VAR_LIBOPENSSL_LIB}} \
+${SB_VAR_LIBEDIT+--with-lineeditlibs=edit} \
+${ARGS+${ARGS}} --sysconfdir=${_sysconfdir} \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+cp -r html/* ${_docdir}
+${SB_PATH_CHOWN} -R 0:0 ${_docdir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir} \
+${_localstatedir+${_localstatedir}}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/ntp.conf
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/ntp.keys
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX}/sbin || :
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license>
+        <para>The following copyright notice applies to all files
+collectively called the Network Time Protocol Version 4 Distribution.
+Unless specifically declared otherwise in an individual file, this
+notice applies as if the text was explicitly included in the
+file.</para>
+        <para>Copyright (c) University of Delaware 1992-2011</para>
+        <para>Permission to use, copy, modify, and distribute this
+software and its documentation for any purpose with or without fee is
+hereby granted, provided that the above copyright notice appears in
+all copies and that both the copyright notice and this permission
+notice appear in supporting documentation, and that the name
+University of Delaware not be used in advertising or publicity
+pertaining to distribution of the software without specific, written
+prior permission. The University of Delaware makes no representations
+about the suitability this software for any purpose. It is provided
+"as is" without express or implied warranty.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>The global configuration file resides in
+<command>/etc${SB_INSTALL_PREFIX}/ntp.conf</command> and
+<command>/etc${SB_INSTALL_PREFIX}/ntp.keys</command>. While the
+"<command>ntp.keys</command>" file exists, NTP has not been built with
+crypto support.</para>
+        <para>The default path to the PID file for the
+"<command>xntpd</command>" executable is
+<command>/var${SB_INSTALL_PREFIX}/run/ntpd.pid</command>. This can be changed by
+modifing the PID_FILE variable in the startup script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

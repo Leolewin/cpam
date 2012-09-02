@@ -1,0 +1,206 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="pango" version="1.2.5" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="df00fe3e71cd297010f24f439b6c8ee6"
+        checksum-type="md5" size="865495"
+        path="src/pango-1.2.5.tar.bz2"/>
+      <patch checksum="79b7f1079490fcc87397e60e14613840"
+        checksum-type="md5" size="443738"
+        path="src/pango-1.2.5.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        systype="*-irix6*">v&gt;=0.11.4</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib22"
+        add-path="prepend">v&gt;=2.2.3</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18"
+        systype="*-irix6*">v&gt;=1.8</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf21"
+        add-path="prepend">v&gt;=2.1.4</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+      <depend program="pkgconfig" add-path="prepend"
+        type="build">v==0.15.0</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+
+  # for proper transitive linking
+  LDFLAGS="-L${GETTEXT_LIB} -L${LIBICONV_LIB}" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CPPFLAGS="-DFUNCPROTO=1" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO=1" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${CPPFLAGS+CPPFLAGS=${CPPFLAGS}} ${LDFLAGS+LDFLAGS="${LDFLAGS}"} \
+PERL=${PERL}/bin/perl PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-html-dir="${_docdir}" --with-xftconfig-dir="${_sysconfdir}" \
+--enable-static --enable-shared --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pangoincludedir="${SB_INSTALL_PREFIX}/include/pango" \
+moduledir="${SB_INSTALL_PREFIX}/lib/modules"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+: # CC on Solaris 2.5.1, 2.6 will error with:
+  #   "/opt/SUNWspro/WS6U2/include/CC/std/time.h", line 29: Error:
+  #   Multiple declaration for std::tm.
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install pangoincludedir="${SB_INSTALL_PREFIX}/include/pango" \
+moduledir="${SB_INSTALL_PREFIX}/lib/modules"
+
+# configuration file
+ginstall -m 644 -o root -g 0 /dev/null ${_sysconfdir}/pangorc
+
+_xftconfig="${SB_INSTALL_PREFIX}/etc/XftConfig"
+case "${SB_SYSTYPE}" in
+*-linux*) ;;
+*)
+  ginstall -m 644 -o root -g 0 /dev/null ${_xftconfig}
+
+  for _dir in /usr/openwin/lib/X11/fonts/Type1 \
+  /usr/openwin/lib/X11/fonts/Type3 \
+  /usr/openwin/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/Type1 \
+  /usr/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/type1.st/typefaces \
+  /usr/lib/X11/fonts/ttf.st/typefaces; do
+    [ ! -d "${_dir}" ] && continue
+
+    cat >>${_xftconfig} <<_EOT_
+dir "${_dir}"
+_EOT_
+  done
+  ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+for _pc in pango.pc pangoft2.pc pangox.pc pangoxft.pc; do
+  sed "s!-L\([^ ][^ ]*\)!-L\1 ${CC_LD_RT}\1!" \
+  ${SB_INSTALL_PREFIX}/lib/pkgconfig/${_pc} >/tmp/$$
+  cp /tmp/$$ ${SB_INSTALL_PREFIX}/lib/pkgconfig/${_pc} && rm -f /tmp/$$ 
+done
+]]>
+    </install>
+
+    <notes>
+      <change from="1.2.4" to="1.2.5">
+        <item><para>Fix a problem where the indic-xft shaper didn't
+get linked against all necessary files</para></item>
+      </change>
+
+      <change from="1.2.3" to="1.2.4">
+        <items name="Win32">
+          <item><para>Avoid calling Uniscribe when not
+necessary</para></item>
+          <item><para>Build fixes</para></item>
+        </items>
+
+        <items name="Indic shaper">
+          <item><para>Add pre-base-matra fixup code from
+ICU</para></item>
+          <item><para>Port of Bengali rendering fix from
+ICU</para></item>
+        </items>
+
+        <items name="OpenType">
+          <item><para>Port various fixes by Werner Lemberg from
+FreeType version</para></item>
+          <item><para>Port various fixes by Lars Knoll from Qt
+version</para></item>
+          <item><para>Many other bug fixes</para></item>
+        </items>
+
+        <item><para>Fix bugs in FT2 rendering code</para></item>
+        <item><para>Remove Qt-based example program; was causing
+compilation problems for a lot of people</para></item>
+        <item><para>Doc fixes</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>Build fixes</para></item>
+      </change>
+
+      <note type="usage">
+        <para>XRender, Xft, and fontconfig support is available for
+all platforms.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 January 23" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 September 23" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Move pango.modules to lib/modules
+directory</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

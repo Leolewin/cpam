@@ -1,0 +1,270 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="pgadmin3" version="1.10.1" revision="3"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}110</install-name>
+
+    <sources>
+      <source checksum="baeec7dfcff6ec1447f6097f11c443e0"
+        checksum-type="md5" size="12080090"
+        path="src/pgadmin3-1.10.1.tar.gz"/>
+      <patch checksum="01df54b08d907cd5730a6fe6123be3fa"
+        checksum-type="md5" size="29959"
+        path="src/pgadmin3-1.10.1.tww.patch"/>
+      <patch checksum="00d1101337351ac5d854d9a44dda3ae0"
+        checksum-type="md5" size="62285"
+        path="src/pgadmin3-1.10.1.remove_double_underscore_macro.patch"/>
+      <patch checksum="a2233da1fd22b7d3dc26335489747bc9"
+        checksum-type="md5" size="1651523"
+        path="src/pgadmin3-1.10.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20"
+        systype="*-irix*">v&gt;=2.0.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf24"
+        add-path="prepend">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11">v&gt;=1.1.26</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.3</depend>
+      <depend program="wxGTK" var="LIBWXGTK"
+        install-name="libwxgtk28">v&gt;=2.8.12</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="postgresql" var="PGSQL"
+        module="libruntime">v==9.0.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC_r CXXFLAGS="-O2 -qrtti -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  LIBS="-lssl -lcrypto -lintl" # Doing it wrong somewhere that I have
+                               # to do this here
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z -mt +O2 +Ofltacc +Olit=all +DAportable \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z -mt +O2 +Ofltacc +Olit=all +DAportable \
++Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  # Compiler segfaults with the standard options
+  # Aborts at runtime without -mt (aCC runtime: Use of "-mt" must be
+  # consistent during both compilation and linking.)
+  CC=cc CFLAGS="-z -mt +O2 +Ofltacc +Olit=all +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z -mt +O2 +Ofltacc +Olit=all +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local -D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis" 
+  CC_LD_RT="-R" ;;
+esac
+
+_wx_config="${SB_VAR_LIBWXGTK}/bin/wx-config"
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_ZLIB+-I${SB_VAR_ZLIB_INC}} \
+${SB_VAR_BZIP2+-I${SB_VAR_BZIP2_INC}} \
+${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_ZLIB+-L${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_BZIP2+-L${SB_VAR_BZIP2_LIB}} \
+${SB_VAR_LIBOPENSSL+-L${SB_VAR_LIBOPENSSL_LIB}} \
+${CC_LD_RT}${SB_VAR_PGSQL_LIB}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_ZLIB+:${SB_VAR_ZLIB_LIB}}\
+${SB_VAR_BZIP2+:${SB_VAR_BZIP2_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+${LIBS+LIBS="${LIBS}"} \
+--disable-dependency-tracking --with-pgsql=${SB_VAR_PGSQL} \
+--with-wx-config=${_wx_config} --datadir=${_datadir} \
+--docdir=${_docdir} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d $(dirname ${_docdir})
+mv ${_datadir}/docs ${_docdir}
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para>Copyright (c) 2002 - 2009, The pgAdmin Development
+Team</para>
+        <para>Permission to use, copy, modify, and distribute this
+software and its documentation for any purpose, without fee, and
+without a written agreement is hereby granted, provided that the above
+copyright notice and this paragraph and the following two paragraphs
+appear in all copies.</para>
+        <para>IN NO EVENT SHALL THE PGADMIN DEVELOPMENT TEAM BE LIABLE
+TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE
+OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE PGADMIN
+DEVELOPMENT TEAM HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+        <para>THE PGADMIN DEVELOPMENT TEAM SPECIFICALLY DISCLAIMS ANY
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE
+PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE PGADMIN DEVELOPMENT
+TEAM HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES,
+ENHANCEMENTS, OR MODIFICATIONS.</para>
+      </license>
+    </licenses>
+
+    <changelog>
+      <change date="2012 January 26" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update atk dependency from 1.22.0 to
+1.32.0</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update libxslt dependency from 1.1.24 to
+1.1.26</para></item>
+        <item><para>Update openssl dependency from 0.9.8h to
+1.0.0e</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.3</para></item>
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+        <item><para>Update tcl dependency from 8.5.6 to
+8.5.10</para></item>
+        <item><para>Update wxGTK dependency from 2.8.10 to
+2.8.12</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+      </change>
+
+      <change date="2010 November 11" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

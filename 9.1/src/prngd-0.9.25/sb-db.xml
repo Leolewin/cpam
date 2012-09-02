@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="prngd" version="0.9.25" revision="1"
+  systype="*-aix4*|*-aix5.1*|*-hpux*|*-irix*|*-osf*|*-solaris2.[567]*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="888c7be618b0676467d76743ee30b35e"
+        checksum-type="md5" size="64720"
+        path="src/prngd-0.9.25.tar.gz"/>
+      <patch checksum="0ab131fc60d0fdc8e65116c73abc432c"
+        checksum-type="md5" size="6897"
+        path="src/prngd-0.9.25.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-DAIX43 -O2 -qmaxmem=-1 -qarch=com"
+  CONTRIB=AIX-4.3 PRNGD_CONF=aix43 ;;
+*-hpux*)
+  CC=cc CFLAGS="-DHPUX10 +O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CONTRIB=HPUX PRNGD_CONF=hpux-10 ;;
+*-irix6.2)
+  CC=cc CFLAGS="-DIRIX62 -O2 -OPT:Olimit=0"
+  CONTRIB=IRIX-65 PRNGD_CONF=irix-65 ;;
+*-irix6.5)
+  CC=cc CFLAGS="-DIRIX65 -O2 -OPT:Olimit=0"
+  CONTRIB=IRIX-65 PRNGD_CONF=irix-65 ;;
+*-osf5*)
+  CC=cc CFLAGS="-DTRU64 -O2 -msym -readonly_strings"
+  CONTRIB=Tru64 PRNGD_CONF=tru64 ;;
+*-osf4*)
+  CC=cc CFLAGS="-DOSF1 -O2 -msym -readonly_strings"
+  CONTRIB=OSF1 PRNGD_CONF=osf1 ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-DSOLARIS -mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  CONTRIB=Solaris-7 PRNGD_CONF=solaris-7 SYSLIBS="-lsocket -lnsl" ;;
+*-solaris2.7)
+  CC=cc CFLAGS="-DSOLARIS -mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CONTRIB=Solaris-7 PRNGD_CONF=solaris-7 SYSLIBS="-lsocket -lnsl" ;;
+*-solaris2.6)
+  CC=cc CFLAGS="-DSOLARIS26 -mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CONTRIB=Solaris-7 PRNGD_CONF=solaris-7 SYSLIBS="-lsocket -lnsl" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-DSOLARIS_251 -mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CONTRIB=Solaris-2.6 PRNGD_CONF=solaris-26 SYSLIBS="-lsocket -lnsl" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake ${SYSLIBS+SYSLIBS="${SYSLIBS}"} CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2} \
+-DRANDSAVENAME=\\\"/var${SB_INSTALL_PREFIX}/seed\\\" \
+-DCONFIGFILE=\\\"${_sysconfdir}/prngd.conf\\\""
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/bin
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d /var${SB_INSTALL_PREFIX}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 \
+contrib/${CONTRIB}/prngd.conf.${PRNGD_CONF} ${_sysconfdir}/prngd.conf
+
+${SB_PATH_INSTALL} -m 555 -o root -g 0 prngd ${SB_INSTALL_PREFIX}/bin
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${SB_INSTALL_PREFIX}
+
+rm -rf /var${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <note type="usage">
+        <para>The default location for the configuration file is
+<command>${SB_INSTALL_PREFIX}/etc/prngd.conf</command>. The configuration file
+defines what system commands to run to generate data for the entropy
+pool. If adding commands to this file or modifying the existing
+commands in the file, please ensure that your changes cause the
+programs to generate different data between runs.</para>
+        <para>The default location for the seed file saved between
+runs of prngd is <command>/var${SB_INSTALL_PREFIX}/seed</command>. If prngd is run
+with the <command>--no-seedfile</command> switch, no seed file will be
+written to <command>/var${SB_INSTALL_PREFIX}/seed</command>. The
+<command>--seedfile</command> switch can be used to specify an
+alternate seed file.</para>
+        <para>We recommend adding the invocation for prngd to your
+startup scripts and advertising the pathname of the socket prngd is
+listening on (<command>/var${SB_INSTALL_PREFIX}/pool</command> by default). Of the
+packages installed by prngd, the location configuration package (if
+available) installs startup scripts in the system
+<command>/etc/init.d</command> or <command>/sbin/init.d</command>
+directory to start the prngd daemon.</para>
+        <para>On Tru64 UNIX, the permission of the socket file must be
+<command>777</command>. If not, only the root user can read the
+socket.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 June 15" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Merge in changes from 0.9.28. Among the important
+fixes:</para>
+        <unorderedlist>
+          <item><para>On Solaris 8 prngd did hang in a tight loop. Due
+to "truss" output added in the bug report, the bug could be found: in
+collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+          <item><para>When failing to execl() a gatherer command, NULL
+pointers could be passed to snprintf() instead of empty strings if not
+all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+          <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+          <item><para>Modified serverloop.c wait_write() behaviour: on
+failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+          <item><para>When lots of processes query entropy at the same
+time, the "fairness" change introduced in 0.9.25 could lead to clients
+being only served with a delay. Reason: in serverloop.c the next
+client to serv is "i1" as determined from</para>
+          <screen>
+i1 = (prev_location + i) % max_query_old;
+          </screen>
+          <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+        </unorderedlist></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

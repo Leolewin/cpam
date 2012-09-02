@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="groff" version="1.17.2" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}11</install-name>
+
+    <sources>
+      <source checksum="9564e58e553e7a8d4c6e73a782f296ce"
+        checksum-type="md5" size="1503169"
+        path="src/groff-1.17.2.tar.gz"/>
+      <patch checksum="ccba12a81cf4854ad56290f498e258a4"
+        checksum-type="md5" size="121423"
+        path="src/groff-1.17.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-aix4*)
+  # We do not want to -D_LINUX_SOURCE_COMPAT for strsep()
+  export ac_cv_func_strsep=no
+
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXXFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+
+  # -O/-O2 generate memory access violation (compiler bug)
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CXXFLAGS="-O2 -mcpu=v7" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" CXX="${CXX:-g++}" \
+CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PERLPATH=${SB_VAR_PERL}/bin/perl \
+./configure --datadir="${_datadir}" --program-prefix=g \
+--prefix=${SB_INSTALL_PREFIX}
+
+cd src/xditview
+case "${SB_SYSTYPE}" in
+*-solaris2.5.1)
+  xmkmf -a ;;
+*)
+  xmkmf ;;
+esac
+
+gmake depend
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake g=g sys_tmac_prefix= tmac_wrap= dataprogramdir="${_datadir}" \
+datasubdir="${_datadir}" &&
+(cd src/xditview
+gmake GROFF_DATAPROGRAMDIR="${_datadir}" \
+GROFF_DATASUBDIR="${_datadir}" \
+CC=gcc CCOPTIONS="-O2 -mcpu=v8")
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+ginstall -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}
+
+gmake g=g sys_tmac_prefix= tmac_wrap= dataprogramdir="${_datadir}" \
+datasubdir="${_datadir}" install
+
+cd src/xditview
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/lib
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/lib/app-defaults
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 gxditview \
+${SB_INSTALL_PREFIX}/bin
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 GXditview.ad \
+${SB_INSTALL_PREFIX}/lib/app-defaults/GXditview
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 gxditview.man \
+${SB_INSTALL_PREFIX}/man/man1/gxditview.1
+]]>
+    </install>
+
+    <notes>
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Build pfbtops with C++ compiler as it links
+against the groff C++ library</para></item>
+      </change>
+
+      <change date="2004 March 13" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 4.3.3. While strsep() is in
+libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+
+      <change date="2004 January 13" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Updated Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 November 10" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Updated GCC dependency to 3.2.3 for HP-UX
+10.20</para></item>
+        <item><para>Updated GCC dependency to 3.3.2</para></item>
+      </change>
+
+      <change date="2003 May 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Updated Perl dependency to 5.6.1</para></item>
+        <item><para>Updated GCC dependency to 3.2.2</para></item>
+      </change>
+
+      <change date="2003 April 4" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

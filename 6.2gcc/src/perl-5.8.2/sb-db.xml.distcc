@@ -1,0 +1,678 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="perl" version="5.8.2" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}582</install-name>
+
+    <sources>
+      <source checksum="fa356b74f99166b63a68a322c3c68f91"
+        checksum-type="md5" size="11896287"
+        path="src/perl-5.8.2.tar.gz"/>
+      <patch checksum="f27446816c66915adc83ffefb2a961ed"
+        checksum-type="md5" size="496891"
+        path="src/perl-5.8.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend var="GCC_RT" install-name="gcc332r"
+        type="build"/>
+      <depend var="PERLP" install-name="perl582p"
+        set-var-only="1"/>
+      <depend program="gcc" add-path="prepend"
+        type="build">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*) ARCH=aix-thread-multi ;;
+*-osf*) ARCH=alpha-dec_osf-thread-multi ;;
+*-hpux*) ARCH=PA-RISC1.1-thread-multi ;;
+*-irix6*) ARCH=IP30-irix-thread-multi ;;
+*-solaris2*) ARCH=sun4-solaris-thread-multi ;;
+x86_64*-linux*) ARCH=x86_64-linux-thread-multi ;;
+*-linux*) ARCH=i686-linux-thread-multi ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+# make local copy of GCC runtime so we don't depend on a specific
+# version of GCC
+if [ ! -d "${SB_INSTALL_PREFIX}/lib/support" ]; then
+  sudo -h 2>/dev/null || {
+    sb_msg_err "'sudo' program not found. Before Perl can be \
+configured, the GCC runtime files must be copied to \
+${SB_INSTALL_PREFIX}/lib/support. 'sudo' is used to run the \
+necessary commands as root because the configuration step is \
+usually run as a non-root user. Please configure 'sudo' per \
+the sb(1) manual and rerun."
+    exit 1
+  }
+  
+  sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+  ${SB_INSTALL_PREFIX}/lib/support
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.a ${GCC_RT_LIB}/libstdc++.a \
+    ${GCC_RT_LIB}/libg2c.a ${SB_INSTALL_PREFIX}/lib/support
+    ;;
+  *-hpux10*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.1 ${GCC_RT_LIB}/libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.sl
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl.0
+    ;;
+  *-hpux11*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.1 ${GCC_RT_LIB}/libstdc++.sl.5.5 \
+    ${GCC_RT_LIB}/libg2c.sl.0.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.sl
+    sudo ${SB_PATH_GLN} -s libstdc++.sl.5.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.sl
+    sudo ${SB_PATH_GLN} -s libstdc++.sl.5.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.sl.5
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl.0
+    ;;
+  *-irix*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.so.1 ${GCC_RT_LIB}/libstdc++.so.6.5 \
+    ${GCC_RT_LIB}/libg2c.so.1.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.so.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.6.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.6.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so.6
+    sudo ${SB_PATH_GLN} -s libg2c.so.1.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so
+    sudo ${SB_PATH_GLN} -s libg2c.so.1.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so.1
+    ;;
+  *-linux*|*-solaris*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.so.1 ${GCC_RT_LIB}/libstdc++.so.5.0.5 \
+    ${GCC_RT_LIB}/libg2c.so.0.0.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.so.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so.5
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so.0
+    ;;
+  *-osf*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.so.1 ${GCC_RT_LIB}/libstdc++.so.5.0.5 \
+    ${GCC_RT_LIB}/libg2c.so.0.0.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.so.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so.5
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so.0
+    ;;
+  esac
+
+  ${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/lib/support
+fi
+
+# Remove old configuration
+rm -f config.sh Policy.sh
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dccflags="-DDEBUGGING" \
+  -Doptimize="-O2" \
+  -Di_db="undef" \
+  -Dcf_email="support@thewrittenword.com" \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+
+  # fix runtime search path for libperl.a
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!SHRPLDFLAGS = -shared!\
+SHRPLDFLAGS = -shared -L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-blibpath:${SB_INSTALL_PREFIX}/lib/support:/usr/lib!" Makefile
+  ;;
+x86_64*-linux*)
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlibpth="/lib64 /usr/lib64" \
+  -Ulocincpth= \
+  -Uloclibpth= \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dcpprun="gcc -E" \
+  -Dcppstdin="gcc -E" \
+  -Dccflags="-fno-strict-aliasing -DDEBUGGING" \
+  -Doptimize="-O2" \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Dlibs="-lnsl -ldl -lm -lcrypt -lutil -lpthread -lc" \
+  -Di_db="undef" \
+  -Dcf_email='support@thewrittenword.com' \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dpager="/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+  ;;
+*-linux*)
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlibpth="/lib /usr/lib" \
+  -Ulocincpth= \
+  -Uloclibpth= \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dcpprun="gcc -E" \
+  -Dcppstdin="gcc -E" \
+  -Dccflags="-fno-strict-aliasing -DDEBUGGING" \
+  -Doptimize="-O2" \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Dlibs="-lnsl -ldl -lm -lcrypt -lutil -lpthread -lc" \
+  -Di_db="undef" \
+  -Dcf_email='support@thewrittenword.com' \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dpager="/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+  ;;
+*-osf4*)
+  # /usr/shlib/libdb.so contains Berkeley DB 1.85 so make sure we
+  # do not link in by hard-coding libs and i_db
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dccflags="-DDEBUGGING" \
+  -Doptimize='-O2' \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Dlibs="-ldbm -lm -liconv -lpthread" \
+  -Di_db="undef" \
+  -Di_inttypes="undef" \
+  -Dcf_email='support@thewrittenword.com' \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+  ;;
+*-osf*)
+  # /usr/shlib/libdb.so contains Berkeley DB 1.85 so make sure we
+  # do not link in by hard-coding libs and i_db
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dccflags="-DDEBUGGING" \
+  -Doptimize='-O2' \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Dlibs="-ldbm -lm -liconv -lpthread" \
+  -Di_db="undef" \
+  -Dcf_email='support@thewrittenword.com' \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+  ;;
+*-hpux10*)
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dcf_email="support@thewrittenword.com" \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dccflags="-march=1.1 -DDEBUGGING -fPIC" \
+  -Doptimize="-O2" \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,+s,+b,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!PA-RISC2.0!PA-RISC1.1!g" config.sh
+  ;;
+*-hpux11*)
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dcf_email='support@thewrittenword.com' \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dccflags="-march=1.1 -DDEBUGGING -fPIC" \
+  -Doptimize='-O2' \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,+s,+b,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Aprepend:libswanted='cl $empty' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!PA-RISC2.0!PA-RISC1.1!g" config.sh
+  ;;
+*-irix6*)
+  # /usr/lib32/libdb.so contains Berkeley DB 1.85 on 6.5 so
+  # make sure we do not link in by hard-coding libs and i_db
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlibpth="/usr/lib32 /lib32 /lib /usr/lib" \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dman1dir="${SB_INSTALL_PREFIX}/man/man1" \
+  -Dman3dir="${SB_INSTALL_PREFIX}/man/man3" \
+  -Dccflags="-DDEBUGGING" \
+  -Doptimize="-O2" \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib/support" \
+  -Dd_dosuid="define" \
+  -Dlibs="-lm -lc -lpthread" \
+  -Di_db="undef" \
+  -Dcf_email='support@thewrittenword.com' \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -Dpager="/usr/bin/more" -des
+
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!^installusrbinperl='define'!installusrbinperl='undef'!" config.sh
+  ;;
+*-solaris2.[89]*)
+  ./Configure -Dcc='distcc gcc' -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlibpth="/lib /usr/lib /usr/ccs/lib" \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dcf_email="support@thewrittenword.com" \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dccflags="-DDEBUGGING" \
+  -Doptimize="-O2 -mcpu=v8" \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-R,${SB_INSTALL_PREFIX}/lib/support" \
+  -Aprepend:libswanted='thread $empty' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+  ;;
+*-solaris2*)
+  ./Configure -Dcc=gcc -Dprefix=${SB_INSTALL_PREFIX} \
+  -Dlibpth="/lib /usr/lib /usr/ccs/lib" \
+  -Dlocincpth=" " \
+  -Dloclibpth=" " \
+  -Dsitearch="${SB_VAR_PERLP}/lib/5.8.2/${ARCH}" \
+  -Dsitebin="${SB_VAR_PERLP}/bin" \
+  -Dsiteetc="${_sysconfdir}" \
+  -Dsitelib="${SB_VAR_PERLP}/lib/5.8.2" \
+  -Dsiteprefix="${SB_VAR_PERLP}" \
+  -Dvendorarch="${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}" \
+  -Dvendorbin="${SB_VAR_PERLP}/vendor/bin" \
+  -Dvendorlib="${SB_VAR_PERLP}/vendor/lib/5.8.2" \
+  -Dvendorprefix="${SB_VAR_PERLP}/vendor" \
+  -Dcf_email="support@thewrittenword.com" \
+  -Dcf_by='The Written Word, Inc.' \
+  -Dccflags="-DDEBUGGING" \
+  -Doptimize="-O2 -mcpu=v7" \
+  -Dldflags="-L${SB_INSTALL_PREFIX}/lib/support \
+-Wl,-R,${SB_INSTALL_PREFIX}/lib/support" \
+  -Aprepend:libswanted='thread $empty' \
+  -Dpager="/usr/bin/more" \
+  -Dinstallusrbinperl="undef" \
+  -Duseshrplib="true" \
+  -Duseithreads="define" \
+  -Dthreads="define" \
+  -des
+  ;;
+esac
+
+gmake depend CC="distcc gcc" 
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  # needed to resolve __divdi3
+  gmake gcc_s="-lgcc_s" ;;
+*)
+export DISTCC_HOSTS='ilad2219 wsdd2501' ;gmake  -j4 CC="distcc gcc" ;;
+esac
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+MAKE=gmake gmake test
+
+: Ignore failures
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# Fix hard-coded shared library path
+case "${SB_SYSTYPE}" in
+*-aix*)
+  rm -f perl ${SB_INSTALL_PREFIX}/bin/perl ${SB_INSTALL_PREFIX}/bin/perl5.8.2
+  gmake LLIBPERL="-L${SB_INSTALL_PREFIX}/lib/5.8.2/${ARCH}/CORE \
+-Wl,-blibpath:${SB_INSTALL_PREFIX}/lib/5.8.2/${ARCH}/CORE:\
+${SB_INSTALL_PREFIX}/lib/support:/usr/lib \
+-lperl" perl
+
+  ginstall -m 755 -o root -g 0 perl ${SB_INSTALL_PREFIX}/bin/perl
+  ln ${SB_INSTALL_PREFIX}/bin/perl ${SB_INSTALL_PREFIX}/bin/perl5.8.2
+  ;;
+*-hpux*)
+  rm -f perl ${SB_INSTALL_PREFIX}/bin/perl ${SB_INSTALL_PREFIX}/bin/perl5.8.2
+  gmake LLIBPERL="-L${SB_INSTALL_PREFIX}/lib/5.8.2/${ARCH}/CORE \
+-Wl,+s,+b,${SB_INSTALL_PREFIX}/lib/5.8.2/${ARCH}/CORE -lperl" perl
+
+  ginstall -m 755 -o root -g 0 perl ${SB_INSTALL_PREFIX}/bin/perl
+  ln ${SB_INSTALL_PREFIX}/bin/perl ${SB_INSTALL_PREFIX}/bin/perl5.8.2
+  ;;
+esac
+
+ginstall -m 755 -o root -g 0 -d ${SB_VAR_PERLP}/vendor/lib/5.8.2/${ARCH}
+
+(cd /usr/include
+find . -type f | while read _include; do
+  echo ${_include}
+  ${SB_INSTALL_PREFIX}/bin/h2ph ${_include}
+done)
+
+# default include.paths configuration file
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/include.paths
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_VAR_PERLP} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <note type="compilation">
+        <para>Unlike Perl 5.6.1 and earlier, the search path for
+installed modules has changed. The ``<command>${SB_INSTALL_BASE}/perl582p</command>''
+directory is now searched before the built-in perl and vendor
+modules.</para>
+
+        <para>The default perl module search path directories
+are:</para>
+        <screen>
+${SB_INSTALL_BASE}/perl582p/lib/5.8.2/&lt;arch&gt;
+${SB_INSTALL_BASE}/perl582p/lib/5.8.2
+${SB_INSTALL_BASE}/perl582p/lib
+${SB_INSTALL_PREFIX}/lib/5.8.2/&lt;arch&gt;
+${SB_INSTALL_PREFIX}/lib/5.8.2
+${SB_INSTALL_BASE}/perl582p/vendor/lib/5.8.2/&lt;arch&gt;
+${SB_INSTALL_BASE}/perl582p/vendor/lib/5.8.2
+${SB_INSTALL_BASE}/perl582p/vendor/lib
+.
+        </screen>
+
+        <para>A separate package contains the perl5 modules which will
+be updated separately as new modules are added and new versions of
+existing modules are released. XEmacs, Python, and teTeX are
+distributed in the same manner. The goal is to keep the perl
+distribution pristine.</para>
+
+        <para>Unlike previous releases of Perl which were compiled
+with the vendor C compliler, releases of Perl beginning with the 5.8.2
+release are built with the GNU C compiler. This will make building
+3rd-party modules easier as the vendor compiler is not required. A
+local copy of the GCC runtime libraries has been copied to the
+<command>${SB_INSTALL_PREFIX}/lib/support</command> directory to avoid
+depending on a specific version of GCC.</para>
+
+        <para>On AIX, HP-UX, IRIX, Redhat Linux, and Solaris 2.6+,
+support for large files has been compiled in.</para>
+      </note>
+
+      <note type="configuration">
+        <para>The list of module search paths can be augmented by
+editing the <command>${SB_INSTALL_PREFIX}/etc/include.paths</command> file, adding
+new search paths, one entry per line. The search paths in this
+configuration file are searched before the defaults. For example, with
+the following entries in the configuration file:</para>
+        <screen>
+/opt/perl582
+/opt/local/perl582
+        </screen>
+
+        <para>the default search paths would be as follows:</para>
+        <screen>
+/opt/perl582
+/opt/local/perl582
+${SB_INSTALL_BASE}/perl582p/lib/5.8.2/&lt;arch&gt;
+${SB_INSTALL_BASE}/perl582p/lib/5.8.2
+${SB_INSTALL_BASE}/perl582p/lib
+${SB_INSTALL_PREFIX}/lib/5.8.2/&lt;arch&gt;
+${SB_INSTALL_PREFIX}/lib/5.8.2
+${SB_INSTALL_BASE}/perl582p/vendor/lib/5.8.2/&lt;arch&gt;
+${SB_INSTALL_BASE}/perl582p/vendor/lib/5.8.2
+${SB_INSTALL_BASE}/perl582p/vendor/lib
+.
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The following 3rd-party modules are provided:
+Array-Compare 1.03, Array-Unique 0.03, Authen-SASL 2.02, BerkeleyDB
+0.25, Bit-Vector 6.3, CGI.pm 3.05, Carp-Assert 0.17, Chart 2.3,
+Class-Accessor 0.18, Class-DBI 0.89, Class-Data-Inheritable 0.02,
+Class-Fields 0.14, Class-Trigger 0.08, Class-WhiteHole 0.04,
+Compress-Zlib 1.33, Convert-ASN1 0.16, Curses 1.06, DB_File 1.807,
+DBD-CSV 0.2002, DBI 1.42, Data-ShowTable 3.3, Data-Table 1.36,
+Date-Calc 5.3, Date-Simple 3.00, DateManip 5.40, Digest-HMAC 1.01,
+Digest-Nilsimsa 0.06, Digest-SHA1 2.04, Digest-SHA2 1.0.0, Expect
+1.15, File-Remote 1.14, File-Tail 0.98, Filter 1.28, Font-AFM 1.18, GD
+2.07, GDGraph 1.39, GDTextUtil 0.85, Geography-Countries 1.4, Graph
+0.20102, Graph-ReadWrite 1.07, GraphViz 1.8, GraphViz-DBI 0.02,
+GraphViz-ISA 0.01, Geography-Countries 1.4, HTML-DynamicTemplate 0.94,
+HTML-Format 2.03, HTML-Parser 3.31, HTML-Table 1.19, HTML-Tagset 3.03,
+HTML-Template 2.6, HTML-Tree 3.18, HTTP-DAV 0.24, Heap 0.50,
+IO-Socket-SSL 0.95, Ima-DBI 0.31, IO-Tty 1.02, IO-stringy 2.108,
+IPC-Run 0.78, List-Compare 0.18, libnet 1.16, libxml-perl 0.07,
+libwww-perl 5.69, MIME-Lite 3.01, MIME-Types 1.12, MIME-tools 5.411a,
+MLDBM 2.01, Mail-Audit 2.1, Mail-IMAPClient 2.2.9, MailTools 1.58,
+Math-Bezier 0.01, Mail-Box 2.054, Module-Signature 0.38, Net_SSLeay
+1.25, Net-Daemon 0.38, Net-Ident 1.20, Net-Ping 2.31, Net-Telnet 3.03,
+Object-Realize-Later 0.15, PAR-Dist 0.07, PDL 2.4.0, Parse-RecDescent
+1.94, PlRPC 0.2017, Pod-Escapes 1.03, Pod-Simple 0.97, Proc-Background
+1.08, Proc-Daemon 0.02, Proc-ProcessTable 0.38, perl-ldap 0.31, Quota
+1.4.10, readonly 1.03, RPC-XML 0.54, sdf 2.001, SNMP_Session 0.93,
+SQL-Statement 1.004, Scalar-List-Utils 1.13, Shell-Source 0.01,
+Syslog-0.97, Term-ReadLine-Gnu 1.14, TermReadKey 2.21,
+Test-Builder-Tester 0.09, Test-Pod 0.95, Text-Balanced 1.89,
+Text-CSV_XS 0.23, Text-Iconv 1.2, Tie-IxHash 1.21, TimeDate 1.16, Tk
+800.025, Tk-FileDialog 1.3, UNIVERSAL-moniker 0.06, URI 1.30,
+User-Identity-0.07, XML-DOM 1.43, XML-LibXML 1.58, XML-LibXML-Common
+0.13, XML-NamespaceSupport 1.08, XML-Parser 2.31, XML-RegExp 0.03,
+XML-SAX 0.12, XML-Twig 3.08, XML-Writer 0.4</para>
+
+        <para>Package dependies for some modules:</para>
+        <unorderedlist>
+          <item><para>The BerkeleyDB module needs v4.1.25 of the
+Berkeley DB package</para></item>
+          <item><para>The Compress-Zlib module needs v1.1.4 of the Zlib
+package</para></item>
+          <item><para>The Curses module needs v5.4 of the Ncurses
+package. Forms, Menus, and Panels support has been
+enabled.</para></item>
+          <item><para>The DB_File module needs v4.1.25 of the
+Berkeley DB package</para></item>
+          <item><para>The GD module needs v2.0.15 of the gd
+library</para></item>
+          <item><para>The Text-Iconv module needs v1.8 of the libiconv
+package</para></item>
+          <item><para>The Term-ReadLine-Gnu module needs v4.2a of the
+readline package and v5.4 of the ncurses package</para></item>
+          <item><para>The XML-LibXML-Common and XNML-LibXML modules 
+need v2.5.11 of the libxml package</para></item>
+          <item><para>The XML-Parser modules needs v1.95.6 of the expat
+package</para></item>
+        </unorderedlist>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 June 4" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Set correct runtime path on AIX for
+libperl.a</para></item>
+      </change>
+
+      <change date="2004 February 24" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to Perl 5.8.3</para></item>
+      </change>
+
+      <change date="2004 January 21" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add lib/support directory to runtime search path
+when relinking perl during installation stage for AIX</para></item>
+        <item><para>Read <command>include.paths</command> configuration
+file to determine list of additional directories to add to runtime
+list of paths to search for modules</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

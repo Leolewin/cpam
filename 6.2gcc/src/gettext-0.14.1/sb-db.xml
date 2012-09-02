@@ -1,0 +1,376 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gettext" version="0.14.1" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}014</install-name>
+
+    <sources>
+      <source checksum="78f4b862510beb2e5d43223dd610e77d"
+        checksum-type="md5" size="6550874"
+        path="src/gettext-0.14.1.tar.gz"/>
+      <patch checksum="3e80b6b0cf9831bcb30185d478190f01"
+        checksum-type="md5" size="4848767"
+        path="src/gettext-0.14.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="!*-aix*">v&gt;=1.9.2 r&gt;=2</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS="-Wl,-brtl" ;;
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS="-Wl,-brtl"
+
+  # We do not have stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" 
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # Don't use getline in libc or xgettext will core dump
+  export ac_cv_func_getline=no ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${CXX+CXX="${CXX}"} ${CXXFLAGS+CXXFLAGS="${CXXFLAGS}"} \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--with-included-gettext --datadir=${_datadir} \
+--with-lispdir="${_datadir}/lisp" \
+--with-libexpat-prefix=${SB_VAR_LIBEXPAT} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+(cd gettext-runtime && gmake configure)
+
+${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+gettext-runtime/intl/libintl.pc
+
+# remove libiconv dependency from pkgconfig file
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_SHTOOL} subst -q -e "\
+/^Requires:/ d" gettext-runtime/intl/libintl.pc ;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake docdir="${_docdir}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake docdir="${_docdir}" install
+
+${SB_PATH_GINSTALL} -o root -g 0 -m 755 -d ${_docdir}/texinfo
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 \
+gettext-runtime/libasprintf/*.texi gettext-runtime/doc/*.texi \
+gettext-tools/doc/*.texi ${_docdir}/texinfo
+]]>
+    </install>
+
+    <notes>
+      <change from="0.13" to="0.14">
+        <items name="Programming languages support">
+          <item><para>C#:</para>
+          <unorderedlist>
+            <item><para>xgettext now also supports C#</para></item>
+            <item><para>New library: GNU.Gettext.dll contains the
+runtime for using GNU gettext message catalogs in C#</para></item>
+            <item><para>msgfmt can create (and msgunfmt can dump)
+message catalogs for C#</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <item><para>Special feature for Farsi (Persian): Translators
+can insert an 'I' flag into numeric format directives in format
+strings. Its effect is that, on glibc systems, the number is generated
+with the locale dependent set of special digits instead of the usual
+ASCII digits.</para></item>
+        <item><para>Documentation:</para>
+        <unorderedlist>
+          <item><para>New documentation section: C#</para></item>
+          <item><para>Complete examples illustrating the use of
+gettext in C# (in text mode and in Forms applications) have been
+added</para></item>
+          <item><para>New documentation section: Preparing Library
+Sources</para></item>
+        </unorderedlist></item>
+        <item><para>Special advice for Norwegian users: The language
+code for Norwegian bokmayl changed from 'no' to 'nb' recently (in
+2003). During the transition period, while some message catalogs for
+this language are installed under 'nb' and some older ones under 'no',
+it's recommended for Norwegian users to set the LANGUAGE environment
+variable to 'nb:no' so that both newer and older translations are
+used.</para></item>
+      </change>
+
+      <change from="0.12" to="0.13">
+        <items name="Programming languages support">
+          <item><para>Shell:</para>
+          <unorderedlist>
+            <item><para>xgettext now also supports shell scripts. It
+recognizes invocations of the programs 'gettext', 'ngettext', the
+functions 'eval_gettext', 'eval_ngettext', as well as the deprecated
+GNU bash builtin syntax $"...".</para></item>
+            <item><para>New function library: gettext.sh - shell
+functions for internationalized shell scripts</para></item>
+            <item><para>New program: envsubst - substitutes
+environment variables in shell format strings</para></item>
+          </unorderedlist></item>
+          <item><para>Perl:</para>
+          <unorderedlist>
+            <item><para>xgettext now also supports Perl</para></item>
+          </unorderedlist></item>
+          <item><para>PHP:</para>
+          <unorderedlist>
+            <item><para>"<command>xgettext --language=PHP</command>"
+now supports the plural handling functions ngettext, dngettext,
+dcngettext (introduced in PHP 4.2.0)</para></item>
+          </unorderedlist></item>
+          <item><para>ObjectiveC:</para>
+          <unorderedlist>
+            <item><para>"<command>xgettext
+--language=ObjectiveC</command>" now supports the @"..." string
+syntax, the NSLocalizedString function and the ObjectiveC specific
+format strings</para></item>
+            <item><para>All the tools that manipulate PO files can
+work with .strings files as well, if given the
+<command>--stringtable-input</command> and/or
+<command>--stringtable-output</command> option. To create a .strings
+file from a PO or POT file, use "<command>msgcat
+--stringtable-output</command>". To create a PO or POT file from a
+.strings file, use "xgettext".</para></item>
+          </unorderedlist></item>
+          <item><para>GCC-source:</para>
+          <unorderedlist>
+            <item><para>xgettext's --language option now supports the
+value "GCC-source". This is like <command>--language=C</command>,
+except that in this mode, xgettext recognizes the special kind of
+format strings used in the GCC sources and marks them as
+'gcc-internal-format'.</para></item>
+          </unorderedlist></item>
+          <item><para>C++ with Qt:</para>
+          <unorderedlist>
+            <item><para>xgettext has a new option --qt that triggers
+the recognition and marking of Qt format strings</para></item>
+            <item><para>msgfmt has a new option --qt that generates
+binary message catalogs in Qt's .qm format</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Data formats support">
+          <item><para>Glade:</para>
+          <unorderedlist>
+            <item><para>xgettext now also supports Glade version
+2</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <item><para>xgettext has a more reliable detection of format
+strings. It now recognizes format strings depending on their
+position, for example as the second argument of fprintf(), regardless
+whether the literal string contains format directives. This behaviour
+can be customized through the <command>--flag</command>
+option.</para></item>
+        <item><para>libgettextpo library:</para>
+        <unorderedlist>
+          <item><para>New functions for testing the
+obsolete/fuzzy/*-format flags of a message</para></item>
+          <item><para>New convenience functions for extracting and
+analyzing the header entry</para></item>
+        </unorderedlist></item>
+        <item><para>Portability:</para>
+        <unorderedlist>
+          <item><para>C format strings with positions, as they arise
+when a translator needs to reorder a sentence, are now supported on
+all platforms. On those few platforms (NetBSD and Woe32) for which the
+native printf()/fprintf()/... functions don't support such format
+strings, replacements are provided through
+&lt;libintl.h&gt;.</para></item>
+          <item><para>A new configuration option --disable-libasprintf
+allows to build all of gettext except libasprintf; this is necessary
+on platforms for which libtool cannot create shared libraries with C++
+code.</para></item>
+        </unorderedlist></item>
+        <item><para>Documentation:</para>
+        <unorderedlist>
+          <item><para>Complete examples illustrating the use of
+gettext, including program sources, Makefile and autoconf
+infrastructure, have been added. They cover the following programming
+languages:</para>
+          <screen>
+C           (text mode, GNOME)
+C++         (text mode, Qt, KDE, GNOME)
+ObjectiveC  (text mode, GNUstep, GNOME)
+Shell       (text mode)
+Python      (text mode)
+Lisp        (text mode)
+librep      (text mode)
+Smalltalk   (text mode)
+Java        (text mode, AWT, Swing)
+awk         (text mode)
+Pascal      (text mode)
+YCP         (libyui)
+Tcl         (text mode, Tk)
+Perl        (text mode)
+PHP         (text mode)
+          </screen></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="0.11.5" to="0.12">
+        <items name="Programming languages support">
+          <item><para>C++:</para>
+          <unorderedlist>
+            <item><para>A new C++ class, called gnu::autosprintf,
+makes it possible to use C format strings in C++. This is needed for
+proper internationalization of C++ programs.</para></item>
+          </unorderedlist></item>
+          <item><para>Java:</para>
+          <unorderedlist>
+            <item><para>All the tools that manipulate PO files can
+work with .properties files as well, if given the --properties-input
+and/or --properties-output option. To create a .properties file from a
+PO or POT file, use "msgcat --properties-output".</para></item>
+          </unorderedlist></item>
+          <item><para>Smalltalk:</para>
+          <unorderedlist>
+            <item><para>xgettext now also supports
+Smalltalk</para></item>
+          </unorderedlist></item>
+          <item><para>PHP:</para>
+          <unorderedlist>
+            <item><para>xgettext now also supports PHP</para></item>
+          </unorderedlist></item>
+          <item><para>Python:</para>
+          <unorderedlist>
+            <item><para>"xgettext --language=Python" now supports the
+plural handling functions ngettext, dngettext, ungettext (introduced
+in Python 2.3)</para></item>
+          </unorderedlist></item>
+          <item><para>A new autoconf macro AM_PO_SUBDIRS is added. It
+is like AM_GNU_GETTEXT, for packages written in other languages than
+C/C++.</para></item>
+        </items>
+
+        <item><para>The gettext package is now separated into two
+subpackages:</para>
+        <unorderedlist>
+          <item><para>gettext-runtime: Runtime libraries and
+programs</para></item>
+          <item><para>gettext-tools: Tools and documentation for
+developers and translators.</para></item>
+        </unorderedlist></item>
+        <item><para>The 'gettext-runtime' package is very small and
+should be installed on every system that has users who desire to use
+internationalization. Whereas the 'gettext-tools' package is only for
+developers and translators.</para></item>
+        <item><para>The po/Makevars file has a new field
+MSGID_BUGS_ADDRESS, which program maintainers should fill in, to help
+feedback from the translators to the program maintainers. xgettext,
+accordingly, has a new option
+<command>--msgid-bugs-address</command>.</para></item>
+        <item><para>A new library libgettextpo, with public header
+file "gettext-po.h", provides functions for reading PO files into
+memory. It is useful for applying PO files to areas not covered by the
+GNU gettext programs. New documentation section: Writing your own
+programs that process PO files.</para></item>
+        <item><para>New documentation sections:</para>
+        <unorderedlist>
+          <item><para>Prioritizing messages: How to determine which
+messages to translate first</para></item>
+          <item><para>Names: Marking Proper Names for
+Translation</para></item>
+        </unorderedlist></item>
+        <item><para>xgettext now supports msgid strings in other
+encodings than ASCII. xgettext has a new option --from-code that
+specifies the encoding of the source files. The resulting POT files
+are UTF-8 encoded.</para></item>
+        <item><para>Tools for translators:</para>
+        <unorderedlist>
+          <item><para>msgmerge has a new option -N/--no-fuzzy-matching
+that inhibits the fuzzy search for untranslated messages</para></item>
+          <item><para>msgattrib has new options --only-file and
+--ignore-file that cause the specified attribute manipulation to apply
+to selected messages only</para></item>
+        </unorderedlist></item>
+        <item><para>Compatibility with automake-1.7</para></item>
+        <item><para>In documentation section po/LINGUAS: Document the
+optional "languages" en@quot and en@boldquot</para></item>
+        <item><para>New configuration option --enable-relocatable. See
+the INSTALL file for details.</para></item>
+      </change>
+
+      <change from="0.11.4" to="0.11.5">
+        <item><para>Bug fixes in the gettext.m4 autoconf
+macros</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 24" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove bison dependency</para></item>
+        <item><para>Remove texinfo dependency</para></item>
+        <item><para>Upgrade to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 August 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add libiconv.pc pkgconfig file</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

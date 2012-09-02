@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="grep" version="2.5.1" revision="2">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}25</install-name>
+
+    <sources>
+      <source checksum="ddd99e2d5d4f4611357e31e97f080cf2"
+        checksum-type="md5" size="559232"
+        path="src/grep-2.5.1.tar.bz2"/>
+      <patch checksum="58ca398baf7ed6e00ac45e0d15625ccf"
+        checksum-type="md5" size="427629"
+        path="src/grep-2.5.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="pcre" var="LIBPCRE"
+        install-name="libpcre44">v&gt;=4.4</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" CPPFLAGS="-I${LIBPCRE_INC}" \
+LDFLAGS="-L${LIBPCRE_LIB} ${CC_LD_RT}${LIBPCRE_LIB} \
+${LDFLAGS+${LDFLAGS}}" ./configure \
+${LIBICONV+--with-libiconv-prefix=${LIBICONV}} \
+--with-libintl-prefix=${GETTEXT} --datadir="${_datadir}" \
+--disable-dependency-tracking --program-prefix=g \
+--prefix=${INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 doc/version.texi doc/grep.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="2.5" to="2.5.1">
+        <item><para>Don't fail if we don't have an stdout fd and -q is
+used (happens e.g. on calls from hotplug scripts)</para></item>
+        <item><para>Don't hang forever if fed with an empty string to
+grep for and --color enabled</para></item>
+        <item><para>Fix infinite loop on</para>
+        <screen>
+echo "1 one" | grep -E "[0-9]*" -o
+echo "1 one" | grep -E "[0-9]*" --color
+        </screen></item>
+      </change>
+
+      <note type="compilation">
+        <para>GNU grep has been compiled with support for Perl regular
+expressions using the PCRE library.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 16" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix support for --disable-nls</para></item>
+      </change>
+
+      <change date="2003 November 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade PCRE dependency to 4.4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

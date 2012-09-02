@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="audiofile" version="0.2.6" revision="2"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}02</install-name>
+
+    <sources>
+      <source checksum="3d01302834660850b6141cac1e6f5501"
+        checksum-type="md5" size="278694"
+        path="src/audiofile-0.2.6.tar.bz2"/>
+      <patch checksum="14afbbad28fc7568c200d1405b4f5513"
+        checksum-type="md5" size="1195290"
+        path="src/audiofile-0.2.6.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,";;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,";;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-static --enable-shared \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!=-L\(\${exec_prefix}/lib\)!=\"-L\1 ${CC_LD_RT}\1\"!" audiofile-config
+
+for _pc in audiofile.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+    </configure>
+
+    <notes>
+      <change from="0.2.5" to="0.2.6">
+        <item><para>Added support for AVR, IFF/8SVX, and NIST SPHERE
+file formats</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

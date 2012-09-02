@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libxslt" version="1.0.33" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}102</install-name>
+
+    <sources>
+      <source checksum="caf27cc5232f5f4cd57be99e206e6c4a"
+        checksum-type="md5" size="2348707"
+        path="src/libxslt-1.0.33.tar.gz"/>
+      <patch checksum="8ba03fc35ebf25dee5b9d0b227356963"
+        checksum-type="md5" size="858644"
+        path="src/libxslt-1.0.33.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std1 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -ieee -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+PKG_CONFIG_PATH="${SB_VAR_LIBXML_LIB}/pkgconfig" \
+--enable-shared --enable-static --datadir="${_datadir}" \
+--with-html-dir="${_docdir}" \
+${PYTHON+--with-python=${SB_VAR_PYTHON}} \
+$(test "${PYTHON+set}" != set && echo --with-python=no) \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" xslt-config \
+libxslt.pc libexslt.pc
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml25">v&gt;=2.5.11</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.8.2</depend>
+      </dependencies>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+    </module>
+
+    <module name="python-2.3.2">
+      <dependencies>
+        <depend program="libxslt">v==1.0.33</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv18"
+          systype="*-osf4*">v&gt;=1.8</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml25">v&gt;=2.5.11</depend>
+        <depend var="PYTHONP" install-name="python232p"
+          type="build"/>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend program="gcc" add-path="prepend"
+          type="build">v==3.3.2</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.8.2</depend>
+        <depend program="python" var="PYTHON" add-path="prepend"
+          type="build">v==2.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_install_prefix="${SB_VAR_PYTHONP}/lib/python2.3/site-packages"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" LDFLAGS="-Wl,-rpath,${SB_INSTALL_PREFIX}/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CC_LD_RT="-Wl,-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_PYTHON}/lib/support \
+${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+--enable-shared --enable-static --with-libxml-prefix=${SB_VAR_LIBXML} \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${PYTHON+--with-python=${SB_VAR_PYTHON}} \
+$(test "${SB_VAR_PYTHON+set}" != set && echo --with-python=no) \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd python
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake AM_LDFLAGS="-Wl,-einitlibxsltmod" ;;
+*-osf4*)
+  gmake libxsltmod_la_LIBADD= \
+  libxsltmod_la_LDFLAGS="-module -avoid-version \
+-L${SB_INSTALL_PREFIX}/lib -L${SB_VAR_LIBXML_LIB} -L${SB_VAR_LIBICONV_LIB} \
+-L${SB_VAR_ZLIB_LIB} -Wl,-no_so,-lexslt,-lxslt,-lxml2,-liconv,-lz,-so_archive"
+  ;;
+*)
+  gmake
+  ;;
+esac)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd python; gmake install pythondir=${_install_prefix})
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/libxslt*
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="1.0.32" to="1.0.33">
+        <item><para>mode not cascaded in template
+fallbacks</para></item>
+        <item><para>catch redefinition of
+parameter/variables</para></item>
+        <item><para>multiple keys with same namespace
+name</para></item>
+        <item><para>patch for compilation using MingW on
+Windows</para></item>
+        <item><para>header export macros for Windows</para></item>
+        <item><para>cdata-section-elements handling of namespaced
+names</para></item>
+        <item><para>compilation without libxml2 XPointer
+support</para></item>
+        <item><para>apply-templates crash</para></item>
+        <item><para>bug with imported templates</para></item>
+        <item><para>imported attribute-sets merging bug
+(DocBook)</para></item>
+      </change>
+
+      <change from="1.0.31" to="1.0.32">
+        <item><para>bugfixes: xsltSaveResultToFile() python binding,
+EXSLT function, RVT for globals, EXSLT date, speed of large text
+output, xsl:copy with attributes, strip-space and namespaces prefix,
+fix for --path xsltproc option, EXST:tokenize, EXSLT:seconds, sort
+with multiple keys, checking of { and } for attribute value
+templates</para></item>
+        <item><para>Python bindings for extension
+elements</para></item>
+        <item><para>EXSLT:split added</para></item>
+        <item><para>portability fixes for
+HP-UX/Solaris/IRIX</para></item>
+        <item><para>doc cleanup</para></item>
+      </change>
+
+      <change from="1.0.30" to="1.0.31">
+        <item><para>bugfixes: xsl:copy on namespace nodes, AVT for
+xsl:sort order, fix for the debugger, output filename limitation,
+trio.h and triodef.h added, EXSLT node-set, xsltChoose and whitespace,
+stylesheet compilation, NaN and sort (William Brack), RVT bug
+introduced in 1.0.30</para></item>
+        <item><para>avoid generating &amp;quot;</para></item>
+        <item><para>fix 64bit cleaness problem and compilation
+troubles introduced in 1.0.30</para></item>
+        <item><para>Windows makefile generation</para></item>
+        <item><para>HP-UX portability fix</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>64-bit libraries are available for the following
+platforms:</para>
+        <screen>
+AIX 5.x            ${SB_INSTALL_PREFIX}/lib/ppc64
+HP-UX 11.x         ${SB_INSTALL_PREFIX}/lib/pa20_64
+IRIX 6.5           ${SB_INSTALL_PREFIX}/lib64
+Solaris 7-9/SPARC  ${SB_INSTALL_PREFIX}/lib/sparcv9
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 August 24" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64-bit module</para></item>
+      </change>
+
+      <change date="2003 November 24" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update perl dependency to 5.8.2</para></item>
+        <item><para>Update libxml dependency to 2.5.11</para></item>
+        <item><para>Add python-2.3.2 module</para></item>
+        <item><para>Remove python-2.2.1 and python-2.2.2
+modules</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

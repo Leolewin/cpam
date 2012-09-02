@@ -1,0 +1,852 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="gimp" version="2.6.8" revision="2"
+  systype="!*-osf*">
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_pysubdir="python26"
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="a4d9462c9420954824a80c9b1963f9d9"
+          checksum-type="md5" size="16342377"
+          path="src/gimp-2.6.8.tar.bz2"/>
+        <patch checksum="e7d1e3bbdfacf96f0cd49c9c8ddb2e52"
+          checksum-type="md5" size="43678"
+          path="src/gimp-2.6.8.tww.patch"/>
+        <patch checksum="2acad7666bea287f0c4f0e6b98c360d3"
+          checksum-type="md5" size="4173480"
+          path="src/gimp-2.6.8.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="gnome" var="GNOME" install-name="gnome232"
+          module="libgtkhtml">v&gt;=2.32</depend>
+        <depend program="gnome" install-name="gnome232"
+          module="librsvg">v&gt;=2.32</depend>
+        <depend program="intltool" install-name="intltool041"
+          add-path="prepend" type="build">v&gt;=0.41.1</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="python" install-name="python26"
+          add-path="prepend" type="build">v&gt;=2.6.7</depend>
+        <depend program="atk" var="ATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="babl" var="BABL"
+          install-name="libbabl01">v&gt;=0.1.0</depend>
+        <depend program="cairo" var="CAIRO"
+          install-name="libcairo110">v==1.10.2</depend>
+        <depend program="dbus" var="DBUS" install-name="dbus12"
+          module="glib" add-path="prepend">v&gt;=1.2.26</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="FREETYPE"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gegl" var="GEGL"
+          install-name="libgegl01">v&gt;=0.1.0</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="GLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+          install-name="libgdkpixbuf222"
+          add-path="prepend">v&gt;=2.22.1</depend>
+        <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+          add-path="prepend">v&gt;=2.22.1</depend>
+        <depend program="gtk-doc" var="GTKDOC" install-name="gtkdoc116"
+          add-path="prepend" type="build">v&gt;=1.16</depend>
+        <depend program="jpeg" var="JPEG"
+          install-name="libjpeg8">v&gt;=8b</depend>
+        <depend program="lcms" var="LCMS"
+          install-name="liblcms21">v&gt;=2.1</depend>
+        <depend program="libart_lgpl" var="LIBART"
+          install-name="libart23">v&gt;=2.3.21</depend>
+        <depend program="libexif" var="LIBEXIF"
+          install-name="libexif06">v&gt;=0.6.20</depend>
+        <depend program="libffi" var="LIBFFI"
+          install-name="libffi30">v==3.0.10</depend>
+        <depend program="libglade" var="LIBGLADE"
+          install-name="libglade26">v&gt;=2.6.4</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          add-path="prepend">v&gt;=1.13.1</depend>
+        <depend program="libmng" var="LIBMNG"
+          install-name="libmng10">v&gt;=1.0.10</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="libwmf" var="LIBWMF"
+          add-path="prepend">v==0.2.8 r&gt;=5</depend>
+        <depend program="libxml" var="LIBXML" install-name="libxml27"
+          add-path="prepend">v&gt;=2.7.8</depend>
+        <depend program="libxslt" var="LIBXSLT"
+          install-name="libxslt11"
+          add-path="prepend">v&gt;=1.1.26</depend>
+        <depend program="openjpeg" var="LIBOPENJPEG"
+          install-name="libopenjpeg14">v&gt;=1.4</depend>
+        <depend program="pango" var="PANGO"
+          install-name="libpango128">v&gt;=1.28.4</depend>
+        <depend program="poppler" var="LIBPOPPLER"
+          install-name="libpoppler016">v&gt;=0.16.7</depend>
+        <depend program="popt" var="LIBPOPT"
+          install-name="libpopt116">v&gt;=1.16</depend>
+        <depend program="tiff" var="LIBTIFF"
+          install-name="libtiff39">v&gt;=3.9.5</depend>
+        <depend program="xpm" var="XPM"
+          install-name="xpm">v&gt;=3.4k</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="glib" var="PYGOBJECT"
+          install-name="libglib226" module="pygobject-2.6.7"
+          append="lib/python26" type="build">v==2.26.1</depend>
+        <depend program="gtk+" var="PYGTK" install-name="libgtk+222"
+          module="pygtk-2.6.7" append="lib/python26"
+          type="build">v&gt;=2.22.1</depend>
+        <depend program="gtk+" install-name="libgtk+222"
+          module="pygtk-2.6.7" append="lib/python26/bin"
+          add-path="prepend" type="build">v&gt;=2.22.1</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+        <depend program="XML-Parser"
+          module="5.12.2">v&gt;=2.41</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="gimp" module="help">v==2.6.8</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_pysubdir="python26"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -features=no%extinl \
+-xO2 -xtarget=pentium4"
+  ARGS="${ARGS+${ARGS}} --disable-mmx --disable-sse"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -features=no%extinl \
+-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -features=no%extinl \
+-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBMNG+-I${SB_VAR_LIBMNG_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_XPM+-I${SB_VAR_XPM_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBMNG+-L${SB_VAR_LIBMNG_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_XPM+-L${SB_VAR_XPM_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_XPM+${CC_LD_RT}${SB_VAR_XPM_LIB}} \
+${SB_VAR_LIBWMF+${CC_LD_RT}${SB_VAR_LIBWMF_LIB}} \
+${SB_VAR_LIBOPENJPEG+${CC_LD_RT}${SB_VAR_LIBOPENJPEG_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_ATK+${SB_VAR_ATK_LIB}/pkgconfig:}\
+${SB_VAR_GEGL+${SB_VAR_GEGL_LIB}/pkgconfig:}\
+${SB_VAR_BABL+${SB_VAR_BABL_LIB}/pkgconfig:}\
+${SB_VAR_CAIRO+${SB_VAR_CAIRO_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_FREETYPE+${SB_VAR_FREETYPE_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_GLIB+${SB_VAR_GLIB_LIB}/pkgconfig:}\
+${SB_VAR_GNOME+${SB_VAR_GNOME_LIB}/pkgconfig:}\
+${SB_VAR_LIBPOPT+${SB_VAR_LIBPOPT_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_PYGTK+${SB_VAR_PYGTK_LIB}/pkgconfig:}\
+${SB_VAR_PYGOBJECT+${SB_VAR_PYGOBJECT_LIB}/pkgconfig:}\
+${SB_VAR_JPEG+${SB_VAR_JPEG_LIB}/pkgconfig:}\
+${SB_VAR_LCMS+${SB_VAR_LCMS_LIB}/pkgconfig:}\
+${SB_VAR_LIBART+${SB_VAR_LIBART_LIB}/pkgconfig:}\
+${SB_VAR_LIBEXIF+${SB_VAR_LIBEXIF_LIB}/pkgconfig:}\
+${SB_VAR_LIBFFI+${SB_VAR_LIBFFI_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLADE+${SB_VAR_LIBGLADE_LIB}/pkgconfig:}\
+${SB_VAR_LIBPOPPLER+${SB_VAR_LIBPOPPLER_LIB}/pkgconfig:}\
+${SB_VAR_DBUS+${SB_VAR_DBUS_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}/pkgconfig:}\
+${SB_VAR_PANGO+${SB_VAR_PANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBTIFF+${SB_VAR_LIBTIFF_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+PERL="${SB_VAR_PERL}/bin/perl" --disable-gtk-doc \
+$(test "${SB_VAR_PYGTK+set}" != set && echo --disable-python) \
+$(test "${SB_VAR_GNOME+set}" != set && echo --without-gnomevfs) \
+$(test "${SB_VAR_GNOME+set}" != set && echo --without-librsvg) \
+--disable-dependency-tracking ${ARGS+${ARGS}} --datadir=${_datadir} \
+--datarootdir=${_datadir} --sysconfdir=${_sysconfdir} \
+--with-html-dir="${_docdir}/html" --with-desktop-dir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" \
+gimp-2.0.pc gimpthumb-2.0.pc gimpui-2.0.pc
+
+# add path to GTK+ python module
+if [ "${SB_VAR_PYGOBJECT+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!@pygimplibdir@!${SB_INSTALL_PREFIX_LIB}/${_pysubdir}!; \
+s!@pygobjectlibdir@!${SB_VAR_PYGOBJECT}!; \
+s!@pygtklibdir@!${SB_VAR_PYGTK}!;" \
+  plug-ins/pygimp/*.py plug-ins/pygimp/plug-ins/*.py
+fi
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pygimpbase=${_pysubdir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pygimpbase=${_pysubdir}
+
+# install path for Python's include.paths.d
+_py_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_py_install_prefix}/include.paths.d
+cat >${_py_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_py_install_prefix}
+_EOT_
+
+# strip -2.6 extension from binaries
+(cd ${SB_INSTALL_PREFIX}/bin
+ for _prog in gimp gimp-console; do
+   rm -f ${_prog}
+   mv ${_prog}-2.6 ${_prog}
+ done
+ mv gimptool-2.0 gimptool
+
+ cd ${SB_INSTALL_PREFIX}/man/man1
+ for _prog in gimp gimp-console; do
+   rm -f ${_prog}.1
+   mv ${_prog}-2.6.1 ${_prog}.1
+ done
+ mv gimptool-2.0.1 gimptool.1
+
+ cd ${SB_INSTALL_PREFIX}/man/man5
+ rm -f gimprc.5
+ mv gimprc-2.6.5 gimprc.5)
+]]>
+      </install>
+    </module>
+
+    <module name="help">
+      <build-name/>
+
+      <sources>
+        <source checksum="b0fbd6d42c7d2a7515d7c10e19475529"
+          checksum-type="md5" size="32871856"
+          path="src/gimp-help-2.6.0-html-de.tar.bz2"
+          noop="1" var="DOC_DE"/>
+        <source checksum="81da262343316835ebdd3354ce8eab4f"
+          checksum-type="md5" size="28336871"
+          path="src/gimp-help-2.6.0-html-en.tar.bz2"
+          noop="1" var="DOC_EN"/>
+        <source checksum="c9da08345a679b84c33f890f4755fe32"
+          checksum-type="md5" size="29733901"
+          path="src/gimp-help-2.6.0-html-es.tar.bz2"
+          noop="1" var="DOC_ES"/>
+        <source checksum="a06b78bbc3322214266e5501b575d59e"
+          checksum-type="md5" size="28639062"
+          path="src/gimp-help-2.6.0-html-fr.tar.bz2"
+          noop="1" var="DOC_FR"/>
+        <source checksum="4a649d7cbd499697a595898ca48f6179"
+          checksum-type="md5" size="29470290"
+          path="src/gimp-help-2.6.0-html-it.tar.bz2"
+          noop="1" var="DOC_IT"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_pysubdir="python26"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+:
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd ${_datadir}
+ ${SB_PATH_TAR} --strip-components=1 -jxf ${SB_SRC_DOC_DE} gimp-help-2/html
+ ${SB_PATH_TAR} --strip-components=1 -jxf ${SB_SRC_DOC_EN} gimp-help-2/html
+ ${SB_PATH_TAR} --strip-components=1 -jxf ${SB_SRC_DOC_ES} gimp-help-2/html
+ ${SB_PATH_TAR} --strip-components=1 -jxf ${SB_SRC_DOC_FR} gimp-help-2/html
+ ${SB_PATH_TAR} --strip-components=1 -jxf ${SB_SRC_DOC_IT} gimp-help-2/html
+
+ mv html help
+ ${SB_PATH_CHOWN} -hR 0:0 help)
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="2.6.7" to="2.6.8">
+        <item><para>470698 MapObject cannot modify
+highlight</para></item>
+        <item><para>593848 FG color changed to black when FG-BG Editor
+tab created</para></item>
+        <item><para>594651 layer.scale() raises
+RuntimeError</para></item>
+        <item><para>594998 Keyboard shortcuts does not work for first
+image when dock is focused</para></item>
+        <item><para>599765 F1 key on gimp-tool-align in menu have
+wrong link and it open gimp-tool-move</para></item>
+        <item><para>600484 Gimp BMP Integer Overflow
+Vulnerability</para></item>
+        <item><para>600741 "read_channel_data()" Integer Overflow
+Vulnerability</para></item>
+        <item><para>601891 gimp_image_get_selection returns
+None</para></item>
+        <item><para>602761 plug-in-grid: Parameters
+Horizontal/Vertical Spacing and Horizontal/Vertical Offset are
+reversed.</para></item>
+        <item><para>603995 PCX plugin doesn't sanitize input to avoid
+allocation overflows.</para></item>
+        <item><para>603998 PCX: Calculating amount of memory to
+allocate may overflow.</para></item>
+        <item><para>604000 SGI: sanitize input</para></item>
+        <item><para>604001 SGI: Calculating amount of memory to
+allocate may overflow.</para></item>
+        <item><para>604002 SGI: RLE encoded input data may write
+beyond allocated buffers</para></item>
+        <item><para>604004 SGI: allocate memory
+consistently</para></item>
+        <item><para>604008 GBR, PAT: sanitize input data</para></item>
+        <item><para>604078 Crash when pressing Backspace with Free
+Select Tool</para></item>
+      </change>
+
+      <change from="2.6.6" to="2.6.7">
+        <item><para>591017 Tablet pan is not working as fast as it
+should</para></item>
+        <item><para>577581 Crashes when using any colors tool/function
+on Windows</para></item>
+        <item><para>589667 GIMP crashes when clicking GEGL Operation
+on Windows</para></item>
+        <item><para>569833 file-jpeg-save erroneous with small quality
+values</para></item>
+        <item><para>590638 Changing palettes from list to grid view
+loses "locked to dock" status</para></item>
+        <item><para>589674 "Send by Email" does not update
+"Filename"</para></item>
+        <item><para>586851 Transparent BMP files fail to
+load</para></item>
+        <item><para>589205 help-browser uses deprecated (and sometimes
+broken) webkit call</para></item>
+        <item><para>582821 'Sphere Designer' does not reset
+correctly...</para></item>
+        <item><para>570353 first time open of .svg file ignores the
+requested units</para></item>
+        <item><para>555777 Export to MNG animation fails</para></item>
+        <item><para>577301 Dithering with transparency is broken for
+"positioned" method</para></item>
+        <item><para>493778 metadata plug-in crashes on some
+images</para></item>
+        <item><para>567466 PNG comment not found if more than 1 tEXt
+chunks</para></item>
+        <item><para>585665 Exporting to PSD with a blank text layer
+creates a corrupt file</para></item>
+        <item><para>586316 Levels tool does not adjust output levels
+correctly if input levels are changed</para></item>
+        <item><para>569661 Import from PDF throws errors when entering
+resolution in pixels per millimetre</para></item>
+        <item><para>567262 Black pixels appear in "Spread" filter
+preview</para></item>
+        <item><para>554658 Path Dialog: Path preview pics not to see
+constantly</para></item>
+        <item><para>167604 gimp_gradient_get_color_at() may return
+out-of-bounds values</para></item>
+        <item><para>567393 Rectangle select tool size shrinks to 0 if
+size is larger than the image and the up or down arrow is
+pressed</para></item>
+        <item><para>587543 crash when invoking certain actions by
+keyboard shortcut</para></item>
+        <item><para>563029 Closing maximized image doesn't restore
+document window size</para></item>
+        <item><para>585488 Perspective transformation on a layer with
+a mask causes crash</para></item>
+        <item><para>586008 GIMP crashes when right-click canceling a
+drawing action initiated outside layer boundaries</para></item>
+        <item><para>584345 when printing, the number of copies should
+be reset to 1</para></item>
+        <item><para>557061 Alpha to Logo</para></item>
+        <item><para>472644 Rotate with clipping crops the whole
+layer</para></item>
+        <item><para>577575 transform tool fills underlying extracted
+area wrongly</para></item>
+        <item><para>555738 Image display is wrong after undoing canvas
+size</para></item>
+        <item><para>577024 help-browser plugin crashes when used with
+webkit 1.1.3</para></item>
+        <item><para>555025 Action GEGL box widgets
+weirdness</para></item>
+      </change>
+
+      <change from="2.6.5" to="2.6.6">
+        <item><para>571117 lcms plug-in crashes on broken
+profile</para></item>
+        <item><para>575154 changing the help browser preference may
+not work</para></item>
+        <item><para>573542 blur plugin: bug in the first
+line</para></item>
+        <item><para>572403 gimp-2.6 crashed with SIGSEGV in
+IA__g_object_get()</para></item>
+        <item><para>573695 1-bit white background saved as PBM becomes
+all black</para></item>
+        <item><para>573488 Small bug in
+Filter&gt;Distorts&gt;Ripple</para></item>
+        <item><para>572156 top left pixel position/coordinate is not
+0,0 but 1,1</para></item>
+        <item><para>472644 Rotate with clipping crops the whole
+layer</para></item>
+      </change>
+
+      <change from="2.6.4" to="2.6.5">
+        <item><para>571628 Scaling image to 25% turn background from
+white to grey</para></item>
+        <item><para>567840 GIMP's GtkScaleButton conflicts with
+GTK's</para></item>
+        <item><para>569043 GEGL tool - missing Operation Settings for
+all sub-tools</para></item>
+        <item><para>568890 don't rely on GtkAction implementation
+details</para></item>
+        <item><para>568909 wrong RGB values for color names in
+libgimpcolor/gimprgb-parse.c</para></item>
+        <item><para>568839 wrong hex RGB value for the color names
+slategrey and slategray</para></item>
+        <item><para>559408 Brushes dragged to the image window look
+strange</para></item>
+        <item><para>563337 Rectangle Select Tool does not allow 1:1
+fixed ratio</para></item>
+        <item><para>568016 pullout parameter of plug-in-newsprint has
+no effect</para></item>
+        <item><para>562818 First image opened in GIMP
+offset</para></item>
+        <item><para>562213 Align Tool doesn't work properly if it is
+the active tool at startup</para></item>
+      </change>
+
+      <change from="2.6.3" to="2.6.4">
+        <item><para>565223 Perspective transformation jagged edges /
+comb effect</para></item>
+        <item><para>563985 jpg save dialog: "cancel" is treated like
+"commit" for settings</para></item>
+        <item><para>564087 Using clone tool on a layer with a part out
+of canvas causes crashes</para></item>
+        <item><para>564593 crash when the drawable is changed while a
+color tool is active</para></item>
+        <item><para>564869 GIMP crashes on selecting Tools-&gt;GEGL
+operation</para></item>
+        <item><para>565138 python-fu-foggify does not check if image
+is in rgb mode</para></item>
+        <item><para>563130 Hue selection mode does not cross the 0-360
+degrees line</para></item>
+        <item><para>563179 Scrollbars not resized when we extend the
+canvas size</para></item>
+        <item><para>562459 PF_PALETTE: 'TypeError' when used in a
+plugin that is registered in &lt;Image&gt;</para></item>
+        <item><para>562427 Compilation with --as-needed</para></item>
+        <item><para>562386 PF_SLIDER and PF_SPINNER 'Step' values do
+not change consistently...</para></item>
+        <item><para>562366 Default image dimensions are not correctly
+transferred in the file/new dialog box</para></item>
+        <item><para>561899 GIMP can't save to mounted filesystem if
+file exists</para></item>
+      </change>
+
+      <change from="2.6.2" to="2.6.3">
+        <item><para>558454 Plugin Map Color Range disappears from
+GIMP</para></item>
+        <item><para>559239 Error while loading psd-data</para></item>
+        <item><para>560903 Explicit zooming with e.g. '1' should
+handle zoom-focus better</para></item>
+        <item><para>560245 Zoom selection always centered in the
+Navigation tab</para></item>
+        <item><para>559490 Wrong lang tags for 'no'</para></item>
+        <item><para>559292 SOTA Chrome cannot accept different
+textures</para></item>
+        <item><para>560375 Clearing an already empty document history
+crashes GIMP</para></item>
+        <item><para>559580 Image windows need better default
+locations</para></item>
+        <item><para>560283 "Scale image..." causes distortion around
+edges</para></item>
+        <item><para>559716 Changing crop size in Crop Tool Options can
+make UI unresponsive</para></item>
+        <item><para>558549 Stroking a single-point path with a paint
+tool crashes GIMP</para></item>
+        <item><para>559015 Move tool gives bad information about px
+moved</para></item>
+        <item><para>558660 help behavior for locales without manual
+translation</para></item>
+      </change>
+
+      <change from="2.6.1" to="2.6.2">
+        <item><para>557950 Scaling in Gimp 2.6 is much slower than in
+Gimp 2.4</para></item>
+        <item><para>558215 unit and zoom entries in Statusbar not
+visible</para></item>
+        <item><para>558451 Cannot build GIMP using Sun CC on Solaris
+2.8</para></item>
+        <item><para>558420 projection incorrect with alpha-less
+layers</para></item>
+        <item><para>556603 Zoom region always zooms in center of
+image</para></item>
+        <item><para>557870 "Qmask" message popping up here and
+there</para></item>
+        <item><para>557705 compatibility with GEGL &gt;
+0.0.20</para></item>
+        <item><para>556248 Scaling gives 'jagged' edges</para></item>
+        <item><para>556804 Zoom drop down doesn't update</para></item>
+        <item><para>524615 Print not to scale</para></item>
+        <item><para>555246 gimp crashes when a file is opened while a
+preview is generating</para></item>
+        <item><para>556741 Alpha layer automatically added (in psd
+format)</para></item>
+        <item><para>556182 Could you please explain a few strings
+[I18N]</para></item>
+        <item><para>555697 build fails if configured with
+--without-libjpeg</para></item>
+        <item><para>134956 Curves tool doesn't save free
+curves</para></item>
+      </change>
+
+      <change from="2.6.0" to="2.6.1">
+        <item><para>555587 PSD file crashes PSD plug-in</para></item>
+        <item><para>555222 PSD Load Plugin: unsupported compression
+mode</para></item>
+        <item><para>555362 gimp-remote is not working
+properly</para></item>
+        <item><para>555280 some gif files will not be
+open</para></item>
+        <item><para>554890 JPEG Save Options Dialog does not
+remember</para></item>
+        <item><para>554966 Gimp crashes creating a new image using a
+template</para></item>
+        <item><para>554785 Compile failure on
+uri-backend-libcurl</para></item>
+        <item><para>554646 Opening Help crashes GIMP with lqr-plugin
+installed</para></item>
+        <item><para>553534 centering issues after image scaling and
+setting zoom</para></item>
+        <item><para>554898 Compile failure on
+uri-backend-wget.c</para></item>
+      </change>
+
+      <change from="2.4.x" to="2.6">
+        <items name="User Interface">
+          <item><para>Toolbox Menubar Removed: The toolbox menubar has
+been removed and merged with the image window menubar. To be able to
+do this a window called the empty image window has been introduced. It
+hosts the menubar and keeps the application instance alive when no
+images are opened. It also acts as a drag and drop target. When
+opening the first image the empty image window is transformed into a
+normal image window, and when closing the last image, that window
+becomes the empty image window.</para></item>
+          <item><para>Toolbox and Docks are Utility windows: With the
+empty image window acting as a natural main window, the default window
+hints for the Toolbox and Docks have been changed to Utility window.
+This enables window managers to do a much better job of managing the
+GIMP windows, including omitting the Toolbox and Docks from the
+taskbar and ensuring that the Toolbox and Docks always are above image
+windows.</para></item>
+          <item><para>Ability to Pan Beyond Image Border: It is now
+possible to pan beyond the image border, making image window
+navigation much less constrained. It is no longer a problem to use the
+edge of a brush on the edge of an image while being zoomed in, and one
+can adapt the canvas to any utility windows covering parts of the
+image window.</para></item>
+          <item><para>Minor Changes:</para>
+          <unorderedlist>
+            <item><para>Renamed Dialogs menu to Windows</para></item>
+            <item><para>Keep a list of recently closed Docks and allow
+reopening them</para></item>
+            <item><para>Make opening images in already running GIMP
+instances work better on Windows</para></item>
+            <item><para>You can now enter the image zoom ratio
+directly in the status bar</para></item>
+            <item><para>Added support for using online help instead of
+a locally installed GIMP Help package</para></item>
+            <item><para>Make it possible to lock tabs in docks to
+prevent accidental moving</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Tools, Filters, and Plug-ins">
+          <item><para>Improved Free Select Tool: The freehand select
+tool has been enhanced to support polygonal selections. It also allows
+mixing free hand segments with polygonal segments, editing of existing
+segments, applying angle-constraints to segments, and of course the
+normal selection tool operations like add and subtract. Altoghether
+this ends up making the Free Select Tool a very versatile, powerful
+and easy-to-use selection tool.</para></item>
+          <item><para>Brush Dynamics: Brush dynamics let you map
+different brush parameters, commonly at least size and opacity, to one
+or more of three input dynamics: pressure, velocity and random.
+Velocity and random are usable with a mouse. The Ink tool, that
+supported velocity before, has been overhauled and now handles
+velocity-dependent painting much better.</para>
+          <para>Brush dynamics have enabled a new feature in
+stroking paths. There is now a check box under the "paint tool"
+option, for emulating brush dynamics if you stroke using a paint tool.
+What this means is that when your stroke is being painted by GIMP, it
+tells the brush that its pressure and velocity are varying along the
+length of the stroke. Pressure starts with zero, ramps up to full
+pressure and then ramps down again to no pressure. Velocity starts
+from zero and ramps up to full speed by the end of the
+stroke.</para></item>
+          <item><para>Minor Changes:</para>
+          <unorderedlist>
+            <item><para>Text Tool bounding box and outside rectangle
+handles screenshot Added a bounding box for the Text Tool that
+supports automatic wrapping of text within that bounding
+box.</para></item>
+            <item><para>Move handles for rectangle based tools like
+Crop and Rectangle Select to the outside of the rectangle when the
+rectangle is narrow.</para></item>
+            <item><para>Added motion constraints to the Move
+Tool.</para></item>
+            <item><para>Improved event smoothing for paint
+tools.</para></item>
+            <item><para>Mark the center of rectangles while they are
+moved, and snap the center to grid and rulers.</para></item>
+            <item><para>Enable brush scaling for the Smudge
+tool.</para></item>
+            <item><para>Added ability to save presets in all color
+tools for color adjustments you use frequently.</para></item>
+            <item><para>Allow to transfer settings from
+Brightness-Contrast to Levels, and from Levels to
+Curves.</para></item>
+            <item><para>Allow changing opacity on transform tool
+previews.</para></item>
+            <item><para>The Screenshot plug-in has been given the
+ability to capture the mouse cursor (using Xfixes).</para></item>
+            <item><para>Display aspect ratio of the Crop and Rectangle
+Select Tool rectangles in the status bar.</para></item>
+            <item><para>Desaturate has been given an on-canvas
+preview.</para></item>
+            <item><para>The Flame plug-in has been extended with 22
+new variations.</para></item>
+            <item><para>Data file folders like brush folders are
+searched recursively for files.</para></item>
+            <item><para>Replaced the PSD import plug-in with a
+rewritten version that does what the old version did plus some other
+things, for example reading of ICC color profiles.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Under the Hood">
+          <item><para>GEGL: Important progress towards high bit-depth
+and non-destructive editing in GIMP has been made. Most color
+operations in GIMP are now ported to the powerful graph based image
+processing framework GEGL, meaning that the internal processing is
+being done in 32bit floating point linear light RGBA. By default the
+legacy 8bit code paths are still used, but a curious user can turn on
+the use of GEGL for the color operations with Colors / Use
+GEGL.</para>
+          <para>In addition to porting color operations to GEGL, an
+experimental GEGL Operation tool has been added, found in the Tools
+menu. It enables applying GEGL operations to an image and it gives
+on-canvas previews of the results. The screenshot to the right shows
+this for a Gaussian Blur.</para></item>
+          <item><para>Minor Changes:</para>
+          <unorderedlist>
+            <item><para>Ported many widgets to use the 2D graphics
+library cairo for drawing. See this comparison for an example of how
+much better this looks.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Miscellaneous">
+          <item><para>Plug-in Development: There are new things for a
+plug-in developer to enjoy as well. For example, procedures can now
+give a detailed error description in case of an error, and the error
+can be propagated to the user.</para>
+          <para>GIMP 2.6 also further enhances its scripting
+abilities. In particular there is now a much richer API for the
+creation and manipulation of text layers. Here is a list of new
+symbols in GIMP 2.6.</para></item>
+          <item><para>Backwards Compatibility: Script-Fu has undergone
+some clean up and includes several bug fixes. One important bug fix,
+for bug #508020, prevents a possible crash of Script-Fu. A side effect
+of the fix will break any script which does not provide an initial
+value for a variable in the binding portion of a let, let*, or letrec
+block.</para>
+          <para>An initial value for a variable is required as stated
+in the R5RS Scheme standard document. The initial value can be
+provided as a simple constant, or as the result of a function call.
+The following examples will illustrate the problem and show a simple
+change that will fix a broken script.</para>
+          <para>This example shows a let* block with incorrect syntax
+that will no longer work in Script-Fu.</para>
+          <screen>
+(let* (
+      (four (+ 2 2))
+      (this-is-wrong)
+      )
+          </screen>
+          <para>This example shows a let* block with the correct
+syntax.</para>
+          <screen>
+(let* (
+      (four (+ 2 2))
+      (this-is-correct 0)
+      )
+          </screen></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 2012" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL 3 and SLED.</para></item>
+        <item><para>Remove support for Solaris 2.6 and 7.</para></item>
+        <item><para>Update atk dependency from 1.22.0 to
+1.32.0.</para></item>
+        <item><para>Update bison dependency from 2.3 to
+2.4.3.</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2.</para></item>
+        <item><para>Update dbus dependency from 1.2.12 to
+1.2.26.</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8.</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6.</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1.</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1.</para></item>
+        <item><para>Update gnome dependency from 2.22 to
+2.32.</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1.</para></item>
+        <item><para>Update gtk-doc dependency from 1.9 to
+1.16.</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b.</para></item>
+        <item><para>Update lcms dependency from 1.17 to
+2.1.</para></item>
+        <item><para>Update libart_lgpl dependency from 2.3.19 to
+2.3.21.</para></item>
+        <item><para>Update libexif dependency from 0.6.19 to
+0.6.20.</para></item>
+        <item><para>Update libglade dependency from 2.6.3 to
+2.6.4.</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1.</para></item>
+        <item><para>Update libmng dependency from 1.0.9 to
+1.0.10.</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+1.4.4.</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8.</para></item>
+        <item><para>Update libxslt dependency from 1.1.24 to
+1.1.26.</para></item>
+        <item><para>Update openjpeg dependency from 1.3 to
+1.4.</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.4.</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2.</para></item>
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25.</para></item>
+        <item><para>Update poppler dependency from 0.10.7 to
+0.16.7.</para></item>
+        <item><para>Update popt dependency from 1.14 to
+1.16.</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7.</para></item>
+        <item><para>Update tiff dependency from 3.8.2 to
+3.9.5.</para></item>
+        <item><para>Update XML-Parser dependency from 2.36 to
+2.41.</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

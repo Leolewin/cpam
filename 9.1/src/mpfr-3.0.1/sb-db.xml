@@ -1,0 +1,371 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="mpfr" version="3.0.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}30</install-name>
+
+    <sources>
+      <source checksum="bfbecb2eacb6d48432ead5cfc3f7390a"
+        checksum-type="md5" size="1154306"
+        path="src/mpfr-3.0.1.tar.bz2"/>
+      <patch checksum="4b7bc20a504879d935e7d6fbffc6426e"
+        checksum-type="md5" size="8821"
+        path="src/mpfr-3.0.1.p4.patch"/>
+      <patch checksum="65d659c7c784796744ebd7e83146baf6"
+        checksum-type="md5" size="2810"
+        path="src/mpfr-3.0.1.tww.patch"/>
+      <patch checksum="4261f1171e98a5cea06fb0c70fceda1f"
+        checksum-type="md5" size="1230529"
+        path="src/mpfr-3.0.1.auto.patch"/>
+    </sources>
+
+    <test>
+<![CDATA[
+gmake check || :
+]]>
+    </test>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gmp" var="LIBGMP"
+          install-name="libgmp43">v&gt;=4.3.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="mpfr" module="64bit"
+          systype="*-aix*|*-hpux*|*-solaris*">v==3.0.1</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-DMPFR_EXP_CHECK"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O1 +ESlit +DAportable"
+  CPPFLAGS="-DLONGLONG_STANDALONE"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-DLONGLONG_STANDALONE"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-irix64=off" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBGMP+${CC_LD_RT}${SB_VAR_LIBGMP_LIB}} \
+${LDFLAGS+${LDFLAGS}}" ${SB_VAR_LIBGMP+--with-gmp=${SB_VAR_LIBGMP}} \
+--enable-shared --enable-static --disable-dependency-tracking \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--docdir=${_docdir} --infodir="${SB_INSTALL_PREFIX}/info" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 fdl.texi mpfr.texi \
+${_docdir}/texinfo
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-solaris*">
+      <dependencies>
+        <depend program="gmp" var="LIBGMP" install-name="libgmp43"
+          module="64bit">v&gt;=4.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  ARCH=$(systype)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARCH="hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARCH="hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARCH="hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARCH="hppa64-hp-hpux11.00" ;;
+  esac
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBGMP+${CC_LD_RT}${SB_VAR_LIBGMP}/${_libdir}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBGMP+--with-gmp-include=${SB_VAR_LIBGMP_INC}/64} \
+${SB_VAR_LIBGMP+--with-gmp-lib=${SB_VAR_LIBGMP}/${_libdir}} \
+--enable-shared --enable-static --disable-dependency-tracking \
+${ARGS+${ARGS}} --libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+${ARCH+--build=${ARCH}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+
+      <license path="lgpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.0.0" to="3.0.1">
+        <item><para>Bug fixes (see <ulink url="http://www.mpfr.org/mpfr-3.0.0/#fixed">http://www.mpfr.org/mpfr-3.0.0/#fixed</ulink>
+or ChangeLog file). Note: The mpfr_subnormalize implementation up to
+MPFR 3.0.0 did not change the flags. In particular, it did not follow
+the generic rule concerning the inexact flag (and no special behavior
+was specified). The case of the underflow flag was more a lack of
+specification.</para></item>
+      </change>
+
+      <change from="2.4.x" to="3.0.0">
+        <item><para>MPFR 3.0.0 is binary incompatible with previous
+versions but (almost) API compatible.  More precisely the obsolete
+functions mpfr_random and mpfr_random2 have been removed, the meaning
+of the return type of the function mpfr_get_f has changed, and the
+return type of the function mpfr_get_z is now int instead of void.  In
+practice, this should not break any existing code.</para></item>
+        <item><para>MPFR is now distributed under the GNU Lesser
+General Public License version 3 or later (LGPL v3+).</para></item>
+        <item><para>Rounding modes GMP_RNDx are now MPFR_RNDx
+(GMP_RNDx kept for compatibility).</para></item>
+        <item><para>A new rounding mode (MPFR_RNDA) is available to
+round away from zero.</para></item>
+        <item><para>The rounding mode type is now mpfr_rnd_t (as in
+previous versions, both mpfr_rnd_t and mp_rnd_t are accepted, but
+mp_rnd_t may be removed in the future).</para></item>
+        <item><para>The precision type is now mpfr_prec_t (as in
+previous versions, both mpfr_prec_t and mp_prec_t are accepted, but
+mp_prec_t may be removed in the future) and it is now signed (it was
+unsigned in MPFR 2.*, but this was not documented). In practice, this
+change should not affect existing code that assumed nothing on the
+precision type.</para></item>
+        <item><para>MPFR now has its own exponent type mpfr_exp_t,
+which is currently the same as GMP's mp_exp_t.</para></item>
+        <item><para>Functions mpfr_random and mpfr_random2 have been
+removed.</para></item>
+        <item><para>mpfr_get_f and mpfr_get_z now return a ternary
+value.</para></item>
+        <item><para>mpfr_strtofr now accepts bases from 37 to
+62.</para></item>
+        <item><para>mpfr_custom_get_mantissa was renamed to
+mpfr_custom_get_significand (mpfr_custom_get_mantissa is still
+available via a #define).</para></item>
+        <item><para>Functions mpfr_get_si, mpfr_get_ui, mpfr_get_sj,
+mpfr_get_uj, mpfr_get_z and mpfr_get_z_2exp no longer have cases with
+undefined behavior; in these cases, the behavior is now specified, and
+in particular, the erange flag is set.</para></item>
+        <item><para>New functions mpfr_buildopt_tls_p and
+mpfr_buildopt_decimal_p giving information about options used at MPFR
+build time.</para></item>
+        <item><para>New function mpfr_regular_p.</para></item>
+        <item><para>New function mpfr_set_zero.</para></item>
+        <item><para>New function mpfr_digamma.</para></item>
+        <item><para>New function mpfr_ai (incomplete,
+experimental).</para></item>
+        <item><para>New functions mpfr_set_flt and mpfr_get_flt to
+convert from/to the float type.</para></item>
+        <item><para>New function mpfr_urandom.</para></item>
+        <item><para>New function mpfr_set_z_2exp (companion to
+mpfr_get_z_2exp, which was renamed from mpfr_get_z_exp in previous
+versions).</para></item>
+        <item><para>Speed improvement for large operands in the
+trigonometric functions (mpfr_sin, mpfr_cos, mpfr_tan, mpfr_sin_cos):
+speedup of about 2.5 for 10^5 digits, of about 5 for 10^6
+digits.</para></item>
+        <item><para>Speed improvement for large operands of the
+inverse trigonometric functions (arcsin, arccos, arctan): about 2 for
+10^3 digits, up to 2.7 for 10^6 digits.</para></item>
+        <item><para>Some documentation files are installed in
+$docdir.</para></item>
+        <item><para>The detection of a GMP build directory (more
+precisely, the internal header files of GMP) was previously done
+separately from the use of the --with-gmp-build configure option. This
+was not consistent with the documentation and with other parts of the
+configure script. So, as of MPFR 3.0.0, the internal header files of
+GMP are now used if and only if the --with-gmp-build configure option
+is given.</para></item>
+        <item><para>The configure script recognizes some extra "long
+double" formats (double big endian, double little endian,
+double-double big endian).</para></item>
+        <item><para>MPFR manual: added "API Compatibility"
+section.</para></item>
+        <item><para>Test coverage: 97.1% lines of code.</para></item>
+        <item><para>Bug fixes.</para></item>
+      </change>
+
+      <change from="2.3.x" to="2.4.x">
+        <item><para>MPFR is now a GNU package.</para></item>
+        <item><para>Changes in the behavior of mpfr_strtofr and in its
+documentation concerning particular cases where the code and the
+documentation did not match; this change is also present in MPFR
+2.3.1.</para></item>
+        <item><para>Behavior of mpfr_check_range changed: if the value
+is an inexact infinity, the overflow flag is set (in case it was
+lost); this change is also present in MPFR 2.3.2.</para></item>
+        <item><para>Function mpfr_init_gmp_rand (only defined when
+building MPFR without the --with-gmp-build configure option) is no
+longer defined at all. This function was private and not documented,
+and was used only in the MPFR test suite. User code that calls it is
+regarded as broken and may fail as a consequence. Running the old test
+suite against MPFR 2.4.0 may also fail.</para></item>
+        <item><para>New functions:</para>
+        <unorderedlist>
+          <item><para>between a MPFR number and a double: mpfr_add_d,
+mpfr_sub_d, mpfr_d_sub, mpfr_mul_d, mpfr_div_d,
+mpfr_d_div,</para></item>
+          <item><para>formatted input/output: mpfr_printf,
+mpfr_fprintf, mpfr_vprintf, mpfr_vfprintf, mpfr_sprintf,
+mpfr_snprintf, mpfr_vsprintf, mpfr_vsnprintf, mpfr_asprintf,
+mpfr_vasprintf.</para></item>
+          <item><para>mpfr_sinh_cosh, mpfr_li2, mpfr_modf, mpfr_fmod,
+mpfr_rec_sqrt.</para></item>
+        </unorderedlist></item>
+        <item><para>Configure test for TLS support.</para></item>
+        <item><para>Get default $CC and $CFLAGS from gmp.h (__GMP_CC /
+__GMP_CFLAGS, which are available as of GMP 4.2.3).</para></item>
+        <item><para>Documented the fact that mpfr_random and
+mpfr_random2 will be suppressed in the next release, and that the
+specification of mpfr_eq may change in the next release (for
+compatibility with the mpf layer of GMP).</para></item>
+        <item><para>Test coverage: 96.7% lines of code</para></item>
+        <item><para>Bug fixes.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

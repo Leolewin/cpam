@@ -1,0 +1,596 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="fetchmail" version="6.3.13" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}63</install-name>
+
+    <sources>
+      <source checksum="db792fb311bc358e95ed0437389269ac"
+        checksum-type="md5" size="1614718"
+        path="src/fetchmail-6.3.13.tar.bz2"/>
+      <patch checksum="4edf17fd2141666c8ce1f640611ff3be"
+        checksum-type="md5" size="404"
+        path="src/fetchmail-6.3.13.CVE-2010-0562.patch"/>
+      <patch checksum="6f4a3d9a15ef3d7b324e3532a98025f2"
+        checksum-type="md5" size="7440"
+        path="src/fetchmail-6.3.13.tww.patch"/>
+      <patch checksum="c41a0c3e77b22a23bb53d71f49c923a8"
+        checksum-type="md5" size="242356"
+        path="src/fetchmail-6.3.13.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v==2.4.3</depend>
+      <depend program="python" var="PYTHON"
+        install-name="python26">v&gt;=2.6.7</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.25</depend>
+      <depend program="tk" var="TK"
+        install-name="tk85">v&gt;=8.5.10</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  SENDMAIL=/usr/sbin/sendmail ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  SENDMAIL=/usr/sbin/sendmail ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  SENDMAIL=/usr/sbin/sendmail ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  SENDMAIL=/usr/sbin/sendmail ;;
+*-irix*)
+  CC=cc CLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  SENDMAIL=/usr/lib/sendmail ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  SENDMAIL=/usr/sbin/sendmail ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  SENDMAIL=/usr/sbin/sendmail ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+  SENDMAIL=/usr/sbin/sendmail ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+  SENDMAIL=/usr/lib/sendmail ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+  SENDMAIL=/usr/lib/sendmail ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+  SENDMAIL=/usr/lib/sendmail ;;
+esac
+
+${SHELL} ./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="${SB_VAR_LIBOPENSSL+${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB}} \
+${SB_VAR_GETTEXT+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+MAKE=gmake sendmail=${SENDMAIL} --enable-nls \
+PYTHON=${SB_VAR_PYTHON+${SB_VAR_PYTHON}/bin/python} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--enable-NTLM --enable-fallback=sendmail \
+--with-ssl${SB_VAR_LIBOPENSSL+=${SB_VAR_LIBOPENSSL}} \
+${ARGS+${ARGS}} --datadir=${_datadir} --datarootdir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <licenses>
+      <license>
+        <para skip="0">This collective work is Copyright (C) 2002,
+2003 by Eric S. Raymond and Copyright (C) 2004 by Matthias Andree,
+Eric S. Raymond, Robert M. Funk and Graham Wilson</para>
+        <para skip="0">and Copyright (C) 2005 by Matthias Andree and
+Sunil Shetye</para>
+        <para>and Copyright (C) 2006 - 2008 by Matthias Andree.</para>
+        <para>Some older portions not explicitly mentioned above are
+copyrighted by Carl E. Harris, George M. Sipe, Graham Wilson, Matthias
+Andree and Sunil Shetye.</para>
+        <para>The support for SMB authentication is copyright by
+Andrew Tridgell and is under GPL version 2 (or any later version).
+Andrew Tridgell has granted a specific exemption for his GPL-licensed
+code to be linked with non-GPL-compliant code in fetchmail. The
+relevant files are smb*.[ch] and ntlm.h.</para>
+        <para>The following files are public-domain: acconfig.h,
+md5c.c, md5.h.</para>
+        <para>The following files are explicitly GPL-licensed (v2 or
+any later version): getopt1.c, getopt.c, getopt.h.</para>
+        <para>The file m4-local/ac_ma_search_package.m4 is copyright
+by Caolan McNamara &lt;caolan@skynet.ie&gt; with fixes from Alexandre
+Duret-Lutz &lt;duret_g@lrde.epita.fr&gt;, Matthew Mueller
+&lt;donut@azstarnet.com&gt; and Matthias Andree
+&lt;matthias.andree@gmx.d&gt;e The license is detailed in
+m4-local/ac-archive-license.txt and is a relaxed GPLv2-or-later
+version.</para>
+        <para>The *.c files in the ucs/ directory are Copyright (C)
+2002, 2003 by Markus Kuhn, with a liberal license as follows:</para>
+        <indent>
+          <para>Permission to use, copy, modify, and distribute this
+software for any purpose and without fee is hereby granted. The author
+disclaims all warranties with regard to this software.</para>
+        </indent>
+
+        <para>The trio/ code is Copyright (C) 1998-2001 by Bjorn Reese
+and Daniel Stenberg and also under a liberal license:</para>
+        <indent>
+          <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+          <para>THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE
+IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE AUTHORS AND CONTRIBUTORS ACCEPT NO RESPONSIBILITY IN ANY
+CONCEIVABLE MANNER.</para>
+        </indent>
+
+        <para>The m4/gethostbyname_r.m4 and libesmtp/* files functions
+are (C) by Brian Stafford, see the respective file headers for details
+(LGPL v2.1 or later).</para>
+        <para>The KAME/* files are (C) Copyright (C) 1995, 1996, 1997,
+and 1998 WIDE Project, see the respective file headers for
+details.</para>
+        <para>All other code in the distribution incorporates the copy
+of GPL version 2 below by reference.</para>
+        <para>Specific permission is granted for the GPLed code in
+this distribition to be linked to OpenSSL without invoking GPL clause
+2(b).</para>
+      </license>
+
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="6.3.12" to="6.3.13">
+        <items name="REGRESSION FIXES">
+          <item><para>The multiline SMTP error fix in release 6.3.12
+caused fetchmail to lose message codes 400..599 and treat all of these
+as temporary error. This would cause messages to be left on the server
+even if softbounce was turned off.</para></item>
+        </items>
+
+        <items name="TRANSLATION UPDATES">
+          <item><para>[cs]    Czech</para></item>
+          <item><para>[zh_CN] Chinese (simplified)</para></item>
+          <item><para>[nl]    Dutch</para></item>
+          <item><para>[id]    Indonesian</para></item>
+          <item><para>[ja]    Japanese</para></item>
+          <item><para>[pl]    Polish</para></item>
+          <item><para>[es]    Spanish</para></item>
+          <item><para>[vi]    Vietnamese</para></item>
+        </items>
+      </change>
+
+      <change from="6.3.11" to="6.3.12">
+        <items name="REGRESSION FIXES">
+          <item><para>The CVS-2009-2666 fix in fetchmail release
+6.3.11 caused a free() of unallocated memory on SSL connections, which
+caused crashes or program aborts on some systems (depending on how
+initialization and free() of unallocated memory is handled in compiler
+and libc). Workaround for older versions: run in verbose mode.
+Patchfixes Gentoo Bug #280760. This regression affected only the
+6.3.11 release, but not the patch that was part of the security
+announcement fetchmail-SA-2009-01.</para></item>
+        </items>
+
+        <items name="BUG FIXES">
+          <item><para>Fix error reporting for GSSAPI on Heimdal (h5l)
+Kerberos.</para></item>
+          <item><para>Look for MD5_Init in libcrypto rather than
+libssl, fixes Gentoo Kerberos builds; fixes upstream parts of Gentoo
+Bugs #231400 and #185652, and fixes BerliOS Bug #16134.</para></item>
+          <item><para>Report multiline SMTP errors properly; fixes
+Debian Bug #569899. Note: This fix introduced a regression, fixed in
+6.3.13.</para></item>
+          <item><para>Replace control characters in SMTP replies by
+'?'.</para></item>
+          <item><para>Fetchmailconf: Fix descriptions for smtpaddress
+and smtpname options; smtpaddress is for RCPT TO, not MAIL
+FROM.</para></item>
+        </items>
+
+        <items name="TRANSLATION UPDATES AND ADDITIONS (ordered by language name):">
+          <item><para>[ca]    Catalan</para></item>
+          <item><para>[zh_CN] Chinese/Simplified</para></item>
+          <item><para>[cs]    Czech</para></item>
+          <item><para>[ja]    Japanese</para></item>
+          <item><para>[pl]    Polish</para></item>
+          <item><para>[es]    Spanish/Castilian</para></item>
+          <item><para>[vi]    Vietnamese</para></item>
+        </items>
+      </change>
+
+      <change from="6.3.10" to="6.3.11">
+        <items name="SECURITY BUGFIXES">
+          <item><para>CVE-2009-2666: SSL NUL prefix impersonation
+attack through NULs in a part of a X.509 certificate's CommonName and
+subjectAltName fields. These fields use opaque strings with a separate
+length field, so that the NUL character isn't a special character
+inside the certificate. Fetchmail, being written in the C language,
+used to treat these strings as C strings nonetheless, so that the
+domain comparison would end at the first embedded NUL character,
+rather than at the real end of the string.</para>
+          <para>Fetchmail will now abort certificate verification as
+failed if NULs are encountered inside either of these fields
+regardless of their position, and drop the connection even if
+--sslcertck is not used, because NUL is not a valid character in
+legitimate DNS names.</para>
+          <para>See fetchmail-SA-2009-01.txt for details, including
+a minimal patch.</para></item>
+        </items>
+
+        <items name="BUGFIXES">
+          <item><para>Remove the spurious message "message delimiter
+found while scanning headers". RFC-5322 syntax states that the
+delimiter is part of the body, and the body is optional.</para></item>
+          <item><para>Convert all non-printable characters in
+certificate Subject/Issuer Common Name or Subject Alternative Name
+fields to ANSI-C hex escapes (\xnn, where nn are hex digits). Note
+that this change introduces a regression, fixed in 6.3.12. See the
+6.3.12 documentation above for details and a workaround.</para></item>
+        </items>
+
+        <items name="TRANSLATION UPDATES AND ADDITIONS (ordered by language name):">
+          <item><para>[zh_CN] Chinese/Simplified</para></item>
+          <item><para>[es]    Spanish/Castilian</para></item>
+        </items>
+      </change>
+
+      <change from="6.3.9" to="6.3.10">
+        <items name="INCOMPATIBLE BUGFIXES AND CHANGES">
+          <item><para>Fetchmail no longer drops permanently
+undelivered messages by default, to match historic documentation. It
+does this by adding a new "softbounce" option, see below. Fixes Debian
+Bug#471283, demotes Debian Bug#494418 to wishlist.</para></item>
+          <item><para>There is a new "softbounce" global option that
+prevents the deletion of messages that have not been forwarded. It
+defaults to "true" for fetchmail 6.3.X in order to match historic
+documentation. This may change its default in the next major
+release.</para></item>
+        </items>
+
+        <items name="BUGFIXES">
+          <item><para>Fix misuse of canonical autoconf target as
+_TARGET when it should have been _HOST. Details: <ulink url="http://blog.flameeyes.eu/2009/01/01/the-canonical-target">http://blog.flameeyes.eu/2009/01/01/the-canonical-target</ulink></para></item>
+          <item><para>Do not lose PS_MAXFETCH (13) exit status when
+hitting maxpoll. Debian Bug#508667.</para></item>
+          <item><para>Do not overlap source and destination fields in
+snprintf() in interface.c.</para></item>
+          <item><para>When a pre- or post-connect command fails, now
+report the exit status or termination signal properly through
+sys/wait.h macros.</para></item>
+          <item><para>When acquiring a body, understand NIL ("no such
+data item"), as returned by some MS Exchange versions. Fixes BerliOS
+Bug #11980.</para></item>
+          <item><para>Make progress tickers (-v/--showdots)
+consistent, and update documentation accordingly ("." for each 1024
+octets read, "#" for a header written, and "*" for each body line
+written.)</para>
+          <para>The conditions under which these had been
+printed were inconsistent, illogical, and documentation hadn't matched
+real behaviour for long.</para></item>
+          <item><para>For NTLM authentication, use dynamically
+allocated buffers. Fixes Debian Bug#449179</para></item>
+          <item><para>Non-delivery notice ("bounce mail") now mentions
+the original reason again, before the address list. This fixes a
+regression introduced in 6.3.0.</para></item>
+          <item><para>Several compiler warnings were
+fixed.</para></item>
+          <item><para>The minimum recommended SMTP (RFC-5321) timeouts
+are enforced to leave sufficient time for the listener to respond.
+Some synchronous listeners, particularly when used with spam filtering
+and other policy enforcement services, take extended amounts of time
+to process messages after the sender, recipient, or data block and EOM
+line. This can cause fetchmail to not wait long enough for the "250
+Ok" and make fetchmail believe the message wasn't properly delivered
+when in fact it was; fetchmail would then retry the download next time
+and never make progress. Fixes Berlios Bug #10972</para></item>
+          <item><para>The ESMTP/LMTP client will now apply an
+application-specific timeout while waiting for the EHLO/LHLO response,
+rather than wait for the server or TCP connection
+timeout.</para></item>
+          <item><para>Treat 530 errors as temporary, so as not to
+delete messages on configuration errors. Partially taken from patch in
+Novell Bugzilla #246829. The 501 part of said patch was not added, as
+the maintainer is not convinced 501 is a temporary condition, and
+softbounce takes care of this anyways.</para></item>
+        </items>
+
+        <items name="CHANGES">
+          <item><para>Make the comparison of the SSL fingerprints case
+insensitive, to ease its use.</para></item>
+          <item><para>Proper precedence ordering for the syslog and
+logfile options. If the logfile option is effective (i. e. we're in
+daemon mode and nodetach isn't used), reset the syslog option. If
+logfile is ineffective (we're not in daemon mode, or nodetach is set),
+syslog takes precedence.</para></item>
+          <item><para>The sleeping at/awakened at messages appear in
+logfiles and syslog only if verbose mode is enabled. On the console,
+they will still appear without verbose mode. Fixes Debian
+Bug#282259.</para></item>
+          <item><para>fetchmail only requests IPv6 addresses via name
+service if at least one is configured on the local host, likewise for
+IPv4. (AI_ADDRCONFIG flag to getaddrinfo()) Extended version of
+Redhat's patch.</para></item>
+          <item><para>If the server name contains "yahoo.com", offers
+the "ID" capability, and we're polling via IMAP, send an ID ("guid"
+"1") transaction first, ignoring its result. This appears needed to be
+able to log into Yahoo's Zimbra servers, but there are open issues
+(such as being only able to download one message and server
+certificate mismatches).</para></item>
+        </items>
+
+        <items name="CHANGES TO CONTRIB">
+          <item><para>Fix bashism in contrib/fetchsetup. Fixes Debian
+Bug#530081.</para></item>
+        </items>
+
+        <items name="DOCUMENTATION">
+          <item><para>Some parts of the the manual page were revised
+for clarity, accuracy, and updated recommendations (particularly
+SSL/TLS) and formatting conventions from man-pages(7).</para></item>
+          <item><para>The README and README.SSL documents were
+updated.</para></item>
+          <item><para>A document, README.SSL-SERVER, was added to
+describe server-side requirements for proper SSL and/or TLS service
+offerings. These are not specific to fetchmail.</para></item>
+          <item><para>Documentation on how to make "NOMAIL" (exit code
+1) not treated an error has been added to the EXIT CODES section of
+the manpage and to the FAQ as item C8. The suggested solution uses a
+tiny POSIX shell script fragment. Fixes Debian Bug
+#530749.</para></item>
+        </items>
+
+        <items name="TRANSLATION UPDATES AND ADDITIONS (ordered by language name):">
+          <item><para>[cs] Czech</para></item>
+          <item><para>[en_GB] English/British</para></item>
+          <item><para>[de] German</para></item>
+          <item><para>[id] Indonesian</para></item>
+          <item><para>[it] Italian</para></item>
+          <item><para>[ja] Japanese</para></item>
+          <item><para>[pl] Polish</para></item>
+          <item><para>[ru] Russian, fixing Debian Bug
+#531925</para></item>
+          <item><para>[es] Spanish/Castilian</para></item>
+          <item><para>[zh_CN] Chinese/Simplified</para></item>
+        </items>
+      </change>
+
+      <change from="6.3.8" to="6.3.9">
+        <items name="SECURITY AND CRITICAL BUG FIXES:">
+          <item><para>CVE-2007-4565: Denial of service: When fetchmail
+tries to inject a warning message it created itself, and the message
+is refused by the SMTP listener, fetchmail dereferences a NULL pointer
+and crashes. Note while this is theoretically a remote denial of
+service attack vector, fetchmail by default talks SMTP to the
+localhost, so the overall risk is rather low.</para>
+          <para>This bug was apparently introduced on 1998-11-27
+when the bouncemail facility was modularized. The bug then made its
+appearance in fetchmail release 4.6.8. See also
+fetchmail-SA-2007-02.txt.</para></item>
+          <item><para>CVE-2008-2711: Denial of service: When fetchmail
+logs data blobs (for instance, a To: header in -v -v verbose mode) in
+excess of 2048 bytes, it will crash, because it hands an uninitialized
+argument pointer (not the format string though) to vsnprintf and reads
+a random memory location (it calls va_arg() too often without
+resetting it with va_start()). Based on a patch (BerliOS patch #2492),
+fixes Novell Bug #354291.</para>
+          <para>Note 6.3.9-rc1 did not completely fix this issue,
+so it was redrawn a few hours after its release. See also
+fetchmail-SA-2008-01.txt.</para></item>
+          <item><para>When expunging, mark the right messages as seen
+to avoid message loss in "keep flush" configurations. Workaround for
+previous versions: "expunge 0". Berlios Bug #11797, "imap_mark_seen
+doesn't consider expunged messages".</para></item>
+          <item><para>SSL fix: close memory leak when SSL connection
+fails; fetchmail used to forget calling SSL_free() on the SSL context,
+leaking in excess of 500 kB RAM on a x86_64 system per failed SSL
+connection attempt.</para></item>
+        </items>
+
+        <items name="BUG FIXES:">
+          <item><para>The configure script will additionally check for
+'dn_skipname', to fix build failures with uClibc. The new check still
+recognizes the resolver libraries on Ubuntu 7.04, openSUSE 10.2,
+Solaris 8, NetBSD 4.0_BETA2 and FreeBSD 6.2. Fixes Gentoo bug
+#134187.</para>
+          <para>NOTE: this is a bit of a hack, since we twist
+the HAVE_RES_SEARCH result, but res_search() and dn_skipname() are
+only used together and scheduled for removal in future versions, so
+this is probably fine.</para></item>
+          <item><para>No longer complain about invalid sslproto ""
+when POP3 CAPA probe fails. Fixes Debian Bug#421446, Novell Bug
+#247233.</para></item>
+          <item><para>Allow .fetchmailrc and .fetchids to be symlinks,
+as the manpage does not document they aren't allowed - fixes Debian
+Bug #452907. TOCTOU race persists.</para></item>
+          <item><para>fetchmailconf quotes mailbox (folder) names when
+writing the configuration. Fixes BerliOS Bug #13207</para></item>
+          <item><para>Only print "Deleting fetchids file" if there
+actually is one. Fixes Debian Bug#374514.</para></item>
+          <item><para>SSL fix: check and report if SSL_set_fd
+fails.</para></item>
+        </items>
+
+        <items name="CHANGES:">
+          <item><para>autoconf 2.60 is now required to build
+fetchmail; it uses AC_USE_SYSTEM_EXTENSIONS to replace AC_AIX,
+AC_MINIX, and the like.</para></item>
+          <item><para>Removed dead FETCHMAIL_DEBUG code from
+fetchmail.h that was disabled by default with no switches in configure
+to enable it. However, the macro would have been prone to a symlink
+attack.</para></item>
+          <item><para>Removed dead FORCE_STUFFING code from socket.c
+that was disabled by default with no switches in configure to enable
+it.</para></item>
+          <item><para>Include the typedef for int16 in the #ifndef
+_AIX in smbencrypt.c</para></item>
+          <item><para>Correct check for u_int32_t in configure.ac
+(seems to be typedef'ed in namser.h on some platforms.)</para></item>
+          <item><para>In configure.ac change all CPFLAGS to CPPFLAGS,
+CEFLAGS to CFLAGS and LDEFLAGS to LDFLAGS otherwise the results of
+some tests (additional -L and -I flags) do not get used for later
+tests causing incorrect configure results. Makefile.am was also
+changed to reflect this.</para></item>
+          <item><para>m4/gethostbyname_r.m4 does AC_TRY_COMPILE, which
+unfortunately can pass even if there is no gethostbyname_r. Changed to
+AC_TRY_LINK.</para></item>
+          <item><para>Revise getnameinfo check to ensure NULL is
+defined and the result is properly evaluated, to avoid bogus results
+on for instance FreeBSD and redefinitions of NI_* at compile
+time.</para></item>
+          <item><para>__attribute__ ((unused)) is a gccism, removed
+from libesmtp/gethostbyname.c.</para></item>
+          <item><para>In KAME/getnameinfo.c it's best to use the
+correct argument to inet_ntoa.</para></item>
+          <item><para>In verbose mode, log if --check mode is
+enabled.</para></item>
+          <item><para>Add sslcommonname option (rcfile and
+commandline) as a way to work around misconfigured upstream SSL
+servers that use the wrong certificate name. It specifies which
+CommonName fetchmail expects and logs.</para></item>
+          <item><para>Changed CRLF to LF line endings in
+contrib/delete-later</para></item>
+          <item><para>SSL change: enable all workarounds with
+SSL_CTX_set_options(ctx,SSL_OP_ALL)</para></item>
+          <item><para>All translations have been re-enabled, in an
+attempt to rekindle translator or user interest.</para></item>
+        </items>
+
+        <items name="DOCUMENTATION:">
+          <item><para>Add fetchmail-SA-2007-02.txt and
+fetchmail-SA-2008-01.txt.</para></item>
+          <item><para>Re-add two lines to the manual page that had
+accidentally become comments to nroff. One was part of the --sslproto
+documentation, and one in the "Awakening the background daemon"
+section.</para></item>
+          <item><para>The manual page no longer asserts that .fetchids
+were for exclusive POP3 use, since it is planned to use the file with
+IMAP4 later.</para></item>
+          <item><para>Add grammar fixes to fetchmail.man. Debian Bug
+#461642.</para></item>
+          <item><para>The manual page now mentions that user
+descriptions need to come before user options. To fix Debian Bug
+#467010.</para></item>
+          <item><para>The manual page no longer hints that multi-user
+declarations per server were only useful in daemon mode running as
+root, to avoid hinting people to doing that.</para></item>
+          <item><para>Several manual page rcfile examples now include
+"ssl".</para></item>
+          <item><para>The manual page hints that option arguments
+beginning with numbers can be enclosed in quotes.</para></item>
+          <item><para>The manual page now mentions that the --logfile
+must already exist before fetchmail is run.</para></item>
+          <item><para>The FAQ now recommends (#I9) not to use Google
+Mail for their disregard to the protocols they claim to
+support.</para></item>
+          <item><para>Documentation and program output now
+/consistently/ claim that the rcfile must not have more than 0700
+(u=rwx,g=,o=) permissions, but fetchmail will still silently accept
+additional g=x permissions for compatibility with previous 6.2.X and
+6.3.X versions. Inconsistency (program 0710, manpage
+0600).</para></item>
+          <item><para>The --logfile documentation is now clearer about
+requiring detached daemon mode.</para></item>
+        </items>
+
+        <items name="TRANSLATION UPDATES AND ADDITIONS (ordered by language name):">
+          <item><para>[sq]    Albanian</para></item>
+          <item><para>[zh_CN] Chinese, simplified</para></item>
+          <item><para>[cs]    Czech</para></item>
+          <item><para>[da]    Danish</para></item>
+          <item><para>[nl]    Dutch</para></item>
+          <item><para>[en_GB] English, British</para></item>
+          <item><para>[fi]    Finnish</para></item>
+          <item><para>[de]    German</para></item>
+          <item><para>[id]    Indonesian</para></item>
+          <item><para>[ja]    Japanese</para></item>
+          <item><para>[pl]    Polish</para></item>
+          <item><para>[ru]    Russian</para></item>
+          <item><para>[es]    Spanish</para></item>
+          <item><para>[tr]    Turkish</para></item>
+          <item><para>[vi]    Vietnamese</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 27" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update openssl dependency from 0.9.8h to
+1.0.0e</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+        <item><para>Update tk dependency from 8.5.6 to
+8.5.10</para></item>
+        <item><para>Remove support for HP-UX 10.20, RHEL 3, SLES 10,
+and Solaris 6 and 7</para></item>
+      </change>
+
+      <change date="2010 November 2" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2010 February 16" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2010-0562 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-0562">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-0562</ulink>).
+The sdump function in <command>sdump.c</command>, when running in
+verbose mode on platforms for which char is signed, allows remote
+attackers to cause a denial of service (application crash) or possibly
+execute arbitrary code via an SSL X.509 certificate containing
+non-printable characters with the high bit set, which triggers a
+heap-based buffer overflow during escaping.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

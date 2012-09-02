@@ -1,0 +1,387 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gimp" version="2.0.4" revision="1">
+    <install-name>${SB_PROG_NAME}20</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="731198e0f46cca833243c43197681c66"
+          checksum-type="md5" size="13845175"
+          path="src/gimp-2.0.4.tar.bz2"/>
+        <patch checksum="d5ff3f34777bc04164f49743c3446350"
+          checksum-type="md5" size="628258"
+          path="src/gimp-2.0.4.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="bison" install-name="bison13"
+          add-path="prepend" type="build">v&gt;=1.35</depend>
+        <depend program="gimp-print" var="GIMPPRINT"
+          install-name="gimpprint42">v&gt;=4.2.7</depend>
+        <depend program="gnome" var="GNOME" install-name="gnome26"
+          module="libgtkhtml"
+          systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">v&gt;=2.6.2</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk16">v&gt;=1.6.1</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage22">v&gt;=2.2</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf21">v&gt;=2.1.4</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext014"
+          add-path="prepend">v&gt;=0.14.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib24"
+          add-path="prepend">v&gt;=2.4.4</depend>
+        <depend program="gtk+" var="LIBGTK" install-name="libgtk+24"
+          add-path="prepend">v&gt;=2.4.4</depend>
+        <depend program="gtk-doc" var="GTKDOC" install-name="gtkdoc12"
+          add-path="prepend"
+          systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*"
+          type="build">v&gt;=1.2</depend>
+        <depend program="jpeg" var="JPEG"
+          install-name="jpeg">v&gt;=6b</depend>
+        <depend program="lcms" var="LIBLCMS"
+          install-name="liblcms11">v&gt;=1.12</depend>
+        <depend program="libart_lgpl" var="LIBART"
+          install-name="libart23">v&gt;=2.3.16</depend>
+        <depend program="libexif" var="LIBEXIF"
+          install-name="libexif06"
+          systype="*-aix*|*-hpux*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">v&gt;=0.6.9</depend>
+        <depend program="libglade" var="LIBGLADE"
+          install-name="libglade23">v&gt;=2.3.6</depend>
+        <depend program="libiconv" install-name="libiconv19"
+          add-path="prepend">v&gt;=1.9.2</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="!*-aix*">v&gt;=1.9.2</depend>
+        <depend program="libmng" var="LIBMNG"
+          install-name="libmng10">v&gt;=1.0.5</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng12">v&gt;=1.2.4</depend>
+        <depend program="libwmf" var="LIBWMF" install-name="libwmf02"
+          add-path="prepend">v==0.2.8 r&gt;=3</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml26">v&gt;=2.6.11</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango14">v&gt;=1.4.0</depend>
+        <depend program="tiff" var="LIBTIFF"
+          install-name="libtiff35">v&gt;=3.5.7</depend>
+        <depend program="xpm" var="XPM"
+          install-name="xpm">v&gt;=3.4k</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBTIFF_INC} -I${SB_VAR_JPEG_INC} \
+-I${SB_VAR_LIBPNG_INC} -I${SB_VAR_ZLIB_INC} \
+-I${SB_VAR_LIBMNG_INC} -I${SB_VAR_XPM_INC} \
+-I${SB_VAR_GETTEXT_INC} ${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="-L${SB_VAR_LIBTIFF_LIB} \
+-L${SB_VAR_JPEG_LIB} -L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_ZLIB_LIB} \
+-L${SB_VAR_LIBMNG_LIB} -L${SB_VAR_XPM_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBTIFF_LIB}:${SB_VAR_JPEG_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_ZLIB_LIB}:${SB_VAR_XPM_LIB}:\
+${SB_VAR_LIBWMF_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBART_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBLCMS_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:${SB_VAR_GIMPPRINT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBEXIF+:${SB_VAR_LIBEXIF_LIB}/pkgconfig}\
+${SB_VAR_GNOME+:${SB_VAR_GNOME_LIB}/pkgconfig}" --disable-gtk-doc \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--with-html-dir="${_docdir}/html" --with-desktop-dir=${_datadir} \
+--disable-dependency-tracking \
+--with-gimpprint-prefix=${SB_VAR_GIMPPRINT} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gimp-2.0.pc gimpthumb-2.0.pc gimpui-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# strip -2.0 extension from binaries
+(cd ${SB_INSTALL_PREFIX}/bin
+for _prog in gimp gimp-remote gimptool; do
+  rm -f ${_prog}
+  mv ${_prog}-2.0 ${_prog}
+done
+
+cd ${SB_INSTALL_PREFIX}/man/man1
+for _prog in gimp gimp-remote gimptool; do
+  rm -f ${_prog}.1
+  mv ${_prog}-2.0.1 ${_prog}.1
+done
+
+cd ${SB_INSTALL_PREFIX}/man/man5
+rm -f gimprc.5
+mv gimprc-2.0.5 gimprc.5)
+]]>
+      </install>
+    </module>
+
+    <module name="help">
+      <build-name>gimp-help-2-0.3</build-name>
+
+      <sources>
+        <source checksum="02c0f11cfd5af6c78e2731edc4b99c65"
+          checksum-type="md5" size="15189581"
+          path="src/gimp-help-2-0.3.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext014">v&gt;=0.14.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib24"
+          add-path="prepend">v&gt;=2.4.4</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+        <depend program="libxslt" var="LIBXSLT"
+          install-name="libxslt11"
+          add-path="prepend">v&gt;=1.1.8</depend>
+        <depend program="gimp">v==2.0.4</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+PKG_CONFIG_PATH="${SB_INSTALL_PREFIX}/lib/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" ./configure \
+--datadir=${_datadir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <notes>
+      <change from="2.0.3" to="2.0.4">
+        <item><para>several build fixes (#147799, #148813,
+#147013)</para></item>
+        <item><para>fixed bug in Polarize plug-in
+(#147799)</para></item>
+        <item><para>fixed out-of-bounds access in Ink tool code
+(#144856)</para></item>
+        <item><para>improved antialiasing of elliptical selections
+(#147836)</para></item>
+        <item><para>fixed typo in gradient editor
+(#148300)</para></item>
+        <item><para>really remove all associated items from the ID
+hash table when an image is being closed (#148614)</para></item>
+        <item><para>work around integer overflows when transforming
+large drawables (#128594)</para></item>
+        <item><para>fixed wrong EXIF handling in JPEG plug-in, a bug
+that has been introduced in 2.0.3 (#148632)</para></item>
+        <item><para>fixed bug in Script-Fu extension (bug
+#148729)</para></item>
+        <item><para>fixed crash in container grid views (bug
+#148955)</para></item>
+        <item><para>handle changes to URI handling in newer glib
+releases (bug #148140)</para></item>
+      </change>
+
+      <change from="2.0.2" to="2.0.3">
+        <item><para>several build fixes (#144632,
+#144780)</para></item>
+        <item><para>documentation fixes (#144267)</para></item>
+        <item><para>avoid use of uninitialized values in GimpColorArea
+widget (#144786)</para></item>
+        <item><para>fixed Levels tool on grayscale images with alpha
+channel (#141930)</para></item>
+        <item><para>fixed Save/Load functionality in channel-mixer
+plug-in (#145380)</para></item>
+        <item><para>fixed brokeness in GimpContext that caused tool
+options and device settings to be saved incorrectly</para></item>
+        <item><para>fixed bug in Colorize tool</para></item>
+        <item><para>fixed undo stack corruption that occured with some
+undo settings (#145379)</para></item>
+        <item><para>fixed long-standing bug that caused the tablet
+pointer to change inadvertently (#115774)</para></item>
+        <item><para>allow to undo script 'Round Corners'
+(#146344)</para></item>
+        <item><para>implemented gimp-path-get-point-at-dist PDB
+function (#138754)</para></item>
+        <item><para>don't crash while loading JPEG files with corrupt
+EXIF data (#145212)</para></item>
+        <item><para>fixed loading of CMYK TIFF images on big-endian
+hosts (#147328)</para></item>
+        <item><para>fixed palette handling in MNG plug-in
+(#139947)</para></item>
+        <item><para>fixed bug in Script-Fu console
+(#139200)</para></item>
+        <item><para>fixed corruption when saving RLE-encoded BMPs on
+big-endian hosts (#147759)</para></item>
+      </change>
+
+      <change from="2.0.1" to="2.0.2">
+        <item><para>several build fixes (#140115, #142907,
+#143069)</para></item>
+        <item><para>allow plug-ins to register menu entries from
+within init() (#139969)</para></item>
+        <item><para>fixed focus issues with tool dialogs
+(#139349)</para></item>
+        <item><para>allow to load grayscale TGA files</para></item>
+        <item><para>a couple of string and i18n fixes (#140296,
+#140039, #137036, #142996)</para></item>
+        <item><para>fixed crash in template editor
+(#140315)</para></item>
+        <item><para>fixed crash in IWarp plug-in
+(#140554)</para></item>
+        <item><para>fixed snap to guides (#140649)</para></item>
+        <item><para>made the PNG plug-in handle empty colormaps
+(#142029)</para></item>
+        <item><para>fixed bug in text editor dialog
+(#141792)</para></item>
+        <item><para>fixed Old Photo script-fu (#142326)</para></item>
+        <item><para>fixed glitch in the Curves tool dialog
+(#142506)</para></item>
+        <item><para>don't allow tablet pressure to become negative
+(#123811)</para></item>
+        <item><para>improved range of tablet pressure values
+(#142808)</para></item>
+        <item><para>better defaults for tablet pressure
+(#143626)</para></item>
+        <item><para>fixed use of screen color picker with XInput
+devices (#143166)</para></item>
+        <item><para>actually return values from the run function of
+Python scripts (#141338)</para></item>
+        <item><para>documentation fixes (#142618)</para></item>
+        <item><para>fixed bug in the save routine of the TIFF plug-in
+(#143522)</para></item>
+        <item><para>don't let Curve Bend silently apply the layer mask
+(#134748)</para></item>
+        <item><para>fixed bug in Blur plug-in (#142318)</para></item>
+        <item><para>fixed mask offsets after crop operations
+(#143860)</para></item>
+        <item><para>let extensions run synchronously when called via
+PDB (#140112)</para></item>
+        <item><para>updated (and some new) translations</para></item>
+      </change>
+
+      <change from="2.0.0" to="2.0.1">
+        <item><para>don't leak file descriptor for the POSIX shm
+implementation (Yosh)</para></item>
+        <item><para>fixed path tool undo (#138086,
+Mitch)</para></item>
+        <item><para>don't transform drawables away (#138117,
+Mitch)</para></item>
+        <item><para>fixed issues with guillotine plug-in (#138314,
+Joao, Mitch)</para></item>
+        <item><para>fixed Slide script-fu (#138310, Nils
+Philippsen)</para></item>
+        <item><para>don't allow removed items to be accessed thru the
+PDB (#138311, Mitch)</para></item>
+        <item><para>skip fonts with invalid names (workaround for
+#132366, Sven)</para></item>
+        <item><para>fixed Spinning Globe script-fu (#138253,
+Sven)</para></item>
+        <item><para>fixed a bug in the IFSCompose plug-in (#138212,
+David Necas)</para></item>
+        <item><para>fixed undo corruption with floating selections
+(Pedro, Mitch)</para></item>
+        <item><para>fixed gimprc man-page (Sven)</para></item>
+        <item><para>align JPEG setjump buffer on 16-byte boundary for
+ia64 (#138357, Yosh)</para></item>
+        <item><para>fixed Alien Glow Arrow script-fu (#138524,
+Sven)</para></item>
+        <item><para>fixed code that suppresses the transform tool grid
+(Simon)</para></item>
+        <item><para>push an undo for changing the text layer
+modification flag (#137767, Mitch)</para></item>
+        <item><para>make the user installation work with pixmap themes
+(#138379, Sven)</para></item>
+        <item><para>register .jpe as extension for JPEG images
+(#138776, Bolsh)</para></item>
+        <item><para>fixed issues with the Lighting Effects plug-in
+(#138788, William Skaggs)</para></item>
+        <item><para>don't crash on color corrections on empty
+selections (#138973, Sven)</para></item>
+        <item><para>made gimptool-2.0 create missing directories
+(#138980, Yosh)</para></item>
+        <item><para>made undo names translatable (#139000,
+Sven)</para></item>
+        <item><para>optimized grid drawing (#138081,
+Sven)</para></item>
+        <item><para>don't create a gimptool link to gimptool-2.0
+(#139024, Sven)</para></item>
+        <item><para>sanitize rectangle and ellipse selection (#138237,
+#138103, Pedro)</para></item>
+        <item><para>fixed problems with Copy-Visible and Drop-Shadow
+scripts (#138662, Pedro)</para></item>
+        <item><para>fixed X server authentification problems with
+gimp-remote (#139158, Sven)</para></item>
+        <item><para>let Script-Fu PDB marshallers handle NULL strings
+(#139386, Kevin Cozens)</para></item>
+        <item><para>fixed rounding error in transformation code
+(#120490, William Skaggs)</para></item>
+        <item><para>fixed winclipboard plug-in (Hans
+Breuer)</para></item>
+        <item><para>fixed Python Slice script (Yosh)</para></item>
+        <item><para>fixed configure check for Xmu (#139803,
+Sven)</para></item>
+        <item><para>fixed crash when scaling up a floating selection
+(#138356, Mitch)</para></item>
+        <item><para>use LC_MESSAGE for help localization (#139917,
+Sven)</para></item>
+        <item><para>fixed imagemap file parsers
+(#139894)</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mod_python" version="3.1.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>modpython313</install-name>
+
+    <sources>
+      <source checksum="2e1983e35edd428f308b0dfeb1c23bfe"
+        checksum-type="md5" size="293548"
+        path="src/mod_python-3.1.3.tgz"/>
+      <patch checksum="c2df609545bab210258c02ad67a11e31"
+        checksum-type="md5" size="70449"
+        path="src/mod_python-3.1.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gzip" install-name="gzip13"
+        add-path="prepend">v&gt;=1.3.5</depend>
+      <depend program="apache" var="APACHE">v==2.0.49</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="python" var="PYTHON">v==2.3.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--with-apxs=${SB_VAR_APACHE}/bin/apxs \
+--with-python=${SB_VAR_PYTHON}/bin/python \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  ln -s mod_python.sl src/mod_python.so ;;
+esac
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install LIBEXECDIR="${SB_INSTALL_PREFIX}/modules"
+
+mv ${SB_INSTALL_PREFIX}/lib/python2.3/site-packages/mod_python \
+${SB_INSTALL_PREFIX}/lib
+rmdir ${SB_INSTALL_PREFIX}/lib/python2.3/site-packages
+rmdir ${SB_INSTALL_PREFIX}/lib/python2.3
+]]>
+    </install>
+
+    <notes>
+      <note type="configuration">
+        <para>The Apache module, <command>mod_python.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules</command>. It is
+automatically added to the default Apache configuration file,
+<command>/etc${SB_INSTALL_BASE}/apache2049/httpd.conf</command>:</para>
+        <screen>
+LoadModule python_module ${SB_INSTALL_PREFIX}/modules/mod_python.so
+        </screen>
+
+        <para>The default Perl library path, 
+<command>${SB_INSTALL_PREFIX}/lib</command>, is automatically added 
+to the list of Python module paths by adding it to the library search 
+path configuration file, 
+<command>${SB_INSTALL_BASE}/python232/etc/include.paths/include.paths</command>.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

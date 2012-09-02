@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="cyrus-sasl" version="2.1.15" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libsasl21</install-name>
+
+    <sources>
+      <source checksum="82c7f82a777b7bc10cc1ef68fb8e2a37"
+        checksum-type="md5" size="1390131"
+        path="src/cyrus-sasl-2.1.15.tar.gz"/>
+      <patch checksum="2be1b3af0960008631da934cf2cc20d8"
+        checksum-type="md5" size="1612383"
+        path="src/cyrus-sasl-2.1.15.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" CC_LD_RT="-Wl,+s -Wl,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" CC_LD_RT="-Wl,-rpath," ;;
+*-freebsd*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" CC_LD_RT="-Wl,-rpath,"
+
+  # don't use inttypes.h
+  export ac_cv_header_inttypes_h=no ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="db" var="LIBDB"
+          install-name="libdb41">v&gt;=4.1.25</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${LIBDB_INC}" LDFLAGS="-L${LIBDB_LIB} \
+${CC_LD_RT}${LIBDB_LIB}:${LIBOPENSSL_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--with-des=${LIBOPENSSL} --with-rc4=${LIBOPENSSL} \
+--with-openssl=${LIBOPENSSL} \
+--with-dbpath="/var${SB_INSTALL_PREFIX}/db" \
+${PRNGD+--with-devrandom=/var${PRNGD}/pool} \
+--with-saslauthd="/var${SB_INSTALL_PREFIX}" \
+--sysconfdir="/etc${SB_INSTALL_PREFIX}" \
+--with-plugindir=${SB_INSTALL_PREFIX}/lib/sasl --with-dblib=berkeley \
+--disable-gssapi --disable-krb4 --enable-shared \
+--enable-static --with-staticsasl ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf /etc/sasldb
+
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.1.14" to="2.1.15">
+        <item><para>Fix a number of build issues</para></item>
+        <item><para>Add a doc/components.html that hopefully describes
+how things interact better</para></item>
+      </change>
+
+      <change from="2.1.13" to="2.1.14">
+        <item><para>OS X 10.2 support</para></item>
+        <item><para>Support for the Sun SEAM GSSAPI
+implementation</para></item>
+        <item><para>Support for MySQL 4</para></item>
+        <item><para>A number of build fixes</para></item>
+        <item><para>Other minor bugfixes</para></item>
+      </change>
+
+      <change from="2.1.13" to="2.1.14">
+        <item><para>Add a configure option to allow specification of
+what /dev/random to use</para></item>
+        <item><para>Addition of a saslauthd credential cache feature
+(-c option)</para></item>
+        <item><para>Unification of the saslauthd ipc method
+code</para></item>
+        <item><para>Fix a number of autoconf issues</para></item>
+        <item><para>A significant number of fixes throughout the
+library from Sun Microsystems</para></item>
+        <item><para>Other minor bugfixes</para></item>
+      </change>
+
+      <change from="2.1.11" to="2.1.12">
+        <item><para>Distribute in Solaris tar (not GNU tar
+format)</para></item>
+        <item><para>Fix a number of build/configure related
+issues</para></item>
+      </change>
+
+      <change from="2.1.10" to="2.1.11">
+        <item><para>Add the fastbind auth method to the saslauthd LDAP
+module</para></item>
+        <item><para>Fix a potential memory leak in the doors version
+of saslauthd</para></item>
+        <item><para>NTLM now only requires one of LM or NT, not
+both</para></item>
+        <item><para>Fix a variety of Berkeley DB, LDAP, OpenSSL, and
+other build issues</para></item>
+        <item><para>Win32 support compiles, but no documentation as of
+yet</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The path to the SASL database is
+<command>/etc/sasldb</command>. The default path to the plugin modules is
+<command>${SB_INSTALL_PREFIX}/lib/sasl</command>.</para>
+
+        <para><command>saslauthd</command> has been disable on AIX due
+to compilation errors.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 March 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.2 (has
+<command>/dev/random</command>)</para></item>
+      </change>
+
+      <change date="2004 March 8" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix shared library loading problems as a result of
+upgrading libtool</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,534 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Pyrex" version="0.9.9" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>pyrex09</install-name>
+
+    <sources>
+      <source checksum="515dee67d15d4393841e2d60e8341947"
+        checksum-type="md5" size="255272"
+        path="src/Pyrex-0.9.9.tar.gz"/>
+      <patch checksum="c3f7fda043813228b4cef6a49f416e69"
+        checksum-type="md5" size="3016"
+        path="src/Pyrex-0.9.9.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" bin/pyrexc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} \
+--install-data=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+mv ${SB_INSTALL_PREFIX}/bin/pyrexc \
+${SB_INSTALL_PREFIX}/bin/pyrexc${_pyver}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+    </install>
+
+    <module name="default">
+      <validate>
+        <depend program="Pyrex" module="2.6.7">v==0.9.9</depend>
+        <depend program="Pyrex" module="2.7.2">v==0.9.9</depend>
+      </validate>
+
+      <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" bin/pyrexc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} \
+--install-data=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+mv ${SB_INSTALL_PREFIX}/bin/pyrexc \
+${SB_INSTALL_PREFIX}/bin/pyrexc${_pyver}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" bin/pyrexc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} \
+--install-data=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+mv ${SB_INSTALL_PREFIX}/bin/pyrexc \
+${SB_INSTALL_PREFIX}/bin/pyrexc${_pyver}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!" bin/pyrexc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+_pyver=$(${SB_VAR_PYTHON}/bin/python -c "\
+import sys; print sys.version[0:3];")
+
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} \
+--install-data=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+mv ${SB_INSTALL_PREFIX}/bin/pyrexc \
+${SB_INSTALL_PREFIX}/bin/pyrexc${_pyver}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <licenses>
+      <license path="apache-2.0.license"/>
+    </licenses>
+
+    <notes>
+      <change from="0.9.8.6" to="0.9.9">
+        <items name="New features">
+          <item><para>C++ struct declarations, 'new' operator, and del
+for C++ delete</para></item>
+          <item><para>As well as the 'not None' modifier for extension
+type arguments, there is now 'or None' to explicitly allow passing
+None. It is planned to make 'not None' the default in a future
+version. For now, a warning is issued (once per Pyrex run) if you do
+not specify one or the other.</para></item>
+          <item><para>Extension types may have a 'nogc' option to
+suppress GC support</para></item>
+        </items>
+
+        <items name="Modifications">
+          <item><para>Exceptions caught by an except clause are no
+longer put into the thread state and cannot be retrieved using
+sys.exc_info(). To access the caught exception, it must be bound to a
+name in the except clause. A third name can be supplied to capture the
+traceback.</para></item>
+          <item><para>PyString_InternFromString is now exposed under
+the name 'cintern' because it is not a complete substitute for
+'intern' (it can't handle strings containing null bytes)</para></item>
+          <item><para>Disabled size check for cimported types because
+it was generating too many false positives in the field</para></item>
+          <item><para>Added __fastcall calling convention. Also no
+longer assuming that an unspecified calling convention is the same as
+__cdecl.</para></item>
+          <item><para>Operations between signed and unsigned ints of
+the same size now have an unsigned result</para></item>
+          <item><para>Py_ssize_t now ranked between long and long
+long</para></item>
+          <item><para>Declaration of __new__ in an extension type is
+now an error, in preparation for introducing new
+semantics</para></item>
+          <item><para>Added size_t type, and made sizeof() return
+it</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>When casting the result of a function call to a
+Python type, the function could be called twice</para></item>
+          <item><para>__Pyx_GetException was not taking account of the
+fact that the traceback could be NULL</para></item>
+          <item><para>sizeof(module.typename) did not
+work</para></item>
+        </items>
+      </change>
+
+      <change from="0.9.8.5" to="0.9.8.6">
+        <items name="Enhancements">
+          <item><para>Check for gil when calling a function declared
+'execpt *' or 'except ?'. Acquire gil when reporting unraisable
+exception.</para></item>
+          <item><para>Added iter2() function for 2-argument form of
+iter()</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Compiler crashed if base class of extension type
+was incompletely defined</para></item>
+          <item><para>Compiler crash on misspelled method name in
+property declaration</para></item>
+          <item><para>Fixed deprecation warnings in 2.6</para></item>
+          <item><para>Always preserve explicit type casts for
+non-Python types</para></item>
+          <item><para>Added workaround for threading initialisation
+bug in Python 2.3</para></item>
+          <item><para>Deleting dict item with integer key did not
+work</para></item>
+          <item><para>Header files for cimported modules included in
+wrong order</para></item>
+          <item><para>Don't allow a member of a ctypedef struct to
+reference itself</para></item>
+          <item><para>Compiler crash due to attribute reference in
+compile-time expression</para></item>
+          <item><para>Public extension type attribute with cname
+didn't work</para></item>
+          <item><para>Memory leak related to exporting C
+functions</para></item>
+          <item><para>Compiler crash on return outside
+function</para></item>
+          <item><para>Scope problem with extension types declared in
+pxd</para></item>
+          <item><para>Calling a builtin method of a subclass of a
+builtin class did not work</para></item>
+          <item><para>Builtin hash() function had wrong return
+type</para></item>
+        </items>
+
+        <items name="Modifications">
+          <item><para>Added 'tags' to .hgignore file</para></item>
+          <item><para>Disallow overriding a builtin method in a
+subclass of a builtin class</para></item>
+        </items>
+      </change>
+
+      <change from="0.9.8.4" to="0.9.8.5">
+        <items name="Bug fixes">
+          <item><para>Function export code was erroneously generated
+for 'extern' functions declared in a .pxd file</para></item>
+          <item><para>The 'api' option was not recognised with
+'ctypedef public class'</para></item>
+          <item><para>MACOSX_DEPLOYMENT_TARGET is no longer set unless
+the undocumented -X option is being used. Hopefully this will prevent
+complaints about it from distutils.</para></item>
+          <item><para>Recognize MS_WINDOWS as well as
+WIN32</para></item>
+          <item><para>Hexadecimal compile-time constants did not
+work</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Dependency files (.dep) are only created when
+compiling with timestamp checking or recursion enabled</para></item>
+        </items>
+
+        <items name="Deprecations">
+          <item><para>The features introducted in 0.9.8 and 0.9.8.1
+for cross-forward-declaring extension types between .pxd files turn
+out to be unnecessary, since the circular import problems they are
+aimed at can be avoided using ordinary forward delcarations in the
+.pxd files ahead of any cimports</para></item>
+        </items>
+      </change>
+
+      <change from="0.9.8.3" to="0.9.8.4">
+        <item><para>Incorrect code generated for Python indexing
+with an unsigned int</para></item>
+      </change>
+
+      <change from="0.9.8.2" to="0.9.8.3">
+        <item><para>Compiling multiple source files at once should
+work as advertised now</para></item>
+        <item><para>Assignment of a nogil function to a non-nogil
+function pointer is now allowed</para></item>
+        <item><para>Applying += or -= to a pointer and an integer
+did not work</para></item>
+        <item><para>Compiling a .pyx file whose name is not a valid
+module name now reports an error instead of generating invalid C
+code</para></item>
+        <item><para>Integer indexing optimisation now performed only
+for signed index types, to avoid change of semantics with index values
+greater than the maximum positive signed int value</para></item>
+        <item><para>Non-void function declared 'except *' could
+produce C compiler warning about uninitialised variable</para></item>
+      </change>
+
+      <change from="0.9.8.1" to="0.9.8.2">
+        <items name="Enhancements">
+          <item><para>A block of external functions can be declared
+nogil at once</para>
+          <screen>
+cdef extern from "somewhere.h" nogil:
+  ...
+          </screen></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>The nogil attribute was not being checked for a
+match when comparing function signatures</para></item>
+          <item><para>Improved error message for C method signature
+mismatch between a class and its base class</para></item>
+        </items>
+
+        <items name="Bug workarounds">
+          <item><para>Multiple source files passed to Main.compile are
+being compiled in separate contexts for the time being until I can
+sort out a problem. You probably won't notice any difference except
+that there will be no speed advantage over compiling them
+separately.</para></item>
+        </items>
+      </change>
+
+      <change from="0.9.8" to="0.9.8.1">
+        <items name="Enhancements">
+          <item><para>It is no longer necessary to specify the base
+class of an extension type in a forward declaration. Also, if the
+class is defined in a .pxd file, the base class only needs to be
+specified in the .pxd file, not the .pyx file.</para></item>
+          <item><para>There's now an even easier way to
+forward-declare a struct, union or extension type in another
+module:</para>
+          <screen>
+from blarg cimport class Foo
+          </screen>
+          <para>This simultaneously cimports the name Foo and
+forward-declares it as an extension type. As well as 'class', you can
+also use 'struct' or 'union'.</para></item>
+        </items>
+
+        <items name="Modifications">
+          <item><para>Casting a non-Python pointer type to a Python
+type no longer generates an incref, unless one is required for other
+reasons</para></item>
+          <item><para>More checks added for gil-requiring operations
+performed without holding the gil</para></item>
+        </items>
+      </change>
+
+      <change from="0.9.7.2" to="0.9.8">
+        <item><para>Augmented assignment operators (+=, etc.) are now
+supported</para></item>
+        <item><para>Package directories: Modules in packages no longer
+need to have dotted names. Instead, a Python-like package directory
+structure can be used, with package dirs marked by containing an
+__init__.py or __init__.pyx.</para>
+        <para>Top-level package directories are found by searching the
+include directories specified by -I options (analogous to
+PYTHONPATH).</para></item>
+        <item><para>Dependency tracking: The Pyrex compiler records
+information about other source files cimported or included, and can
+automatically compile all the modules a given module depends on, with
+timestamp checking.</para>
+        <para>This is enabled by a -r (recursive) option to the
+compiler, e.g.</para>
+        <screen>
+pyrexc -r mainmodule.pyx
+        </screen>
+        <para>There are also two other new command-line
+options:</para>
+        <screen>
+-t   Enable timestamp checking. This is implied with -r.
+-f   Overrides implied -t when using -r and forces all dependent
+     modules to be compiled regardless of timestamps.
+        </screen></item>
+        <item><para>Nogil restrictions relaxed: C functions declared
+nogil can now have Python objects as arguments. The argument names are
+read-only inside the function when this is done.</para>
+        <para>Among other things, this allows C methods to be declared
+nogil (this couldn't be done before because 'self' is always an object
+argument).A</para></item>
+        <item><para>Circular cimports: There is now a way of
+forward-declaring a struct, union or extension type into another
+module. This allows two .pxd files to define extension types that
+refer to each other without running into circular import problems. For
+example:</para>
+        <screen>
+cimport blarg
+cdef class blarg.Blarg # Forward declaration
+      
+cdef class Foo:
+  cdef blarg.Blarg blg
+        </screen></item>
+      </change>
+
+      <change from="0.9.7.1" to="0.9.7.2">
+        <item><para>Another integer indexing problem
+fixed</para></item>
+      </change>
+
+      <change from="0.9.7" to="0.9.7.1">
+        <items name="Bug fixes">
+          <item><para>The optimisation for indexing using a C int
+failed when the object being indexed was a mapping rather than a
+sequence</para></item>
+        </items>
+
+        <items name="Modifications">
+          <item><para>Old integer for-loop syntax is no longer
+deprecated</para></item>
+        </items>
+      </change>
+
+      <change from="0.9.6.4" to="0.9.7">
+        <items name="New features">
+          <item><para>Builtin constants and types are known, and are
+referenced directly with no dictionary lookup</para></item>
+          <item><para>Direct calls are made to certain methods of
+lists and dicts when their type is statically known</para></item>
+          <item><para>New builtin functions 'typecheck' and
+'issubtype' added, providing safer type checking than isinstance and
+issubclass (which can be overridden)</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Redundant type test eliminated when assigning
+the result of an extension type constructor call to a variable of the
+same type.</para></item>
+          <item><para>No tp_traverse and tp_clear functions generated
+for types without Python attributes.</para></item>
+          <item><para>Safer code generated in tp_clear</para></item>
+          <item><para>Indexing with a C int type generates calls to
+PySequence_GetItem and PySequence_SetItem</para></item>
+          <item><para>Integer for-loop syntax streamlined to 'for x
+&lt; i &lt; y'</para></item>
+          <item><para>Appropriate C code generated for compile-time
+expressions evaluating to float nan, inf and -inf</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Value raised by assert statement now only
+evaluated if the assertion fails</para></item>
+          <item><para>Comparing a value of an enum type with another
+value of a type which is ctypedefed to the same enum type gave a
+spurious type error</para></item>
+          <item><para>Comparing an int with a float resulted in the
+float being cast to an int before comparison</para></item>
+          <item><para>Compiler crashed on an invalid argument to a
+'with nogil' statement</para></item>
+          <item><para>Incorrect code generated for function with
+keyword only args and no * or ** args</para></item>
+          <item><para>GC type with non-GC base type caused crash due
+to trying to call non-existent base tp_traverse and tp_clear
+functions</para></item>
+          <item><para>Compile-time IF with no ELSE clause crashed
+compiler</para></item>
+          <item><para>Values in enum declaration were not being
+checked for appropriate type</para></item>
+          <item><para>Improved the error message from attempting to
+declare a struct or union member as a function</para></item>
+          <item><para>Referring to an undefined name in a compile-time
+constant crashed the compiler</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The Pyrex Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

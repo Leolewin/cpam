@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="ImageMagick" version="6.0.3" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>imagemagick60</install-name>
+
+    <sources>
+      <source checksum="15799a3565abb11aa546c7ba5594fd19"
+        checksum-type="md5" size="5735820"
+        path="src/ImageMagick-6.0.3-5.tar.bz2"/>
+      <patch checksum="4a107af2803ab684531a12b77fa8796a"
+        checksum-type="md5" size="428449"
+        path="src/ImageMagick-6.0.3-5.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="ghostscript" var="GHOSTSCRIPT"
+        install-name="ghostscript70"
+        add-path="prepend">v&gt;=7.07</depend>
+      <depend program="gnuplot" var="GNUPLOT"
+        install-name="gnuplot40"
+        add-path="prepend">v&gt;=4.0.0</depend>
+      <depend program="transfig" var="TRANSFIG"
+        install-name="transfig32"
+        add-path="prepend">v&gt;=3.2.3d</depend>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip2">v&gt;=1.0.2</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf21"
+        add-path="prepend">v&gt;=2.1.4</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="lcms" var="LIBLCMS"
+        install-name="liblcms11">v&gt;=1.12</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml26"
+        add-path="prepend">v&gt;=2.6.11</depend>
+      <depend program="libwmf" var="LIBWMF" install-name="libwmf02"
+        add-path="prepend">v&gt;=0.2.8</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_gs_font_dir="${SB_VAR_GHOSTSCRIPT}/share/fonts"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  ARGS="--with-modules --with-magick-plus-plus --with-threads" ;;
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CPPFLAGS="-D_ALL_SOURCE"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  ARGS="--with-modules --without-magick-plus-plus --without-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-modules --with-threads"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-modules --without-magick-plus-plus --without-threads"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -O2 -OPT:Olimit=0"
+  CXXCPP="CC -E" ARGS="--with-modules --with-threads"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--with-modules --with-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std1 -ieee -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+  ARGS="--with-modules" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+  ARGS="--with-modules" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  ARGS="--with-modules --with-threads" CC_LD_RT="-R" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  ARGS="--with-modules --with-threads --without-magick-plus-plus"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  ARGS="--with-modules --with-threads" ;;
+esac
+
+./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_XPM_INC} \
+-I${SB_VAR_JPEG_INC} -I${SB_VAR_LIBLCMS_INC} -I${SB_VAR_LIBTIFF_INC} \
+-I${SB_VAR_LIBPNG_INC} -I${SB_VAR_ZLIB_INC} -I${SB_VAR_BZIP2_INC} \
+-I${SB_VAR_LIBTTF_INC} -I${SB_VAR_LIBWMF_INC} -I${SB_VAR_LIBXML_INC} \
+${CPPFLAGS+${CPPFLAGS}}" \
+CFLAGS="${CFLAGS:--O2}" ${CXX+CXX="${CXX}"} \
+${CXXFLAGS+CXXFLAGS="${CXXFLAGS}"} CXXCPP="${CXXCPP+${CXXCPP}}" \
+LDFLAGS="-L${SB_VAR_XPM_LIB} -L${SB_VAR_JPEG_LIB} -L${SB_VAR_LIBLCMS_LIB} \
+-L${SB_VAR_LIBTIFF_LIB} -L${SB_VAR_LIBPNG_LIB} \
+-L${SB_VAR_ZLIB_LIB} -L${SB_VAR_BZIP2_LIB} -L${SB_VAR_LIBTTF_LIB} \
+-L${SB_VAR_LIBWMF_LIB} -L${SB_VAR_LIBXML_LIB} \
+${CC_LD_RT}${SB_VAR_XPM_LIB}:${SB_VAR_JPEG_LIB}:${SB_VAR_LIBLCMS_LIB}:\
+${SB_VAR_LIBTIFF_LIB}:${SB_VAR_LIBPNG_LIB}:${SB_VAR_ZLIB_LIB}:\
+${SB_VAR_BZIP2_LIB}:${SB_VAR_LIBTTF_LIB}:${SB_VAR_LIBWMF_LIB}:\
+${SB_VAR_LIBXML_LIB}${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --without-frozenpaths --enable-shared \
+--without-perl --without-dps --without-gslib \
+--disable-dependency-tracking --enable-libtool-verbose \
+--with-gs-font-dir=${_gs_font_dir} --datadir=${_datadir} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(${SB_INSTALL_PREFIX}/lib\) !-L\1 ${CC_LD_RT}\1 !" \
+magick/Magick-config
+
+${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" magick/ImageMagick.pc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdocdir=${_docdir}
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install pkgdocdir=${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <note type="build">
+        <para>The Magick++ C++ interface to the ImageMagick library is
+available for HP-UX 11.x, IRIX 6.5, Redhat Linux, Solaris 2.6+, and
+Tru64 UNIX using the vendor C++ compiler.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 10" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Backport fixes from the 6.0.6 release to fix
+vulnerabilities in BMP, AVI, and DIB decoder and potential stack
+overflow in the TIFF decoder.</para></item>
+      </change>
+
+      <change date="2004 August 31" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade libtool to 1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

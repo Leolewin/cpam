@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gettext" version="0.10.40" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="6a17767b47ffb45b4866cec9fb0a39b0"
+        checksum-type="md5" size="1352976"
+        path="src/gettext-0.10.40.tar.gz"/>
+      <patch checksum="e45d3d90891bbb5f16dd42e8b048f209"
+        checksum-type="md5" size="1429792"
+        path="src/gettext-0.10.40.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv16"
+        systype="!*-aix*">v&gt;=1.6.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl"
+
+  # We do not have stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" CC_LD_RT="-Wl,+s,+b,"
+
+  # We don't want to use getline in libc or else xgettext will core dump
+  export ac_cv_func_getline=no ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" 
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --with-included-gettext \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--datadir=${_datadir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake && gmake check
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_docdir}
+${SB_PATH_INSTALL} -o root -g 0 -m 644 doc/gettext.texi \
+doc/version.texi doc/iso-639.texi doc/iso-3166.texi \
+doc/matrix.texi doc/nls.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 September 10" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove ACLOCAL override from top-level
+Makefile</para></item>
+      </change>
+
+      <change date="2004 August 8" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove bison dependency</para></item>
+      </change>
+
+      <change date="2004 June 12" revision="4"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove emacs dependency</para></item>
+      </change>
+
+      <change date="2004 March 10" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 4.3.3. While stpcpy() is in
+libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+
+      <change date="2003 February 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>HP-UX 10.20 comment wrapped to second line invoking
+dump(1) command by accident</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

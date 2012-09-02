@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="m4" version="1.4" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="9eb2dd07740b2d2f3c7adb3e8d299bda"
+        checksum-type="md5" size="317588"
+        path="src/m4-1.4.tar.gz"/>
+      <patch checksum="588d2c455464533a7fcc84e15da448f2"
+        checksum-type="md5" size="249761"
+        path="src/m4-1.4.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com -qro -qroconst" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+--prefix=${SB_INSTALL_PREFIX} --program-prefix=g
+
+rm -f doc/m4.info* || :
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+
+# install texinfo source files
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/m4.texinfo \
+doc/version.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 June 15" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Merge changes from 1.4.1 to incorporate fix so
+maketemp now creates an empty file with the given name, instead of
+merely returning the name of a nonexistent file. This closes a
+security hole.</para></item>
+      </change>
+
+      <change date="2003 April 16" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

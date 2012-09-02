@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="confuse" version="2.6" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="0e883d66f0f58fc33585b430c652aa30"
+        checksum-type="md5" size="504017"
+        path="src/confuse-2.6.tar.gz"/>
+      <patch checksum="4500c6f3776129fcaa568b9aaafbaf73"
+        checksum-type="md5" size="2178"
+        path="src/confuse-2.6.tww.patch"/>
+      <patch checksum="17fa68ced4222dc2b9844e2960c5953a"
+        checksum-type="md5" size="1520914"
+        path="src/confuse-2.6.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64-*hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc  +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linuxe*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CPPFLAGS="-DYY_USE_PROTOS"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-*-solaris*)
+  CC=cc CFLAGS=" -mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CPPFLAGS="-DYY_USE_PROTOS"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS=" -mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CPPFLAGS="-DYY_USE_PROTOS"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS=" -mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CPPFLAGS="-DYY_USE_PROTOS"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC-gcc}" CFLAGS="${CFLAGS--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--disable-dependency-tracking --enable-shared --enable-static \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--docdir="${SB_INSTALL_PREFIX}/doc" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libconfuse.pc
+]]>
+    </configure>
+
+    <licenses>
+      <license>
+        <para align="center">Copyright (c) 2002,2003,2007 Martin Hedenfalk
+&lt;martin@bzero.se&gt;</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR
+DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
+CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
+USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+      </license>
+    </licenses>
+
+    <changelog>
+      <change date="2012 January 27" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

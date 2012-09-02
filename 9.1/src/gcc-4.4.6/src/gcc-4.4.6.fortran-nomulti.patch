@@ -1,0 +1,18 @@
+Index: libgfortran/configure.ac
+===================================================================
+--- libgfortran/configure.ac.orig	2010-04-29 15:03:38.000000000 +0000
++++ libgfortran/configure.ac	2011-08-22 05:25:28.925558042 +0000
+@@ -67,6 +67,13 @@
+ AM_MAINTAINER_MODE
+ AM_ENABLE_MULTILIB(, ..)
+ 
++AC_ARG_ENABLE(fortran-multilib,
++       AS_HELP_STRING([--disable-fortran-multilib], [do not build libgfortran as multilib]))
++if test "$enable_fortran_multilib" = no; then
++  multilib=no
++  ac_configure_args="$ac_configure_args --disable-multilib"
++fi
++
+ # Handy for debugging:
+ #AC_MSG_NOTICE($build / $host / $target / $host_alias / $target_alias); sleep 5
+ 

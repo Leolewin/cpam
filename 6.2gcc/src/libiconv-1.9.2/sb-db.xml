@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libiconv" version="1.9.2" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}19</install-name>
+
+    <sources>
+      <source checksum="6bc300365053c815b10b800a21e0bc7e"
+        checksum-type="md5" size="3919945"
+        path="src/libiconv-1.9.2.tar.gz"/>
+      <patch checksum="9f686de6981c0df92a4871539343cb99"
+        checksum-type="md5" size="1830582"
+        path="src/libiconv-1.9.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <module name="default">
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --enable-shared --enable-static \
+--disable-nls --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libcharset.pc libiconv.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake docdir=${_docdir}
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install docdir=${_docdir}
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <note type="compilation">
+        <para>64-bit libraries are available for the following
+platforms:</para>
+        <screen>
+AIX 5.x            ${SB_INSTALL_PREFIX}/lib/ppc64
+HP-UX 11.x         ${SB_INSTALL_PREFIX}/lib/pa20_64
+IRIX 6.5           ${SB_INSTALL_PREFIX}/lib64
+Solaris 7-9/SPARC  ${SB_INSTALL_PREFIX}/lib/sparcv9
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The <command>iconv</command> executable has been built
+without NLS support to work around a circular dependency with the
+gettext package.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 23" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove bison dependency</para></item>
+        <item><para>Add 64bit module for 64-bit
+libraries</para></item>
+      </change>
+
+      <change date="2004 August 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add libiconv.pc pkgconfig file</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

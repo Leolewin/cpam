@@ -1,0 +1,390 @@
+--- shtoolize.in.orig	2005-06-15 03:13:25.000000000 -0500
++++ shtoolize.in	2005-06-20 13:40:51.296420000 -0500
+@@ -28,9 +28,10 @@
+ 
+ #   General configuration
+ my $version   = "@SHTOOL_VERSION_STR@";
+-my $prefix    = "@prefix@";
+-my $datadir   = "@datadir@";
++my $prefix    = '@prefix@';
++my $datadir   = '@datadir@';
+ my $scriptdir = "$datadir/shtool";
++my $sed       = '@SED@';
+ 
+ #   Available modules
+ my @available = qw(
+@@ -207,6 +208,7 @@
+              $code =~ s|^(##\s+.*?\n)|$head .= $1, ''|se);
+     $head =~ s|##\s+This file is.+\n##\s+USA.+?\n##\n||s;
+     $code =~ s|\n\n+|\n\n|sg;
++    $code =~ s|SED_COMMAND|$sed|;
+     my ($code1, $code2);
+     if ($code =~ m|^(.+\n)\.\s+[^\n]*/sh\.common\n(.+)$|s) {
+         ($code1, $code2) = ($1, $2);
+--- sh.common.orig	2005-06-15 02:52:28.000000000 -0500
++++ sh.common	2005-06-20 13:40:51.320935000 -0500
+@@ -43,7 +43,7 @@
+ 
+ #   parse option specification string
+ eval `echo h.$opt_spec |\
+-      sed -e 's/\([a-zA-Z0-9]\)\([.:+]\)/opt_MODE_\1=\2;/g'`
++      sed -e 's/\([a-zA-Z0-9]\)\([.:+-]\)/opt_MODE_\1=\2;/g'`
+ 
+ #   parse option alias string
+ eval `echo h:help,$opt_alias |\
+@@ -102,7 +102,8 @@
+     #   determine whether option needs an argument
+     eval "opt_MODE=\$opt_MODE_${opt_OPT}"
+     if [ ".$opt_ARG" = . ] && [ ".$opt_ARG_OK" != .yes ]; then
+-        if [ ".$opt_MODE" = ".:" ] || [ ".$opt_MODE" = ".+" ]; then
++        if [ ".$opt_MODE" = ".:" ] || [ ".$opt_MODE" = ".+" ] || \
++           [ ".$opt_MODE" = ".-" ]; then
+             opt_PREV="$opt_OPT"
+             continue
+         fi
+@@ -122,6 +123,18 @@
+             #   option with argument (multiple occurances append)
+             eval "opt_${opt_OPT}=\"\$opt_${opt_OPT}\${ASC_NL}\$opt_ARG\""
+             ;;
++        '-' )
++            sed_quote_subst='s/\([\\`\\"$\\\\]\)/\\\1/g'
++
++            #   option with argument (multiple occurances append);
++            #   preserve option name in argument string
++            OIFS="$IFS"; IFS=""
++            eval "arg=\$opt_ARG"
++            sedarg=`echo "$arg" | sed -e "$sed_quote_subst"`
++            eval "opt_${opt_OPT}=\"\$opt_${opt_OPT} -\${opt_OPT} \\\"\$sedarg\\\"\""
++            IFS="$OIFS"
++            ;;
++
+         * )
+             echo "$msgprefix:Error: unknown option: \`$opt_OPT'" 1>&2
+             echo "$msgprefix:Hint:  run \`$toolcmdhelp -h' or \`man shtool' for details" 1>&2
+--- configure.ac.orig	2005-06-15 03:13:10.000000000 -0500
++++ configure.ac	2005-06-20 13:40:51.357679000 -0500
+@@ -30,6 +30,69 @@
+ AC_PREFIX_DEFAULT(/usr/local)
+ AC_SET_MAKE
+ 
++m4_ifndef([AC_PROG_SED], [
++############################################################
++# NOTE: This macro has been submitted for inclusion into   #
++#  GNU Autoconf as AC_PROG_SED.  When it is available in   #
++#  a released version of Autoconf we should remove this    #
++#  macro and use it instead.                               #
++############################################################
++
++m4_define([AC_PROG_SED],
++[AC_MSG_CHECKING([for a sed that does not truncate output])
++AC_CACHE_VAL(lt_cv_path_SED,
++[# Loop through the user's path and test for sed and gsed.
++# Then use that list of sed's as ones to test for truncation.
++as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++for as_dir in $PATH
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++  for lt_ac_prog in sed gsed; do
++    for ac_exec_ext in '' $ac_executable_extensions; do
++      if $as_executable_p "$as_dir/$lt_ac_prog$ac_exec_ext"; then
++        lt_ac_sed_list="$lt_ac_sed_list $as_dir/$lt_ac_prog$ac_exec_ext"
++      fi
++    done
++  done
++done
++lt_ac_max=0
++lt_ac_count=0
++# Add /usr/xpg4/bin/sed as it is typically found on Solaris
++# along with /bin/sed that truncates output.
++for lt_ac_sed in $lt_ac_sed_list /usr/xpg4/bin/sed; do
++  test ! -f $lt_ac_sed && break
++  cat /dev/null > conftest.in
++  lt_ac_count=0
++  echo $ECHO_N "0123456789$ECHO_C" >conftest.in
++  # Check for GNU sed and select it if it is found.
++  if "$lt_ac_sed" --version 2>&1 < /dev/null | grep 'GNU' > /dev/null; then
++    lt_cv_path_SED=$lt_ac_sed
++    break
++  fi
++  while true; do
++    cat conftest.in conftest.in >conftest.tmp
++    mv conftest.tmp conftest.in
++    cp conftest.in conftest.nl
++    echo >>conftest.nl
++    $lt_ac_sed -e 's/a$//' < conftest.nl >conftest.out || break
++    cmp -s conftest.out conftest.nl || break
++    # 10000 chars as input seems more than enough
++    test $lt_ac_count -gt 10 && break
++    lt_ac_count=`expr $lt_ac_count + 1`
++    if test $lt_ac_count -gt $lt_ac_max; then
++      lt_ac_max=$lt_ac_count
++      lt_cv_path_SED=$lt_ac_sed
++    fi
++  done
++done
++])
++SED=$lt_cv_path_SED
++AC_SUBST([SED])
++AC_MSG_RESULT([$SED])
++])#AC_PROG_SED
++])#m4_ifndef
++
+ AC_MSG_CHECKING(for perl interpreter)
+ PERL=`sh sh.path -m perl`
+ AC_SUBST(PERL)
+@@ -49,6 +112,8 @@
+     exit 1
+ fi
+ 
++AC_PROG_SED
++
+ AC_CONFIG_FILES(Makefile shtoolize)
+ AC_CONFIG_COMMANDS([adjustment], [chmod a+x shtoolize])
+ AC_OUTPUT
+--- sh.subst.orig	2005-06-15 03:13:16.000000000 -0500
++++ sh.subst	2005-06-20 13:40:51.392430000 -0500
+@@ -22,7 +22,7 @@
+ str_usage="[-v|--verbose] [-t|--trace] [-n|--nop] [-w|--warning] [-q|--quiet] [-s|--stealth] [-i|--interactive] [-b|--backup <ext>] [-e|--exec <cmd>] [-f|--file <cmd-file>] [<file>] [...]"
+ gen_tmpfile=yes
+ arg_spec="0+"
+-opt_spec="v.t.n.w.q.s.i.b:e+f:"
++opt_spec="v.t.n.w.q.s.i.b:e-f:"
+ opt_alias="v:verbose,t:trace,n:nop,w:warning,q:quiet,s:stealth,i:interactive,b:backup,e:exec,f:file"
+ opt_v=no
+ opt_t=no
+@@ -52,13 +52,11 @@
+ fi
+ 
+ #   build underlying sed(1) command
+-sedcmd='sed'
++sedcmd='SED_COMMAND'
+ if [ ".$opt_e" != . ]; then
+-    OIFS="$IFS"; IFS="$ASC_NL"; set -- $opt_e; IFS="$OIFS"
+-    for e
+-    do
+-        sedcmd="$sedcmd -e '$e'"
+-    done
++    OIFS="$IFS"; IFS=""
++    sedcmd="$sedcmd $opt_e"
++    IFS="$OIFS"
+ elif [ ".$opt_f" != . ]; then
+     if [ ! -f $opt_f ]; then
+         echo "$msgprefix:Error: command file \`$opt_f' not found or not a regular file" 1>&2
+@@ -89,7 +87,9 @@
+ 
+         #   handle interactive mode
+         if [ ".$opt_i" = .yes ]; then
++            OIFS="$IFS"; IFS=""
+             eval "$sedcmd <$file >$file.new"
++            IFS="$OIFS"
+             skip=no
+             if cmp $file $file.new >/dev/null 2>&1; then
+                 rm -f $file.new
+@@ -133,7 +133,9 @@
+         if [ ".$opt_n" = .no ]; then
+             cp -p $file $file$orig
+             chmod u+w $file >/dev/null 2>&1 || true
++            OIFS="$IFS"; IFS=""
+             eval "$sedcmd <$file$orig >$file"
++            IFS="$OIFS"
+         fi
+ 
+         #   optionally fix timestamp
+@@ -185,7 +187,9 @@
+         echo "\$ $sedcmd"
+     fi
+     if [ ".$opt_n" = .no ]; then
++        OIFS="$IFS"; IFS=""
+         eval "$sedcmd"
++        IFS="$OIFS"
+     fi
+ fi
+ 
+--- configure.orig	2005-06-15 03:29:23.000000000 -0500
++++ configure	2005-06-20 13:40:57.937811000 -0500
+@@ -1,7 +1,7 @@
+ #! /bin/sh
+ # From configure.ac 1.0.
+ # Guess values for system-dependent variables and create Makefiles.
+-# Generated by GNU Autoconf 2.59 (OpenPKG-CURRENT).
++# Generated by GNU Autoconf 2.59.
+ #
+ # Copyright (C) 2003 Free Software Foundation, Inc.
+ # This configure script is free software; the Free Software Foundation
+@@ -274,7 +274,7 @@
+ 
+ ac_unique_file="README"
+ ac_default_prefix=/usr/local
+-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS SHTOOL_VERSION_STR SET_MAKE PERL POD2MAN LIBOBJS LTLIBOBJS'
++ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS SHTOOL_VERSION_STR SET_MAKE PERL POD2MAN SED LIBOBJS LTLIBOBJS'
+ ac_subst_files=''
+ 
+ # Initialize some variables set by options.
+@@ -890,7 +890,7 @@
+ running configure, to aid debugging if configure makes a mistake.
+ 
+ It was created by $as_me, which was
+-generated by GNU Autoconf 2.59 (OpenPKG-CURRENT).  Invocation command line was
++generated by GNU Autoconf 2.59.  Invocation command line was
+ 
+   $ $0 $@
+ 
+@@ -1254,6 +1254,8 @@
+ fi
+ 
+ 
++#m4_ifndef
++
+ echo "$as_me:$LINENO: checking for perl interpreter" >&5
+ echo $ECHO_N "checking for perl interpreter... $ECHO_C" >&6
+ PERL=`sh sh.path -m perl`
+@@ -1277,6 +1279,84 @@
+     exit 1
+ fi
+ 
++echo "$as_me:$LINENO: checking for a sed that does not truncate output" >&5
++echo $ECHO_N "checking for a sed that does not truncate output... $ECHO_C" >&6
++if test "${ac_cv_path_SED+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  # Extract the first word of "sed gsed" to use in msg output
++if test -z "$SED"; then
++set dummy sed gsed; ac_prog_name=$2
++if test "${ac_cv_path_SED+set}" = set; then
++  echo $ECHO_N "(cached) $ECHO_C" >&6
++else
++  ac_path_SED_found=false
++# Loop through the user's path and test for each of PROGNAME-LIST
++as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
++as_dummy="$PATH:/usr/xpg4/bin"
++for as_dir in $as_dummy
++do
++  IFS=$as_save_IFS
++  test -z "$as_dir" && as_dir=.
++  for ac_prog in sed gsed; do
++  for ac_exec_ext in '' $ac_executable_extensions; do
++    ac_path_SED="$as_dir/$ac_prog$ac_exec_ext"
++    $as_executable_p "$ac_path_SED" || continue
++    # Check for GNU ac_path_SED and select it if it is found.
++  # Check for GNU $ac_path_SED
++if "$ac_path_SED" --version 2>&1 < /dev/null | grep 'GNU' >/dev/null; then
++  ac_cv_path_SED="$ac_path_SED" ac_path_SED_found=:
++else
++  ac_count=0
++  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
++  while :
++  do
++    cat "conftest.in" "conftest.in" >"conftest.tmp"
++    mv "conftest.tmp" "conftest.in"
++    cp "conftest.in" "conftest.nl"
++    echo '' >> "conftest.nl"
++    "$ac_path_SED" -e 's/a$//' < "conftest.nl" >"conftest.out" 2>/dev/null || break
++    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
++    ac_count=`expr $ac_count + 1`
++    if test $ac_count -gt ${ac_path_SED_max-0}; then
++      # Best one so far, save it but keep looking for a better one
++      ac_cv_path_SED="$ac_path_SED"
++      ac_path_SED_max=$ac_count
++    fi
++    # 10*(2^10) chars as input seems more than enough
++    test $ac_count -gt 10 && break
++  done
++  rm -f conftest.*
++fi
++
++
++    $ac_path_SED_found && break 3
++  done
++done
++
++done
++
++
++fi
++
++SED="$ac_cv_path_SED"
++if test -z "$SED"; then
++  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&5
++echo "$as_me: error: no acceptable $ac_prog_name could be found in $PATH:/usr/xpg4/bin" >&2;}
++   { (exit 1); exit 1; }; }
++fi
++
++else
++  ac_cv_path_SED=$SED
++fi
++
++fi
++echo "$as_me:$LINENO: result: $ac_cv_path_SED" >&5
++echo "${ECHO_T}$ac_cv_path_SED" >&6
++ SED="$ac_cv_path_SED"
++
++
++
+                     ac_config_files="$ac_config_files Makefile shtoolize"
+ 
+           ac_config_commands="$ac_config_commands adjustment"
+@@ -1419,6 +1499,7 @@
+ debug=false
+ ac_cs_recheck=false
+ ac_cs_silent=false
++SED="$SED"
+ SHELL=\${CONFIG_SHELL-$SHELL}
+ _ACEOF
+ 
+@@ -1675,7 +1756,7 @@
+ cat >&5 <<_CSEOF
+ 
+ This file was extended by $as_me, which was
+-generated by GNU Autoconf 2.59 (OpenPKG-CURRENT).  Invocation command line was
++generated by GNU Autoconf 2.59.  Invocation command line was
+ 
+   CONFIG_FILES    = $CONFIG_FILES
+   CONFIG_HEADERS  = $CONFIG_HEADERS
+@@ -1733,7 +1814,7 @@
+ cat >>$CONFIG_STATUS <<_ACEOF
+ ac_cs_version="\\
+ config.status
+-configured by $0, generated by GNU Autoconf 2.59 (OpenPKG-CURRENT),
++configured by $0, generated by GNU Autoconf 2.59,
+   with options \\"`echo "$ac_configure_args" | sed 's/[\\""\`\$]/\\\\&/g'`\\"
+ 
+ Copyright (C) 2003 Free Software Foundation, Inc.
+@@ -1925,6 +2006,7 @@
+ s,@SET_MAKE@,$SET_MAKE,;t t
+ s,@PERL@,$PERL,;t t
+ s,@POD2MAN@,$POD2MAN,;t t
++s,@SED@,$SED,;t t
+ s,@LIBOBJS@,$LIBOBJS,;t t
+ s,@LTLIBOBJS@,$LTLIBOBJS,;t t
+ CEOF
+@@ -1934,7 +2016,7 @@
+   cat >>$CONFIG_STATUS <<\_ACEOF
+   # Split the substitutions into bite-sized pieces for seds with
+   # small command number limits, like on Digital OSF/1 and HP-UX.
+-  ac_max_sed_lines=48
++  ac_max_sed_lines=40
+   ac_sed_frag=1 # Number of current file.
+   ac_beg=1 # First line for current file.
+   ac_end=$ac_max_sed_lines # Line after last line for current file.
+@@ -1956,9 +2038,9 @@
+       (echo ':t
+   /@[a-zA-Z_][a-zA-Z_0-9]*@/!b' && cat $tmp/subs.frag) >$tmp/subs-$ac_sed_frag.sed
+       if test -z "$ac_sed_cmds"; then
+-	ac_sed_cmds="sed -f $tmp/subs-$ac_sed_frag.sed"
++	ac_sed_cmds="$SED -f $tmp/subs-$ac_sed_frag.sed"
+       else
+-	ac_sed_cmds="$ac_sed_cmds | sed -f $tmp/subs-$ac_sed_frag.sed"
++	ac_sed_cmds="$ac_sed_cmds | $SED -f $tmp/subs-$ac_sed_frag.sed"
+       fi
+       ac_sed_frag=`expr $ac_sed_frag + 1`
+       ac_beg=$ac_end
+@@ -2134,7 +2216,7 @@
+     done` || { (exit 1); exit 1; }
+ _ACEOF
+ cat >>$CONFIG_STATUS <<_ACEOF
+-  sed "$ac_vpsub
++  \$SED "$ac_vpsub
+ $extrasub
+ _ACEOF
+ cat >>$CONFIG_STATUS <<\_ACEOF

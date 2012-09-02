@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Net-Daemon" version="0.48" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="771f9ba01c3b033ed8cc3d6bad36e5fb"
+        checksum-type="md5" size="29513"
+        path="src/Net-Daemon-0.48.tar.gz"/>
+      <patch checksum="0f6ed35271fdb0483a6ea972995ad6ce"
+        checksum-type="md5" size="1030"
+        path="src/Net-Daemon-0.48.bug28652.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Net/Daemon/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Net/Daemon/.packlist
+rmdir ${_installsitearch}/auto/Net/Daemon
+rmdir ${_installsitearch}/auto/Net 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Net::Daemon|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <licenses>
+      <license>
+        <para>Net::Daemon is Copyright (c) 1998, Jochen Wiedmann,
+Germany. All rights reserved.</para>
+        <para>You may distribute under the terms of either the GNU
+General Public License or the Artistic License, as specified in the
+Perl README file.</para>
+      </license>
+    </licenses>
+  </program>
+</programs>

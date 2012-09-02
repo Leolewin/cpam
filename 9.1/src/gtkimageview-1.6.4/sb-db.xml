@@ -1,0 +1,455 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="gtkimageview" version="1.6.4" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="501367b3f50e69a12208dc9c6ad00b18"
+        checksum-type="md5" size="1158138"
+        path="src/gtkimageview-1.6.4.tar.gz"/>
+      <patch checksum="3695be29cb5c3076a1733ee21d378f78"
+        checksum-type="md5" size="81479"
+        path="src/gtkimageview-1.6.4.tww.patch"/>
+      <patch checksum="bd0c5bc50c2eda4b8759f452c9546d57"
+        checksum-type="md5" size="1214442"
+        path="src/gtkimageview-1.6.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf24"
+        add-path="prepend">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v==1.2.5</depend>
+    </dependencies>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--enable-shared --enable-static \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--docdir=${_docdir} --disable-gtk-doc \
+--with-html-dir="${_docdir}/html" \
+--disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" gtkimageview.pc
+]]>
+      </configure>
+    </module>
+
+    <module name="pygtkimageview-2.6.7">
+      <build-name>pygtkimageview-1.2.0</build-name>
+
+      <sources>
+        <source checksum="469a2385e56b29e0656d0721fc871857"
+          checksum-type="md5" size="364824"
+          path="src/pygtkimageview-1.2.0.tar.gz"/>
+        <patch checksum="8b558b719ac9a0f7c9a9e33641971706"
+          checksum-type="md5" size="86647"
+          path="src/pygtkimageview-1.2.0.tww.patch"/>
+        <patch checksum="5bd9be79567f8ffe697ed1432579c5a3"
+          checksum-type="md5" size="1178882"
+          path="src/pygtkimageview-1.2.0.auto.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="gtk+" install-name="libgtk+222"
+          module="pygtk-2.6.7">v&gt;=2.22.1</depend>
+        <depend program="libffi" var="LIBFFI"
+          install-name="libffi30">v&gt;=3.0.10</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gtkimageview"
+          var="LIBGTKIMAGEVIEW">v==1.6.4</depend>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.6.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+_pysubdir="python26"
+
+PATH=${SB_VAR_LIBGLIB_LIB}/${_pysubdir}/bin:$PATH
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl" ;;
+i?86*-solaris*)
+  CPPFLAGS="-DNO_HIDDEN ${CPPFLAGS+${CPPFLAGS}}" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGTKIMAGEVIEW_LIB}/pkgconfig:\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/\
+${SB_VAR_GCC_RT+${_gccsubdir}/}pkgconfig:}\
+${SB_VAR_LIBFFI+${SB_VAR_LIBFFI_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/${_pysubdir}/lib/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}/${_pysubdir}/lib/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--disable-dependency-tracking \
+--prefix=${_install_prefix}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pyexecdir=${_install_prefix} pythondir=${_install_prefix}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pyexecdir=${_install_prefix} pythondir=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Gtk2-ImageView-5.12.2">
+      <build-name>Gtk2-ImageView-0.05</build-name>
+
+      <sources>
+        <source checksum="7c961071b347b6a64b8351fdd87ec4c0"
+          checksum-type="md5" size="43632"
+          path="src/Gtk2-ImageView-0.05.tar.gz"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="ExtUtils-Depends"
+          module="5.12.2">v&gt;=0.301</depend>
+        <depend program="ExtUtils-PkgConfig"
+          module="5.12.2">v&gt;=1.12</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="cairo" install-name="libcairo110"
+          module="Cairo-5.12.2">v&gt;=1.10.2</depend>
+        <depend program="glib" install-name="libglib226"
+          module="Glib-5.12.2">v&gt;=2.26.1</depend>
+        <depend program="gtk+" install-name="libgtk+222"
+          module="Gtk-5.12.2">v&gt;=2.22.1</depend>
+        <depend program="pango" install-name="libpango128"
+          module="Pango-5.12.2">v&gt;=1.28.4</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gtkimageview"
+          var="LIBGTKIMAGEVIEW">v==1.6.4</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:\
+${SB_VAR_LIBGTK_LIB}/perl5122:\
+${SB_VAR_LIBCAIRO_LIB}/perl5122:\
+${SB_VAR_LIBPANGO_LIB}/perl5122" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGTKIMAGEVIEW_LIB}/pkgconfig:\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/\
+${SB_VAR_GCC_RT+${_gccsubdir}/}pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:\
+${SB_VAR_LIBGTK_LIB}/perl5122:\
+${SB_VAR_LIBCAIRO_LIB}/perl5122:\
+${SB_VAR_LIBPANGO_LIB}/perl5122" \
+gmake NOECHO=
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:\
+${SB_VAR_LIBGTK_LIB}/perl5122:\
+${SB_VAR_LIBCAIRO_LIB}/perl5122:\
+${SB_VAR_LIBPANGO_LIB}/perl5122" \
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_install_prefix}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="pygtkimageview-2.7.2">
+      <build-name>pygtkimageview-1.2.0</build-name>
+
+      <sources>
+        <source checksum="469a2385e56b29e0656d0721fc871857"
+          checksum-type="md5" size="364824"
+          path="src/pygtkimageview-1.2.0.tar.gz"/>
+        <patch checksum="8b558b719ac9a0f7c9a9e33641971706"
+          checksum-type="md5" size="86647"
+          path="src/pygtkimageview-1.2.0.tww.patch"/>
+        <patch checksum="5bd9be79567f8ffe697ed1432579c5a3"
+          checksum-type="md5" size="1178882"
+          path="src/pygtkimageview-1.2.0.auto.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="gtk+" install-name="libgtk+222"
+          module="pygtk-2.7.2">v&gt;=2.22.1</depend>
+        <depend program="libffi" var="LIBFFI"
+          install-name="libffi30">v&gt;=3.0.10</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gtkimageview"
+          var="LIBGTKIMAGEVIEW">v==1.6.4</depend>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.7.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+_pysubdir="python26"
+
+PATH=${SB_VAR_LIBGLIB_LIB}/${_pysubdir}/bin:$PATH
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl" ;;
+i?86*-solaris*)
+  CPPFLAGS="-DNO_HIDDEN ${CPPFLAGS+${CPPFLAGS}}" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGTKIMAGEVIEW_LIB}/pkgconfig:\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/\
+${SB_VAR_GCC_RT+${_gccsubdir}/}pkgconfig:}\
+${SB_VAR_LIBFFI+${SB_VAR_LIBFFI_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/${_pysubdir}/lib/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}/${_pysubdir}/lib/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--disable-dependency-tracking \
+--prefix=${_install_prefix}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pyexecdir=${_install_prefix} pythondir=${_install_prefix}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pyexecdir=${_install_prefix} pythondir=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+  </program>
+</programs>

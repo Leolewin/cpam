@@ -1,0 +1,101 @@
+#SB=/opt/TWWfsw/sbutils12/bin/sb --force
+SB=/opt/TWWfsw/sbutils12/bin/sb
+PB=/opt/TWWfsw/bin/pb
+ZIP=zip
+M5S=/opt/TWWfsw/textutils21/bin/gmd5sum
+GPD=/opt/TWWfsw/bin/gen-pkg-db
+SRCDIR=/pub/cpamsrc/tww/6.2gcc/dists/6.2/src
+PLSRC=${SRCDIR}/perl_modules
+PYSRC=${SRCDIR}/python_modules
+TCLSRC=${SRCDIR}/tcl_modules
+INST=/opt/TWWfsw/.sb
+PDIST=/opt/dist/cd
+#
+RSYNC=/opt/TWWfsw/rsync25/bin/rsync
+DEST=/export/dist/cd/dists/gcc/packages
+
+TPKGS=cyrus-sasl-2.1.15 apache-2.0.49 openssh-3.8.1p1 openssl-0.9.7b sendmail-8.12.11 subversion-1.0.6
+
+cleanallsb:
+	@for i in $(TPKGS); do \
+                echo remove  $${i}; \
+                ${SB} --ignoredeps  --uninstall $${i}/sb-db.xml \
+                cd ..; \
+        done
+
+#cleanall: cleaninstall cleanpkgdb cleanpackages
+allpkgs: allpkgs_1  allpkgs_2  allpkgs_4  allpkgs_5 allpkgs_51 allpkgs_52 allpkgs_6  allpkgs_7
+
+#allpkgs: cleanpackages prework allpkgs_1 allpkgs_2 perl_pkgs
+perl_pkgs: perl-5.6.1 perl-5.8.0 perl_modules 
+prework : prework-utils
+	@mkdir -p /opt/dist /opt/build
+prework-utils: rsync-2.5.6  textutils-2.1 
+
+# 
+allpkgs_1: allpkgs_11 allpkgs_12
+
+allpkgs_11: gcc-3.3.2 perl-5.8.2 xpm-3.4k gettext-0.10.40 \
+libiconv-1.8 libiconv-1.6.1 \
+tcl-8.3.5 tk-8.3.5 dhcping-1.2 net-snmp-5.0.9 libungif-4.1.1 \
+dhcp-3.0.1rc14  psutils-p17 ntp-4.1.2 zip-2.3 unzip-5.50 \
+ncurses-5.4 ncftp-3.1.7 glib-1.2.10 tcl-8.4.6 tk-8.4.6 expat-1.95.6 \
+texinfo-4.2 gdbm-1.8.2  zlib-1.1.4  texinfo-4.3 
+
+allpkgs_12: texinfo-4.6 gettext-0.11.4 \
+bison-1.35 popt-1.7 freetype-2.1.4 pkgconfig-0.15.0 fcpackage-2.2 fonts-1.0 \
+make-3.79.1  make-3.80 m4-1.4 readline-4.2a help2man-1.29 bash-2.05b \
+rsync-2.6.2 libiconv-1.9.2 gettext-0.14.1 readline-4.3 lftp-3.0.6 \
+smake-1.2a22  cdrtools-2.01  audiofile-0.2.6 
+
+#
+#allpkgs_2:     
+
+#  
+# 
+allpkgs_2: db-3.1.17 autoconf-2.13  automake-1.4  gtk+-1.2.10 \
+libpng-1.2.4 jpeg-6b ghostscript-7.07  xfig-3.2.3d  \
+transfig-3.2.3d  bzip2-1.0.2 zip-2.3 tar-1.13.25 cpio-2.5 \
+prngd-0.9.25 openssl-0.9.7b /opt/TWWfsw/libpcre44s tcp_wrappers-7.6 \
+openssh-3.8.1p1 grep-2.5.1 db-4.2.52   transfig-3.2.3d flex-2.5.4a  \
+postgresql-7.4.3   python-2.3.2 groff-1.17.2 t1lib-1.3.1 tetex-2.0.2 \
+gawk-3.1.3  libmng-1.0.5  libart_lgpl-2.3.16 autoconf-2.59  automake-1.6.3 \
+gmp-4.1.3                               
+#esound-0.2.34  
+
+allpkgs_3: distcc-2.17  bison-1.28 patch-2.5.8 libxml-2.5.11 libxml-2.6.11 samba-3.0.5 \
+libpcap-0.8.3 nmap-3.30 rrdtool-1.0.42 libxklavier-1.03  mysql-4.0.20 
+
+allpkgs_4: sed-4.0.9  tiff-3.5.7 gzip-1.3.5 db-4.1.25 cyrus-sasl-2.1.15  \
+sendmail-8.12.11 diffutils-2.8.1 a2ps-4.12  \
+libtool-1.4.2  GraphicsMagick-1.1.2 libexif-0.6.9 libtool-1.5  \
+automake-1.5  automake-1.7.9   automake-1.8.5  bind-9.2.3 
+
+allpkgs_5: gd-2.0.15 libwmf-0.2.8 gnuplot-4.0.0  lcms-1.12 plotutils-2.4.1 \
+libwmf-0.2.8 ImageMagick-6.0.3  gimp-print-4.2.7 gimp-2.0.4 openldap-2.1.27 \
+xemacs-21.4.15 graphviz-1.12 nano-1.2.1  glib-2.4.4 libIDL-0.6.8 \
+libIDL-0.8.3 mozplugger-1.6.0 mozilla-1.7.2 
+# qt-3.3.2
+allpkgs_51: doxygen-1.3.6 gdb-6.1 subversion-1.0.6 expect-5.40 
+allpkgs_52: aspell-0.50.5 sharutils-4.2.1 indent-2.2.9
+allpkgs_6:  OpenSP-1.5.1 openjade-1.3.2  libxslt-1.1.8  xmlcatalog-1.1 \
+pango-1.4.0 libxslt-1.0.33 gtk-doc-1.1 gtk-doc-1.2 atk-1.6.1 \
+pango-1.2.5 gtk+-2.4.4 libglade-2.3.6 \
+ethereal-0.10.5  aiksaurus-1.2.1 lyx-1.3.4 emacs-21.2   
+
+allpkgs_7: tightvnc-1.2.9 apache-2.0.49 php-4.3.8 atk-1.4.1 \
+gtk+-2.2.4  gtk-themes-2.4  samba-2.2.10 apache-1.3.31 mm-1.3.1
+
+# TBA: coreutils-5.3.0  
+# expect-5.40   gnome-2.6.2                             
+# perl_modules: XML-Parser-2.31  mod_python-3.1.3   
+# py_modules:  Numeric-23.0 pygtk-2.2.0
+# 
+
+
+# include Makefile.perl-5.6.1-modules
+cleanpkgdb: 
+	rm -rf /opt/dist/cd/pkg-db.xml 
+cleanpackages: 
+	rm -rf /opt/dist/cd/* /opt/build/*
+

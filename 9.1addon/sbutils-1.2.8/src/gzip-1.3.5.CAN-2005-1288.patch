@@ -1,0 +1,21 @@
+Index: gzip.c
+===================================================================
+--- gzip.c.orig	2005-11-21 21:09:14.610809000 -0600
++++ gzip.c	2005-11-21 21:09:30.926731000 -0600
+@@ -1316,6 +1316,7 @@
+ 		/* Copy the base name. Keep a directory prefix intact. */
+                 char *p = base_name (ofname);
+                 char *base = p;
++		char *base2;
+ 		for (;;) {
+ 		    *p = (char)get_char();
+ 		    if (*p++ == '\0') break;
+@@ -1323,6 +1324,8 @@
+ 			error("corrupted input -- file name too large");
+ 		    }
+ 		}
++		base2 = base_name (base);
++		strcpy(base, base2);
+                 /* If necessary, adapt the name to local OS conventions: */
+                 if (!list) {
+                    MAKE_LEGAL_NAME(base);

@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libmng" version="1.0.5" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}10</install-name>
+
+    <sources>
+      <source checksum="e4f8f11231f01aa540a9b99251ab8bb6"
+        checksum-type="md5" size="623279"
+        path="src/libmng-1.0.5.tar.gz"/>
+      <patch checksum="c8a4773804bd4c40ac952757aff36418"
+        checksum-type="md5" size="992643"
+        path="src/libmng-1.0.5.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --enable-shared --enable-static \
+--with-jpeg=${JPEG} --with-zlib=${ZLIB} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <changelog>
+      <change date="2004 September 6" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade libtool to 1.5-4</para></item>
+      </change>
+
+      <change date="2003 June 4" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>SYSV style libraries on AIX</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

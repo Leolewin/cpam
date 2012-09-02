@@ -1,0 +1,304 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gtk-themes" version="2.4" revision="1">
+    <install-name>gtkthemes24</install-name>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk16">v&gt;=1.6.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v==2.1.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014">v&gt;=0.14.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib24">v&gt;=2.4.4</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+24">v==2.4.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango14">v&gt;=1.4.0</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <module name="gtk-engines">
+      <build-name>${SB_MODULE_NAME}-2.2.0</build-name>
+
+      <sources>
+        <source checksum="78e9276c28b509f3203de4873c20a263"
+          checksum-type="md5" size="401883"
+          path="src/gtk-engines-2.2.0.tar.bz2"/>
+        <patch checksum="7919a9524b37a04345559422ea2942ba"
+          checksum-type="md5" size="78006"
+          path="src/gtk-engines-2.2.0.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  # Override XFree86 versions in /usr/X11R6/lib
+  LDFLAGS="-L${FCPACKAGE_LIB}" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir=${_datadir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="lighthouseblue">
+      <build-name>${SB_MODULE_NAME}-gtk2</build-name>
+
+      <sources>
+        <source checksum="9958d3bb0dd3e78d9430641390da9d99"
+          checksum-type="md5" size="207576"
+          path="src/lighthouseblue-gtk2-0.7.0.tar.gz"/>
+        <patch checksum="3f5c6967872e0a697e21a07219961dd3"
+          checksum-type="md5" size="112614"
+          path="src/lighthouseblue-gtk2-0.7.0.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  # Override XFree86 versions in /usr/X11R6/lib
+  LDFLAGS="-L${FCPACKAGE_LIB}" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir=${_datadir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gtk-xfce">
+      <build-name>${SB_MODULE_NAME}-engine-2.1.10</build-name>
+
+      <sources>
+        <source checksum="116f33de9083a2c38b0943e5591baecb"
+          checksum-type="md5" size="352524"
+          path="src/gtk-xfce-engine-2.1.10.tar.gz"/>
+        <patch checksum="c4e88dfe32ce5a1501b90413cae9a959"
+          checksum-type="md5" size="1200220"
+          path="src/gtk-xfce-engine-2.1.10.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  # Override XFree86 versions in /usr/X11R6/lib
+  LDFLAGS="-L${FCPACKAGE_LIB}" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--disable-dependency-tracking --datadir=${_datadir} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="gtk-thinice">
+      <build-name>${SB_MODULE_NAME}-engine-2.0.2</build-name>
+
+      <sources>
+        <source checksum="3956787e5e570946f8930bdf42099023"
+          checksum-type="md5" size="177021"
+          path="src/gtk-thinice-engine-2.0.2.tar.gz"/>
+        <patch checksum="7975eef59932f765e9fbcdd944875323"
+          checksum-type="md5" size="275745"
+          path="src/gtk-thinice-engine-2.0.2.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-linux*)
+  # Override XFree86 versions in /usr/X11R6/lib
+  LDFLAGS="-L${FCPACKAGE_LIB}" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/pkgconfig:${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir=${_datadir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The following GTK 2.4.x themes are available:</para>
+        <unorderedlist>
+          <item><para>Metal 2.2.0 (from GNOME 2.2)</para></item>
+          <item><para>Redmond95 2.2.0 (from GNOME 2.2)</para></item>
+          <item><para>ThinIce 2.0.2</para></item>
+          <item><para>XFce 2.1.10</para></item>
+        </unorderedlist>
+
+        <para>Unlike GTK+ 1.2, it is not enough to add an entry to
+<command>~/.gtkrc-2.0</command> for a theme to work. GTK+ 2.4 searches
+the default installation directory for theme engines and, because
+themes installed with this package are installed outside of the
+default GTK+ 2.4 search directory, the ``<command>GTK_PATH</command>''
+environment variable must be used to specify additional search paths
+for theme engines. Therefore, augment the colon-separated path list of
+``<command>GTK_PATH</command>'' with the following to enable the
+themes to work if the selected theme does not work by default:</para>
+        <unorderedlist>
+          <item><para><command>${SB_INSTALL_PREFIX}/lib/gtk-2.0</command></para></item>
+        </unorderedlist>
+
+        <para>Setting the <command>GTK_PATH</command> variable should
+be done as a last resort as a wrapper script has been created for
+GNOME and GTK+ 2.4.x applications to automatically set
+<command>GTK_PATH</command>.</para>
+
+        <para>To use the Metal 2.2.0 theme, add the following to
+<command>~/.gtkrc-2.0</command>:</para>
+        <unorderedlist>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Metal/gtkrc"</command></para></item>
+        </unorderedlist>
+
+        <para>To use the Redmond95 2.2.0 theme, add the following to
+<command>~/.gtkrc-2.0</command>:</para>
+        <unorderedlist>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Redmond95/gtkrc"</command></para></item>
+        </unorderedlist>
+
+        <para>To use the ThinIce 2.0.2 theme, add the following to
+<command>~/.gtkrc-2.0</command>:</para>
+        <unorderedlist>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/ThinIce/gtkrc"</command></para></item>
+        </unorderedlist>
+
+        <para>To use the XFce 2.1.10 theme, add one of the following
+to <command>~/.gtkrc-2.0</command>:</para>
+        <unorderedlist>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-b5/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-basic/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-curve/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-kde2/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-kolors/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-light/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-redmondxp/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-saltlake/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-smooth/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-stellar/gtkrc"</command></para></item>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/Xfce-winter/gtkrc"</command></para></item>
+        </unorderedlist>
+      </note>
+    </notes>
+  </program>
+</programs>

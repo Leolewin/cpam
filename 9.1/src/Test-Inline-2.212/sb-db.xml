@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Test-Inline" version="2.212" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="381fd25782370894d3335996527f6aef"
+        checksum-type="md5" size="60795"
+        path="src/Test-Inline-2.212.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Test/Inline/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Test/Inline/.packlist
+rmdir ${_installsitearch}/auto/Test/Inline
+rmdir ${_installsitearch}/auto/Test 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Test::Inline|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Algorithm-Dependency"
+          module="5.12.2">v&gt;=1.110</depend>
+        <depend program="Config-Tiny"
+          module="5.12.2">v&gt;=2.14</depend>
+        <depend program="File-Find-Rule"
+          module="5.12.2">v&gt;=0.32</depend>
+        <depend program="File-Flat" module="5.12.2">v&gt;=1.04</depend>
+        <depend program="File-Remove"
+          module="5.12.2">v&gt;=1.50</depend>
+        <depend program="File-Slurp"
+          module="5.12.2">v&gt;=9999.19</depend>
+        <depend program="File-chmod"
+          module="5.12.2">v&gt;=0.32</depend>
+        <depend program="Params-Util"
+          module="5.12.2">v&gt;=1.04</depend>
+        <depend program="Pod-Tests" module="5.12.2">v&gt;=1.19</depend>
+        <depend program="Test-ClassAPI"
+          module="5.12.2">v&gt;=1.06</depend>
+        <depend program="Test-Script"
+          module="5.12.2">v&gt;=1.07</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>

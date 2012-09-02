@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="XML-Parser" version="2.31" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="01f136a5f71631845979fd2b797b3ce3"
+        checksum-type="md5" size="255106"
+        path="src/XML-Parser-2.31.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${PERL}/bin/perl Makefile.PL EXPATLIBPATH=${LIBEXPAT_LIB} \
+EXPATINCPATH=${LIBEXPAT_INC} PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/XML/Parser/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/XML/Parser/.packlist
+rmdir ${_installsitearch}/auto/XML/Parser 2>/dev/null
+rmdir ${_installsitearch}/auto/XML 2>/dev/null
+
+${SB_PATH_SHTOOL} subst -q -e "\
+/head2.*L<XML::Parser|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.0">
+      <install-name>perl580p</install-name>
+
+      <dependencies>
+        <depend program="expat" var="LIBEXPAT" install-name="libexpat"
+          systype="!*-osf4*">v&gt;=1.95.6</depend>
+        <depend program="expat" var="LIBEXPAT" install-name="libexpat"
+          systype="*-osf4*">v&gt;=1.95.6</depend>
+        <depend program="perl" var="PERL">v==5.8.0</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.8.2">
+      <install-name>perl582p</install-name>
+
+      <dependencies>
+        <depend program="expat" var="LIBEXPAT" install-name="libexpat"
+          systype="!*-osf4*">v&gt;=1.95.6</depend>
+        <depend program="expat" var="LIBEXPAT" install-name="libexpat"
+          systype="*-osf4*">v&gt;=1.95.6</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="perl" var="PERL">v==5.8.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2003 November 12" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Perl 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="xscreensaver" version="5.15" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}51</install-name>
+
+    <sources>
+      <source checksum="c0b8b2c817a9a7371f51a82e80602d10"
+        checksum-type="md5" size="5977594"
+        path="src/xscreensaver-5.15.tar.gz"/>
+      <patch checksum="d63e8825e95868a897f8818800576069"
+        checksum-type="md5" size="24706"
+        path="src/xscreensaver-5.15.tww.patch"/>
+      <patch checksum="503b89633bbb81bdc52769af6810b014"
+        checksum-type="md5" size="673712"
+        path="src/xscreensaver-5.15.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="intltool" install-name="intltool041"
+        add-path="prepend" type="build">v&gt;=0.41.1</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libglade" var="LIBGLADE"
+        install-name="libglade26">v&gt;=2.6.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        add-path="prepend">v&gt;=2.7.8</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-bexpfull -Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--without-pam" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath"
+
+  ARGS="--with-dpms-ext=no --x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  LDFLAGS="-Wl,-E"
+
+  ARGS="--with-dpms-ext=no --x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  LDFLAGS="-Wl,-E"
+
+  ARGS="--with-dpms-ext=no --x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-shadow --with-sgi-ext --with-sgivc-ext \
+--with-sgivideo" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-shadow --with-xinerama-ext \
+--with-xf86vmode-ext --with-xf86gamma-ext --with-dpms-ext" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-shadow --with-xinerama-ext \
+--with-xf86vmode-ext --with-xf86gamma-ext --with-dpms-ext" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-dpms-ext=no" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -features=no%extinl -xstrconst -xO2 \
+-xtarget=pentium4"
+  CC_LD_RT="-R" ARGS="--with-shadow" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO1 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+   ARGS="--with-dpms-ext=no --with-shadow" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ARGS="--with-shadow" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+CFLAGS="${CFLAGS:--O2}" X_CFLAGS="\
+${SB_VAR_XPM+-I${SB_VAR_XPM_INC}} \
+${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBXML+-I${SB_VAR_LIBXML_INC}} \
+${SB_VAR_ZLIB+-I${SB_VAR_ZLIB_INC}}" \
+LDFLAGS="${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBPANGO+-L${SB_VAR_LIBPANGO_LIB}} \
+${SB_VAR_LIBGTK+-L${SB_VAR_LIBGTK_LIB}} \
+${SB_VAR_LIBGLADE+-L${SB_VAR_LIBGLADE_LIB}} \
+${SB_VAR_XPM+-L${SB_VAR_XPM_LIB}} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBXML+-L${SB_VAR_LIBXML_LIB}} \
+${SB_VAR_ZLIB+-L${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_GETTEXT+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_XPM+${CC_LD_RT}${SB_VAR_XPM_LIB}} \
+${SB_VAR_JPEG+${CC_LD_RT}${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBXML+${CC_LD_RT}${SB_VAR_LIBXML_LIB}} \
+${SB_VAR_ZLIB+${CC_LD_RT}${SB_VAR_ZLIB_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLADE+${SB_VAR_LIBGLADE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_ZLIB+${SB_VAR_ZLIB_LIB}/pkgconfig}" \
+PERL="${SB_VAR_PERL}/bin/perl" \
+ac_cv_x_app_defaults="${SB_INSTALL_PREFIX_LIB}/app-defaults" \
+--enable-locking --with-gtk --with-jpeg --with-xpm \
+--with-xshm-ext --with-xdbe-ext --with-readdisplay --with-gl=no \
+--with-gle=no --with-hackdir="${SB_INSTALL_PREFIX_LIB}/modules" \
+--with-configdir="${SB_INSTALL_PREFIX_LIB}/modules/config" \
+${ARGS+${ARGS}} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <licenses>
+      <license>
+        <para>xscreensaver, Copyright (c) 1998-2008 Jamie Zawinski
+&lt;jwz@jwz.org&gt;</para>
+        <para>Permission to use, copy, modify, distribute, and sell
+this software and its documentation for any purpose is hereby granted
+without fee, provided that the above copyright notice appear in all
+copies and that both that copyright notice and this permission notice
+appear in supporting documentation. No representations are made about
+the suitability of this software for any purpose. It is provided "as
+is" without express or implied warranty.</para>
+      </license>
+    </licenses>
+  </program>
+</programs>

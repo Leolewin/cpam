@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="lyx" version="1.3.4" revision="2"
+  systype="*-aix5*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="13fe7a7bcec0430e9a9436f2e3cfa04e"
+        checksum-type="md5" size="5404453"
+        path="src/lyx-1.3.4.tar.bz2"/>
+      <patch checksum="9d1ad18dd2eef8bee199c37383e9378d"
+        checksum-type="md5" size="1487651"
+        path="src/lyx-1.3.4.patch"/>
+      <patch checksum="70ff6e4e227d05cb66594db2433d2607"
+        checksum-type="md5" size="2403"
+        path="src/lyx-1.3.4.patch.gcc"
+        systype="*-aix5*|*-hpux11*|*-linux*|*-osf5*|*-solaris*"/>
+    </sources>
+
+    <dependencies>
+      <depend program="aiksaurus" var="AIKSAURUS"
+        install-name="aiksaurus12">v&gt;=1.2.1</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="ghostscript" install-name="ghostscript70"
+        add-path="prepend">v&gt;=7.07</depend>
+      <depend program="groff" install-name="groff11"
+        add-path="prepend">v&gt;=1.17.2</depend>
+      <depend program="tetex" install-name="tetex20"
+        add-path="prepend">v&gt;=2.0.2</depend>
+      <depend program="aspell" var="ASPELL"
+        add-path="prepend">v&gt;=0.50.5</depend>
+      <depend program="qt" var="LIBQT" install-name="libqt33"
+        add-path="prepend">v&gt;=3.3.2</depend>
+      <depend program="gettext" install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend var="GCC_RT" install-name="gcc332r"/>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=common"
+  CXXFLAGS="-O2 -mcpu=common -ftemplate-depth-30"
+  LDFLAGS="-Wl,-brtl -Wl,-bbigtoc -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  QT_UIC="${SB_VAR_LIBQT}/bin/uic" ;;
+*-hpux11*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  ARGS="--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CFLAGS="-O2 -mips4" CXXFLAGS="-O2 -mips4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux9*|*-linuxe3*)
+  CC_LD_RT="-Wl,-rpath," QT_UIC="${SB_VAR_LIBQT}/bin/uic" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  LIB_ASPELL="${SB_VAR_ASPELL_LIB}"
+  QT_INC="${SB_VAR_LIBQT_INC}" QT_LIB="${SB_VAR_LIBQT_LIB}"
+  QT_UIC="${SB_VAR_LIBQT}/bin/uic"
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8" CC_LD_RT="-R" ;;
+*-solaris2.5.1)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7" CC_LD_RT="-R"
+  QT_UIC="${SB_VAR_LIBQT}/bin/uic" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_AIKSAURUS_INC} -I${SB_VAR_XPM_INC}" \
+LDFLAGS="-L${SB_VAR_AIKSAURUS_LIB} -L${SB_VAR_JPEG_LIB} \
+-L${SB_VAR_XPM_LIB} ${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${CC_LD_RT}${QT_LIB:-${SB_VAR_LIBQT_LIB}/gcc32}:\
+${SB_VAR_JPEG_LIB}:${SB_VAR_XPM_LIB}:${SB_VAR_LIBTIFF_LIB}:\
+${SB_VAR_AIKSAURUS_LIB}:${LIB_ASPELL:-${SB_VAR_ASPELL_LIB}/gcc32}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--with-included-gettext --disable-dependency-tracking \
+${SB_VAR_ASPELL+--with-pspell} \
+${SB_VAR_ASPELL+--with-pspell-includes=${SB_VAR_ASPELL_INC}} \
+${SB_VAR_ASPELL+--with-pspell-libs=${LIB_ASPELL:-${SB_VAR_ASPELL_LIB}/gcc32}} \
+--datadir="${_datadir}" --with-frontend=qt \
+--with-qt-includes=${QT_INC:-${SB_VAR_LIBQT_INC}/gcc32} \
+--with-qt-libraries=${QT_LIB:-${SB_VAR_LIBQT_LIB}/gcc32} \
+qt_cv_path_uic=${QT_UIC:-${SB_VAR_LIBQT}/bin/gcc32/uic} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir="${_datadir}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake pkgdatadir="${_datadir}" install
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+]]>
+    </install>
+
+    <notes>
+      <change from="1.3.3" to="1.3.4">
+        <item><para>It adds support for old files from LyX 0.10.x or
+0.12.x</para></item>
+        <item><para>Lyx documents can now be opened and edited even if
+they use text classes not present in your latex
+installation</para></item>
+        <item><para>New Qt features have been added (improved
+selection, drag-and-drop)</para></item>
+        <item><para>Mac OS X support is much improved</para></item>
+        <item><para>The interface and documentation localization have
+been polished</para></item>
+      </change>
+
+      <note type="usage">
+        <para>LyX uses Ghostscript to generate Postscript output. The
+ghostscript binary, `<command>gs</command>', must be in your
+<command>$PATH</command> for LyX to invoke ghostscript
+correctly.</para>
+
+        <para>The Aspell spell checking library and Aiksaurus
+thesaurus are available.</para>
+
+        <para>LyX uses fonts in the
+``<command>${SB_INSTALL_PREFIX}/share</command>'' directory. Unless users can add
+these fonts locally, they must be added to a global directory for use
+by <command>xfs</command>, the X Font Server.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+
+      <change date="2004 July 28" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Aiksaurus dependency from 1.0.1 to
+1.2.1</para></item>
+        <item><para>Upgrade Qt dependency from 3.3.1 to
+3.3.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

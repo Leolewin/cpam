@@ -1,0 +1,325 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="distcc" version="2.17" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}217</install-name>
+
+    <sources>
+      <source checksum="8ac5c032cde68c525afe9f53eae5cbf7"
+        checksum-type="md5" size="339527"
+        path="src/distcc-2.17.tar.bz2"/>
+      <patch checksum="4bbe1850de4948cbe55561c430468f8d"
+        checksum-type="md5" size="2245"
+        path="src/distcc-2.17.patch"/>
+    </sources>
+
+    <dependencies>
+    <depend user="distcc"/>
+
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="popt" var="LIBPOPT"
+        install-name="libpopt17">v&gt;=1.7</depend>
+      <depend var="GCC_RT" install-name="gcc332r"/>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="python" add-path="prepend"
+        type="build">v==2.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for strndup()
+  export ac_cv_func_strndup=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # No sendfile support (even though libc.so has a sendfile symbol)
+  export ac_cv_func_sendfile=no ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBPOPT_INC}" LDFLAGS="-L${SB_VAR_LIBPOPT_LIB} \
+${CC_LD_RT}${SB_VAR_LIBPOPT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-docdir="${_docdir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir="${_datadir}"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+# Test suite might require large number of process/user. Solaris 2.5.1
+# and 2.6 hang while AIX/HP-UX leave around distccd processes.
+gmake maintainer-check
+
+: ignore test failures
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir="${_datadir}"
+
+# configuration file
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/hosts
+
+if [ "${_localstatedir+set}" = set ]; then
+  ${SB_PATH_GINSTALL} -m 755 -o distcc -g 0 -d ${_localstatedir}/run
+fi
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_localstatedir+${_localstatedir}} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="2.16" to="2.17">
+        <items name="Features">
+          <item><para>Performance improvements for
+distccmon-gnome</para></item>
+          <item><para>Added timeouts for connection to servers,
+transmission of jobs and remote compilation. If the timeout expires,
+the job is run locally. This should make distcc cope better if some or
+all of the servers are unreachable or failing.</para></item>
+          <item><para>Also add timeouts in server to kick out stalled
+or disconnected clients</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>If remote compilation fails because of a signal
+in a later phase of the compilation causing an exit with code
+&gt;=128, retry compilation locally</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Manpage fix</para></item>
+        </items>
+
+        <items name="Portability">
+          <item><para>Cygwin portability fix for
+WCOREDUMP</para></item>
+        </items>
+      </change>
+
+      <change from="2.15" to="2.16">
+        <items name="Security">
+          <item><para>Fix bug that might cause IP-based access control
+rules not to be interpreted correctly on 64-bit platforms
+(CAN-2004-0601)</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Fix small memory leaks in distccmon-gnome and
+distccmon-text</para></item>
+        </items>
+
+        <items name="Features">
+          <item><para>Use a GNOME status bar with a grab handle for
+distccmon-gnome</para></item>
+        </items>
+
+        <items name="Portability">
+          <item><para>Better detection of systems with a popt library
+installed but no popt.h</para></item>
+          <item><para>Fix bug in reporting crashed daemon children
+that showed up on systems without strsignal, such as Mac OS
+10.2</para></item>
+          <item><para>Update testdistcc.py to work on ia64
+linux</para></item>
+        </items>
+
+        <items name="Internal">
+          <item><para>Simplify dcc_log_child_exited</para></item>
+          <item><para>Include copyright and licence in --version
+output, as suggested by GNU programs</para></item>
+        </items>
+      </change>
+
+      <change from="2.14" to="2.15">
+        <items name="Bug fixes">
+          <item><para>Fix crash bug in receiving LZO compressed data
+into a mmapped file</para></item>
+          <item><para>Remove redundant temporary file cleanup in
+non-forking mode</para></item>
+        </items>
+
+        <items name="Features">
+          <item><para>Client calculates and can display the overall
+throughput in preprocessed bytes per second for remote
+jobs</para></item>
+        </items>
+
+        <items name="Removals">
+          <item><para>The deprecated fork-after-exec mode controlled
+by the --no-prefork option has been removed</para></item>
+          <item><para>mmap is no longer used for compressed data to
+simplify the code</para></item>
+        </items>
+
+        <items name="Portability">
+          <item><para>Additional fixes to Red Hat / Fedora
+scripts</para></item>
+        </items>
+
+        <items name="Internal">
+          <item><para>Daemon now chdirs to $TMPDIR at startup rather
+than /. This allows dumping core, among other things.</para></item>
+        </items>
+      </change>
+
+      <change from="2.13" to="2.14">
+        <items name="Features">
+          <item><para>The host file is looked ip in $DISTCC_DIR/hosts,
+not hardcoded to ~/.distcc/hosts. The default for $DISTCC_DIR is still
+~/.distcc</para></item>
+          <item><para>Source file name is included in success/failure
+messages, e.g.:</para>
+          <screen>
+distcc[6655] ERROR: compile ./cases/bad.c on cardhu failed
+          </screen></item>
+          <item><para>distcc can now be built with a build directory
+separate from the source directory</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Add documentation of DISTCC_DIR, and other
+fixes</para></item>
+          <item><para>Slightly improved distcc --help</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Decompression buffer can dynamically resize to
+allow for very gassy files</para></item>
+        </items>
+
+        <items name="Portability">
+          <item><para>Add sample scripts for Red Hat /
+Fedora</para></item>
+          <item><para>mmap is always disabled on HP-UX, because the
+inconsistent page case is a bit dangerous for the way distcc uses
+mmap</para></item>
+        </items>
+      </change>
+
+      <change from="2.12.1" to="2.13">
+        <items name="Security">
+          <item><para>Enforce IPv4 access control lists when the
+daemon is listening on an IPv6 port. This only applies when the server
+was compiled using --enable-rfc2553 and run with
+--allow.</para></item>
+        </items>
+
+        <items name="Features">
+          <item><para>Hash comments are allowed in host list
+files</para></item>
+        </items>
+
+        <items name="Internal">
+          <item><para>Use TCP_DEFER_ACCEPT on Linux to avoid some
+wasted context switching when a new connection comes in to the
+server</para></item>
+        </items>
+
+        <items name="Bug Fixes">
+          <item><para>Some fixes for connections over SSH when built
+using --enable-rfc2553</para></item>
+          <item><para>Handle arguments like "-xcpp" and
+"-Wa,-xarch=v8"</para></item>
+          <item><para>Fix resource exhaustion when DISTCC_SAVE_TEMPS
+is set</para></item>
+          <item><para>Fix problems in running IPv6-enabled builds on
+kernels without IPv6 support</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>More instructions for distributors/packagers
+</para></item>
+        </items>
+
+        <items name="Portability">
+          <item><para>Portability patches</para></item>
+          <item><para>Possibly fix mmap problem on HP-UX with
+compressed transfers</para></item>
+        </items>
+
+        <items name="Testing">
+          <item><para>Add test for compilation with
+compression</para></item>
+          <item><para>Testsuite portability patch</para></item>
+        </items>
+      </change>
+
+      <note type="installation">
+        <para>The <command>distccd</command> daemon requires a special
+user to run as, "<command>distcc</command>". While optional, it is
+recommended that the following entry be added to
+<command>/etc/services</command>:</para>
+        <screen>
+pop3        110/tcp
+distcc      3632/tcp            # distributed compiler
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>While distcc will work with the vendor compiler
+depending on the compiler options, it is designed to work with
+GCC.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 25" revision="1"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Removed unused sa_family_t declaration that clashed
+with the system declaration on Tru64 Unix</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

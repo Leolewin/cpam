@@ -1,0 +1,494 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="pkgutils" version="1.6.0" revision="2">
+    <package-manager name="depot">
+      <category>Applications/System</category>
+      <title>Packaging Utilities</title>
+      <vendor>The Written Word</vendor>
+
+      <description>
+Package-manager independent suite of tools used to install, remove,
+and configure binary packages. Using an XML configuration file to
+describe the package, the pkgutils suite automatically downloads and
+installs packages including all necessary dependencies, provides
+information on the list of installed packages, removes packages,
+configures packages (runs the package pre-remove and post-install
+scripts), and queries a repository for a list of updated packages.
+      </description>
+
+      <install-name>pkgutils16</install-name>
+
+      <pkgname-base>TWWpkgut16</pkgname-base>
+
+      <version>1.6.0</version>
+      <revision>2</revision>
+
+      <config upgrade="1">etc/pkgutils.conf</config>
+
+      <replace pkgname-base="TWWpkgut15"
+        install-name="pkgutils15"/>
+
+      <changelog>
+        <change date="2010 March 4" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Security fix for bundled curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+            <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+            <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+          </unorderedlist></item>
+          <item><para>Security fix for openssl curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+            <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+          </unorderedlist></item>
+          <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="inst">
+      <category>Applications/System</category>
+      <title>Packaging Utilities</title>
+      <vendor>The Written Word</vendor>
+
+      <description>
+Package-manager independent suite of tools used to install, remove,
+and configure binary packages. Using an XML configuration file to
+describe the package, the pkgutils suite automatically downloads and
+installs packages including all necessary dependencies, provides
+information on the list of installed packages, removes packages,
+configures packages (runs the package pre-remove and post-install
+scripts), and queries a repository for a list of updated packages.
+      </description>
+
+      <install-name>pkgutils16</install-name>
+
+      <pkgname-base>TWWpkgutils16</pkgname-base>
+
+      <version>1</version>
+      <revision>2</revision>
+
+      <config upgrade="1">etc/pkgutils.conf</config>
+
+      <replace pkgname-base="TWWpkgutils15"
+        install-name="pkgutils15"/>
+
+      <changelog>
+        <change date="2010 March 4" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Security fix for bundled curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+            <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+            <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+          </unorderedlist></item>
+          <item><para>Security fix for openssl curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+            <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+          </unorderedlist></item>
+          <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="lpp">
+      <category>Applications/System</category>
+      <title>Packaging Utilities</title>
+      <vendor>The Written Word</vendor>
+
+      <description>
+Package-manager independent suite of tools used to install, remove,
+and configure binary packages. Using an XML configuration file to
+describe the package, the pkgutils suite automatically downloads and
+installs packages including all necessary dependencies, provides
+information on the list of installed packages, removes packages,
+configures packages (runs the package pre-remove and post-install
+scripts), and queries a repository for a list of updated packages.
+      </description>
+
+      <install-name>pkgutils16</install-name>
+
+      <pkgname-base>TWW.pkgutils16</pkgname-base>
+
+      <version>1.6.0</version>
+      <revision>2</revision>
+
+      <config upgrade="1">etc/pkgutils.conf</config>
+
+      <replace pkgname-base="TWW.pkgutils15"
+        install-name="pkgutils15"/>
+
+      <changelog>
+        <change date="2010 March 4" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Security fix for bundled curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+            <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+            <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+          </unorderedlist></item>
+          <item><para>Security fix for openssl curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+            <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+          </unorderedlist></item>
+          <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="pkgadd">
+      <category>Applications/System</category>
+      <title>Packaging Utilities</title>
+      <vendor>The Written Word</vendor>
+
+      <description>
+Package-manager independent suite of tools used to install, remove,
+and configure binary packages. Using an XML configuration file to
+describe the package, the pkgutils suite automatically downloads and
+installs packages including all necessary dependencies, provides
+information on the list of installed packages, removes packages,
+configures packages (runs the package pre-remove and post-install
+scripts), and queries a repository for a list of updated packages.
+      </description>
+
+      <install-name>pkgutils16</install-name>
+
+      <pkgname-base>TWWpkgutils16</pkgname-base>
+
+      <version>1.6.0</version>
+      <revision>2</revision>
+
+      <config upgrade="1">etc/pkgutils.conf</config>
+
+      <replace pkgname-base="TWWpkg15"
+        install-name="pkgutils15"/>
+
+      <changelog>
+        <change date="2010 March 4" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Security fix for bundled curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+            <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+            <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+          </unorderedlist></item>
+          <item><para>Security fix for openssl curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+            <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+          </unorderedlist></item>
+          <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="rpm4">
+      <category>Applications/System</category>
+      <title>Packaging Utilities</title>
+      <vendor>The Written Word</vendor>
+
+      <description>
+Package-manager independent suite of tools used to install, remove,
+and configure binary packages. Using an XML configuration file to
+describe the package, the pkgutils suite automatically downloads and
+installs packages including all necessary dependencies, provides
+information on the list of installed packages, removes packages,
+configures packages (runs the package pre-remove and post-install
+scripts), and queries a repository for a list of updated packages.
+      </description>
+
+      <install-name>pkgutils16</install-name>
+
+      <pkgname-base>TWWpkgutils16</pkgname-base>
+
+      <version>1.6.0</version>
+      <revision>2</revision>
+
+      <config upgrade="1">etc/pkgutils.conf</config>
+
+      <replace pkgname-base="TWWpkgutils15"
+        install-name="pkgutils15"/>
+
+      <changelog>
+        <change date="2010 March 4" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Security fix for bundled curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+            <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+            <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+          </unorderedlist></item>
+          <item><para>Security fix for openssl curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+            <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+          </unorderedlist></item>
+          <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="setld">
+      <category>Applications/System</category>
+      <title>Packaging Utilities</title>
+      <vendor>The Written Word</vendor>
+
+      <description>
+Package-manager independent suite of tools used to install, remove,
+and configure binary packages. Using an XML configuration file to
+describe the package, the pkgutils suite automatically downloads and
+installs packages including all necessary dependencies, provides
+information on the list of installed packages, removes packages,
+configures packages (runs the package pre-remove and post-install
+scripts), and queries a repository for a list of updated packages.
+      </description>
+
+      <install-name>pkgutils16</install-name>
+
+      <pkgname-base>TWWPKGUTILS16</pkgname-base>
+
+      <version>1.6.0</version>
+      <revision>2</revision>
+
+      <config upgrade="1">etc/pkgutils.conf</config>
+
+      <replace pkgname-base="TWWPKGUTILS15"
+        install-name="pkgutils15"/>
+
+      <changelog>
+        <change date="2010 March 4" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Security fix for bundled curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+            <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+            <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+          </unorderedlist></item>
+          <item><para>Security fix for openssl curl:</para>
+          <unorderedlist>
+            <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+            <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+          </unorderedlist></item>
+          <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <changelog>
+      <change date="2010 March 4" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Security fix for bundled curl:</para>
+        <unorderedlist>
+          <item><para>Apply patch to libcurl to fix possible buffer
+overflow in data callback buffer.</para>
+          <para>When downloading data, libcurl hands it over to
+the application using a callback that is registered by the client
+software. libcurl will then call that function repeatedly with data
+until the transfer is complete. The callback is documented to receive
+a maximum data size of 16K 
+(<command>CURL_MAX_WRITE_SIZE</command>).</para>
+          <para>Using the affected libcurl version to download 
+compressed content over HTTP, an application can ask libcurl to
+automatically uncompress data. When doing so, libcurl can wrongly send
+data up to 64K in size to the callback which thus is much larger than
+the documented maximum size. An application that blindly trusts
+libcurl's max limit for a fixed buffer size or similar is then a
+possible target for a buffer overflow vulnerability.</para></item>
+        </unorderedlist></item>
+        <item><para>Security fix for openssl curl:</para>
+        <unorderedlist>
+          <item><para>Apply patch for CVE-2009-3555 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-3555</ulink>).
+The TLS protocol, and the SSL protocol 3.0 and possibly earlier, does
+not properly associate renegotiation handshakes with an existing
+connection, which allows man-in-the-middle attackers to insert data
+into HTTPS sessions, and possibly other types of sessions protected by
+TLS or SSL, by sending an unauthenticated request that is processed
+retroactively by a server in a post-renegotiation context, related to
+a "plaintext injection" attack, aka the "Project Mogul"
+issue.</para></item>
+          <item><para>Apply patch for CVE-2009-4355 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355">http://www .cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4355</ulink>).
+Memory leak in the <command>zlib_stateful_finish</command> function in
+<command>crypto/comp/c_zlib.c</command> allows remote attackers to
+cause a denial of service (memory consumption) via vectors that
+trigger incorrect calls to the
+<command>CRYPTO_cleanup_all_ex_data</command> function, as
+demonstrated by use of SSLv3 and PHP with the Apache HTTP Server, a
+related issue to <command>CVE-2008-1678</command>.</para></item>
+        </unorderedlist></item>
+        <item><para>Recompile bundled openssl without -fast on
+Solaris/x86 to avoid 3DNow extension</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

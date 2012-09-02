@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="expect" version="5.45" revision="1">
+    <build-name>${SB_PROG_NAME}${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}54</install-name>
+
+    <sources>
+      <source checksum="44e1a4f4c877e9ddc5a542dfa7ecc92b"
+        checksum-type="md5" size="628808"
+        path="src/expect5.45.tar.gz"/>
+      <patch checksum="0012d1e3a5f07f92f424e421c0c0050c"
+        checksum-type="md5" size="10728"
+        path="src/expect5.45.tww.patch"/>
+      <patch checksum="7c4ea543c024a582dbc32de8e4d9c105"
+        checksum-type="md5" size="1042267"
+        path="src/expect5.45.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcl" state="build">v==8.5.10</depend>
+      <depend program="tcl" var="TCL"
+        install-name="tcl85">v&gt;=8.5.10</depend>
+      <depend program="tk" var="TK"
+        install-name="tk85">v&gt;=8.5.10</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  # Must link pthread because tcl was built with pthread
+  CC=cc CFLAGS="-mt +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_TCL_LIB} ${LDFLAGS+$LDFLAGS}" \
+--enable-shared --enable-rpath --with-tcl=${SB_VAR_TCL_LIB} \
+--with-tclinclude=${SB_VAR_TCL_INC} \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--exec-prefix=${SB_INSTALL_PREFIX} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test auto-include="0">
+      <dependencies>
+        <depend program="dejagnu" var="DEJAGNU"
+          add-path="prepend">v==1.4.4</depend>
+        <depend program="tcl" state="build">v==8.5.10</depend>
+      </dependencies>
+<![CDATA[
+_dejagnu_datadir="${SB_VAR_DEJAGNU}/share"
+
+gmake -k test
+
+(cd testsuite
+ DEJAGNULIBS=${_dejagnu_datadir} gmake -k check)
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install path for Tcl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX_LIB}/include.paths.d
+cat >${SB_INSTALL_PREFIX_LIB}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${SB_INSTALL_PREFIX_LIB}
+_EOT_
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para>Design and implementation of this program was paid for
+by U.S. tax dollars. Therefore it is public domain. However, the
+author and NIST would appreciate credit if this program or parts of it
+are used.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="5.44.0" to="5.44.1">
+        <item><para>tclconfig was missing, evidentally for new
+TEA.</para></item>
+      </change>
+
+      <change from="5.43" to="5.44.0">
+        <item><para>Lots of massaging to fix TEAification of Makefile
+and configure including that version numbers will now be full three
+part.</para></item>
+        <item><para>Passmass needed some fixes to handle Solaris 9
+passwd prompt changes.</para></item>
+        <item><para>Changes to better support TEA</para></item>
+        <item><para>Fix debugger interaction with nonblocking
+mode</para></item>
+        <item><para>Autoconf 2.59 was confused by C comment after
+undefs in expect_cf.h.in.</para></item>
+        <item><para>Added additional code to unbuffer -p so that if a
+process earlier in the pipeline exits, unbuffer attempts to recover
+any remaining output from the spawned proc before unbuffer itself
+exits.</para></item>
+        <item><para>Once stty was called, a bg'd script would be
+suspended at exit.  Turned out to be overaggressive code in stty that
+recorded what 'damage' the user might have caused when calling stty in
+the first place.</para></item>
+        <item><para>Make setpgrp configure better on some Linux
+systems.</para></item>
+        <item><para>Added example/getpassck script to test for getpass
+bug.</para></item>
+        <item><para>Multixterm had debugging stuff leftover
+("hello").</para></item>
+      </change>
+
+      <change from="5.42.1" to="5.43">
+        <item><para>Fixed bug in ExpOutputProc that caused misbehavior
+during partial writes</para></item>
+        <item><para>gets stdin behaves differently (returns -1
+immediately) from tclsh because with 5.42, stdin is unblocked by
+default</para></item>
+        <item><para>expect_background ignores timeouts. Added to
+documentation.</para></item>
+        <item><para>patch for "mkpasswd -vo"</para></item>
+        <item><para>multixterm failed on his system which had an old
+Tk that didn't support the Tk package</para></item>
+      </change>
+
+      <change from="5.42b0" to="5.42.1">
+        <item><para>Removed beta designation</para></item>
+        <item><para>Patch for MacOS to avoid
+panic-redefinition</para></item>
+      </change>
+
+      <change from="5.40.1" to="5.42b0">
+        <item><para>Using expect as a filter is possible but "too
+hard". To make it easier, added close_on_eof command to control
+whether expect/interact automatically close the channel on eof. This
+should simplify/enable other scripts</para></item>
+        <item><para>Due to a change in Tcl such that when Tcl had data
+left in its buffers, it would check for more data rather than
+returning what it had to Expect first, Expect would hang. If no data
+was forthcoming then Tcl would hang because the pty driver runs in
+blocked mode. Recoded to use nonblocking mode</para></item>
+        <item><para>multixterm xterms were reporting the parent's X
+window ids (via the WINDOWID env variable) instead of the new
+ones</para></item>
+        <item><para>kibitz expects to find write in /bin but it is in
+/usr/bin on Slackware. Seems safe to drop the prefix</para></item>
+        <item><para>Building Expect failed on Linux when built from
+scratch because stty ends up in /usr/local/bin rather than the assumed
+/bin. Added code to support this</para></item>
+        <item><para>Fix for interact -o which was completely broken by
+5.40.1</para></item>
+      </change>
+
+      <change from="5.40" to="5.40.1">
+        <item><para>Added scroll support to official tkterm. Copied
+all fixes from/to term_expect to/from tkterm</para></item>
+        <item><para>Interact diagnostics incorrectly pointed to
+expect_background. Also, multiple -o flags behaved unexpectedly.
+Added diag</para></item>
+        <item><para>Typo in SIMPLE code in exp_inter.c. However, this
+is extremely unlikely to affect any machines</para></item>
+        <item><para>"make test" failed when run in the background.
+The log testcase was testing the send_tty command. Added code in both
+Expect and in the test to handle this</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The Expect Tcl module is available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/tcl85       # Tcl 8.5.10
+        </screen>
+
+        <para>The directory is automatically added to the Tcl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

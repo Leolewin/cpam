@@ -1,0 +1,260 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="swish-e" version="2.4.3" revision="10"
+  systype="!*-irix*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>swishe24</install-name>
+
+    <sources>
+      <source checksum="d611ba8d40fe5340097ca6e8a042ca44"
+        checksum-type="md5" size="1563031"
+        path="src/swish-e-2.4.3.tar.gz"/>
+      <patch checksum="7084a0e9c904652592e5a6901683e069"
+        checksum-type="md5" size="140672"
+        path="src/swish-e-2.4.3.tww.patch"/>
+      <patch checksum="b47e2deaa7873f623412c1c52d29d51c"
+        checksum-type="md5" size="780"
+        path="src/swish-e-2.4.3.gentoo248477.patch"/>
+      <patch checksum="073609be9568da79c1cd6d8289d668ab"
+        checksum-type="md5" size="1714709"
+        path="src/swish-e-2.4.3.auto.patch"/>
+    </sources>
+
+    <module name="default">
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml27">v&gt;=2.7.8</depend>
+        <depend program="pcre" var="LIBPCRE"
+          install-name="libpcre811">v&gt;=8.11</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="perl" add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="swish-e"
+          module="perl-5.12.2">v==2.4.3</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-msym -O2 -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--with-libxml2=${SB_VAR_LIBXML} --with-zlib=${SB_VAR_ZLIB} \
+--with-pcre=${SB_VAR_LIBPCRE} --disable-dependency-tracking \
+--enable-shared --enable-static --datadir=${_datadir} \
+--docdir=${_docdir} --datarootdir=${_datadir} \
+--mandir=${SB_INSTALL_PREFIX}/man \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" swish-e.pc
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\) !-L\1 ${CC_LD_RT}\1 !;" swish-config
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+    </module>
+
+    <module name="perl-5.12.2">
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+        <depend program="swish-e" add-path="prepend">v==2.4.3</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+(cd perl && ${SB_VAR_PERL}/bin/perl Makefile.PL \
+ INSTALLARCHLIB="${SB_INSTALL_PREFIX_LIB}/perl5122" \
+ INSTALLSITEARCH="${SB_INSTALL_PREFIX_LIB}/perl5122" \
+ INSTALLSITELIB="${SB_INSTALL_PREFIX_LIB}/perl5122" \
+ PREFIX=${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C perl
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake -C perl test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake -C perl install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/perl5122 ${SB_INSTALL_PREFIX}/man/man3
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The SWISH::API Object Oriented Perl interface to the
+swish-e C library is installed in
+<command>${SB_INSTALL_PREFIX}/lib/perl5122</command> for Perl
+5.12.2.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 23" revision="10"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update pcre dependency from 7.8 to
+8.11</para></item>
+        <item><para>Update perl dependnecy from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 December 9" revision="9"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update libxml dependency from 2.6.29 to
+2.6.32</para></item>
+        <item><para>Update pcre dependency from 7.4 to
+7.8</para></item>
+        <item><para>Update perl dependnecy from 5.8.6 to
+5.8.8</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to
+4.2.4</para></item>
+      </change>
+
+      <change date="2008 January 28" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update zlib dependency from 1.1.4 to
+1.2.3</para></item>
+        <item><para>Update libxml dependency from 2.6.22 to
+2.6.29</para></item>
+        <item><para>Update pcre dependency from 5.0 to
+7.4</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 September 25" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update bison dependency from 2.1 to
+2.3</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 March 26" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 November 29" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+        <item><para>Update bison dependency from 2.0 to
+2.1</para></item>
+        <item><para>Update libxml dependency from 2.6.11 to
+2.6.22</para></item>
+      </change>
+
+      <change date="2005 June 14" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+        <item><para>Update bison dependency from 1.35 to
+2.0</para></item>
+        <item><para>Update perl dependency from 5.8.2 to
+5.8.6</para></item>
+        <item><para>Import snprintf() from gnulib</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

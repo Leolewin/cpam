@@ -1,0 +1,205 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="ethereal" version="0.10.5" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}010</install-name>
+
+    <sources>
+      <source checksum="26d5672935ac8bd0793fcd2ad0b4833f"
+        checksum-type="md5" size="4984584"
+        path="src/ethereal-0.10.5.tar.bz2"/>
+      <patch checksum="50fec696ffbafd7e5344d6d7b53402fe"
+        checksum-type="md5" size="1548790"
+        path="src/ethereal-0.10.5.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend">v&gt;=1.35</depend>
+      <depend program="net-snmp" var="NETSNMP"
+        install-name="netsnmp50">v&gt;=5.0.9</depend>
+      <depend program="pkgconfig"
+        add-path="prepend">v&gt;=0.15.0</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk16">v&gt;=1.6.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib24">v&gt;=2.4.4</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+24">v&gt;=2.4.4</depend>
+      <depend program="libpcap" var="LIBPCAP"
+        install-name="libpcap08">v&gt;=0.8.3</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango14">v&gt;=1.4.0</depend>
+      <depend program="pcre" var="LIBPCRE"
+        install-name="libpcre44">v&gt;=4.4</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.8.2</depend>
+      <depend program="python" var="PYTHON"
+        type="build">v==2.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC="cc +DAportable" CFLAGS="+O2 -Ae -z +ESlit +Onofltacc \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  # override system Xft
+  CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC}"
+  LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB}"
+
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_NETSNMP_INC} -I${SB_VAR_ZLIB_INC} \
+${CPPFLAGS+${CPPFLAGS}}" PYTHON=${SB_VAR_PYTHON}/bin/python \
+LDFLAGS="${CC_LD_RT}${SB_VAR_ZLIB_LIB}:${SB_VAR_NETSNMP_LIB}:\
+${SB_VAR_LIBPCRE_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--enable-shared --disable-usr-local --disable-dependency-tracking \
+--with-ssl=no --enable-gtk2 --sysconfdir="${_sysconfdir}" \
+--with-pcap=${SB_VAR_LIBPCAP} --with-pcre=${SB_VAR_LIBPCRE} \
+--with-zlib=${SB_VAR_ZLIB} --datadir=${_datadir} \
+--with-net-snmp=${SB_VAR_NETSNMP}/bin/net-snmp-config \
+--with-plugins=${SB_INSTALL_PREFIX}/lib/plugins \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+]]>
+    </install>
+
+    <notes>
+      <change from="0.10.4" to="0.10.5">
+        <items name="New and updated features">
+          <item><para>Ethereal can now merge multiple files (you don't
+have to resort to mergecap on the command line)</para></item>
+          <item><para>A preview pane has been added to the file
+dialog</para></item>
+          <item><para>The capture progress dialog can now be
+disabled</para></item>
+          <item><para>The about dialog has received further
+improvements</para></item>
+          <item><para>The behavior of Ethereal's dialog windows has
+been normalized somewhat</para></item>
+          <item><para>The Windows installer can now associate standard
+file extensions with Ethereal</para></item>
+          <item><para>Ethereal can be configured not to bug you about
+unsaved captures</para></item>
+          <item><para>Ethereal can open help documentation using the
+default web browser</para></item>
+        </items>
+
+        <items name="New protocol support">
+          <item><para>DNP, ENRP, giFT, H.235, PacketCable, SigComp,
+SIR (Serial Infrared)</para></item>
+        </items>
+
+        <items name="Updated protocol support">
+          <item><para>AIM, ASAP, ASN.1 BER, ARP, ATM, DHCP, CFPI,
+CLNP, DCERPC (DCERPC, LSA, NT, SAMR, SRVSVC, WKSSVC), EAP, ENIP, Frame
+Relay, GRE, H.225, H.245, H.450, HTTP, IAX2, IEEE 802.11, ISAKMP,
+iSNS, ISUP, JFIF, Kerberos, LMP, M3UA, MGCP, MPLS, MTP3, NCP, NetFlow,
+NFS, OSPF, PIM, RADIUS, RIP, RSVP, RTCP, RTP, RTSP, SCSI, SDP, SIP,
+SMB, SMTP, SNMP, SOCKS, SSL, T.35, TCP, VRRP, WBXML (User-Agent
+Profile), WSP, X11</para></item>
+        </items>
+
+        <items name="New and updated apture file support">
+          <item><para>Radcom</para></item>
+        </items>
+      </change>
+
+      <platform name="Tru64 UNIX">
+        <para>For Ethereal to work, the kernel must be compiled to
+support the packetfilter(7) pseudo-device driver. This is done by
+adding the option '<command>options PACKETFILTER</command>' to your
+kernel configuration file in <command>/sys/conf/[KERNEL
+CONFIG]</command>. Once added, recompile the kernel with
+'<command>doconfig -c [KERNEL CONFIG]</command>' and reboot to use the
+new kernel. The packetfilter devices must be created as well:</para>
+        <screen>
+$ /bin/su
+# cd /dev
+# ./MAKEDEV pfilt
+        </screen>
+
+        <para>Finally, the interface you wish to listen on must be
+allowed to enter promiscuous mode. This is done as follows:</para>
+        <screen>
+# /usr/sbin/pfconfig +promisc [INTERFACE]
+# /usr/sbin/pfconfig +copyall [INTERFACE]
+        </screen>
+      </platform>
+
+      <platform name="HP-UX 11.00">
+        <para>The latest LAN patch, <command>PHNE_21217</command>,
+should be installed.</para>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Python dependency from 2.2.3 to 2.3.2 and
+make it a build-time dependency</para></item>
+        <item><para>Make Perl a build-time dependency</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

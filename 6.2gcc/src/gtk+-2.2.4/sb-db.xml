@@ -1,0 +1,282 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gtk+" version="2.2.4" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}22</install-name>
+
+    <sources>
+      <source checksum="605332199533e73bc6eec481fb4f1671"
+        checksum-type="md5" size="7189272"
+        path="src/gtk+-2.2.4.tar.bz2"/>
+      <patch checksum="c92578ffbaee36aacd4e890f940ab1bc"
+        checksum-type="md5" size="1296791"
+        path="src/gtk+-2.2.4.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="indent" install-name="indent2"
+        add-path="prepend" type="build">v&gt;=2.2.9</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk14">v&gt;=1.4.1</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf21"
+        add-path="prepend">v==2.1.4</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib22"
+        add-path="prepend">v&gt;=2.2.3</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango12">v&gt;=1.2.5</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+_libdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z -Wp,-H32768 +Onofltacc +ESlit \
++DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO" LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ARGS="--enable-xkb=no" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DFUNCPROTO" LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ARGS="--enable-xkb=no" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:=-O2}" \
+CPPFLAGS="-I${SB_VAR_LIBTIFF_INC} -I${SB_VAR_JPEG_INC} \
+-I${SB_VAR_LIBPNG_INC} -I${SB_VAR_ZLIB_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBTIFF_LIB} -L${SB_VAR_JPEG_LIB} \
+-L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBTIFF_LIB}:${SB_VAR_JPEG_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} --datadir="${_datadir}" \
+--sysconfdir="${_sysconfdir}" --with-html-dir="${_docdir}" \
+--enable-static --enable-shared ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gdk-2.0.pc gdk-pixbuf-2.0.pc \
+contrib/gdk-pixbuf-xlib/gdk-pixbuf-xlib-2.0.pc gtk+-2.0.pc; do
+  sed "s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" \
+  ${_pc} >/tmp/$$
+  cp /tmp/$$ ${_pc} && rm /tmp/$$ 
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake \
+configexecincludedir="${_libdir}/include" \
+democodedir="${_datadir}/demo" \
+gdkincludedir="${_includedir}/gdk" \
+gtkincludedir="${_includedir}/gtk" \
+libgdk_pixbuf_xlibincludedir="${_includedir}/gdk-pixbuf-xlib" \
+libgdk_pixbufincludedir="${_includedir}/gdk-pixbuf" \
+libgdkincludedir="${_includedir}/gdk" \
+libgtkincludedir="${_includedir}/gtk"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install \
+configexecincludedir="${_libdir}/include" \
+democodedir="${_datadir}/demo" \
+gdkincludedir="${_includedir}/gdk" \
+gtkincludedir="${_includedir}/gtk" \
+libgdk_pixbuf_xlibincludedir="${_includedir}/gdk-pixbuf-xlib" \
+libgdk_pixbufincludedir="${_includedir}/gdk-pixbuf" \
+libgdkincludedir="${_includedir}/gdk" \
+libgtkincludedir="${_includedir}/gtk"
+
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/gtkrc
+]]>
+    </install>
+
+    <notes>
+      <change from="2.2.3" to="2.2.4">
+        <item><para>Revert TreeView fix which broke context menus in
+different applications</para></item>
+        <item><para>Typo fixes</para></item>
+        <item><para>Make pressing END not put the menu in scrolling
+mode</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>New and updated translations (sq, cy, hi, nl, de,
+es, zh_CN, ja, no, el)</para></item>
+      </change>
+
+      <change from="2.2.2" to="2.2.3">
+        <items name="GdkPixbuf">
+          <item><para>Fix some problems with overflows when scaling
+down</para></item>
+          <item><para>Many GIF bug fixes</para></item>
+          <item><para>Prefer 32-bpp ICOs, fix bugs with
+them</para></item>
+          <item><para>Fix problem with absolute filenames and
+gdk-pixbuf-query-loaders</para></item>
+          <item><para>Make gdk-pixbuf-csource include alignment
+magic</para></item>
+        </items>
+
+        <items name="Win32">
+          <item><para>Add multiple monitor </para></item>
+          <item><para>Major event and key handling rewrite, including
+IME fixes</para></item>
+          <item><para>Fix handling of toplevel window
+positions</para></item>
+          <item><para>Add support for all window geometry hints
+(gridded geometry, etc.)</para></item>
+          <item><para>Fix DND to ignore drag window</para></item>
+          <item><para>Fix GdkImage memory leak</para></item>
+          <item><para>Remove leftover OwnerGrabButtonMask emulation
+(fixes lots)</para></item>
+          <item><para>Misc bug fixes</para></item>
+          <item><para>Build fixes and improvements</para></item>
+        </items>
+
+        <items name="X11">
+          <item><para>Fix extremely common crash where we interpreted
+the timestamp field of a XKB event as a window ID and found a pixmap
+that matched</para></item>
+          <item><para>Fix CapsLock and NumLock for
+non-XKB</para></item>
+          <item><para>Fix problems with, eg. Ctrl-Alt-Backspace hiding
+Cntrl-Backspace</para></item>
+          <item><para>Workaround Xinerama servers reporting wrong
+depths</para></item>
+        </items>
+
+        <items name="GtkTreeView">
+          <item><para>Fix scrolling once more</para></item>
+          <item><para>Don't get confused by the Control key when
+handling selection from an accelerator like
+&lt;Control&gt;B</para></item>
+          <item><para>Many misc fixes</para></item>
+        </items>
+
+        <items name="Input methods">
+          <item><para>Handle input methods exiting and starting while
+the app is running</para></item>
+          <item><para>Fix infinite loop when closing input
+methods</para></item>
+          <item><para>Add a 'cedilla' input method with c+acute =&gt;
+cedilla and use as the default for languages that use
+cedilla</para></item>
+          <item><para>Fix status window for multihead</para></item>
+          <item><para>Remember imcontext attributes when switching
+methods</para></item>
+        </items>
+
+        <items name="GtkFileSelection">
+          <item><para>Fix selection of "UntitledN" on initial
+map</para></item>
+          <item><para>Fix an annoying bug with cursor positioning on
+failed completion</para></item>
+          <item><para>Misc Fixes</para></item>
+        </items>
+
+        <items name="Other widgets">
+          <item><para>Fix problem with GtkOptionMenus coming up in the
+wrong place</para></item>
+          <item><para>Fix problem with spinbuttons not getting enough
+space</para></item>
+          <item><para>Fix an infinite loop when resizing
+GtkTextView</para></item>
+          <item><para>Don't include menu labels in
+gtk_notebook_forall</para></item>
+          <item><para>Fix problem with XEMBED (GtkPlug) clients that
+don't take focus stealing focus</para></item>
+          <item><para>Accept color drops with wrong format from
+KDE</para></item>
+        </items>
+
+        <item><para>Fix problem from gnome-theme-manager playing
+tricks making event-&gt;window a pixmap</para></item>
+        <item><para>Ignore Caps-lock when matching
+accelerators</para></item>
+        <item><para>Fix 5-year-old bug where toplevels didn't fully
+refresh properly on theme change</para></item>
+        <item><para>Don't require precompiled gdk-pixbuf-csource when
+cross-compiling from a tarball</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>New and updated translations (ar,az,cs,cy,be,de,es,fi,fr,he,hi,hu,id,is,it,ko,lt,ml,mn,nl,ne,no,pl,pt,pt_BR,ru,sk,sr,sr@Latn,ta,wa,zh_TW,zh_CN)</para></item>
+      </change>
+
+      <note type="build">
+        <para>Antialias font support is enabled for all
+platforms.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 January 5" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade ATK dependency to 1.4.1</para></item>
+        <item><para>Move <command>gdk-pixbuf.loaders</command> to
+<command>lib/loaders</command> and <command>gtk.immodules</command> to
+<command>lib/immodules</command> as etc directory not correct location
+for system-dependent configuration file</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,55 @@
+Index: Lib/lib-tk/Tkinter.py
+===================================================================
+--- Lib/lib-tk/Tkinter.py.orig	2006-07-18 17:46:31.000000000 +0000
++++ Lib/lib-tk/Tkinter.py	2008-09-08 02:22:05.681574406 +0000
+@@ -2981,7 +2981,7 @@
+         return self.tk.call(self._w, "image", "names")
+     def index(self, index):
+         """Return the index in the form line.char for INDEX."""
+-        return self.tk.call(self._w, 'index', index)
++        return str(self.tk.call(self._w, 'index', index))
+     def insert(self, index, chars, *args):
+         """Insert CHARS before the characters at INDEX. An additional
+         tag can be given in ARGS. Additional CHARS and tags can follow in ARGS."""
+Index: Modules/_tkinter.c
+===================================================================
+--- Modules/_tkinter.c.orig	2008-01-03 23:52:04.000000000 +0000
++++ Modules/_tkinter.c	2008-09-08 02:23:45.785749239 +0000
+@@ -1988,9 +1988,9 @@
+ PythonCmd(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
+ {
+ 	PythonCmd_ClientData *data = (PythonCmd_ClientData *)clientData;
+-	PyObject *self, *func, *arg, *res, *tmp;
++	PyObject *self, *func, *arg, *res;
+ 	int i, rv;
+-	char *s;
++	Tcl_Obj *obj_res;
+ 
+ 	ENTER_PYTHON
+ 
+@@ -2017,22 +2017,17 @@
+ 	if (res == NULL)
+ 		return PythonCmd_Error(interp);
+ 
+-	if (!(tmp = PyList_New(0))) {
++	obj_res = AsObj(res);
++	if (obj_res == NULL) {
+ 		Py_DECREF(res);
+ 		return PythonCmd_Error(interp);
+ 	}
+-
+-	s = AsString(res, tmp);
+-	if (s == NULL) {
+-		rv = PythonCmd_Error(interp);
+-	}
+ 	else {
+-		Tcl_SetResult(Tkapp_Interp(self), s, TCL_VOLATILE);
++		Tcl_SetObjResult(Tkapp_Interp(self), obj_res);
+ 		rv = TCL_OK;
+ 	}
+ 
+ 	Py_DECREF(res);
+-	Py_DECREF(tmp);
+ 
+ 	LEAVE_PYTHON
+ 

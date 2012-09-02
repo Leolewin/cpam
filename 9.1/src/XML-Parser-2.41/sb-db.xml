@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="XML-Parser" version="2.41" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="c320d2ffa459e6cdc6f9f59c1185855e"
+        checksum-type="md5" size="238441"
+        path="src/XML-Parser-2.41.tar.gz"/>
+      <patch checksum="58754e52dccaa4b8bf0df721b56ad89a"
+        checksum-type="md5" size="1594"
+        path="src/XML-Parser-2.41.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL EXPATLIBPATH=${SB_VAR_LIBEXPAT_LIB} \
+EXPATINCPATH=${SB_VAR_LIBEXPAT_INC} PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/XML/Parser/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/XML/Parser/.packlist
+rmdir ${_installsitearch}/auto/XML/Parser 2>/dev/null
+rmdir ${_installsitearch}/auto/XML 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<XML::Parser|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="libwww-perl"
+          module="5.12.2">v&gt;=6.02</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>

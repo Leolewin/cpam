@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="libpng" version="1.2.4" revision="3">
+    <package-manager name="pkgadd">
+      <category>System Environment/Libraries</category>
+      <title>PNG Image Library</title>
+      <vendor>Glenn Randers-Pehrson</vendor>
+
+      <description attribution="Redhat, Inc.">
+The libpng package contains a library of functions for creating and
+manipulating PNG (Portable Network Graphics) image format files. PNG
+is a bit-mapped graphics format similar to the GIF format. PNG was
+created to replace the GIF format, since GIF uses a patented data
+compression algorithm.
+      </description>
+
+      <install-name>libpng12</install-name>
+
+      <pkgname-base>TWWpng12</pkgname-base>
+
+      <version>1.2.4</version>
+      <revision>1</revision>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWzlb11"
+          title="ZLIB Compression Library"
+          subpkg="runtime">v&gt;=1.1.4</depend>
+      </subpkg>
+    </package-manager>
+
+    <changelog>
+      <change date="2003 August 7" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Reverse part of pngrtran.c patch that caused a 
+SEGV on Redhat Linux</para></item>
+      </change>
+
+      <change date="2004 August 4" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>libpng-patch01-pngrtran-filler-GG-overflow.txt:
+Fixes bug that was introduced in version 1.0.2 This bug was also
+publicised around January 2003. Because of its similarity to patch00,
+there has been some confusion and hardly anyone has applied this
+patch. There was a flurry of bug reports about this in June 2004 when
+people noticed that only half of the problem had been fixed. Mitre has
+assigned a new name, CAN-2004-0768, to this
+vulnerability.</para></item>
+        <item><para>libpng-patch03-trns-chunk-overflow.txt: This fixes
+the most dangerous of the newly reported vulnerabilities, which is
+CERT VU#388984 and Item 1 of CAN-2004-0597.</para></item>
+        <item><para>libpng-patch04-get-uint-31.txt: This patch defines
+PNG_UINT_31_MAX, PNG_UINT_32_MAX, PNG_SIZE_MAX, and png_get_uint_31(),
+which are needed by patches 05-08.</para></item>
+        <item><para>libpng-patch05-pngpread-chunklength.txt: Fixes
+CERT VU#817368.</para></item>
+        <item><para>libpng-patch06-pngread-chunklength.txt: Fixes CERT
+VU#286464.</para></item>
+        <item><para>libpng-patch07-png-read-png-overflow.txt: Fixes
+CERT VU#160448, Item 5 of CAN-2004-0599.</para></item>
+        <item><para>libpng-patch08-splt-buffer-overflow.txt: Fixes
+CERT VU#477512, Item 4 of CAN-2004-0598.</para></item>
+        <item><para>libpng-patch09-null-iccp-profile.txt: Fixes CERT
+VU#236656, CAN-2004-0598.</para></item>
+        <item><para>libpng-patch10-find-duplicate-chunk.txt: No
+security problem. The bugs are similar to the one fixed in patch 03,
+but the only effect is that libpng will fail to detect misplaced
+harmless duplicate chunks.</para></item>
+        <item><para>libpng-patch11-limit-dimensions.txt: This patch
+avoids a host of security problems related to buffer overflows that
+might occur when processing very large images. It causes the reader to
+reject any images having more than one million rows or one million
+columns.</para></item>
+        <item><para>libpng-patch11-limit-dimensions.txt: This patch
+avoids a host of security problems related to buffer overflows that
+might occur when processing very large images. It causes the reader to
+reject any images having more than one million rows or one million
+columns.</para></item>
+      </change>
+
+      <change date="2004 May 1" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0421 to fix an out of 
+bounds access error (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0421">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0421</ulink>). 
+When processing a broken PNG image, the error handling routine will
+access memory that is out of bounds when creating an error message.
+Depending on machine architecture, bounds checking and other
+protective measures, this problem could cause the program to crash if
+a defective or intentionally prepared PNG image file is handled by
+libpng.</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

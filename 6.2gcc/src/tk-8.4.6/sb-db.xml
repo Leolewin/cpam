@@ -1,0 +1,287 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="tk" version="8.4.6" revision="4">
+    <build-name>${SB_PROG_NAME}${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}84</install-name>
+
+    <sources>
+      <source checksum="24b7774d54c1c568cabe16f3498ddccd"
+        checksum-type="md5" size="3230760"
+        path="src/tk8.4.6-src.tar.gz"/>
+      <patch checksum="2a33f9a9fbfeccd8b279e5eae2bd957c"
+        checksum-type="md5" size="47543"
+        path="src/tk8.4.6-src.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  ARGS="--enable-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--enable-threads" ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--enable-threads" ;;
+x86_64*-linux*)
+  ARGS="--x-libraries=/usr/X11R6/lib64" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  ARGS="--enable-threads" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-threads" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  ARGS="--enable-threads" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+(cd unix; gmake CFLAGS="${CFLAGS:--O2}")
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies>
+        <depend program="tcl" state="build">v==8.4.6</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend var="TKP" install-name="tk84p"
+          set-var-only="1"/>
+        <depend program="tcl" var="TCL">v==8.4.6</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+cd unix
+rm -f config.cache
+CC="${CC:-gcc}" ./configure --enable-shared \
+--with-tcl=${SB_BUILD_BASE}/tcl8.4.6/unix ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# Modify TK_CC_SEARCH_FLAGS and TK_LD_SEARCH_FLAGS with path to tk
+# for use when linking with other applications
+${SB_PATH_SHTOOL} subst -q -e "\
+s!RUNTIME_DIR}!RUNTIME_DIR}:${SB_INSTALL_PREFIX}/lib:\
+${SB_VAR_TCL_LIB}!" config.status
+sh config.status
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+(cd unix && gmake install)
+
+# Fix runtime path to tk shared library
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  (cd unix
+  rm wish
+  gmake TCL_LIB_SPEC="-L${SB_VAR_TCL_LIB} -ltcl8.4" \
+  TK_BUILD_LIB_SPEC="-L${SB_INSTALL_PREFIX}/lib -ltk8.4" wish)
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 unix/wish \
+  ${SB_INSTALL_PREFIX}/bin/wish8.4 ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${TKP} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="static">
+      <dependencies>
+        <depend program="tcl" module="static"
+          state="build">v==8.4.6</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="tcl" module="static">v==8.4.6</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+cd unix
+rm -f config.cache
+CC="${CC:-gcc}" ./configure --disable-shared \
+--with-tcl=${SB_BUILD_BASE}/tcl8.4.6/unix ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/lib
+
+${SB_PATH_INSTALL} -o root -g 0 unix/libtk8.4.a ${SB_INSTALL_PREFIX}/lib
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/lib/libtk8.4.a
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="8.4.5" to="8.4.6">
+        <items name="Bug Fixes">
+          <item><para>[877950] stop crash during intra-image
+copy/resize</para></item>
+          <item><para>[899246] fix shrinking grid geometry
+calculations</para></item>
+        </items>
+
+        <items name="Feature Enhancements">
+          <item><para>post menubuttons so they stay on
+screen.</para></item>
+          <item><para>New msg catalogs for Esperanto and
+Polish</para></item>
+        </items>
+
+        <items name="Platform Support">
+          <item><para>[842952] Mac OS X: [scrollbar]</para></item>
+          <item><para>[776646] Win: native hand2/fleur
+cursors</para></item>
+          <item><para>[478568] Win: bold/italic font
+handling</para></item>
+          <item><para>[860454] Mac OS X: [event
+generate]</para></item>
+          <item><para>[840107] Mac OS X: Unicode
+clipboard</para></item>
+          <item><para>[517600] Mac OS X: handle FSRef's</para></item>
+          <item><para>Mac OS X: native [tk_messageBox]</para></item>
+          <item><para>Mac OS X: PowerBook keycode 0x34 -&gt;
+&lt;Return&gt;</para></item>
+          <item><para>Mac OS MouseWheel event handling</para></item>
+          <item><para>[809157] Mac OS X: Add alpha blending for images
+with partial transparency</para></item>
+          <item><para>[218561] Allow 64-bit configure on
+IRIX64-6.5*</para></item>
+        </items>
+      </change>
+
+      <change from="8.4.4" to="8.4.5">
+        <items name="Bug Fixes">
+          <item><para>[787065] Fix Button-2 binding for scale
+widget</para></item>
+          <item><para>[791500] Fix panedwindow refresh glitches for
+bg</para></item>
+          <item><para>[808039] Prevent [image create] from generating
+an image command name that overwrites an existing
+command</para></item>
+          <item><para>Fix image offset stippling for disabled
+buttons</para></item>
+          <item><para>Add 16bpp XGetImage support on
+Windows</para></item>
+          <item><para>[836483] Fix mem leak in '$listbox
+itemconfigure'</para></item>
+          <item><para>[723856] Correctly handle menu (un)posting on
+menus with spaces in their names</para></item>
+          <item><para>Fix menubutton -compound state disabled
+drawing.</para></item>
+        </items>
+
+        <items name="Feature Enhancements">
+          <item><para>Added -compound support for OS X bevel
+buttons.</para></item>
+          <item><para>[827535] Constrain tk_dialog to be sensibly
+sized and placed</para></item>
+          <item><para>[795717] Allow some control of foreground and
+background colors on Tk's
+tk_getOpenFile/tk_chooseDirectory</para></item>
+          <item><para>[820519] Updated Dutch (nl) message
+catalog</para></item>
+          <item><para>[826614] Provide more Tk build info in
+tkConfig.sh</para></item>
+          <item><para>[809157] Add alpha blending for images with
+partial transparency on Windows and Unix on 15bpp+
+displays</para></item>
+          <item><para>[820282] Use the XGCValues.function parameter
+when filling rectangles with XFillRectangles on Windows</para></item>
+          <item><para>[840107] Add OS X unicode clipboard
+support</para></item>
+          <item><para>[833819] Improve Tk's
+tk_getOpenFile/tk_chooseDirectory directory glob'ing
+speed</para></item>
+          <item><para>Improve AIX-64 build
+configuration</para></item>
+        </items>
+      </change>
+
+      <note type="build">
+        <para>64-bit binaries and libraries are available for AIX 5.x, 
+HP-UX 11.x, IRIX 6.5, and Solaris 7+. They can be found in:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/bin/64
+${SB_INSTALL_PREFIX}/lib/64
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The default Tcl module search path directories
+are:</para>
+        <screen>
+${SB_INSTALL_BASE}/tk84p/lib/Tktable2.8
+${SB_INSTALL_BASE}/tk84p/lib/bwidget1.7
+${SB_INSTALL_BASE}/tcl84p/lib/itcl3.2
+${SB_INSTALL_BASE}/tcl84p/lib/itk3.2
+${SB_INSTALL_BASE}/tcl84p/lib/iwidgets4.0.1
+${SB_INSTALL_BASE}/tcl84p/lib/tclcurl0.11
+${SB_INSTALL_BASE}/tcl84p/lib/tcllib1.6
+${SB_INSTALL_BASE}/tcl84p/lib/tclx8.4
+${SB_INSTALL_BASE}/tk84p/lib/tix8.1
+        </screen>
+
+        <para>The default search path is set by the
+<command>TCLLIBPATH</command> environment variable. The executable
+wrapper for <command>wish8.4</command> sets the variable to the paths
+above.</para>
+
+        <para>The following 3rd-party modules are available: BWidget
+1.7, Tktable 2.8, tix 8.1.4, tkcon 2.4.</para>
+
+        <para>Tkcon, available as
+<command>${SB_INSTALL_BASE}/tk84p/bin/tkcon8.4</command>, contains a more
+feature-rich replacement for the wish shell.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 12" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Create lib directory for "static" module when
+installing so we don't assume "default" module installed
+first</para></item>
+      </change>
+
+      <change date="2004 September 10" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix runtime path for 64-bit binaries and
+libraries</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Search for X11 libraries on RHEL 3.0/AMD64 in
+/usr/X11R6/lib64</para></item>
+      </change>
+
+      <change date="2004 June 17" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64bit and 64bit-static modules</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

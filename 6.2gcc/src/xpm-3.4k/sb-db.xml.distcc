@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="xpm" version="3.4k" revision="7">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="dd7c6df259912646671ab8cbd3fcafd7"
+        checksum-type="md5" size="148887"
+        path="src/xpm-3.4k.tar.gz"/>
+      <patch checksum="8882ead0d45b15a5bc321d61b1a0f5d7"
+        checksum-type="md5" size="1905"
+        path="src/xpm-3.4k.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <module name="default">
+      <configure>
+<![CDATA[
+xmkmf -a
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  make CDEBUGFLAGS="-O2 -qmaxmem=-1 -qarch=com" \
+  REQUIREDLIBS="-lX11" CC=xlc
+  cd sxpm; rm -f sxpm
+  make CC=xlc XPMLIBDIR="${SB_INSTALL_PREFIX}/lib \
+-Wl,-blibpath:${SB_INSTALL_PREFIX}/lib:/usr/lib:/lib" ;;
+*-osf*)
+  make
+  cd sxpm; rm -f sxpm
+  make USRLIBDIRPATH=${SB_INSTALL_PREFIX}/lib ;;
+*-hpux*)
+  make \
+  CDEBUGFLAGS="+O2 -z +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit" REQUIREDLIBS="-lX11"
+  cd sxpm; rm -f sxpm
+  make EXTRA_LOAD_FLAGS="-Wl,+s,+b,${SB_INSTALL_PREFIX}/lib" ;;
+*-irix6*)
+  make CDEBUGFLAGS="-O2 -OPT:Olimit=0"
+  cd sxpm
+  make CDEBUGFLAGS="-O2 -OPT:Olimit=0" \
+  LOCAL_LIBRARIES="-L../lib -lXpm -lXt -lSM -lICE -lXext -lX11" \
+  USRLIBDIRPATH=${SB_INSTALL_PREFIX}/lib
+  cd ../cxpm
+  make ;;
+x86_64*-linux*)
+  make CDEBUGFLAGS="-O2" REQUIREDLIBS="-L/usr/X11R6/lib64 -lX11"
+  cd sxpm; rm -f sxpm
+  make CDEBUGFLAGS="-O2" XPMLIBDIR="${SB_INSTALL_PREFIX}/lib \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib" ;;
+*-linux*)
+  make CDEBUGFLAGS="-O2" REQUIREDLIBS="-L/usr/X11R6/lib -lX11"
+  cd sxpm; rm -f sxpm
+  make CDEBUGFLAGS="-O2" XPMLIBDIR="${SB_INSTALL_PREFIX}/lib \
+-Wl,-rpath,${SB_INSTALL_PREFIX}/lib" ;;
+*-solaris2*)
+  export DISTCC_HOSTS='ilad2219 wsdd2501';
+  gmake MAKE=gmake CDEBUGFLAGS="-O2" CCOPTIONS="-mcpu=v8" CC="distcc gcc" \
+  PICFLAGS="-fpic" MFLAGS="CCOPTIONS='-mcpu=v8'" \
+  REQUIREDLIBS="-L/usr/openwin/lib -lX11"
+  cd sxpm; rm -f sxpm
+  gmake MAKE=gmake CDEBUGFLAGS="-O2" CCOPTIONS="-mcpu=v8" CC="distcc gcc" \
+  LOCAL_LDFLAGS="-L${SB_BUILD_PREFIX}/lib" \
+  EXTRA_LOAD_FLAGS="-R${SB_INSTALL_PREFIX}/lib" ;;
+esac
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/bin ${INSTALL_PREFIX}/lib \
+${SB_INSTALL_PREFIX}/man/man1 ${INSTALL_PREFIX}/include
+
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 lib/libXpm.a \
+${SB_INSTALL_PREFIX}/lib
+if [ -f "lib/libXpm.so.4.11" ]; then
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 lib/libXpm.so.4.11 \
+  ${SB_INSTALL_PREFIX}/lib
+  rm -f ${SB_INSTALL_PREFIX}/lib/libXpm.so
+  ln -s ./libXpm.so.4.11 ${SB_INSTALL_PREFIX}/lib/libXpm.so
+elif [ -f "lib/libXpm.so4.11" ]; then
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 lib/libXpm.so4.11 \
+  ${SB_INSTALL_PREFIX}/lib
+  rm -f ${SB_INSTALL_PREFIX}/lib/libXpm.so
+  ln -s ./libXpm.so4.11 ${SB_INSTALL_PREFIX}/lib/libXpm.so
+elif [ -f "lib/libXpm.sl" ]; then
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 lib/libXpm.sl \
+  ${SB_INSTALL_PREFIX}/lib
+elif [ -f "lib/libXpm.so" ]; then
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 lib/libXpm.so \
+  ${SB_INSTALL_PREFIX}/lib
+fi
+
+case "${SB_SYSTYPE}" in
+*-linux*)
+  ln -s ./libXpm.so.4.11 ${SB_INSTALL_PREFIX}/lib/libXpm.so.4 ;;
+esac
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/include/X11
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 lib/xpm.h \
+${SB_INSTALL_PREFIX}/include/X11
+# So <X11/Xpm.h> works too
+[ ! -f "${SB_INSTALL_PREFIX}/include/xpm.h" ] && \
+ln -s X11/xpm.h ${SB_INSTALL_PREFIX}/include/xpm.h
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 cxpm/cxpm sxpm/sxpm \
+${SB_INSTALL_PREFIX}/bin
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 cxpm/cxpm.man \
+${SB_INSTALL_PREFIX}/man/man1/cxpm.1
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 sxpm/sxpm.man \
+${SB_INSTALL_PREFIX}/man/man1/sxpm.1
+]]>
+      </install>
+    </module>
+
+    <changelog>
+      <change date="2004 August 27" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Search for X11 libraries on RHEL 3.0/AMD64 in
+/usr/X11R6/lib64</para></item>
+      </change>
+
+      <change date="2003 May 19" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Install shared library 755</para></item>
+        <item><para>Include dependency on X11 library</para></item>
+      </change>
+
+      <change date="2003 April 4" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX 4)</para></item>
+        <item><para>Rebuild on AIX with "-O2 -qmaxmem=-1
+-qarch=com"</para></item>
+      </change>
+
+      <change date="2003 January 30" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Make include/xpm.h a link to include/X11/xpm.h
+rather than a hard link to work around cross-directory link issues in
+AFS</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

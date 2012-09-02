@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mozplugger" version="1.6.0" revision="1"
+  systype="*-aix5*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="bfd3fd0524029331d36ac62969c1f560"
+        checksum-type="md5" size="52307"
+        path="src/mozplugger-1.6.0.tar.gz"/>
+      <patch checksum="ba40f78ff6ea3d77e7c4303c721e15d2"
+        checksum-type="md5" size="13373"
+        path="src/mozplugger-1.6.0.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  _plugger=mozplugger.sl ;;
+*)
+  _plugger=mozplugger.so ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" OS=aix ;;
+*-hpux11*)
+  CC= CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" OS=hp-cc ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" OS=irix ;;
+*-linux*)
+  CFLAGS="-fPIC" OS=linux ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  LD=ld OS=tru64 ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8 -fPIC"
+  OS=solaris-gcc ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -KPIC"
+  OS=solaris-cc ;;
+esac
+
+gmake ${OS} prefix=${SB_INSTALL_PREFIX} CC=${CC:-gcc} \
+NORM_CFLAGS="${CFLAGS}" RPM_OPT_FLAGS=""
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+ginstall -m 755 -o root -g 0 mozplugger.so \
+${SB_INSTALL_PREFIX}/lib/plugins/${_plugger}
+
+ginstall -m 644 -o root -g 0 /dev/null \
+${SB_INSTALL_PREFIX}/lib/mozpluggerrc
+ginstall -m 644 -o root -g 0 mozpluggerrc \
+${SB_INSTALL_PREFIX}/lib/mozpluggerrc.sample
+
+ginstall -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/man/man7
+ginstall -m 644 -o root -g 0 mozplugger.7 ${SB_INSTALL_PREFIX}/man/man7
+ginstall -m 755 -o root -g 0 mozplugger-helper mozplugger-controller \
+${SB_INSTALL_PREFIX}/bin
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -f ${SB_INSTALL_PREFIX}/bin/mozplugger \
+${SB_INSTALL_PREFIX}/lib/plugins/${_plugger} \
+${SB_INSTALL_PREFIX}/lib/mozpluggerrc \
+${SB_INSTALL_PREFIX}/lib/mozpluggerrc.sample \
+${SB_INSTALL_PREFIX}/man/man7/mozplugger.7
+]]>
+    </uninstall>
+
+    <module name="1.7.2">
+      <install-name>mozilla17</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="mozilla"
+          install-name="mozilla17">v&gt;=1.7.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>

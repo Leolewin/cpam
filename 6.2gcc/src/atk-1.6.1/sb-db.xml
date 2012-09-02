@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="atk" version="1.6.1" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="f77be7e128c957bd3056c2e270b5f283"
+        checksum-type="md5" size="493415"
+        path="src/atk-1.6.1.tar.bz2"/>
+      <patch checksum="78da88edf2257cd71f054e83bb78fdd4"
+        checksum-type="md5" size="869226"
+        path="src/atk-1.6.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="gtk-doc" var="GTKDOC" install-name="gtkdoc12"
+        add-path="prepend"
+        systype="*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.2</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib24"
+        add-path="prepend">v&gt;=2.4.4</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}}" \
+CFLAGS="${CFLAGS:=-O2}" LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB}/lib/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+--disable-gtk-doc --enable-static --enable-shared \
+--datadir=${_datadir} --disable-dependency-tracking \
+--with-html-dir=${_docdir} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+for _pc in atk.pc; do
+  ${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ${_pc}
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake libatkincludedir="${_includedir}/atk"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install libatkincludedir="${_includedir}/atk"
+]]>
+    </install>
+
+    <notes>
+      <change from="1.6.0" to="1.6.1">
+        <item><para>Update to build on Cygwin, (bug
+#136666)</para></item>
+        <item><para>Add translations: Gujarati, Basque, Walloon,
+Marathi</para></item>
+        <item><para>Update translations: Norwegian Nynorsk, Brazilian
+Portuguese, British, Romanian, Croatian, Catalan, Slovak</para></item>
+      </change>
+
+      <change from="1.5.5" to="1.6.0">
+        <item><para>Add translation: Serbian Jekavian,
+Estonian</para></item>
+        <item><para>Update translations: Arabic, Spanish, Lithuanian,
+Serbian, Belarusian</para></item>
+      </change>
+
+      <change from="1.5.4" to="1.5.5">
+        <item><para>Add translation: Canadian English</para></item>
+        <item><para>Update translations: Italian, Mongolian, Albanian,
+German, Greek, Hindi</para></item>
+      </change>
+
+      <change from="1.5.3" to="1.5.4">
+        <item><para>Update translations: Japanese, Azerbaijani,
+Finnish, French, Ukrainian, Simplified Chinese, Arabic,
+Albanian</para></item>
+      </change>
+
+      <change from="1.5.2" to="1.5.3">
+        <item><para>Corrected library name in atk-uninstalled.pc.in
+(bug #132283)</para></item>
+        <item><para>Corrcted property name for number of links in a
+AtkHypertext (bug #130022)</para></item>
+        <item><para>Add translation: Croatian</para></item>
+        <item><para>Update translations: Japanese, Italian, Norwegian,
+Albanian, Russian, Polish, Welsh, Swedish, Serbian, Dutch, Czech,
+Korean, Spanish, Danish, Portuguese</para></item>
+      </change>
+
+      <change from="1.5.1" to="1.5.2">
+        <item><para>Fix crasher bug in atk_text_free_ranges (bug
+#129837)</para></item>
+        <item><para>Change name of role from, "accel label" to
+"accelerator label" (bug #129499)</para></item>
+        <item><para>Update translations: Czech, Portuguese, Danish,
+Spanish, Afrikaans, Japanese, Norwegian, Greek, Swedish, Belarusian,
+Serbian, Arabic, Norwegian Nyorsk, Croatian, Polish, Lithuanian,
+Dutch, French, Mongolian, Korean, Arabic </para></item>
+      </change>
+
+      <change from="1.5.0" to="1.5.1">
+        <item><para>Change role names so that unlocalized names the
+same as Java role names (bug #125024)</para></item>
+        <item><para>Set state FOCUSED for object reported as having
+focus (bug #127400)</para></item>
+        <item><para>Add new property "accessible-hypertext-nlinks" for
+AtkObject. Add new signal link_activated and properties
+"number-of-anchors", "end-index" and "start-index" for AtkHyperlink.
+(bug 112390)</para></item>
+        <item><para>Make nicks and blurbs of properties
+translatable</para></item>
+        <item><para>Add new role ATK_ROLE_EDITBAR (bug
+116007)</para></item>
+        <item><para>Add translations: Afrikaans</para></item>
+        <item><para>Update translations: Serbian, Czech, Portuguese,
+Mongolian, Dutch</para></item>
+      </change>
+
+      <change from="1.4.1" to="1.5.0">
+        <item><para>Fix memory leaks in AtkRelations (bugs #124877,
+#125725)</para></item>
+        <item><para>Add version number to documentation (bug
+#125758)</para></item>
+        <item><para>Update translations: Catalan</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

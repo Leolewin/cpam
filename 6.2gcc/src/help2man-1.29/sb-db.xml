@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="help2man" version="1.29" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="d084ca7079239b4405f3a07298cf7229"
+        checksum-type="md5" size="37341"
+        path="src/help2man-1.29.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+rm -f config.cache
+PERL=${SB_VAR_PERL}/bin/perl ./configure --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 help2man.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 January 14" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

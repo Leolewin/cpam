@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="tmake" version="1.8" revision="11">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="3f28b40958e2be57b9dca05f4e5087ab"
+        checksum-type="md5" size="47410"
+        path="src/tmake-1.8.tar.gz"/>
+      <patch checksum="302210cb74f050ed965e84b19c3bec9f"
+        checksum-type="md5" size="26547"
+        path="src/tmake-1.8.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+hppa*-hpux11.[23]*)
+  # remove +DAportable
+  ${SB_PATH_SED} -i -e "\
+s! +DAportable!!" lib/hpux-acc/tmake.conf ;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+${SB_PATH_CHMOD} +w bin/progen bin/tmake
+
+${SB_PATH_SED} -i -e "\
+1 s|!/usr/bin/perl|!${PERL}/bin/perl|" bin/progen
+${SB_PATH_SED} -i -e "\
+1 s|!/usr/bin/perl|!${PERL}/bin/perl|" bin/tmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 bin/progen bin/tmake \
+${SB_INSTALL_PREFIX}/bin
+
+for lib in lib/aix-* lib/hpux-* lib/hpuxi-* lib/irix-* lib/linux-g++ \
+lib/linux-g++-64 lib/osf1-* lib/solaris* lib/unix; do
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/${lib}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${lib}/* ${SB_INSTALL_PREFIX}/${lib}
+done
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 19" revision="11"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2010 September 28" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 October 12" revision="9"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+        <item><para>Add support for HP-UX 11.31</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 March 23" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 November 29" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 June 14" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+        <item><para>Update perl dependency from 5.8.2 to
+5.8.6</para></item>
+      </change>
+
+      <change date="2005 February 20" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Use -model ansi on Tru64 UNIX</para></item>
+      </change>
+
+      <change date="2004 September 7" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add linux-g++-64 lib files for RHEL 3.0/AMD64
+support</para></item>
+      </change>
+
+      <change date="2004 January 23" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 June 1" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Patch aix-xlc template for AIX 5.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

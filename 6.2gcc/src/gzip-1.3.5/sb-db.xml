@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gzip" version="1.3.5" revision="3">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}13</install-name>
+
+    <sources>
+      <source checksum="3d6c191dfd2bf307014b421c12dc8469"
+        checksum-type="md5" size="331550"
+        path="src/gzip-1.3.5.tar.gz"/>
+      <patch checksum="5da4a5d626e3802171cf9b9584de7cc6"
+        checksum-type="md5" size="356"
+        path="src/gzip-1.3.5.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1 -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--disable-dependency-tracking --prefix=${INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install texinfo source files
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 fdl.texi gzip.texi version.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 April 1" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade texinfo dependency from 4.3 to
+4.6</para></item>
+      </change>
+
+      <change date="2003 June 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix for symlink attack in znew</para></item>
+      </change>
+
+      <change date="2003 April 22" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

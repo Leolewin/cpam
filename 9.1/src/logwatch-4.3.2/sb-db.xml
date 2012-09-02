@@ -1,0 +1,114 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="logwatch" version="4.3.2" revision="5">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}43</install-name>
+
+    <sources>
+      <source checksum="fdd2edb48c17f52ace9e2b00a3ac17f9"
+        checksum-type="md5" size="57546"
+        path="src/logwatch-4.3.2.tar.gz"/>
+      <patch checksum="e29f67812daed43cddac29c6a0f5f5bf"
+        checksum-type="md5" size="1104"
+        path="src/logwatch-4.3.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" var="PERL">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+:
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${_sysconfdir}/conf/logfiles ${_sysconfdir}/conf/services \
+${_sysconfdir}/scripts/logfiles ${_sysconfdir}/scripts/services \
+${_sysconfdir}/scripts/shared ${_docdir} ${SB_INSTALL_PREFIX}/man/man8
+
+# man page
+${SB_PATH_SED} \
+-e "s!/etc/log.d!${_sysconfdir}!g" \
+-e "s!/usr/share/doc!${_docdir}!g" \
+logwatch.8 >${SB_INSTALL_PREFIX}/man/man8/logwatch.8
+
+# documentation
+${SB_PATH_SED} -e "\
+s!/etc/log.d!${_sysconfdir}!g" \
+HOWTO-Make-Filter >${_docdir}/HOWTO-Make-Filter
+
+# binary
+${SB_PATH_SED} \
+-e "s!/usr/bin/perl!${SB_VAR_PERL}/bin/perl!" \
+-e "s!/etc/log.d!${_sysconfdir}!g" \
+-e "/kirk/ d" \
+scripts/logwatch.pl >${SB_INSTALL_PREFIX}/bin/logwatch
+${SB_PATH_CHMOD} 755 ${SB_INSTALL_PREFIX}/bin/logwatch
+${SB_PATH_CHOWN} 0:0 ${SB_INSTALL_PREFIX}/bin/logwatch
+
+# scripts
+for _script in scripts/logfiles/*/* scripts/services/* \
+scripts/shared/*; do
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+  ${_sysconfdir}/$(dirname ${_script})
+  ${SB_PATH_SED} \
+-e "s!/usr/bin/perl!${SB_VAR_PERL}/bin/perl!" \
+-e "s!/bin/bash!/bin/sh!" \
+-e "s!/bin/egrep!egrep!" ${_script} >${_sysconfdir}/${_script}
+  ${SB_PATH_CHMOD} 755 ${_sysconfdir}/${_script}
+  ${SB_PATH_CHOWN} 0:0 ${_sysconfdir}/${_script}
+done
+
+# config files
+${SB_PATH_SED} -e "\
+s!/etc/log.d!${_sysconfdir}!g" \
+conf/logwatch.conf >${_sysconfdir}/conf/logwatch.conf
+${SB_PATH_INSTALL} -m 644 -o root -g 0 conf/logfiles/* \
+${_sysconfdir}/conf/logfiles
+${SB_PATH_INSTALL} -m 644 -o root -g 0 conf/services/* \
+${_sysconfdir}/conf/services
+]]>
+    </install>
+
+    <notes>
+      <note type="usage">
+        <para>All files in ${SB_INSTALL_PREFIX}/etc/conf/logfiles and
+${SB_INSTALL_PREFIX}/etc/conf/services have been marked as configuration files.
+The configuration files in ${SB_INSTALL_PREFIX}/etc/conf/services control the
+service scripts in ${SB_INSTALL_PREFIX}/etc/scripts/services.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 February 1" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2009 August 11" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Upgrade perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+
+      <change date="2004 January 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

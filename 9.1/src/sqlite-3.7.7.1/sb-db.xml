@@ -1,0 +1,1079 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="sqlite" version="3.7.7.1" revision="2">
+    <install-name>lib${SB_PROG_NAME}37</install-name>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  # +O2 causes testsuite failure
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-autoconf-3070701</build-name>
+
+      <sources>
+        <source checksum="554026fe7fac47b1cf61c18d5fe43419"
+          checksum-type="md5" size="1748837"
+          path="src/sqlite-autoconf-3070701.tar.gz"/>
+        <patch checksum="381a8fc5a0646ba0fce1f9ee62d71c82"
+          checksum-type="md5" size="14270"
+          path="src/sqlite-autoconf-3070701.tww.patch"/>
+        <patch checksum="db98f25acc767f08a9b89a2617baf631"
+          checksum-type="md5" size="1399422"
+          path="src/sqlite-autoconf-3070701.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="ncurses" var="NCURSES">v==5.7</depend>
+        <depend program="readline" var="READLINE">v==6.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="sqlite"
+          module="ruby-1.8.7">v==3.7.7.1</depend>
+        <depend program="sqlite"
+          module="ruby-1.9.2">v==3.7.7.1</depend>
+        <depend program="sqlite"
+          module="tcl-8.5.10">v==3.7.7.1</depend>
+        <depend program="sqlite" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==3.7.7.1</depend>
+        <depend program="sqlite"
+          module="DBD-SQLite-5.12.2">v==3.7.7.1</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  # +O2 causes testsuite failure
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+# Fedora has:
+# -DSQLITE_ENABLE_COLUMN_METADATA=1 -DSQLITE_DISABLE_DIRSYNC=1
+# -DSQLITE_ENABLE_FTS3=3 -DSQLITE_ENABLE_RTREE=1
+# -DSQLITE_SECURE_DELETE=1 -DSQLITE_ENABLE_UNLOCK_NOTIFY=1
+#
+# Debian has:
+# -DSQLITE_SECURE_DELETE -DSQLITE_ENABLE_COLUMN_METADATA
+# -DSQLITE_ENABLE_FTS3 -DSQLITE_ENABLE_RTREE=1 -DSQLITE_SOUNDEX=1
+# -DSQLITE_ENABLE_UNLOCK_NOTIFY -DSQLITE_OMIT_LOOKASIDE=1
+#
+# See http://www.sqlite.org/compile.html for option descriptions
+ 
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA \
+-DSQLITE_DISABLE_DIRSYNC -DSQLITE_ENABLE_RTREE \
+-DSQLITE_SECURE_DELETE -DSQLITE_ENABLE_UNLOCK_NOTIFY \
+-DSQLITE_ENABLE_FTS3 -DSQLITE_SOUNDEX \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB} \
+${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB} \
+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_READLINE+set}" != set && echo "--disable-readline") \
+--disable-dependency-tracking --libdir="${SB_INSTALL_PREFIX_LIB}" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix="${SB_INSTALL_PREFIX}"
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" sqlite3.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake all
+]]>
+      </build>
+
+      <uninstall>
+        <remove-db-entry program="sqlite"
+          module="ruby-1.8.7">v==3.7.7.1</remove-db-entry>
+        <remove-db-entry program="sqlite"
+          module="ruby-1.9.2">v==3.7.7.1</remove-db-entry>
+        <remove-db-entry program="sqlite"
+          module="tcl-8.5.10">v==3.7.7.1</remove-db-entry>
+        <remove-db-entry module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==3.7.7.1</remove-db-entry>
+        <remove-db-entry program="sqlite"
+          module="DBD-SQLite-5.12.2">v==3.7.7.1</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <module name="ruby-1.8.7">
+      <build-name>sqlite3-1.3.5</build-name>
+
+      <sources>
+        <source checksum="1285b91e57d1bbe2700b435f25570f10"
+          checksum-type="md5" size="56320"
+          path="src/sqlite3-1.3.5.gem"
+          noop="1" var="GEMFILE"/>
+      </sources>
+
+      <dependencies>
+        <depend program="ruby" install-name="ruby18"
+          add-path="prepend">v&gt;=1.8.7</depend>
+        <depend program="sqlite" var="LIBSQLITE">v==3.7.7.1</depend>
+        <depend program="rubygems" module="1.8.7"
+          add-path="prepend">v&gt;=1.8.10</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_rbsubdir="ruby18"
+
+_ruby_libdir="${SB_INSTALL_PREFIX_LIB}/${_rbsubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+# Extract to build_prefix for testing ("gem unpack" only works for
+# installed gems, which this gem is not yet, but "gem install"
+# builds exts, even though we have to remove them again in order
+# for <test> to work later).
+LDFLAGS="${LDFLAGS+${LDFLAGS}} \
+${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}" \
+gem install --local -V --no-rdoc --no-ri \
+--install-dir=${SB_BUILD_PREFIX} ${SB_SRC_GEMFILE} -- \
+"--with-sqlite3-dir='${SB_VAR_LIBSQLITE}'" \
+"--with-ldflags='${LDFLAGS+${LDFLAGS}} ${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}'"
+]]>
+      </build>
+
+      <test>
+        <dependencies replace="0">
+          <depend program="hoe" module="1.8.7">v&gt;=2.12.3</depend>
+          <depend program="mini_portile"
+            module="1.8.7">v&gt;=0.2.2</depend>
+          <depend program="rake" module="1.8.7"
+            add-path="prepend">v&gt;=0.9.2</depend>
+          <depend program="rake-compiler" module="1.8.7"
+            add-path="prepend">v&gt;=0.7.9</depend>
+        </dependencies>
+<![CDATA[
+export RUBYLIB="${SB_BUILD_PREFIX}/gems/${SB_BUILD_NAME}/lib"
+
+(cd gems/${SB_BUILD_NAME}
+ # rake_compiler complains if we run the tests with objects already built
+ ruby setup.rb distclean
+ CONFIGURE_ARGS="with-sqlite3-dir='${SB_VAR_LIBSQLITE}' \
+ with-ldflags='${LDFLAGS+${LDFLAGS}} ${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}'" \
+ rake test)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+# Install directly from the gem payload.
+LDFLAGS="${LDFLAGS+${LDFLAGS}} \
+${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}" \
+gem install --local -V --rdoc --ri \
+--install-dir=${_ruby_libdir} ${SB_SRC_GEMFILE} -- \
+"--with-sqlite3-dir='${SB_VAR_LIBSQLITE}'" \
+"--with-ldflags='${LDFLAGS+${LDFLAGS}} ${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}'"
+
+# install path for Ruby's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_ruby_libdir}/include.paths.d
+cat >${_ruby_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_ruby_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_ruby_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="tcl-8.5.10">
+      <build-name>${SB_PROG_NAME}-autoconf-3070701</build-name>
+
+      <sources>
+        <source checksum="554026fe7fac47b1cf61c18d5fe43419"
+          checksum-type="md5" size="1748837"
+          path="src/sqlite-autoconf-3070701.tar.gz"/>
+        <patch checksum="381a8fc5a0646ba0fce1f9ee62d71c82"
+          checksum-type="md5" size="14270"
+          path="src/sqlite-autoconf-3070701.tww.patch"/>
+        <patch checksum="db98f25acc767f08a9b89a2617baf631"
+          checksum-type="md5" size="1399422"
+          path="src/sqlite-autoconf-3070701.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="tcl" var="TCL" install-name="tcl85"
+          add-path="prepend" type="build">v&gt;=8.5.10</depend>
+        <depend program="ncurses" var="NCURSES">v==5.7</depend>
+        <depend program="readline" var="READLINE">v==6.2</depend>
+        <depend program="sqlite" var="LIBSQLITE">v==3.7.7.1</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_tclsubdir="tcl85"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_tclsubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+(cd tea
+ ${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+ CPPFLAGS="-I${SB_VAR_LIBSQLITE_INC} \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+ LDFLAGS="-L${SB_VAR_LIBSQLITE_LIB} \
+${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB} \
+${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB} \
+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+ --with-tcl=${SB_VAR_TCL_LIB} --with-tclinclude=${SB_VAR_TCL_INC} \
+ --with-system-sqlite --libdir=${_install_prefix} \
+ --mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX})
+
+# Fix path to AIX linker script
+${SB_PATH_SED} -i -e "\
+/SHLIB_LD/ s| [^ ][^ ]*/ldAix| ${SB_VAR_TCL_LIB}/tcl8.5/ldAix|;" \
+tea/Makefile
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C tea all
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+: tests are no longer shipped
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake -C tea install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <build-name>${SB_PROG_NAME}-autoconf-3070701</build-name>
+
+      <sources>
+        <source checksum="554026fe7fac47b1cf61c18d5fe43419"
+          checksum-type="md5" size="1748837"
+          path="src/sqlite-autoconf-3070701.tar.gz"/>
+        <patch checksum="381a8fc5a0646ba0fce1f9ee62d71c82"
+          checksum-type="md5" size="14270"
+          path="src/sqlite-autoconf-3070701.tww.patch"/>
+        <patch checksum="db98f25acc767f08a9b89a2617baf631"
+          checksum-type="md5" size="1399422"
+          path="src/sqlite-autoconf-3070701.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="ncurses" var="NCURSES"
+          module="64bit">v==5.7</depend>
+        <depend program="readline" var="READLINE"
+          module="64bit">v==6.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+ 
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-DSQLITE_ENABLE_COLUMN_METADATA \
+-DSQLITE_DISABLE_DIRSYNC -DSQLITE_ENABLE_RTREE \
+-DSQLITE_SECURE_DELETE -DSQLITE_ENABLE_UNLOCK_NOTIFY \
+-DSQLITE_ENABLE_FTS3 -DSQLITE_SOUNDEX \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_READLINE+-L${SB_VAR_READLINE}/${_libdir} \
+${CC_LD_RT}${SB_VAR_READLINE}/${_libdir}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES}/${_libdir} \
+${CC_LD_RT}${SB_VAR_NCURSES}/${_libdir}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_READLINE+set}" != set && echo "--disable-readline") \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix="${SB_INSTALL_PREFIX}"
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" sqlite3.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename "${_libdir}") "${SB_INSTALL_PREFIX}/lib/64" ;;
+  *-irix*)
+    ln -s ../lib64 "${SB_INSTALL_PREFIX}/lib/64" ;;
+  esac
+fi
+
+gmake install-libLTLIBRARIES install-pkgconfigDATA
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf "${SB_INSTALL_PREFIX}/lib/64" "${SB_INSTALL_PREFIX}/${_libdir}"
+]]>
+      </uninstall>
+    </module>
+
+    <module name="ruby-1.9.2">
+      <build-name>sqlite3-1.3.5</build-name>
+
+      <sources>
+        <source checksum="1285b91e57d1bbe2700b435f25570f10"
+          checksum-type="md5" size="56320"
+          path="src/sqlite3-1.3.5.gem"
+          noop="1" var="GEMFILE"/>
+      </sources>
+
+      <dependencies>
+        <depend program="ruby" install-name="ruby19"
+          add-path="prepend">v&gt;=1.9.2</depend>
+        <depend program="sqlite" var="LIBSQLITE">v==3.7.7.1</depend>
+        <depend program="rubygems" module="1.9.2"
+          add-path="prepend">v&gt;=1.8.10</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_rbsubdir="ruby19"
+
+_ruby_libdir="${SB_INSTALL_PREFIX_LIB}/${_rbsubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+# Extract to build_prefix for testing ("gem unpack" only works for
+# installed gems, which this gem is not yet, but "gem install"
+# builds exts, even though we have to remove them again in order
+# for <test> to work later).
+gem install --local -V --no-rdoc --no-ri \
+--install-dir=${SB_BUILD_PREFIX} ${SB_SRC_GEMFILE} -- \
+"--with-sqlite3-dir='${SB_VAR_LIBSQLITE}'" \
+"--with-ldflags='${LDFLAGS+${LDFLAGS}} ${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}'"
+]]>
+      </build>
+
+      <test>
+        <dependencies replace="0">
+          <depend program="hoe" module="1.9.2">v&gt;=2.12.3</depend>
+          <depend program="mini_portile"
+            module="1.9.2">v&gt;=0.2.2</depend>
+          <depend program="rake" module="1.9.2"
+            add-path="prepend">v&gt;=0.9.2</depend>
+          <depend program="rake-compiler" module="1.9.2"
+            add-path="prepend">v&gt;=0.7.9</depend>
+        </dependencies>
+<![CDATA[
+export RUBYLIB="${SB_BUILD_PREFIX}/gems/${SB_BUILD_NAME}/lib"
+
+(cd gems/${SB_BUILD_NAME}
+ # rake_compiler complains if we run the tests with objects already built
+ ruby setup.rb distclean
+ CONFIGURE_ARGS="with-sqlite3-dir='${SB_VAR_LIBSQLITE}' \
+ with-ldflags='${LDFLAGS+${LDFLAGS}} ${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}'" \
+ rake test)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+# Install directly from the gem payload.
+LDFLAGS="${LDFLAGS+${LDFLAGS}} \
+${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}" \
+gem install --local -V --rdoc --ri \
+--install-dir=${_ruby_libdir} ${SB_SRC_GEMFILE} -- \
+"--with-sqlite3-dir='${SB_VAR_LIBSQLITE}'" \
+"--with-ldflags='${LDFLAGS+${LDFLAGS}} ${CC_LD_RT}${SB_VAR_LIBSQLITE_LIB}'"
+
+# install path for Ruby's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_ruby_libdir}/include.paths.d
+cat >${_ruby_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_ruby_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_ruby_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="DBD-SQLite-5.12.2">
+      <build-name>DBD-SQLite-1.33</build-name>
+
+      <sources>
+        <source checksum="623e1340f98d4df1d2f313b49489471c"
+          checksum-type="md5" size="1400534"
+          path="src/DBD-SQLite-1.33.tar.gz"/>
+        <patch checksum="462982a440a44a1db16db27683e5ce76"
+          checksum-type="md5" size="2838"
+          path="src/DBD-SQLite-1.33.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="DBI" module="5.12.2">v&gt;=1.616</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+
+# strip -D_BSD_TYPES on IRIX because it brings in static/non-static
+# declarations of select().
+case "${SB_SYSTYPE}" in
+*-irix*)
+  ${SB_PATH_SED} -i -e "\
+s! -D_BSD_TYPES!!;" Makefile ;;
+esac
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix} ${SB_INSTALL_PREFIX}/man/man3
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>SQLite is in the public domain. No claim of ownership is
+made to any part of the code. You can do anything you want with
+it.</para>
+        <para>However, the sqlite3 binary, linked with the GNU
+Readline library, is covered under the GPL.</para>
+      </license>
+
+      <license module="DBD-SQLite">
+        <para>This module is distributed under the same terms as Perl
+itself, and is copyright Matt Sergeant, 2002.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="3.7.7" to="3.7.7.1">
+        <item><para>Fix a bug causing PRAGMA case_sensitive_like
+statements compiled using sqlite3_prepare() to fail with an
+SQLITE_SCHEMA error.</para></item>
+      </change>
+
+      <change from="3.7.6.3" to="3.7.7">
+        <item><para>Add support for URI filenames</para></item>
+        <item><para>Add the sqlite3_vtab_config() interface in support
+of ON CONFLICT clauses with virtual tables.</para></item>
+        <item><para>Add the xSavepoint, xRelease and xRollbackTo methods
+in virtual tables in support of SAVEPOINT for virtual
+tables.</para></item>
+        <item><para>Update the built-in FTS3/FTS4 and RTREE virtual
+tables to support ON CONFLICT clauses and REPLACE.</para></item>
+        <item><para>Avoid unnecessary reparsing of the database
+schema.</para></item>
+        <item><para>Added support for the FTS4 prefix option and the
+FTS4 order option.</para></item>
+        <item><para>Allow WAL-mode databases to be opened read-only as
+long as there is an existing read/write connection.</para></item>
+        <item><para>Added support for short filenames.</para></item>
+      </change>
+
+      <change from="3.7.6.2" to="3.7.6.3">
+        <item><para>Fix a problem with WAL mode which could cause
+transactions to silently rollback if the cache_size is set very small
+(less than 10) and SQLite comes under memory pressure.</para></item>
+      </change>
+
+      <change from="3.7.6.1" to="3.7.6.2">
+        <item><para>Fix the function prototype for the open(2) system
+call to agree with POSIX. Without this fix, pthreads does not work
+correctly on NetBSD.</para></item>
+      </change>
+
+      <change from="3.7.6" to="3.7.6.1">
+        <item><para>Fix a bug in 3.7.6 that only appears if the
+SQLITE_FCNTL_SIZE_HINT file control is used with a build of SQLite that
+makes use of the HAVE_POSIX_FALLOCATE compile-time option and which has
+SQLITE_ENABLE_LOCKING_MODE turned off.</para></item>
+      </change>
+
+      <change from="3.7.5" to="3.7.6">
+        <item><para>Added the sqlite3_wal_checkpoint_v2() interface and
+enhanced the wal_checkpoint pragma to support blocking
+checkpoints.</para></item>
+        <item><para>Improvements to the query planner so that it makes
+better estimates of plan costs and hence does a better job of choosing
+the right plan, especially when SQLITE_ENABLE_STAT2 is
+used.</para></item>
+        <item><para>Fix a bug which prevented deferred foreign key
+constraints from being enforced when sqlite3_finalize() was not called
+by one statement with a failed foreign key constraint prior to another
+statement with foreign key constraints running.</para></item>
+        <item><para>Integer arithmetic operations that would have
+resulted in overflow are now performed using floating-point
+instead.</para></item>
+        <item><para>Increased the version number on the VFS object to 3
+and added new methods xSetSysCall, xGetSysCall, and xNextSysCall used
+for doing full-coverage testing.</para></item>
+        <item><para>Increase the maximum value of SQLITE_MAX_ATTACHED
+from 30 to 62 (though the default value remains at 10).</para></item>
+        <item><para>Enhancements to FTS4:</para>
+        <unorderedlist>
+          <item><para>Added the fts4aux table</para></item>
+          <item><para>Added support for compressed FTS4
+content</para></item>
+          <item><para>Enhance the ANALYZE command to support the name of
+an index as its argument, in order to analyze just that one
+index.</para></item>
+          <item><para>Added the "unix-excl" built-in VFS on unix and
+unix-like platforms.</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="3.7.4" to="3.7.5">
+        <item><para>Added the sqlite3_vsnprintf()
+interface.</para></item>
+        <item><para>Added the SQLITE_DBSTATUS_LOOKASIDE_HIT,
+SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE, and
+SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL options for the sqlite3_db_status()
+interface.</para></item>
+        <item><para>Added the SQLITE_OMIT_AUTORESET compile-time
+option.</para></item>
+        <item><para>Added the SQLITE_DEFAULT_FOREIGN_KEYS compile-time
+option.</para></item>
+        <item><para>Updates to sqlite3_stmt_readonly() so that its
+result is well-defined for all prepared statements and so that it works
+with VACUUM.</para></item>
+        <item><para>Added the "-heap" option to the command-line
+shell</para></item>
+        <item><para>Fix a bug involving frequent changes in and out of
+WAL mode and VACUUM that could (in theory) cause database
+corruption.</para></item>
+        <item><para>Enhance the sqlite3_trace() mechanism so that nested
+SQL statements such as might be generated by virtual tables are shown
+but are shown in comments and without parameter expansion. This greatly
+improves tracing output when using the FTS3/4 and/or RTREE virtual
+tables.</para></item>
+        <item><para>Change the xFileControl() methods on all built-in
+VFSes to return SQLITE_NOTFOUND instead of SQLITE_ERROR for an
+unrecognized operation code.</para></item>
+        <item><para>The SQLite core invokes the
+SQLITE_FCNTL_SYNC_OMITTED file control to the VFS in place of a call to
+xSync if the database has PRAGMA synchronous set to OFF.</para></item>
+      </change>
+
+      <change from="3.7.3" to="3.7.4">
+        <item><para>Added the sqlite3_blob_reopen() interface to allow
+an existing sqlite3_blob object to be rebound to a new
+row.</para></item>
+        <item><para>Use the new sqlite3_blob_reopen() interface to
+improve the performance of FTS.</para></item>
+        <item><para>VFSes that do not support shared memory are
+allowed to access WAL databases if PRAGMA locking_mode is set to
+EXCLUSIVE.</para></item>
+        <item><para>Enhancements to EXPLAIN QUERY PLAN.</para></item>
+        <item><para>Added the sqlite3_stmt_readonly()
+interface.</para></item>
+        <item><para>Added PRAGMA checkpoint_fullfsync.</para></item>
+        <item><para>Added the SQLITE_FCNTL_FILE_POINTER option to
+sqlite3_file_control().</para></item>
+        <item><para>Added support for FTS4 and enhancements to the FTS
+matchinfo() function.</para></item>
+        <item><para>Added the test_superlock.c module which provides
+example code for obtaining an exclusive lock to a rollback or WAL
+database.</para></item>
+        <item><para>Added the test_multiplex.c module which provides
+an example VFS that provides multiplexing (sharding) of a DB,
+splitting it over multiple files of fixed size.</para></item>
+        <item><para>A very obscure bug associated with the or
+optimization was fixed.</para></item>
+      </change>
+
+      <change from="3.7.2" to="3.7.3">
+        <item><para>Added the sqlite3_create_function_v2() interface
+that includes a destructor callback.</para></item>
+        <item><para>Added support for custom r-tree queries using
+application-supplied callback routines to define the boundary of the
+query region.</para></item>
+        <item><para>The default page cache strives more diligently to
+avoid using memory beyond what is allocated to it by
+SQLITE_CONFIG_PAGECACHE. Or if using page cache is allocating from the
+heap, it strives to avoid going over the sqlite3_soft_heap_limit64(),
+even if SQLITE_ENABLE_MEMORY_MANAGEMENT is not set.</para></item>
+        <item><para>Added the sqlite3_soft_heap_limit64() interface as
+a replacement for sqlite3_soft_heap_limit().</para></item>
+        <item><para>The ANALYZE command now gathers statistics on
+tables even if they have no indices.</para></item>
+        <item><para>Tweaks to the query planner to help it do a better
+job of finding the most efficient query plan for each
+query.</para></item>
+        <item><para>Enhanced the internal text-to-numeric conversion
+routines so that they work with UTF8 or UTF16, thereby avoiding some
+UTF16-to-UTF8 text conversions.</para></item>
+        <item><para>Fix a problem that was causing excess memory usage
+with large WAL transactions in win32 systems.</para></item>
+        <item><para>The interface between the VDBE and B-Tree layer is
+enhanced such that the VDBE provides hints to the B-Tree layer letting
+the B-Tree layer know when it is safe to use hashing instead of
+B-Trees for transient tables.</para></item>
+        <item><para>Miscellaneous documentation
+enhancements.</para></item>
+      </change>
+
+      <change from="3.7.1" to="3.7.2">
+        <item><para>Fix an old and very obscure bug that can lead to
+corruption of the database free-page list when incremental_vacuum is
+used.</para></item>
+      </change>
+
+      <change from="3.7.0.1" to="3.7.1">
+        <item><para>Added new commands SQLITE_DBSTATUS_SCHEMA_USED and
+SQLITE_DBSTATUS_STMT_USED to the sqlite3_db_status() interface, in
+order to report out the amount of memory used to hold the schema and
+prepared statements of a connection.</para></item>
+        <item><para>Increase the maximum size of a database pages from
+32KiB to 64KiB.</para></item>
+        <item><para>Use the LIKE optimization even if the right-hand
+side string contains no wildcards.</para></item>
+        <item><para>Added the SQLITE_FCNTL_CHUNK_SIZE verb to the
+sqlite3_file_control() interface for both unix and windows, to cause
+database files to grow in large chunks in order to reduce disk
+fragmentation.</para></item>
+        <item><para>Fixed a bug in the query planner that caused
+performance regressions relative to 3.6.23.1 on some complex
+joins.</para></item>
+        <item><para>Fixed a typo in the OS/2 backend.</para></item>
+        <item><para>Refactored the pager module.</para></item>
+        <item><para>The SQLITE_MAX_PAGE_SIZE compile-time option is
+now silently ignored. The maximum page size is hard-coded at 65536
+bytes.</para></item>
+      </change>
+
+      <change from="3.7.0" to="3.7.0.1">
+        <item><para>Fix a potential database corruption bug that can
+occur if version 3.7.0 and version 3.6.23.1 alternately write to the
+same database file. Ticket [51ae9cad317a1]</para></item>
+        <item><para>Fix a performance regression related to the query
+planner enhancements of version 3.7.0.</para></item>
+      </change>
+
+      <change from="3.6.23.1" to="3.7.0">
+        <item><para>SQLite version 3.7.0 is a major new release of
+SQLite that features a new transaction control mechanism usingn a
+write-ahead log or WAL. The traditional rollback-journal is still used
+as the default so there should be no visible change for legacy
+programs. But newer programs can take advantage of improved
+performance and concurrency by enabling the WAL journaling
+mode.</para></item>
+        <item><para>SQLite version 3.7.0 also contains some query
+planner enhancements and a few obscure bug fixes, but the only really
+big change is the addition of WAL mode. </para></item>
+      </change>
+
+      <change from="3.6.23" to="3.6.23.1">
+        <item><para>SQLite version 3.6.23.1 is a patch release to fix
+a bug in the offsets() function of FTS3  at the request of the
+Mozilla. </para></item>
+      </change>
+
+      <change from="3.6.22" to="3.6.23">
+        <item><para>SQLite version 3.6.23 is a regular bimonthly
+release of SQLite. Upgrading from the prior release is purely
+optional.</para></item>
+        <item><para>This release contains new pragmas: the
+secure_delete pragma, and the compile_options pragma. There are a new
+SQL functions: sqlite_compileoption_used() and
+sqlite_compileoption_get(). New C/C++ interfaces:
+sqlite3_compileoption_used(), sqlite3_compileoption_get(),
+SQLITE_CONFIG_LOG, and sqlite3_log().</para></item>
+        <item><para>This release also includes several minor bug fixes
+and performance improvements. Support for SQLITE_OMIT_FLOATING_POINT
+is enhanced. There are on-going improvements to FTS3.</para></item>
+        <item><para>The ".genfkey" command in the Command Line
+Interface has been removed. SQLite has supported standard SQL foreign
+key constraints since version 3.6.19 and so the ".genfkey" command was
+seen as an anachronism.</para></item>
+      </change>
+
+      <change from="3.6.21" to="3.6.22">
+        <item><para>SQLite version 3.6.22 is a bug-fix release. Two
+bugs have been fixed that might cause incorrect query
+results.</para>
+        <unorderedlist>
+          <item><para>Ticket 31338dca7e describes a problem with queries
+that have a WHERE clause of the form (x AND y) OR z where x and z come
+from one table of a join and y comes from a different
+table.</para></item>
+          <item><para>Ticket eb5548a849 describes a problem where the
+use of the CAST operator in the WHERE clause can lead to incorrect
+results if the column being cast to a new datatype is also used in the
+same WHERE clause without being cast. </para></item>
+        </unorderedlist></item>
+        <item><para>Both bugs are obscure, but because they could
+arise in an application after deployment, it is recommended that all
+applications upgrade SQLite to version 3.6.22.</para></item>
+        <item><para>This release also includes other minor bug fixes
+and performance enhancements, especially in the FTS3 extension.
+</para></item>
+      </change>
+
+      <change from="3.6.20" to="3.6.21">
+        <item><para>SQLite version 3.6.21 focuses on performance
+optimization. For a certain set of traces, this version uses 12% fewer
+CPU instructions than the previous release (as measured by valgrind).
+In addition, the FTS3 extension has been through an extensive cleanup
+and rework and the sqlite3_trace()  interface has been modified to
+insert bound parameter values into its output.</para></item>
+      </change>
+
+      <change from="3.6.19" to="3.6.20">
+        <item><para>SQLite version 3.6.20 is a general maintenance
+release. The query planner has been enhanced to work better with bound
+parameters in LIKE and GLOB operators and in range constraints and
+various minor bugs have been fixed. Upgrading from 3.6.19 is
+optional.</para></item>
+      </change>
+
+      <change from="3.6.18" to="3.6.19">
+        <item><para>SQLite version 3.6.19 adds native support for
+foreign key constraints, including deferred constraints and cascading
+deletes. Enforcement of foreign keys is disabled by default for
+backwards compatibility and must be turned on using the foreign_keys
+pragma.</para></item>
+        <item><para>Version 3.6.19 also adds support for the IS and IS
+NOT operators. Formerly, SQLite (as most other SQL database engines)
+supported IS NULL and IS NOT NULL. The IS and IS NOT operators are
+generalizations that allow the right-hand side to be an arbitrary
+expression. IS and IS NOT work the same as == (equals) and != (not
+equals) except that with IS and IS NOT the NULL values compare equal
+to one another.</para></item>
+      </change>
+
+      <change from="3.6.17" to="3.6.18">
+        <item><para>Beginning with this release, the SQLite source
+code is tracked and managed using the Fossil  distributed
+configuration management system. SQLite was previously versioned using
+CVS. The entire CVS history has been imported into Fossil. The older
+CVS repository remains on the website but is read-only.</para></item>
+        <item><para>There are two major enhancements in SQLite version
+3.6.18. The first is a series or refinements to the query planner that
+help SQLite to choose better plans for joins where in the past it was
+selecting suboptimal query plans. The SQLITE_ENABLE_STAT2 compile-time
+option has been added to cause SQLite to collect histogram data on
+indices when the ANALYZE command is run. The use of histograms improve
+the query planning performance even more.</para></item>
+        <item><para>The second major enhancement is that SQLite now
+support recursive triggers. The older non-recursive behavior of
+triggers is still the default behavior. Recursive triggers are
+activated using the recursive_triggers pragma. In addition to allowing
+triggers to call themselves (either directly or indirectly) the new
+capability also fires DELETE triggers on rows that are removed from a
+table as a result of REPLACE conflict resolution
+processing.</para></item>
+        <item><para>Non-recursive triggers are still the default
+behavior since this is least likely to cause problems for existing
+applications. However, we anticipate that triggers will become
+recursive by default beginning with release 3.7.0. At that point,
+applications that want to continue using the older non-recursive
+trigger behavior will need to use the recursive_triggers pragma to
+disable recursive triggers.</para></item>
+        <item><para>This version of SQLite also contains bug fixes,
+though none of the bugs are serious and all are obscure, so upgrading
+is optional.</para></item>
+        <item><para>The SQLite core continues to have 100% branch test
+coverage and so despite the many changes in this release, the
+developers believe that this version of SQLite is stable and ready for
+production use.</para></item>
+      </change>
+
+      <change from="3.6.16" to="3.6.17">
+        <item><para>This is a monthly maintenance release with a focus
+of bug fixes, performance improvements, and increased test coverage.
+This is the first release of SQLite since 100% branch test coverage
+was achieved on the SQLite core.</para></item>
+        <item><para>In addition, a new interface sqlite3_strnicmp() is
+provided for the convenience of extension writers.</para></item>
+        <item><para>None of the bugs fixed in this release are
+serious. All bugs are obscure. Upgrading is optional. </para></item>
+      </change>
+
+      <change from="3.6.15" to="3.6.16">
+        <item><para>SQLite version 3.6.16 is another general
+maintenance relase containing performance and robustness enhancements.
+A single notable bug was fixed (ticket #3929). This bug cause cause
+INSERT or UPDATE statements to fail on indexed tables that have AFTER
+triggers that modify the same table and index.</para></item>
+      </change>
+
+      <change from="3.6.14.2" to="3.6.15">
+        <item><para>SQLite version 3.6.15 is a general maintenance
+release containing performance and robustness enhancements and fixes
+for various obscure bugs.</para></item>
+      </change>
+
+      <change from="3.6.14.1" to="3.6.14.2">
+        <item><para>SQLite version 3.6.14.2 fixes an obscure bug in
+the code generator (ticket #3879) section of SQLite which can
+potentially cause incorrect query results. The changes from the prior
+release consist of only this one bug fix, check-in [6676]  and a
+change to the version number text.</para></item>
+        <item><para>The bug was introduced in version 3.6.14. It is
+recommended that users of version 3.6.14 and 3.6.14.1 upgrade to this
+release. Applications are unlikely to hit this bug, but since it is
+difficult to predict which applications might hit it and which might
+not, we recommend that all users of 3.6.14 and 3.5.14.1 upgrade to
+this release.</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The DBD::SQLite Perl module is available in the
+following directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+        <para>The sqlite3 Ruby module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/ruby18      # Ruby 1.8.7
+${SB_INSTALL_PREFIX}/lib/ruby19      # Ruby 1.9.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Ruby include.paths.d directory by the postinstall script.</para>
+        <para>The sqlite3 Tcl module is available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/tcl85       # Tcl 8.5.10
+        </screen>
+
+        <para>The directory is automatically added to the Tcl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 April 26" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Rebuild ruby modules so they have the correct
+runpath</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

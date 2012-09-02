@@ -1,0 +1,215 @@
+Commit 26e182d2e080cfccf7a2a11e9f675fb4c757948c
+Author: charlet <charlet@138bc75d-0d04-0410-961f-82ee72b054a4>
+Date:   Thu Oct 7 12:37:10 2010 +0000
+
+    2010-10-07  Robert Dewar  <dewar@adacore.com>
+    
+    	* exp_intr.adb (Expand_Unc_Deallocation): Remove test for empty
+    	storage pool (this test is moved to Sem_Intr).
+    	* sem_intr.adb (Check_Intrinsic_Call): Add check for deallocation from
+    	empty storage pool, moved here from Exp_Intr and made into error.
+    	(Check_Intrinsic_Call): Remove assumption in generating not-null free
+    	warning that the name of the instantiation is Free.
+    	* sinput.adb (Tree_Read): Document use of illegal free call allowed in
+    	GNAT mode.
+    	* types.ads: Remove storage size clauses from big types (since we may
+    	need to do deallocations, which are now illegal for empty pools).
+    
+    git-svn-id: svn+ssh://gcc.gnu.org/svn/gcc/trunk@165099 138bc75d-0d04-0410-961f-82ee72b054a4
+
+Index: gcc/ada/exp_intr.adb
+===================================================================
+--- gcc/ada/exp_intr.adb.orig	2008-08-22 12:59:45.000000000 +0000
++++ gcc/ada/exp_intr.adb	2012-04-29 22:24:44.998524852 +0000
+@@ -788,7 +788,7 @@
+       Rtyp  : constant Entity_Id  := Underlying_Type (Root_Type (Typ));
+       Pool  : constant Entity_Id  := Associated_Storage_Pool (Rtyp);
+ 
+-      Desig_T   : constant Entity_Id  := Designated_Type (Typ);
++      Desig_T   : constant Entity_Id := Designated_Type (Typ);
+       Gen_Code  : Node_Id;
+       Free_Node : Node_Id;
+       Deref     : Node_Id;
+@@ -803,10 +803,6 @@
+       --  them to the tree, and that can disturb current value settings.
+ 
+    begin
+-      if No_Pool_Assigned (Rtyp) then
+-         Error_Msg_N ("?deallocation from empty storage pool!", N);
+-      end if;
+-
+       --  Nothing to do if we know the argument is null
+ 
+       if Known_Null (N) then
+Index: gcc/ada/sem_intr.adb
+===================================================================
+--- gcc/ada/sem_intr.adb.orig	2008-05-20 12:44:55.000000000 +0000
++++ gcc/ada/sem_intr.adb	2012-04-29 22:24:45.050420653 +0000
+@@ -98,10 +98,32 @@
+ 
+    procedure Check_Intrinsic_Call (N : Node_Id) is
+       Nam  : constant Entity_Id := Entity (Name (N));
+-      Cnam : constant Name_Id   := Chars (Nam);
+       Arg1 : constant Node_Id   := First_Actual (N);
++      Typ  : Entity_Id;
++      Rtyp : Entity_Id;
++      Cnam : Name_Id;
++      Unam : Node_Id;
+ 
+    begin
++      --  Set argument type if argument present
++
++      if Present (Arg1) then
++         Typ := Etype (Arg1);
++         Rtyp := Underlying_Type (Root_Type (Typ));
++      end if;
++
++      --  Set intrinsic name (getting original name in the generic case)
++
++      Unam := Ultimate_Alias (Nam);
++
++      if Present (Parent (Unam))
++        and then Present (Generic_Parent (Parent (Unam)))
++      then
++         Cnam := Chars (Generic_Parent (Parent (Unam)));
++      else
++         Cnam := Chars (Nam);
++      end if;
++
+       --  For Import_xxx calls, argument must be static string
+ 
+       if Cnam = Name_Import_Address
+@@ -134,12 +156,23 @@
+       --  Check for the case of freeing a non-null object which will raise
+       --  Constraint_Error. Issue warning here, do the expansion in Exp_Intr.
+ 
+-      elsif Cnam = Name_Free
++      elsif Cnam = Name_Unchecked_Deallocation
+         and then Can_Never_Be_Null (Etype (Arg1))
+       then
+          Error_Msg_N
+            ("freeing `NOT NULL` object will raise Constraint_Error?", N);
+ 
++      --  For unchecked deallocation, error to deallocate from empty pool.
++      --  Note: this test used to be in Exp_Intr as a warning, but AI 157
++      --  issues a binding intepretation that this should be an error, and
++      --  consequently it needs to be done in the semantic analysis so that
++      --  the error is issued even in semantics only mode.
++
++      elsif Cnam = Name_Unchecked_Deallocation
++        and then No_Pool_Assigned (Rtyp)
++      then
++         Error_Msg_N ("deallocation from empty storage pool!", N);
++
+       --  For now, no other special checks are required
+ 
+       else
+@@ -186,9 +219,9 @@
+             then
+                T2 := T1;
+ 
+-            else
+-               --  Previous error in declaration
++            --  Previous error in declaration
+ 
++            else
+                return;
+             end if;
+ 
+@@ -219,12 +252,10 @@
+       then
+          T1 := Etype (First_Formal (E));
+ 
+-         if No (Next_Formal (First_Formal (E))) then
+-
+-            --  Previous error in declaration
++         --  Return if previous error in declaration, otherwise get T2 type
+ 
++         if No (Next_Formal (First_Formal (E))) then
+             return;
+-
+          else
+             T2 := Etype (Next_Formal (First_Formal (E)));
+          end if;
+Index: gcc/ada/sinput.adb
+===================================================================
+--- gcc/ada/sinput.adb.orig	2009-04-09 23:23:07.000000000 +0000
++++ gcc/ada/sinput.adb	2012-04-29 22:24:45.089407471 +0000
+@@ -763,8 +763,7 @@
+                else
+                   --  Free the buffer, we use Free here, because we used malloc
+                   --  or realloc directly to allocate the tables. That is
+-                  --  because we were playing the big array trick. We need to
+-                  --  suppress the warning for freeing from an empty pool!
++                  --  because we were playing the big array trick.
+ 
+                   --  We have to recreate a proper pointer to the actual array
+                   --  from the zero origin pointer stored in the source table.
+@@ -772,9 +771,7 @@
+                   Tmp1 :=
+                     To_Source_Buffer_Ptr
+                       (S.Source_Text (S.Source_First)'Address);
+-                  pragma Warnings (Off);
+                   Free_Ptr (Tmp1);
+-                  pragma Warnings (On);
+ 
+                   if S.Lines_Table /= null then
+                      Memory.Free (To_Address (S.Lines_Table));
+Index: gcc/ada/types.ads
+===================================================================
+--- gcc/ada/types.ads.orig	2009-04-09 23:23:07.000000000 +0000
++++ gcc/ada/types.ads	2012-04-29 22:24:45.115856638 +0000
+@@ -125,8 +125,9 @@
+ 
+    subtype Big_String is String (Positive);
+    type Big_String_Ptr is access all Big_String;
+-   for Big_String_Ptr'Storage_Size use 0;
+-   --  Virtual type for handling imported big strings
++   --  Virtual type for handling imported big strings. Note that we should
++   --  never have any allocators for this type, but we don't give a storage
++   --  size of zero, since there are legitimate deallocations going on.
+ 
+    function To_Big_String_Ptr is
+      new Unchecked_Conversion (System.Address, Big_String_Ptr);
+@@ -200,13 +201,14 @@
+    --  type Source_Buffer_Ptr, see Osint.Read_Source_File for details.
+ 
+    type Source_Buffer_Ptr is access all Big_Source_Buffer;
+-   for Source_Buffer_Ptr'Storage_Size use 0;
+    --  Pointer to source buffer. We use virtual origin addressing for source
+    --  buffers, with thin pointers. The pointer points to a virtual instance
+    --  of type Big_Source_Buffer, where the actual type is in fact of type
+    --  Source_Buffer. The address is adjusted so that the virtual origin
+    --  addressing works correctly. See Osint.Read_Source_Buffer for further
+-   --  details.
++   --  details. Again, as for Big_String_Ptr, we should never allocate using
++   --  this type, but we don't give a storage size clause of zero, since we
++   --  may end up doing deallocations of instances allocated manually.
+ 
+    subtype Source_Ptr is Text_Ptr;
+    --  Type used to represent a source location, which is a subscript of a
+Index: gcc/ada/uintp.adb
+===================================================================
+--- gcc/ada/uintp.adb.orig	2009-04-09 23:23:07.000000000 +0000
++++ gcc/ada/uintp.adb	2012-04-29 22:24:45.141654581 +0000
+@@ -239,7 +239,7 @@
+ 
+    function Hash_Num (F : Int) return Hnum is
+    begin
+-      return Standard."mod" (F, Hnum'Range_Length);
++      return Types."mod" (F, Hnum'Range_Length);
+    end Hash_Num;
+ 
+    ---------------
+Index: gcc/ada/init.c
+===================================================================
+--- gcc/ada/init.c.orig	2009-10-24 10:58:53.000000000 +0000
++++ gcc/ada/init.c	2012-04-29 22:24:45.160431427 +0000
+@@ -86,6 +86,7 @@
+ 
+ /* Global values computed by the binder.  */
+ int   __gl_main_priority                 = -1;
++int   __gl_main_cpu                      = -1;
+ int   __gl_time_slice_val                = -1;
+ char  __gl_wc_encoding                   = 'n';
+ char  __gl_locking_policy                = ' ';

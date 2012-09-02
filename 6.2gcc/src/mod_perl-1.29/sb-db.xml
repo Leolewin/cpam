@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mod_perl" version="1.29" revision="1"
+  systype="*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>modperl12</install-name>
+
+    <sources>
+      <source checksum="1491931790509b9af06fc037d02b0e7a"
+        checksum-type="md5" size="378877"
+        path="src/mod_perl-1.29.tar.gz"/>
+      <patch checksum="016bef3a1a98ad39b170af5b2fe54182"
+        checksum-type="md5" size="650"
+        path="src/mod_perl-1.29.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="apache" var="APACHE">v==1.3.31</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="libwww-perl"
+        module="5.8.2">v&gt;=5.69</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL USE_APXS=1 \
+WITH_APXS=${SB_VAR_APACHE}/bin/apxs EVERYTHING=1 \
+PREFIX=${SB_INSTALL_PREFIX}
+
+# remove non-gcc compiler options
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-mr !!g; \
+s!-Qn !!g; \
+s!-xO2 !!g; \
+s!-xarch=[^ ]* !!g; \
+s!-xtarget=[^ ]* !!g; \
+s!-std1 !!g; \
+s!-n32 !!g; \
+s!-OPT[^ ]* !!g; \
+s!-woff [0-9]* !!g; \
+s!-Wl,-woff,[^ ]* !!g;" Makefile apaci/Makefile
+
+# Tru64 UNIX uses ld to link, not gcc
+case "${SB_SYSTYPE}" in
+*-osf*)
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-Wl,-rpath,!-rpath !g;" Makefile apaci/Makefile ;;
+esac
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/modules
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 apaci/libperl.so \
+${SB_INSTALL_PREFIX}/modules/mod_perl.so
+
+gmake install
+
+# move library files
+_archname=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config; print "$Config{'archname'}";')
+mv ${SB_INSTALL_PREFIX}/lib/5.8.2/${_archname}/* \
+${SB_INSTALL_PREFIX}/lib
+rmdir ${SB_INSTALL_PREFIX}/lib/5.8.2/${_archname}
+rmdir ${SB_INSTALL_PREFIX}/lib/5.8.2
+]]>
+    </install>
+
+    <notes>
+      <note type="installation">
+        <para>The Apache modue, <command>mod_perl.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules</command>, unlike
+previous releases which installed the module under the Apache
+installation directory. When installed, the package postinstall script
+will automatically update
+<command>/etc${SB_INSTALL_BASE}/apache1331/httpd.conf</command> with the
+following:</para>
+        <screen>
+LoadModule perl_module ${SB_INSTALL_PREFIX}/modules/mod_perl.so
+        </screen>
+      </note>
+    </notes>
+  </program>
+</programs>

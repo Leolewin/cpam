@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="patch" version="2.6.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="0818d1763ae0c4281bcdc63cdac0b2c0"
+        checksum-type="md5" size="253719"
+        path="src/patch-2.6.1.tar.bz2"/>
+      <patch checksum="5331f3e8ed25de9b603e8cbf5ad33e9d"
+        checksum-type="md5" size="6641"
+        path="src/patch-2.6.1.tww.patch"/>
+      <patch checksum="99d97c6788910452ef9cef41aeb3cc34"
+        checksum-type="md5" size="1169908"
+        path="src/patch-2.6.1.gnulib.patch"/>
+      <patch checksum="b4ad7c3f5403ee23a44624f558c56d64"
+        checksum-type="md5" size="1052602"
+        path="src/patch-2.6.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --program-prefix=g \
+--disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.6" to="2.6.1">
+        <item><para>Support for diff3(1) style merges which show the
+old, original, and new lines of a conflict has been added
+(--merge=diff3).  The default still is the merge(1) format (--merge or
+--merge=merge).</para></item>
+        <item><para>Bug and portability fixes.</para></item>
+      </change>
+
+      <change from="2.5.9" to="2.6">
+        <item><para>A regression test suite has been added ("make
+check").</para></item>
+        <item><para>A --merge option has been added which will merge a
+patch file into the original files similar to merge(1).  See the
+patch(1) manual page for documentation.</para></item>
+        <item><para>Unless a filename has been specified on the
+command line, look only for filenames in the patch until one has been
+found.  This prevents patch from tripping over garbage that isn't a
+patch.  When conforming to POSIX, this behavior is turned off and
+patch will ask for a filename if none is found.</para></item>
+        <item><para>All reject files have file name headers, which
+allows them to be used as regular patches.</para></item>
+        <item><para>When a patch file modifies the same file more than
+once, patch makes sure it backs up the original version of the file
+rather than any intermediary versions.</para></item>
+        <item><para>In the above situation, if there are rejects in
+more than one of those patches, they all go into the same reject
+file.</para></item>
+        <item><para>When the file to be patched is specified on the
+command line, all patches are applied to that file. (Previously, the
+first patch was applied to the file specified on the command line, and
+the names of additional files to patch were taken from header lines in
+the patch file.)</para></item>
+        <item><para>The -r option now works correctly even if there
+are rejects in more than one file.  Use the - argument to discard
+rejects.</para></item>
+        <item><para>Rejected hunks come out in unified diff format if
+the input patch was of that format, otherwise in ordinary context diff
+form.  Use the --reject-format option to enforce either "context" or
+"unified" format. Timestamps and the "diff -p" (--show-c-function)
+output are preserved. Changed lines in context format reject files are
+correctly indicated with '!' markers as the format defines.  Added and
+removed lines are still marked with '+' and '-',
+respectively.</para></item>
+        <item><para>The file permissions of reject files are no longer
+set to match the files they modify.  Instead, they retain the default
+permissions.  This is consistent with reject files produced with the
+-r option.</para></item>
+        <item><para>The --binary option disables the heuristic for
+stripping CRs from line endings in patches.  This allows to preserve
+CRs even in mangled patches, or in patches generated on non-POSIX
+systems and without the --binary option.</para></item>
+        <item><para>Backup files for nonexisting files are now created
+with default permissions rather than with mode 0: backup files with
+mode 0 were causing problems with applications which do not expect
+unreadable files.</para></item>
+        <item><para>The -B, -Y, and -z options (--prefix,
+--basename-prefix, --suffix) now imply the simple version control
+mode, and can be combined.</para></item>
+        <item><para>Patch rejects more malformed normal format
+commands and checks for trailing garbage.  It now recognizes ed
+commands without addresses.</para></item>
+        <item><para>Change the default value of PATCH_GET to 0.
+(Previously, the default was 0 under POSIXLY_CORRECT and negative
+otherwise; this is causing problems particularly with
+Perforce.)</para></item>
+        <item><para>Handle missing timestamps better.</para></item>
+        <item><para>Various bug fixes.</para></item>
+      </change>
+
+      <change from="2.5.8" to="2.5.9">
+        <item><para>bug fixes only.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

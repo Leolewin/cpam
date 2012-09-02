@@ -1,0 +1,49 @@
+Index: lib/snprintf.c
+===================================================================
+--- lib/snprintf.c.orig	2007-11-02 01:09:09.167837638 +0000
++++ lib/snprintf.c	2007-11-02 01:09:15.143678755 +0000
+@@ -40,7 +40,7 @@
+    STR may be NULL, in which case nothing will be written.  On error,
+    return a negative value.  */
+ int
+-snprintf (char *str, size_t size, const char *format, ...)
++zlib_snprintf (char *str, size_t size, const char *format, ...)
+ {
+   char *output;
+   size_t len;
+Index: lib/stdio.in.h
+===================================================================
+--- lib/stdio.in.h.orig	2007-11-02 01:09:09.182186982 +0000
++++ lib/stdio.in.h	2007-11-02 01:09:15.151290807 +0000
+@@ -138,7 +138,7 @@
+ #  define snprintf rpl_snprintf
+ # endif
+ # if @REPLACE_SNPRINTF@ || !@HAVE_DECL_SNPRINTF@
+-extern int snprintf (char *str, size_t size, const char *format, ...)
++extern int zlib_snprintf (char *str, size_t size, const char *format, ...)
+        __attribute__ ((__format__ (__printf__, 3, 4)));
+ # endif
+ #elif defined GNULIB_POSIXCHECK
+@@ -154,7 +154,8 @@
+ #  define vsnprintf rpl_vsnprintf
+ # endif
+ # if @REPLACE_VSNPRINTF@ || !@HAVE_DECL_VSNPRINTF@
+-extern int vsnprintf (char *str, size_t size, const char *format, va_list args)
++extern int zlib_vsnprintf (char *str, size_t size, const char *format,
++                           va_list args)
+        __attribute__ ((__format__ (__printf__, 3, 0)));
+ # endif
+ #elif defined GNULIB_POSIXCHECK
+Index: lib/vsnprintf.c
+===================================================================
+--- lib/vsnprintf.c.orig	2007-11-02 01:09:09.207544729 +0000
++++ lib/vsnprintf.c	2007-11-02 01:09:15.158685432 +0000
+@@ -42,7 +42,7 @@
+    STR may be NULL, in which case nothing will be written.  On error,
+    return a negative value.  */
+ int
+-vsnprintf (char *str, size_t size, const char *format, va_list args)
++zlib_vsnprintf (char *str, size_t size, const char *format, va_list args)
+ {
+   char *output;
+   size_t len;

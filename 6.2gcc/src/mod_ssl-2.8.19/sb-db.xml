@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mod_ssl" version="2.8.19" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}-1.3.31</build-name>
+
+    <install-name>modssl2819</install-name>
+
+    <sources>
+      <source checksum="ae2becebfec3784f9342932581e1cc9d"
+        checksum-type="md5" size="754277"
+        path="src/mod_ssl-2.8.19-1.3.31.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="apache" var="APACHE">v==1.3.31</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v==0.9.7b</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_localstatedir="/var${SB_VAR_APACHE}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+./configure --with-apxs=${SB_VAR_APACHE}/bin/apxs \
+--with-ssl=${LIBOPENSSL}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-brtl -bnortllib -blibpath:/usr/lib"
+  LD_RT="-blibpath:" ;;
+*-hpux*)
+  LD_RT="+s +b " ;;
+*-irix6*|*-osf*)
+  LD_RT="-rpath " ;;
+*-linux*)
+  LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  LD_RT="-R" ;;
+esac
+
+gmake SSL_LDFLAGS='-L$(SSL_LIBDIR) '"${LD_RT}"'$(SSL_LIBDIR)'" \
+${LDFLAGS+${LDFLAGS}}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/modules ${_sysconfdir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 pkg.sslmod/libssl.so \
+${SB_INSTALL_PREFIX}/modules
+
+# create custom mod_ssl.conf file and include it in httpd.conf
+cat >${_sysconfdir}/ssl.conf <<_EOT_
+Listen 443
+
+AddType application/x-x509-ca-cert .crt
+AddType application/x-pkcs7-crl .crl
+
+SSLPassPhraseDialog builtin
+
+SSLRandomSeed startup builtin
+_EOT_
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed startup egd:/var${PRNGD}/pool
+_EOT_
+else
+  case "${SB_SYSTYPE}" in
+  *-aix5.2*|*-linux*)
+    cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+    ;;
+  *-solaris2.[89])
+    cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed startup file:/dev/random 1024
+SSLRandomSeed startup file:/dev/urandom 1024
+_EOT_
+    ;;
+  esac
+fi
+
+cat >>${_sysconfdir}/ssl.conf <<_EOT_
+
+SSLRandomSeed connect builtin
+_EOT_
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect egd:/var${PRNGD}/pool
+_EOT_
+else
+  case "${SB_SYSTYPE}" in
+  *-aix5.2*|*-linux*)
+    cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+    ;;
+  *-solaris2.[89])
+    cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/random 1024
+SSLRandomSeed connect file:/dev/urandom 1024
+_EOT_
+    ;;
+  esac
+fi
+
+case "${SB_SYSTYPE}" in
+*-aix*|*-irix*)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+  
+SSLMutex file:${_localstatedir}/run/mutex
+_EOT_
+  ;;
+*)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+  
+SSLMutex sem
+_EOT_
+  ;;
+esac
+
+cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLSessionCache shm:${_localstatedir}/run/ssl.cache(512000)
+SSLSessionCacheTimeout 300
+
+SSLLog ${_localstatedir}/log/ssl.log
+SSLLogLevel warn
+
+SSLCipherSuite \\
+  ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
+_EOT_
+]]>
+    </install>
+
+    <notes>
+      <note type="configuration">
+        <para>The path to the configuration file is
+<command>${SB_INSTALL_BASE}/etc/ssl.conf</command>. It is no longer installed in
+the <command>/etc${SB_INSTALL_BASE}/apache1331</command> directory.</para>
+      </note>
+
+      <note type="installation">
+        <para>The Apache modue, <command>libssl.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules</command>, unlike
+previous releases which installed the module under the Apache
+installation directory. When installed, the package postinstall script
+will automatically update
+<command>/etc${SB_INSTALL_BASE}/apache1331/httpd.conf</command> with the
+following:</para>
+        <screen>
+LoadModule ssl_module ${SB_INSTALL_PREFIX}/modules/libssl.so
+&lt;IfModule mod_ssl.c&gt;
+  Include ${SB_INSTALL_BASE}/etc/ssl.conf
+&lt;/IfModule&gt;
+        </screen>
+      </note>
+    </notes>
+  </program>
+</programs>

@@ -1,0 +1,158 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="a2ps" version="4.12" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="f9e8331f5834525a2178b267b14dfa57"
+        checksum-type="md5" size="1831809"
+        path="src/a2ps-4.12.tar.gz"/>
+      <patch checksum="72dfea74296f5c77968a3d8cd4a3d71e"
+        checksum-type="md5" size="1192375"
+        path="src/a2ps-4.12.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="groff" install-name="groff11"
+        add-path="prepend">v&gt;=1.17.2</depend>
+      <depend program="ghostscript" var="GS"
+        install-name="ghostscript70"
+        add-path="prepend">v&gt;=7.07</depend>
+      <depend program="emacs" var="EMACS"
+        install-name="emacs21">v&gt;=21.2</depend>
+      <depend program="tetex" install-name="tetex20"
+        add-path="prepend">v&gt;=2.0.2</depend>
+      <depend program="ImageMagick" install-name="imagemagick60"
+        add-path="prepend">v&gt;=6.0.3</depend>
+      <depend program="bison" add-path="prepend"
+        type="build">v&gt;=1.28</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="gettext" var="GETTEXT"
+        add-path="prepend">v&gt;=0.10.40</depend>
+      <depend program="psutils" install-name="psutils"
+        add-path="prepend">v&gt;=p17</depend>
+      <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z -Ae +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+# update gettext
+${GETTEXT}/bin/gettextize -c -f
+
+export GS
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} EMACS=${EMACS}/bin/emacs \
+--with-medium=Letter \
+--with-psfonts=${GS}/share/fonts \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-encoding=latin1 --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -o root -g 0 -m 755 -d ${_docdir}
+ginstall -m 644 -o root -g 0 doc/a2ps.texi doc/encoding.texi \
+doc/poes.texi doc/prologue.texi doc/regex.texi doc/sheets.texi \
+doc/translators.texi doc/version.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <note type="usage">
+        <para>a2ps contains no dependencies but does make use of some
+external programs for formatting text. These programs are optional
+unless you wish to pass non-text files through a2ps. The programs are:
+psutils, teTeX, ImageMagick, bzip2, gzip, and groff.</para>
+
+        <para>The global configuration file resides in
+<command>${SB_INSTALL_PREFIX}/etc/a2ps.cfg</command> and
+<command>${SB_INSTALL_PREFIX}/etc/a2ps-site.cfg</command>.</para>
+
+        <para>The default path to the postscript fonts is
+<command>${SB_INSTALL_PREFIX}/share/fonts</command>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 11" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update ImagMagick dependency from 5.5.7 to
+6.0.3</para></item>
+      </change>
+
+      <change date="2004 March 20" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 4.3.3. While stpcpy() is in
+libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+
+      <change date="2004 March 20" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade ghostscript dependency to
+7.07</para></item>
+      </change>
+
+      <change date="2004 January 23" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 August 17" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update ImageMagick dependency to
+5.5.7</para></item>
+      </change>
+
+      <change date="2003 June 29" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update Perl dependency to 5.6.1</para></item>
+        <item><para>Update teTeX dependency to 2.0.2</para></item>
+        <item><para>Update ImageMagick dependency to
+5.5.3</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

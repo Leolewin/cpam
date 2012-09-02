@@ -1,0 +1,282 @@
+Index: configure.in
+===================================================================
+--- configure.in.orig	2009-08-04 21:10:30.871249545 +0000
++++ configure.in	2009-08-04 21:10:34.146355334 +0000
+@@ -2333,6 +2333,17 @@
+   AC_MSG_RESULT(no)
+ )
+ 
++AC_MSG_CHECKING(for readdir_r)
++AC_TRY_COMPILE([#include <dirent.h>],[
++	DIR *d;
++	struct dirent *ent;
++	int x= readdir_r(d,ent,&ent);],
++  [AC_DEFINE([HAVE_READDIR_R], [1],
++[Define if you have the 'readdir_r' function and it takes 3 arguments.])],
++  [AC_MSG_RESULT(yes)],
++  [AC_MSG_RESULT(no)]
++)
++
+ # On some systems (eg. FreeBSD 5), we would find a definition of the
+ # functions ctermid_r, setgroups in the library, but no prototype
+ # (e.g. because we use _XOPEN_SOURCE). See whether we can take their
+Index: Modules/getpath.c
+===================================================================
+--- Modules/getpath.c.orig	2009-05-02 03:32:52.123741985 +0000
++++ Modules/getpath.c	2009-08-04 21:10:34.160279612 +0000
+@@ -6,6 +6,7 @@
+ #include <sys/types.h>
+ #include <string.h>
+ #include <fcntl.h>
++#include <dirent.h>
+ 
+ #ifdef __APPLE__
+ #include <mach-o/dyld.h>
+@@ -364,6 +365,159 @@
+ }
+ 
+ 
++#ifndef PATH_MAX
++#define PATH_MAX 1024
++#endif
++#ifndef NAME_MAX
++#define NAME_MAX 1024
++#endif
++#ifndef INC_PATH_ALLOC_SIZE
++#define INC_PATH_ALLOC_SIZE 2048
++#endif
++#ifndef INC_PATH_DIR_SIZE
++#define INC_PATH_DIR_SIZE 64
++#endif
++
++static size_t inc_path_read_all_paths(char ** buf);
++static void inc_path_readafile(char * filename, size_t size,
++                               char * buffer,size_t * bufrd);
++static int inc_path_compare(const void *a, const void *b);
++static int inc_path_compare(const void *a, const void *b) {
++    return strcmp(*(char**)a,*(char**)b);
++}
++
++static size_t inc_path_read_all_paths(char ** buf) {
++    struct stat sbuf;
++    const char * include_file_name = SYSCONFDIR "/include.paths";
++    const char * include_dir_name = SYSCONFDIR "/include.paths.d";
++    /* This is the first of five malloc calls in this file */
++    char * buffer = PyMem_Malloc (INC_PATH_ALLOC_SIZE);
++    size_t bufsz = INC_PATH_ALLOC_SIZE;
++    size_t bufrd = 0;
++
++    /* Grab the file size and resize our buffer if needed in
++     * increments of INC_PATH_ALLOC_SIZE. If the file is not a file,
++     * or is empty, do nothing */
++    if ((stat (include_file_name, &sbuf) == 0) &&
++         (S_ISREG (sbuf.st_mode)) &&
++         (sbuf.st_size > 0) ) {
++        if (bufsz < bufrd + sbuf.st_size + 2) {
++            while (bufsz < bufrd + sbuf.st_size + 2)
++               bufsz += INC_PATH_ALLOC_SIZE;
++            buffer = PyMem_Realloc (buffer, bufsz);
++        }
++        inc_path_readafile ((char *)include_file_name, sbuf.st_size,
++                            buffer, &bufrd);
++    }
++
++    /* Check for include.paths.d */
++    if (stat (include_dir_name, &sbuf) == 0) {
++        /* This is the second of five malloc calls in this file */
++        char ** dirarr = PyMem_Malloc (sizeof (char *) * INC_PATH_DIR_SIZE);
++        unsigned int dirct = INC_PATH_DIR_SIZE;
++        unsigned int dircur = 0;
++        unsigned int diridx = 0;
++        DIR * d;
++        struct dirent * direntry = NULL;
++        int namlen;
++        char * filename;
++#ifdef HAVE_READDIR_R
++        /* This is the third of five malloc calls in this file */
++        struct dirent * dirent = PyMem_Malloc (sizeof (struct dirent) +
++                                               NAME_MAX + 1);
++#endif
++        d = opendir (include_dir_name);
++        if (d) {
++            do {
++#ifdef HAVE_READDIR_R
++                if (readdir_r (d, dirent, &direntry)) {
++                    direntry = NULL;
++                }
++#else
++                direntry = readdir (d);
++#endif
++                /* We append the directory entries to the end of
++                 * dararr, so we can later sort them */
++                if (direntry) {
++                    if ((namlen = strlen (direntry->d_name))) {
++                        /* This is the fourth of five malloc calls
++                           in this file */
++                        filename = PyMem_Malloc (strlen (include_dir_name) +
++                                                 namlen + 2);
++                        sprintf (filename, "%s/%s", include_dir_name,
++                                 direntry->d_name);
++                        if (dircur >= dirct) {
++                            while (dircur >= dirct)
++                                dirct += INC_PATH_DIR_SIZE;
++                            dirarr = PyMem_Realloc (dirarr,
++                                                    sizeof (char*) * dirct);
++                        }
++                        dirarr[dircur] = filename;
++                        dircur++;
++                    }
++                }
++            } while (direntry);
++#ifdef HAVE_READDIR_R
++            PyMem_Free (dirent);
++#endif
++            closedir (d);
++            d = NULL;
++            direntry = NULL;
++            if (dircur) {
++                /* Sort the directory entries and read the files in
++                 * sorted order into buffer */
++                qsort (dirarr, dircur, sizeof (char *), inc_path_compare);
++                for (diridx = 0; diridx < dircur; diridx++) {
++                    filename = dirarr[diridx];
++                    if ((stat (filename, &sbuf) == 0) &&
++                         (S_ISREG (sbuf.st_mode)) &&
++                         (sbuf.st_size > 0)) {
++                        if (bufsz < bufrd + sbuf.st_size + 2) {
++                            while (bufsz < bufrd + sbuf.st_size + 2)
++                                bufsz += INC_PATH_ALLOC_SIZE;
++                            buffer = PyMem_Realloc (buffer, bufsz);
++                        }
++                        inc_path_readafile (filename, sbuf.st_size,
++                                            buffer, &bufrd);
++                    }
++                    PyMem_Free (filename);
++                }
++            }
++            PyMem_Free (dirarr);
++        }
++    }
++    if (bufrd) {
++        bufsz = bufrd +1;
++        buffer = PyMem_Realloc (buffer, bufsz);
++        *buf = buffer;
++    } else {
++        bufsz = 0;
++        PyMem_Free (buffer);
++        *buf = NULL;
++    }
++    return bufsz;
++}
++
++
++static void inc_path_readafile(char * filename, size_t size,
++                               char * buffer, size_t * bufrd) {
++    int f = 0;
++    size_t bufof = *bufrd;
++    f = open (filename, O_RDONLY);
++    if (f) {
++        if (read (f,(char *)buffer+bufof, size) == size) {
++            bufof += size;
++            if (buffer[bufof-1] != '\n') {
++                bufof++;
++                buffer[bufof-1] = '\n';
++            }
++            buffer[bufof] = '\0';
++        }
++        close(f);
++    }
++    *bufrd = bufof;
++}
++
+ static void
+ calculate_path(void)
+ {
+@@ -373,7 +527,6 @@
+     static char separator[2] = {SEP, '\0'};
+     char *pythonpath = PYTHONPATH;
+     char *rtpypath = Py_GETENV("PYTHONPATH");
+-    char *incpath = SYSCONFDIR "/include.paths";
+     char *home = Py_GetPythonHome();
+     char *path = getenv("PATH");
+     char *prog = Py_GetProgramName();
+@@ -384,8 +537,8 @@
+     size_t bufsz;
+     size_t prefixsz;
+     char *defpath = pythonpath;
+-    struct stat s_incpath;
+     char *s_buf, *s_buf_cp;
++    size_t s_bufsize;
+ #ifdef WITH_NEXT_FRAMEWORK
+     NSModule pythonModule;
+ #endif
+@@ -552,29 +705,20 @@
+ 
+     if (rtpypath)
+         bufsz += strlen(rtpypath) + 1;
++    if ((s_bufsize = inc_path_read_all_paths(&s_buf))) {
++        off_t index;
++        s_buf_cp = s_buf;
+ 
+-    if (stat (incpath, &s_incpath) == 0) {
+-        int f_incpath;
+-
+-        /* This is the first of two malloc calls in this file */
+-        s_buf = s_buf_cp = PyMem_Malloc(s_incpath.st_size + 1);
+-        f_incpath = open(incpath, O_RDONLY);
+-        if (read(f_incpath, s_buf, s_incpath.st_size) == s_incpath.st_size) {
+-            off_t index;
++        bufsz += s_bufsize +1;
+ 
+-            bufsz += s_incpath.st_size + 1;
+-
+-            for (index = 0; index < s_incpath.st_size; index++)
++        for (index = 0; index < s_bufsize; index++)
+                 if (s_buf[index] == '\n')
+                     bufsz++;
+ 
+             /* In the event the last path is not newline terminated */
+             bufsz++;
+         } else
+-            s_incpath.st_size = 0;
+-        close(f_incpath);
+-    } else
+-        s_incpath.st_size = 0;
++            s_bufsize = 0;
+ 
+     prefixsz = strlen(prefix) + 1;
+ 
+@@ -597,7 +741,7 @@
+     bufsz += strlen(zip_path) + 1;
+     bufsz += strlen(exec_prefix) + 1;
+ 
+-    /* This is the second of two malloc calls in this file */
++    /* This is the fifth of fifth malloc calls in this file */
+     buf = (char *)PyMem_Malloc(bufsz);
+ 
+     if (buf == NULL) {
+@@ -616,10 +760,9 @@
+             buf[0] = '\0';
+ 
+         /* Run-time paths in module config file goes second */
+-        if (s_incpath.st_size) {
++        if (s_bufsize) {
+             char *s_path = NULL;
+ 
+-            s_buf[s_incpath.st_size] = '\0';
+             while (s_path = strstr(s_buf, "\n")) {
+                 *s_path = '\0';
+ 
+@@ -630,12 +773,6 @@
+                 s_buf = s_path + 1;
+             }
+ 
+-            /* last path might not be newline terminated */
+-            if (strlen(s_buf) && isdir(s_buf)) {
+-                strcat(buf, s_buf);
+-                strcat(buf, delimiter);
+-            }
+-
+             PyMem_Free(s_buf_cp);
+         }
+ 

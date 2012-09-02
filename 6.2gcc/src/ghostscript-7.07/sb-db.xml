@@ -1,0 +1,530 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="ghostscript" version="7.07" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}b</build-name>
+
+    <module name="default">
+      <install-name>${SB_PROG_NAME}70</install-name>
+
+      <sources>
+        <source checksum="2b7dfa329f6530b6975b79a811d0d5de"
+          checksum-type="md5" size="4949905"
+          path="src/ghostscript-7.07b.tar.gz"/>
+        <patch checksum="46b1241631f704e3d337a1fbbc1c97b3"
+          checksum-type="md5" size="1052958"
+          path="src/ghostscript-7.07b.patch"/>
+        <source checksum="348bbc20f42b9d7dae4b08590649098b"
+          checksum-type="md5" size="1141804"
+          path="src/hpijs-1.5.tar.gz"
+          destdir="ghostscript-7.07b"/>
+        <patch checksum="f609d703762cf2b20789bd52a41ae421"
+          checksum-type="md5" size="478250"
+          path="src/hpijs-1.5.patch"
+          destdir="ghostscript-7.07b/hpijs-1.5"/>
+        <source checksum="6865682b095f8c4500c54b285ff05ef6"
+          checksum-type="md5" size="3752871"
+          path="src/ghostscript-fonts-std-8.11.tar.gz"
+          noop="1" var="FONT_STD"/>
+        <source checksum="33457d3f37de7ef03d2eea05a9e6aa4f"
+          checksum-type="md5" size="796086"
+          path="src/gnu-gs-fonts-other-6.0.tar.gz"
+          noop="1" var="FONT_OTHER"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="jpeg" var="JPEG"
+          install-name="jpeg">v&gt;=6b</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng12">v&gt;=1.2.4</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXXFLAGS="-O2 -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXXFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf5*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -std1 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="" GCFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${JPEG_INC} -I${ZLIB_INC} -I${LIBPNG_INC}" \
+LDFLAGS="-L${JPEG_LIB} -L${ZLIB_LIB} -L${LIBPNG_LIB} \
+${CC_LD_RT}${JPEG_LIB}:${LIBPNG_LIB}:${ZLIB_LIB} \
+${LDFLAGS+${LDFLAGS}}" --with-ijs --datadir="${_datadir}" \
+${SB_VAR_CUPS+--with-cups-ppd-path=${SB_VAR_CUPS}/share/model} \
+${SB_VAR_CUPS+--with-cups-filter-path=${SB_VAR_CUPS}/lib/filter} \
+${SB_VAR_CUPS+--enable-cups-install} --prefix=${SB_INSTALL_PREFIX}
+
+# configure HP IJS driver
+(cd hpijs-1.5
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${GCC_RT+LDFLAGS="${CC_LD_RT}${GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}"} \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake docdir="${_docdir}" && (cd hpijs-1.5; gmake docdir="${_docdir}")
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake docdir="${_docdir}" install
+
+(cd ${_datadir}
+${SB_PATH_GTAR} zxf ${SRC_FONT_STD}
+${SB_PATH_GTAR} zxf ${SRC_FONT_OTHER}
+${SB_PATH_GCHOWN} -R 0:0 ${_datadir}/fonts
+${SB_PATH_GFIND} ${_datadir}/fonts -type f -exec ${SB_PATH_GCHMOD} 644 {} \;)
+
+(cd hpijs-1.5
+gmake docdir="${_docdir}" install)
+]]>
+      </install>
+    </module>
+
+    <module name="runtime">
+      <install-name>${SB_PROG_NAME}70r</install-name>
+
+      <sources>
+        <source checksum="2b7dfa329f6530b6975b79a811d0d5de"
+          checksum-type="md5" size="4949905"
+          path="src/ghostscript-7.07b.tar.gz"/>
+        <patch checksum="46b1241631f704e3d337a1fbbc1c97b3"
+          checksum-type="md5" size="1052958"
+          path="src/ghostscript-7.07b.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+(cd ijs
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --prefix=${SB_INSTALL_PREFIX}
+
+sed "s!libdirs=-L\(.*\)!libdirs=\"-L\1 ${CC_LD_RT}\1\"!" ijs-config >/tmp/$$
+cp /tmp/$$ ijs-config && rm -f /tmp/$$)
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd ijs && gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd ijs && gmake install)
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="7.06" to="7.07">
+        <items name="Utilities fixes">
+          <item><para>Avoid calling a null pgsdll_callback, as can
+happen with the new client api and CHECK_INTERRUPTS. This fix affects
+primarily MacOS; similar protections are already in place for other
+platforms, although the global was not explicitly initialized to null.
+Also return EOFC in the mac stdio stream process if no callback is
+defined.</para></item>
+        </items>
+
+        <items name="Driver fixes">
+          <item><para>Avoid calling a null pgsdll_callback, as can
+happen with the new client api and CHECK_INTERRUPTS. This fix affects
+primarily MacOS; similar protections are already in place for other
+platforms, although the global was not explicitly initialized to null.
+Also return EOFC in the mac stdio stream process if no callback is
+defined.</para></item>
+          <item><para>In the display device, store the line pointers
+separately from the bits, so that the bits can be placed in special
+memory (e.g. allocated in video memory). Fixes Bug 686780
+display_memalloc() asks for too much memory. If reopening the display
+device fails after setting the callback, display an error message.
+Allocate the large display bitmap using a low level allocator to avoid
+exceeding the memory limit of the previously used device stable memory
+allocator. Fixes bugs 686836 "-r doesn't work" and duplicate 686838
+"Ghostscript doesn't do anything". DETAILS: The display memory device
+and the raster including line pointers was allocated using the stable
+allocator of the display device. This had a limit of 1Mbyte, which was
+exceeded when the resolution was greater then 114dpi. This would cause
+subsequent allocations to fail, but it appears that nothing else tried
+to use this allocator after the display device. The display device was
+changed to allocate the line pointers separately to allow the raster
+to be allocated in special memory, e.g. video memory or shared memory.
+This caused the subsequent allocation of the line pointers to fail
+when resolution exceeded 114dpi. The modified code now allocates the
+raster with gs_alloc_byte_array_immovable, which allocates directly
+from the C heap, not subject to any memory limit apart from the
+overall -K limit if specified, and is not subject to garbage
+collection. The normal allocator now has sufficient memory to allocate
+the line pointers without problem. The raster pointer is removed from
+the pointers that are enumerated during garbage
+collection.</para></item>
+          <item><para>Log message: For the pngalpha device, set the
+default background color to white in the bKGD chunk. Add an option
+-dBackgroundColor=16#RRGGBB to explicitly set the background color.
+This is needed by a common web browser that doesn't correctly support
+PNG with alpha transparency. DETAILS: Programs that don't fully
+support alpha transparency let libpng convert an RGBA image to RGB.
+The background color used is either provided by the program, or in the
+bKGD chunk, or it falls back to gray. MSIE was defaulting to a gray
+background which is not commonly used on web pages. By writing a white
+bKGD chunk, PNG files will display correctly against a white
+background in MSIE. If a solid color for a web page background is used
+with &lt;body bgcolor="#CCCC00"&gt;, then PNG images appearing on that
+page would need to be created with -dBackgroundColor=16#CCCC00. For
+textured background there is no hope. Microsoft needs to fix Internet
+Explorer.</para></item>
+        </items>
+
+        <items name="Interpreter">
+          <item><para>Sort the list of devices in the output of 'gs
+-h' so they're easier to read. List the default device separately as
+it's no longer first.</para></item>
+          <item><para>In the display device, store the line pointers
+separately from the bits, so that the bits can be placed in special
+memory (e.g. allocated in video memory). Fixes Bug 686780
+display_memalloc() asks for too much memory. If reopening the display
+device fails after setting the callback, display an error message.
+Allocate the large display bitmap using a low level allocator to avoid
+exceeding the memory limit of the previously used device stable memory
+allocator. Fixes bugs 686836 "-r doesn't work" and duplicate 686838
+"Ghostscript doesn't do anything". DETAILS: The display memory device
+and the raster including line pointers was allocated using the stable
+allocator of the display device. This had a limit of 1Mbyte, which was
+exceeded when the resolution was greater then 114dpi. This would cause
+subsequent allocations to fail, but it appears that nothing else tried
+to use this allocator after the display device. The display device was
+changed to allocate the line pointers separately to allow the raster
+to be allocated in special memory, e.g. video memory or shared memory.
+This caused the subsequent allocation of the line pointers to fail
+when resolution exceeded 114dpi. The modified code now allocates the
+raster with gs_alloc_byte_array_immovable, which allocates directly
+from the C heap, not subject to any memory limit apart from the
+overall -K limit if specified, and is not subject to garbage
+collection. The normal allocator now has sufficient memory to allocate
+the line pointers without problem. The raster pointer is removed from
+the pointers that are enumerated during garbage
+collection.</para></item>
+          <item><para>Security fixes. Add detection of %pipe% device
+when in SAFER mode. Also fix detection of 'renamefile' to prevent
+rename from a file that is not on the PermitFileControl
+list.</para></item>
+        </items>
+      </change>
+
+      <change from="7.05" to="7.06">
+        <items name="Driver fixes">
+          <item><para>Correct the display device color mapping
+functions that were wrong. Change 4-bit mapping functions to standard
+VGA. Correct 16-bit native RGB and 32-bit xRGB mapping functions. Add
+RGB to color mapping functions for CMYK formats, needed by
+anti-aliasing.</para></item>
+          <item><para>When compiled for A4 default page size, the
+initial page size is now 595x842pts. The initial printer page size in
+tenths of an inch now uses floating point. This may cause problems
+with old compilers that do not allow floating point calculations in
+initializers for integers. Add some casts to suppress warnings with
+the MS compiler.</para></item>
+          <item><para>To improve clarity, use hexadecimal for
+-dDisplayFormat=16#XXXXXX in the display device example
+code</para></item>
+          <item><para>Add a 32 bit/pixel CMYK driver named pam using
+the Portable Arbitrary Map file format, one of the netpbm family. This
+driver has problems with anti-aliasing that will be fixed in a later
+patch.</para></item>
+          <item><para>Remove some interpreter references from the
+graphics library</para></item>
+        </items>
+
+        <items name="PDF Writer fixes">
+          <item><para>Completely replacing the Rotation computation
+logics</para></item>
+        </items>
+
+        <items name="PDF Interpreter fixes">
+          <item><para>Add the option -dUseCropBox to set the page size
+from the CropBox rather than the MediaBox. This is appropriate when
+using ghostscript to view PDF files or convert to bitmaps. It probably
+isn't appropriate for printing.</para></item>
+          <item><para>When drawing PDF annotation links which are
+missing a /Border, assume the default /Border [0 0 1]. Previously
+ghostscript assumed that links without a /Border should not be drawn,
+which is contrary to the PDF specification.</para></item>
+          <item><para>If a PDF annotation specified other than the
+default color with /C, pass this into the pdfmark logic as
+/Color.</para></item>
+          <item><para>When using -dUseCropBox, use an inherited
+CropBox. The previous fix would only use a CropBox on the page being
+displayed.</para></item>
+          <item><para>When ghostscript is given a PDF file on standard
+input, copy it to a temporary file before processing. Prior to version
+7, ghostscript could read PDF from standard input redirected from a
+file, but not from a pipe. Standard input was changed in version 7 to
+use callouts, which prevented PDF reading from standard
+input.</para></item>
+          <item><para>Move code from pdfshowpage to pdfshowpage_finish
+for the benefit of GSview which calls pdfshowpage_init and
+pdfshowpage_finish, but not pdfshowpage_setpage</para></item>
+          <item><para>Treat files starting with %Pxxx as PostScript,
+not PDF. Process empty files without error. Fixes SourceForge bug
+#663150, Some PS files half-recognized as PDF files DETAILS: Changes
+for the 8.00 release to allow reading of PDF files from stdin caused
+files starting with %Pxxx to be half recognised as PDF files. This
+patch simplifies the PDF recognition code and makes it treat only
+files starting with "%PDF-" as PDF. Testing of this code found that
+zero length input files caused a PostScript error. This was an
+existing error which is fixed by the gs_epsf.ps patch and last line of
+the pdf_main.ps patch.</para></item>
+        </items>
+
+        <items name="Interpreter fixes">
+          <item><para>As a result of a recent fix, an opdef table had
+more than 16 entries, causing initialization to abort.</para></item>
+          <item><para>Correct the display device color mapping
+functions that were wrong. Change 4-bit mapping functions to standard
+VGA. Correct 16-bit native RGB and 32-bit xRGB mapping functions. Add
+RGB to color mapping functions for CMYK formats, needed by
+anti-aliasing.</para></item>
+          <item><para>correct the ISO paper sizes in gs_statd.ps to
+match those in the Adobe PPD specification, technical note
+5003</para></item>
+          <item><para>process comment lines when they straddle a
+buffer boundary, so that all DSC comments can be processed by the PDF
+writer</para></item>
+          <item><para>copy comment lines inside a procedure which
+require a scanner refill to the operand stack, not the execution
+stack</para></item>
+          <item><para>provide a meaningful error message when an
+immediately evaluated name can not be found</para></item>
+          <item><para>Keep pagedevice and device views of
+.LockSafetyParams correct even after a 'restore' is used to unlock.
+The dictionary fed to the setpagedevice operator is allocated in the
+same VM space as currentpagedevice to avoid invalidaccess
+problems.</para></item>
+          <item><para>Fix: Overlapping format 4 CMap ranges, while
+arguably buggy, are commonly found in quite a few popular CJK TrueType
+fonts</para></item>
+          <item><para>The constraint for FontBBox to be non-zero was
+not conforming and now is removed</para></item>
+          <item><para>Provide a meaningful error message when an
+immediately evaluated name in a procedure can not be found. Additional
+fix for SourceForge bug #543185, Confusing diagnostics for
+//undefined.</para></item>
+          <item><para>Redefine .runstdin with one bound to EPSF 'run'
+operator so that EPS files are handled correctly from %stdin. Code for
+skipping DOS EPS header now uses the EPS encapsulating run, instead of
+directly calling .runexec.</para></item>
+          <item><para>When processing an EPS file, remove any left
+over items on the operand and dictionary stacks</para></item>
+          <item><para>Fix the remaining security patch problems so
+that local/global state is correctly handled, both for the pagedevice
+as well as the PermitFile... userparam dictionary
+entries.</para></item>
+          <item><para>Delete all temporary files when the interpreter
+closes</para></item>
+          <item><para>Add command line options -dEPS, -dEPSCrop and
+-dEPSFitPage for handling Encapsulated PostScript files</para></item>
+          <item><para>Improvements to processing of EPS
+files</para></item>
+          <item><para>Correct -dEPSFitPage when the device has
+non-zero margins</para></item>
+          <item><para>Make sure resource use of .forcedef works with
+-dDELAYBIND</para></item>
+          <item><para>Prevent access to .forceput</para></item>
+          <item><para>When processing multiple EPS files, call
+showpage if necessary for subsequent files</para></item>
+          <item><para>When processing EPS files, empty the path after
+checking the page size</para></item>
+          <item><para>Backport debug and unitialized variable fixes
+from HEAD</para></item>
+          <item><para>Update DSC parser to current Ghostgum Software
+version. Fixes SourceForge   bug #657289, SEGV on Alpha in DSC parser.
+DETAILS: A %%Page line with mismatched parentheses around the page
+label was ignored, but parser state was updated to scanning pages, not
+setup section. This resulted in access to dsc-&gt;page[-1] which is
+invalid and caused a SEGV on Alpha. The updated code now checks that
+dsc-&gt;page_count is non-zero before accessing
+dsc-&gt;page[dsc-&gt;page_count-1]. It also makes a second attempt at
+finding the page ordinal at the end of a line like: %%Page: (label
+with closing parentheses 1 Other parser updates include support for
+DCS2 files (which is not quite compliant with DSC), removing a few
+compiler warnings, %%HiResBoundingBox, %%CropBox, %%PageCropBox, and
+being more resilient to incorrect DSC.</para></item>
+          <item><para>Treat files starting with %Pxxx as PostScript,
+not PDF. Process empty files without error. Fixes SourceForge bug
+#663150, Some PS files half-recognized as PDF files DETAILS: Changes
+for the 8.00 release to allow reading of PDF files from stdin caused
+files starting with %Pxxx to be half recognised as PDF files. This
+patch simplifies the PDF recognition code and makes it treat only
+files starting with "%PDF-" as PDF. Testing of this code found that
+zero length input files caused a PostScript error. This was an
+existing error which is fixed by the gs_epsf.ps patch and last line of
+the pdf_main.ps patch.</para></item>
+        </items>
+
+        <items name="Library">
+          <item><para>When drawing with anti-aliasing on devices with
+less than 8-bit/pixel, extract the correct existing pixel
+value</para></item>
+          <item><para>(pdfwrite) Enforce writing FontBBox into
+CFF</para></item>
+          <item><para>When compiled for A4 default page size, the
+initial page size is now 595x842pts. The initial printer page size in
+tenths of an inch now uses floating point. This may cause problems
+with old compilers that do not allow floating point calculations in
+initializers for integers. Add some casts to suppress warnings with
+the MS compiler.</para></item>
+          <item><para>Provide an implementation of popen for Windows,
+to avoid the broken implementation in MSVC++ 5 and 6. This allows
+pswrite to output to a pipe on Windows.</para></item>
+          <item><para>Propagate error codes from
+gs_distance_transform_inverse</para></item>
+          <item><para>Add pngalpha device that uses RGBA, with the
+alpha channel providing pixel coverage. Used for generating PNG images
+with a transparent background.</para></item>
+        </items>
+
+        <item><para>Also new in this release is the 'pngalpha' device
+which produces png output with a transparent background (page) color
+so they can be composited against a separate background. The
+transparency is based only on what parts of the page have been drawn
+and does not support PDF 1.4 trasparent painting.</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>The 1.5 release of the HP Inkjet driver has been
+compiled in. Documentation is available from
+<command>${SB_INSTALL_PREFIX}/doc/hpijs_readme.html</command>. Additional
+information is available from the project home page at
+<ulink url="http://hpinkjet.sourceforge.net">http://hpinkjet.sourceforge.net</ulink></para>
+      </note>
+
+      <note type="usage">
+        <para>The default font path is:</para>
+        <unorderedlist>
+          <item><para>${SB_INSTALL_PREFIX}/share/lib</para></item>
+          <item><para>${SB_INSTALL_PREFIX}/share/fonts</para></item>
+        </unorderedlist>
+
+        <para>Additional fonts can be specified as defined in the
+<command>${SB_INSTALL_PREFIX}/doc/Use.htm</command>.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update config.guess and config.sub in hpijs for
+RHEL 3.0/AMD64</para></item>
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 January 26" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix default font search path</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

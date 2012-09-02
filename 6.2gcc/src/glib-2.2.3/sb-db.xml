@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="glib" version="2.2.3" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}22</install-name>
+
+    <sources>
+      <source checksum="aa214a10d873b68ddd67cd9de2ccae55"
+        checksum-type="md5" size="1636987"
+        path="src/glib-2.2.3.tar.bz2"/>
+      <patch checksum="f6f66cebf0146308b0a8324097662241"
+        checksum-type="md5" size="1321480"
+        path="src/glib-2.2.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.8.2</depend>
+      <depend program="pkgconfig" add-path="prepend"
+        type="build">v==0.15.0</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+_libdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-blibpath:"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--disable-threads" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-threads" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  ARGS="--enable-threads" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:=-O2}" \
+CPPFLAGS="${LIBICONV+-I${LIBICONV_INC}} -I${GETTEXT_INC}" \
+LDFLAGS="${LIBICONV+-L${LIBICONV_LIB}} -L${GETTEXT_LIB} \
+${CC_LD_RT}${GETTEXT_LIB}${LIBICONV_LIB+:${LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --enable-static --enable-shared \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in glib-2.0.pc gmodule-2.0.pc gobject-2.0.pc gthread-2.0.pc; do
+  sed -e "s!-L\([^ ][^ ]*\)!-L\1 ${CC_LD_RT}\1!" \
+  -e "s!  *-lintl  *-liconv!!" ${_pc} >/tmp/$$
+  cp /tmp/$$ ${_pc} && rm -f /tmp/$$ 
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake configexecincludedir="${_includedir}" \
+glibincludedir="${_includedir}" \
+glibsubincludedir="${_includedir}/glib" \
+libgobjectincludedir="${_includedir}/gobject"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install configexecincludedir="${_includedir}" \
+glibincludedir="${_includedir}" \
+glibsubincludedir="${_includedir}/glib" \
+libgobjectincludedir="${_includedir}/gobject"
+]]>
+    </install>
+
+    <notes>
+      <change from="2.2.2" to="2.2.3">
+        <items name="Win32">
+          <item><para>Fix socket handling for giochannel</para></item>
+          <item><para>Omit helper process for GSpawn when
+possible</para></item>
+          <item><para>Accept / as well as \ as a pathname separators
+in path handling functions</para></item>
+          <item><para>Fix g_strdup_printf to be locale
+sensitive</para></item>
+          <item><para>Build fixes</para></item>
+          <item><para>Misc bug fixes</para></item>
+        </items>
+
+        <item><para>Documentation improvements</para></item>
+        <item><para>glib-gettext.m4 fixes</para></item>
+        <item><para>Improve configure checks for sprintf</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>New and updated translations
+(ar,az,cy,eo,is,sr,sr@Latn,zh_CN)</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 March 16" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 4.3.3. While stpcpy() is in
+libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+
+      <change date="2004 January 5" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Force usage of GNU gettext and iconv</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 October 15" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Ignore test failures</para></item>
+      </change>
+
+      <change date="2003 September 22" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Backport glib/gnulib (v)snprintf functions from
+2.4 to resolve text failures</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

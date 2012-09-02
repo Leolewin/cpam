@@ -1,0 +1,285 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="aspell" version="0.50.5" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}05</install-name>
+
+    <dependencies>
+      <depend program="aspell" install-name="aspell05"
+        add-path="prepend">v&gt;=0.50.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+./configure
+]]>
+    </configure>
+
+    <module name="default"
+    systype="*-linux*|*-solaris*">
+      <sources>
+        <source checksum="14403d2ea5ded5d3fc9bb259bf65aab5"
+          checksum-type="md5" size="1016586"
+          path="src/aspell-0.50.5.tar.gz"/>
+        <patch checksum="aee598deac9e346439cd0324b57940d1"
+          checksum-type="md5" size="876243"
+          path="src/aspell-0.50.5.patch"/>
+        <patch checksum="f4d1c1bc3455eea6bf40a8a69b4c6837"
+          checksum-type="md5" size="2121"
+          path="src/CAN-2004-0548.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend var="GCC_RT" install-name="gcc332r"/>
+        <depend program="bison" install-name="bison13"
+          add-path="prepend" type="build">v&gt;=1.35</depend>
+        <depend program="ncurses" var="NCURSES"
+          install-name="ncurses54">v&gt;=5.4</depend>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-D__USE_STD_IOSTREAM -O2 -timplicit_local \
+-no_implicit_include -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CXX="${CXX:-g++}" \
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --enable-docdir="${_docdir}" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--enable-curses-include="-I${SB_VAR_NCURSES_INC} \
+-I${SB_VAR_NCURSES_INC}/ncurses" \
+--enable-curses="-L${SB_VAR_NCURSES_LIB} \
+${CC_LD_RT}${SB_VAR_NCURSES_LIB} -lncurses" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir} \
+pkglibdir="${SB_INSTALL_PREFIX}/lib/aspell"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir} \
+pkglibdir="${SB_INSTALL_PREFIX}/lib/aspell"
+
+# Path to config files and dictionaries
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir} \
+${SB_INSTALL_PREFIX}/lib
+]]>
+      </install>
+    </module>
+
+    <module name="dict-nl">
+      <build-name>${NAME}-nl-0.50-2</build-name>
+
+      <sources>
+        <source checksum="c3ef9fd7dc4c47d816eee9ef5149c76a"
+          checksum-type="md5" size="428365"
+          path="src/aspell-nl-0.50-2.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-no">
+      <build-name>${NAME}-no-0.50-2</build-name>
+
+      <sources>
+        <source checksum="b24b20ad02ce2a569f71f949b48823cc"
+          checksum-type="md5" size="286696"
+          path="src/aspell-no-0.50-2.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-da">
+      <build-name>${NAME}-da-0.50.1-0</build-name>
+
+      <sources>
+        <source checksum="1bf582a9aa0e0f8007a2ba9d52964e7e"
+          checksum-type="md5" size="304097"
+          path="src/aspell-da-0.50.1-0.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-fr">
+      <build-name>${NAME}-fr-0.50-3</build-name>
+
+      <sources>
+        <source checksum="53a2d05c4e8f7fabd3cefe24db977be7"
+          checksum-type="md5" size="283086"
+          path="src/aspell-fr-0.50-3.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-it">
+      <build-name>${NAME}-it-0.52-0</build-name>
+
+      <sources>
+        <source checksum="03e14dab69e0ecb132dda02fe0c220fc"
+          checksum-type="md5" size="45138"
+          path="src/aspell-it-0.52-0.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-sv">
+      <build-name>${NAME}-sv-0.51-0</build-name>
+
+      <sources>
+        <source checksum="d180c781f8986ea0f65b6b18f02a494e"
+          checksum-type="md5" size="93942"
+          path="src/aspell-sv-0.51-0.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-de">
+      <build-name>${NAME}-de-0.50-2</build-name>
+
+      <sources>
+        <source checksum="204a9737ff0110fb8c7d284bd7200f7d"
+          checksum-type="md5" size="304820"
+          path="src/aspell-de-0.50-2.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-ru">
+      <build-name>${NAME}-ru-0.50-2</build-name>
+
+      <sources>
+        <source checksum="d7add85adeef2ea36457ea811d52c295"
+          checksum-type="md5" size="521827"
+          path="src/aspell-ru-0.50-2.tar.bz2"/>
+      </sources>
+    </module>
+
+    <module name="dict-en">
+      <build-name>${NAME}-en-0.51-1</build-name>
+
+      <sources>
+        <source checksum="aabb933daee93be446c71e79babf8da4"
+          checksum-type="md5" size="172874"
+          path="src/aspell-en-0.51-1.tar.bz2"/>
+      </sources>
+    </module>
+
+    <notes>
+      <change from="0.50.4.1" to="0.50.5">
+        <item><para>Reworked url filter which fixed several bugs and
+now accepts "bla.bla/kdkdl" as a url</para></item>
+        <item><para>Fixed bug in which the url filter was coming
+before all other filters when it was suppose to come after. This
+solved a number of problems where the url filter was interfering with
+other filters.</para></item>
+        <item><para>Small bug fix in SGML filter</para></item>
+        <item><para>Added code page charsets, ie
+cp125?.dat</para></item>
+        <item><para>Added natural (split) keyboard data file as
+"split.kbd"</para></item>
+        <item><para>Compile fixes for the upcoming GCC
+3.4</para></item>
+        <item><para>Removed Solaris link hack as it was causing more
+problems than it fixes</para></item>
+        <item><para>Compile fixes for Sun WorkShop 6 compiler, but
+there may still be some problems, especially with
+linking</para></item>
+        <item><para>Included patch to help compile with Microsoft
+Visual C++ 6</para></item>
+        <item><para>Minor manual fixes</para></item>
+        <item><para>Updated the TODO section to reflect the current
+progress with the next major version of Aspell (0.51)</para></item>
+      </change>
+
+      <change from="0.50.4" to="0.50.4.1">
+        <item><para>Fixed major bug in pipe mode which caused the last
+character to be chopped off words before they were
+stored</para></item>
+        <item><para>Minor formating fixes in the manual</para></item>
+      </change>
+
+      <change from="0.50.3" to="0.50.4">
+        <item><para>Minor changes in URL filter to avoid treating the
+double quote character as part of the URL, and to avoid treating words
+ending in more than one period as a URL</para></item>
+        <item><para>Document fixes in Aspell API</para></item>
+        <item><para>Small compile fixes, including one for GCC
+3.3</para></item>
+        <item><para>Updated Win32 section since a port now
+exists</para></item>
+        <item><para>Complain instead of doing nothing or aborting for
+unimplemented functions in Aspell utility</para></item>
+        <item><para>Portability bug fixes</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The aspell shared library was compiled with GCC 3.3.2.
+Because the GCC ABI is incompatible with the vendor compilers,
+programs linked against the shared library must use GCC.</para>
+
+        <para>The following language dictionaries are available:
+Danish (da), German (de), English (en), French (fr), Italian (it),
+Dutch (nl), Norwegian (no), Russian (ru), Swedish (sv). They can be
+selected with the <command>--lang=&lt;lang&gt;</command> command-line
+option.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 15" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0548 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0548">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0548</ulink>)
+to fix multiple stack-based buffer overflows in the word-list-compress
+functionality in compress.c allowing local users to execute arbitrary
+code via a long entry in the wordlist that is not properly handled
+when using the (1) "c" compress option or (2) "d" decompress
+option.</para></item>
+        <item><para>Add uninstall rule for gcc32 module</para></item>
+      </change>
+
+      <change date="2004 September 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

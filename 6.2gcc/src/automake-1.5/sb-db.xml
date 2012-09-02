@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="automake" version="1.5" revision="2">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}15</install-name>
+
+    <sources>
+      <source checksum="74a22ac0581378e807ecb334a55c5bab"
+        checksum-type="md5" size="526934"
+        path="src/automake-1.5.tar.gz"/>
+      <patch checksum="fdb67c8db8908ac6f5dcc4394c28ab4d"
+        checksum-type="md5" size="202"
+        path="src/automake-1.5.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="autoconf" install-name="autoconf25"
+        add-path="prepend">v&gt;=2.59</depend>
+      <depend program="gzip" install-name="gzip13"
+        add-path="append">v&gt;=1.3.5</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+./configure --datadir="${_datadir}" --prefix=${INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# replace '@sys' with '\@sys'
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+PERL=${PERL}/bin/perl MAKE=gmake gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 version.texi automake.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 January 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade autoconf dependency to 2.59</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Upgrade texinfo dependency to 4.6</para></item>
+      </change>
+
+      <change date="2003 May 29" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade autoconf dependency to 2.57</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

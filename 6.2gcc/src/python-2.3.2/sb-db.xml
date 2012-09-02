@@ -1,0 +1,1038 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="python" version="2.3.2" revision="8">
+    <build-name>Python-${SB_PROG_VER}</build-name>
+
+    <install-name>python232</install-name>
+
+    <sources>
+      <source checksum="9271171d55690e5cacd692e563924305"
+        checksum-type="md5" size="7161770"
+        path="src/Python-2.3.2.tar.bz2"/>
+      <patch checksum="ecefb0faabe46449626973236bcd864e"
+        checksum-type="md5" size="478019"
+        path="src/Python-2.3.2.patch"/>
+      <source checksum="099df1801c947e4a821605a6ae01c6b2"
+        checksum-type="md5" size="1222947"
+        path="src/html-2.3.2.tar.bz2"
+        noop="1" var="DOC_HTML"/>
+      <source checksum="eae1a8eb7f13534ebf068808ac99b0e9"
+        checksum-type="md5" size="3522174"
+        path="src/pdf-a4-2.3.2.tar.bz2"
+        noop="1" var="DOC_PDF_A4"/>
+      <source checksum="2677385da2db8c3fd05de937a9e148d3"
+        checksum-type="md5" size="3541160"
+        path="src/pdf-letter-2.3.2.tar.bz2"
+        noop="1" var="DOC_PDF_LETTER"/>
+      <source checksum="fc1752ce42810b87870688327bedecc7"
+        checksum-type="md5" size="1480941"
+        path="src/postscript-a4-2.3.2.tar.bz2"
+        noop="1" var="DOC_PS_A4"/>
+      <source checksum="5cca4937bf2b3b662d2c815ebc72a9d5"
+        checksum-type="md5" size="1476320"
+        path="src/postscript-letter-2.3.2.tar.bz2"
+        noop="1" var="DOC_PS_LETTER"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcl" var="TCL"
+        install-name="tcl84">v&gt;=8.4.6</depend>
+      <depend program="tk" var="TK"
+        install-name="tk84">v&gt;=8.4.6</depend>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip2">v&gt;=1.0.2</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb42">v&gt;=4.2.52</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="openssl"
+        var="LIBOPENSSL">v&gt;=0.9.7b</depend>
+      <depend var="GCC_RT" install-name="gcc332r"
+        type="build"/>
+      <depend var="PYTHONP" install-name="python232p"
+        set-var-only="1"/>
+      <depend program="gcc" var="GCC" add-path="prepend"
+        type="build">v==3.3.2</depend>
+      <depend program="ncurses" var="NCURSES">v==5.4</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+      <depend program="readline" var="READLINE">v==4.2a</depend>
+      <depend program="zlib" var="ZLIB">v==1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-D_THREAD_SAFE -O2 -mcpu=common"
+  CC=gcc CXX=g++ CXXFLAGS="-D_THREAD_SAFE -O2 -mcpu=common"
+  OPT="-D_LARGE_FILES=1 ${CFLAGS}"
+  ARGS="--with-threads --disable-ipv6"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  LD_RT="-Wl,-brtl -Wl,-blibpath:" LD_RT_POST=":/usr/lib"
+  BYTEORDER="4321"
+
+  # For some reason, GCC accepts -pthread which is wrong
+  export ac_cv_thread=no ;;
+*-hpux11*)
+  CFLAGS="-D_FILE_OFFSET_BITS=64"
+  CXX=g++ CXXFLAGS="-D__STDC_EXT__ -O2 -march=1.1"
+  OPT="-D_FILE_OFFSET_BITS=64 -O2 -march=1.1"
+  ARGS="--with-threads" LD_RT="-Wl,+s,+b,"
+  BYTEORDER="4321"
+
+  # For some reason, GCC accepts -pthread which is wrong
+  export ac_cv_thread=no ;;
+*-hpux10*)
+  CFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-D_FILE_OFFSET_BITS=64 -O2 -march=1.1"
+  ARGS="--without-threads" LD_RT="-Wl,+s,+b,"
+  BYTEORDER="4321" ;;
+*-irix6*)
+  CXX=g++ ARGS="--with-threads" LD_RT="-Wl,-rpath,"
+  BYTEORDER="4321" ;;
+x86_64*-linux*)
+  CXX=g++ OPT="-O2" LD_RT="-Wl,-rpath,"
+  BYTEORDER="1234" ARGS="--with-threads" ;;
+*-linux*)
+  CXX=g++ OPT="-O2" LD_RT="-Wl,-rpath," ARGS="--with-threads"
+  BYTEORDER="1234" ;;
+*-osf5*)
+  CFLAGS="-D_REENTRANT -O2 -mieee -mcpu=ev4"
+  CXX=g++ CXXFLAGS="-D_REENTRANT -O2 -mieee -mcpu=ev4"
+  OPT=${CFLAGS} LD_RT="-Wl,-rpath," ARGS="--with-dec-threads"
+  BYTEORDER="1234"
+
+  # For some reason, GCC accepts -pthread which is wrong
+  export ac_cv_thread=no ;;
+*-osf*)
+  CFLAGS="-D_REENTRANT -mieee -O2 -mcpu=ev4"
+  CXX=g++ CXXFLAGS="-D_REENTRANT -O2 -mieee -mcpu=ev4"
+  OPT=${CFLAGS} ARGS="--with-dec-threads --disable-ipv6"
+  LD_RT="-Wl,-rpath," LDFLAGS="${LD_RT}${SB_INSTALL_PREFIX}/lib/support:\
+${SB_VAR_LIBDB_LIB}:${SB_VAR_NCURSES_LIB}:${SB_VAR_READLINE_LIB}:\
+${SB_VAR_TCL_LIB}:${SB_VAR_TK_LIB}:${SB_VAR_ZLIB_LIB}:\
+${SB_VAR_BZIP2_LIB}:${SB_VAR_LIBEXPAT_LIB}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}}"
+  BYTEORDER="1234"
+
+  # For some reason, GCC accepts -pthread which is wrong
+  export ac_cv_thread=no ;;
+*-solaris2.[89])
+  CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -mcpu=v8"
+  CXX=g++ CXXFLAGS="${CFLAGS}" OPT="${CFLAGS}"
+  ARGS="--with-threads" LD_RT="-Wl,-R"
+  BYTEORDER="4321" ;;
+*-solaris2.5.1)
+  CFLAGS="-D_REENTRANT -O2 -mcpu=v7"
+  CXX=g++ CXXFLAGS="${CFLAGS}" OPT="${CFLAGS}"
+  ARGS="--with-threads --disable-ipv6" LD_RT="-Wl,-R"
+  BYTEORDER="4321" ;;
+*-solaris2*)
+  CFLAGS="-D_REENTRANT -D_FILE_OFFSET_BITS=64 -O2 -mcpu=v7"
+  CXX=g++ CXXFLAGS="${CFLAGS}" OPT="${CFLAGS}"
+  ARGS="--with-threads --disable-ipv6" LD_RT="-Wl,-R"
+  BYTEORDER="4321" ;;
+esac
+
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+cat >Modules/Setup.local <<_EOT_
+resource resource.c
+syslog syslogmodule.c
+termios termios.c
+timing timingmodule.c
+
+*shared*
+_EOT_
+
+case "${SB_SYSTYPE}" in
+x86_64*-linux*)
+  X_LIB="-L/usr/X11R6/lib64 -Wl,-rpath,/usr/X11R6/lib64" ;;
+*-linux*)
+  X_LIB="-L/usr/X11R6/lib -Wl,-rpath,/usr/X11R6/lib" ;;
+*-solaris2*)
+  X_INC="-I/usr/openwin/include"
+  X_LIB="-L/usr/openwin/lib -R/usr/openwin/lib" ;;
+esac
+
+if [ "${SB_VAR_LIBOPENSSL+set}" = "set" ]; then
+  cat >>Modules/Setup.local <<_EOT_
+_ssl _ssl.c -DUSE_SSL -I${SB_VAR_LIBOPENSSL_INC} \
+ -L${SB_VAR_LIBOPENSSL_LIB} ${LD_RT}${SB_VAR_LIBOPENSSL_LIB}\
+${LD_RT_POST+${LD_RT_POST}} -lssl -lcrypto
+_EOT_
+fi
+
+cat >>Modules/Setup.local <<_EOT_
+_bsddb _bsddb.c -I${LIBDB_INC} -L${LIBDB_LIB} \
+ ${LD_RT}${LIBDB_LIB}${LD_RT_POST+${LD_RT_POST}} -ldb
+_curses _cursesmodule.c -I${NCURSES_INC} \
+ -I${NCURSES_INC}/ncurses -L${NCURSES_LIB} \
+ ${LD_RT}${NCURSES_LIB}${LD_RT_POST+${LD_RT_POST}} -lncurses
+_curses_panel _curses_panel.c -I${NCURSES_INC} \
+ -I${NCURSES_INC}/ncurses -L${NCURSES_LIB} \
+ ${LD_RT}${NCURSES_LIB}${LD_RT_POST+${LD_RT_POST}} -lpanel -lncurses
+_tkinter _tkinter.c tkappinit.c -DWITH_APPINIT \
+ -I${TCL_INC} -I${TK_INC} ${X_INC+${X_INC}} -L${TCL_LIB} -L${TK_LIB} \
+ ${LD_RT}${TCL_LIB}:${TK_LIB}${LD_RT_POST+${LD_RT_POST}} \
+ -ltcl8.4 -ltk8.4 ${X_LIB+${X_LIB}} -lX11
+bz2 bz2module.c -I${BZIP2_INC} -L${BZIP2_LIB} \
+  ${LD_RT}${BZIP2_LIB}${LD_RT_POST+${LD_RT_POST}} -lbz2
+pyexpat pyexpat.c -I${LIBEXPAT_INC} -L${LIBEXPAT_LIB} \
+ ${LD_RT}${LIBEXPAT_LIB}${LD_RT_POST+${LD_RT_POST}} -lexpat
+readline readline.c -DHAVE_RL_PRE_INPUT_HOOK -DHAVE_RL_COMPLETION_MATCHES \
+ -I${READLINE_INC} -L${READLINE_LIB} -L${NCURSES_LIB} \
+ ${LD_RT}${READLINE_LIB}:${NCURSES_LIB}${LD_RT_POST+${LD_RT_POST}} \
+ -lreadline -lncurses
+zlib zlibmodule.c -I${ZLIB_INC} -L${ZLIB_LIB} \
+ ${LD_RT}${ZLIB_LIB}${LD_RT_POST+${LD_RT_POST}} -lz
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  cat >>Modules/Setup.local <<_EOT_
+audioop audioop.c
+crypt cryptmodule.c
+dbm dbmmodule.c
+imageop imageop.c
+nis nismodule.c
+rgbimg rgbimgmodule.c
+_EOT_
+  ;;
+*-osf*)
+  cat >>Modules/Setup.local <<_EOT_
+crypt cryptmodule.c
+dbm dbmmodule.c
+nis nismodule.c
+_EOT_
+  ;;
+*-hpux*)
+  case "${SB_SYSTYPE}" in
+  *-hpux10*)
+    cat >>Modules/Setup.local <<_EOT_
+nis nismodule.c
+_EOT_
+    ;;
+  *-hpux11*)
+    cat >>Modules/Setup.local <<_EOT_
+nis nismodule.c -lnsl
+_EOT_
+    ;;
+  esac
+
+  cat >>Modules/Setup.local <<_EOT_
+audioop audioop.c
+crypt cryptmodule.c
+dbm dbmmodule.c
+imageop imageop.c
+rgbimg rgbimgmodule.c
+_EOT_
+  ;;
+*-irix6*)
+  cat >>Modules/Setup.local <<_EOT_
+audioop audioop.c
+crypt cryptmodule.c
+dbm dbmmodule.c
+imageop imageop.c
+nis nismodule.c
+rgbimg rgbimgmodule.c
+sgi sgimodule.c
+_EOT_
+  ;;
+*-linux*)
+  cat >>Modules/Setup.local <<_EOT_
+audioop audioop.c
+crypt cryptmodule.c -lcrypt
+gdbm gdbmmodule.c -lgdbm
+imageop imageop.c
+nis nismodule.c -lnsl
+rgbimg rgbimgmodule.c
+_EOT_
+  ;;
+*-solaris2*)
+  cat >>Modules/Setup.local <<_EOT_
+audioop audioop.c -lm
+crypt cryptmodule.c
+dbm dbmmodule.c
+imageop imageop.c
+nis nismodule.c -lnsl
+rgbimg rgbimgmodule.c
+_EOT_
+  ;;
+esac
+
+# add path to 3rd-party libraries to default search path
+sed -e "s!^prefixes = .*!prefixes = [sys.prefix, '${SB_VAR_PYTHONP}']!" \
+Lib/site.py >/tmp/$$
+cp /tmp/$$ Lib/site.py && rm /tmp/$$
+
+# curses KEY_COMMAND and KEY_HELP don't exist on AIX
+case "${SB_SYSTYPE}" in
+*-aix*)
+  sed -e "/KEY_COMMAND/ d" -e "/KEY_HELP/ d" Lib/curses/has_key.py >/tmp/$$
+  cp /tmp/$$ Lib/curses/has_key.py && rm /tmp/$$
+  ;;
+esac
+
+# make local copy of GCC runtime so we don't depend on a specific
+# version of GCC
+if [ ! -d "${SB_INSTALL_PREFIX}/lib/support" ]; then
+  sudo -h 2>/dev/null || {
+    sb_msg_err "'sudo' program not found. Before Python can be \
+configured, the GCC runtime files must be copied to \
+${SB_INSTALL_PREFIX}/lib/support. 'sudo' is used to run the \
+necessary commands as root because the configuration step is \
+usually run as a non-root user. Please configure 'sudo' per \
+the sb(1) manual and rerun."
+    exit 1
+  }
+
+  sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+  ${SB_INSTALL_PREFIX}/lib/support
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.a ${GCC_RT_LIB}/libstdc++.a \
+    ${GCC_RT_LIB}/libg2c.a ${SB_INSTALL_PREFIX}/lib/support
+    ;;
+  *-hpux10*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.1 ${GCC_RT_LIB}/libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.sl
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl.0
+    ;;
+  *-hpux11*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.1 ${GCC_RT_LIB}/libstdc++.sl.5.5 \
+    ${GCC_RT_LIB}/libg2c.sl.0.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.sl
+    sudo ${SB_PATH_GLN} -s libstdc++.sl.5.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.sl
+    sudo ${SB_PATH_GLN} -s libstdc++.sl.5.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.sl.5
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl
+    sudo ${SB_PATH_GLN} -s libg2c.sl.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.sl.0
+    ;;
+  *-irix*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.so.1 ${GCC_RT_LIB}/libstdc++.so.6.5 \
+    ${GCC_RT_LIB}/libg2c.so.1.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.so.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.6.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.6.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so.6
+    sudo ${SB_PATH_GLN} -s libg2c.so.1.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so
+    sudo ${SB_PATH_GLN} -s libg2c.so.1.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so.1
+    ;;
+  *-linux*|*-solaris*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.so.1 ${GCC_RT_LIB}/libstdc++.so.5.0.5 \
+    ${GCC_RT_LIB}/libg2c.so.0.0.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.so.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so.5
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so.0
+    ;;
+  *-osf*)
+    sudo ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+    ${GCC_RT_LIB}/libgcc_s.so.1 ${GCC_RT_LIB}/libstdc++.so.5.0.5 \
+    ${GCC_RT_LIB}/libg2c.so.0.0.0 ${SB_INSTALL_PREFIX}/lib/support
+    sudo ${SB_PATH_GLN} -s libgcc_s.so.1 \
+    ${SB_INSTALL_PREFIX}/lib/support/libgcc_s.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so
+    sudo ${SB_PATH_GLN} -s libstdc++.so.5.0.5 \
+    ${SB_INSTALL_PREFIX}/lib/support/libstdc++.so.5
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so
+    sudo ${SB_PATH_GLN} -s libg2c.so.0.0.0 \
+    ${SB_INSTALL_PREFIX}/lib/support/libg2c.so.0
+    ;;
+  esac
+
+  ${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/lib/support
+fi
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS+${CFLAGS}}" \
+CPPFLAGS="-I${NCURSES_INC} -I${NCURSES_INC}/ncurses \
+${LIBDB+-I${LIBDB_INC}}" OPT="${OPT:--O2}" \
+CXXFLAGS="${CXXFLAGS:--O2}" LDFLAGS="-L${SB_INSTALL_PREFIX}/lib/support \
+${LD_RT}${SB_INSTALL_PREFIX}/lib/support ${LDFLAGS+${LDFLAGS}}" \
+--with-cxx="${CXX:-no}" --without-libdb --with-cycle-gc \
+--with-gcc --sysconfdir=${_sysconfdir} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# add path to include files from packages directory
+grep ${SB_INSTALL_PREFIX} Lib/distutils/sysconfig.py >/dev/null || {
+sed -e "\
+/ldshared = ldshared.*CPPFLAGS/ {
+a\\
+        opt = opt + ' -I${SB_VAR_PYTHONP}/include/python2.3'
+a\\
+        ldshared = ldshared + ' -L${SB_INSTALL_PREFIX}/lib/support'
+a\\
+        ldshared = ldshared + ' ${LD_RT}${SB_INSTALL_PREFIX}/lib/support${LD_RT_POST+${LD_RT_POST}}'
+}" Lib/distutils/sysconfig.py >/tmp/$$
+cp /tmp/$$ Lib/distutils/sysconfig.py && rm /tmp/$$
+}
+
+${SB_VAR_PERL}/bin/perl -pi -e "s!^BLDSHARED(.*)!\
+BLDSHARED\$1 -L${SB_INSTALL_PREFIX}/lib/support \
+${LD_RT}${SB_INSTALL_PREFIX}/lib/support${LD_RT_POST+${LD_RT_POST}}!" \
+Makefile
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-hpux10*)
+  # make archive members shared so we can create a shared
+  # libpython2.3.sl for mod_python
+  gmake CFLAGS='$(OPT) -fPIC'
+
+  # created libpython2.3.sl
+  ld +vnocompatwarnings -b +s -o libpython2.3.sl \
+  +h libpython2.3.sl -Fl libpython2.3.a -lm -lc ;;
+*-hpux11*)
+  # make archive members shared so we can create a shared
+  # libpython2.3.sl for mod_python
+  gmake CFLAGS='$(OPT) -fPIC'
+
+  # created libpython2.3.sl
+  ld +vnocompatwarnings -b +s -o libpython2.3.sl \
+  +h libpython2.3.sl -Fl libpython2.3.a -lm -lrt -lc ;;
+*)
+  gmake ;;
+esac
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}
+gmake install
+
+# install shared libpython2.3.sl for HP-UX
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 libpython2.3.sl \
+  ${SB_INSTALL_PREFIX}/lib/python2.3/config
+
+  # remove alternate install of library
+  rm ${SB_INSTALL_PREFIX}/lib/libpython* ;;
+esac
+
+# Create module directory
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_VAR_PYTHONP} \
+${SB_VAR_PYTHONP}/lib ${SB_VAR_PYTHONP}/lib/python2.3 \
+${SB_VAR_PYTHONP}/lib/python2.3/site-packages \
+${SB_VAR_PYTHONP}/lib/site-python
+
+# Install documentation
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/pdf/a4 \
+${_docdir}/pdf/letter ${_docdir}/ps/a4 ${_docdir}/ps/letter
+(cd ${_docdir}
+gtar jxf ${SRC_DOC_HTML}
+mv Python-Docs-2.3.2 html)
+(cd ${_docdir}/pdf/a4; gtar jxf ${SRC_DOC_PDF_A4})
+(cd ${_docdir}/pdf/letter; gtar jxf ${SRC_DOC_PDF_LETTER})
+(cd ${_docdir}/ps/a4; gtar jxf ${SRC_DOC_PS_A4})
+(cd ${_docdir}/ps/letter; gtar jxf ${SRC_DOC_PS_LETTER})
+
+${SB_PATH_GCHOWN} -R 0:0 ${_docdir}
+
+# BLDSHARED used at build-time only. switch to LDSHARED
+${SB_VAR_PERL}/bin/perl -pi -e "s!BLDSHARED!LDSHARED!" \
+${SB_INSTALL_PREFIX}/lib/python2.3/config/makesetup
+
+# default include.paths configuration file
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/include.paths
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_VAR_PYTHONP} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="2.3.1" to="2.3.2">
+        <items name="Core and builtins">
+          <item><para>A workaround for an OpenBSD compiler bug that
+meant python failed to detect floating point overflow in some
+cases</para></item>
+        </items>
+
+        <items name="Tools/Demos">
+          <item><para>Tools/scripts/md5sum.py opens files in binary
+mode by default. Opening in text mode is almost certainly not what you
+want.</para></item>
+        </items>
+
+        <items name="Extension modules">
+          <item><para>The documentation for bsddb now warns strongly
+about using the legacy API in multi-threaded
+applications</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>A bug in the autoconf machinery meant that
+os.fsync was never available</para></item>
+          <item><para>A bug in autoconf meant a bunch of symbols were
+undefined on HP/UX</para></item>
+        </items>
+      </change>
+
+      <change from="2.3.0" to="2.3.1">
+        <items name="Core and builtins">
+          <item><para>Patch #805613: Fix usage of the PTH
+library</para></item>
+          <item><para>Fixed a bug in the cache of length-one Unicode
+strings that could lead to a seg fault. The specific problem occurred
+when an earlier, non-fatal error left an uninitialized Unicode object
+in the freelist.</para></item>
+          <item><para>Fixed a leak in class objects defining a
+comparison but not a hash function</para></item>
+          <item><para>Bug #789402, fixed memory leak when opening a
+file object</para></item>
+          <item><para>Fixed a leak when new code objects are
+instantiated</para></item>
+          <item><para>Bug #800796: slice(1).__hash__() now raises a
+TypeError, unhashable type</para></item>
+          <item><para>Bug #603724: Pass an explicit buffer to setvbuf
+in PyFile_SetBufSize()</para></item>
+          <item><para>Bug #795506: The % formatting operator did not
+support '%F' as had been documented</para></item>
+          <item><para>Bug #775985: Only set stdout.encoding if a codec
+is available</para></item>
+        </items>
+
+        <items name="Extension modules">
+          <item><para>The _bsddb module now supports Berkeley DB
+4.2</para></item>
+          <item><para>Bug #698282: Add __file__ to dynamic modules in
+multiple interpreters</para></item>
+          <item><para>Patch #798145: Return correct information from
+nl_langinfo(RADIXCHAR)</para></item>
+          <item><para>Bug #797447: Correct confusing error message for
+unsupported locales</para></item>
+          <item><para>Patch #798534: fixed memory leak in
+os.popen()</para></item>
+          <item><para>Bug #793826: re-ordered the reference counting
+code in itertools.izip() to prevent re-entrancy anomalies. Also, if
+given zero arguments, it now returns an empty iterator rather than
+raising a type error.</para></item>
+          <item><para>Bug #770485: cStringIO did not support the
+f.closed attribute</para></item>
+          <item><para>Patch #781722: Gracefully reject AF_INET6 in
+socket.inet_pton if IPv6 is disabled</para></item>
+          <item><para>Bug #783312: Release host name memory in socket
+calls</para></item>
+        </items>
+
+        <items name="Library">
+          <item><para>Bug #709491: Reset __starttext_tag in
+sgmllib</para></item>
+          <item><para>The bsddb module and dbhash module now support
+the iterator and mapping protocols</para></item>
+          <item><para>Bug #711632: Reset all state members in
+HTMLParser.reset</para></item>
+          <item><para>Bug #792649: logging.ConfigStreamHandler had an
+uninitialized variable</para></item>
+          <item><para>The csv module's DictReader and DictWriter
+classes now accept keyword arguments. This was an omission in the
+initial implementation.</para></item>
+          <item><para>Bug #453515: filecmp.dircmp() can now make case
+insensitive filename comparisons</para></item>
+          <item><para>Bug #798254: doctest.py can now handle unbound
+methods</para></item>
+          <item><para>Bug #797650: textwrap.py now avoids an infinite
+loop when one of the indent arguments is set longer than the total
+width</para></item>
+          <item><para>Bug #796149: time.strptime() now handles having
+parentheses in the format string properly</para></item>
+          <item><para>The email package handles some RFC 2231
+parameters with missing CHARSET fields better. It also includes a
+patch to parameter parsing when semicolons appear inside
+quotes.</para></item>
+          <item><para>sets.py now runs under Py2.2. In addition, the
+argument restrictions for most set methods (but not the operators)
+have been relaxed to allow any iterable.</para></item>
+          <item><para>Bug #801342: random.sample() now accepts a Set
+as a possible argument. Previously, it insisted that the population
+argument be indexable.</para></item>
+          <item><para>Bug #778964: random.seed() now uses fractional
+seconds so that rapid successive, seeding calls will produce different
+sequences.</para></item>
+          <item><para>Bug #777664: Add
+Tkconstants.HIDDEN</para></item>
+          <item><para>Bug #781065: test_normalization is updated to
+the current URL of the Unicode 3.2 normalization file</para></item>
+          <item><para>Bug #782369: fix memory leak in array
+module</para></item>
+          <item><para>Caching in _strptime.py has been re-introduced.
+This leads to a large performance boost at the cost of not being
+thread-safe from locale changes while executing
+time.strptime()</para></item>
+          <item><para>Bug #783952: time.strptime() now properly
+handles issue of time.tzname[0] == time.tzname[1] while time.daylight
+is set to be true.</para></item>
+        </items>
+
+        <items name="IDLE">
+          <item><para>Bug #788378: Handle locale.error</para></item>
+          <item><para>Bug #774680: IDLE now does not fail to save the
+file anymore if the Tk buffer is not a Unicode string, yet
+eol_convention is</para></item>
+          <item><para>Bug #782510: The idna codec would fail to
+support names with a trailing full-stop</para></item>
+        </items>
+
+        <items name="Tools/Demos">
+          <item><para>Patch #713645: Fix typo in
+checkextensions_win32</para></item>
+          <item><para>Pynche was fixed to not crash when there is no
+~/.pynche file and no -d option was given</para></item>
+          <item><para>texcheck.py now checks for double word errors
+and erroneous spacing markup</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>patch #762934: improve detection of broken
+implementations of tzset()</para></item>
+          <item><para>Patch #798202: detect redhat9 Tcl/Tk in
+configure script</para></item>
+        </items>
+
+        <items name="Windows">
+          <item><para>The _ssl extension module was built using
+openssl-0.9.7b</para></item>
+          <item><para>The Windows installer includes documentation in
+HTMLHelp format instead of single HTML pages</para></item>
+        </items>
+      </change>
+
+      <change from="2.2.3" to="2.3.0">
+        <items name="New Tools">
+          <item><para>A brand new version of IDLE (from the IDLEfork
+project at SourceForge) is now included as Lib/idlelib. The old
+Tools/idle is no more.</para></item>
+        </items>
+
+        <items name="New or upgraded built-ins">
+          <item><para>sum() - a new function to sum a sequence of
+numbers. "sum(seq, start)" is faster and easier to understand than
+"reduce(operator.add, seq, start)"</para></item>
+          <item><para>enumerate() - an iterator taking a sequence
+returning tuples of (index, item). This solves the old "for i in
+range(len(seq))" problem more elegantly. (PEP 279)</para></item>
+          <item><para>basestring - an abstract string type which is
+the base class for str (8-bit strings) and unicode. Primarily used to
+simplify tests for string-ness to isinstance(x,
+basestring).</para></item>
+          <item><para>bool, True, False - these were introduced as
+ints in Python 2.2.1, but are now a separate type (a subtype of int).
+This means that True and False are now printed as the strings 'True'
+and 'False', respectively. As of 2.3b1, bool() without arguments
+returns False. (PEP 285)</para></item>
+          <item><para>compile(), eval(), exec - fully support Unicode,
+and no longer issue a SyntaxError when their input doesn't end with a
+newline</para></item>
+          <item><para>range() - as of 2.3b1 supports long arguments
+with a magnitude larger than sys.maxint. E.g., range(2**100, 2**101,
+2**100) is the following list:
+[1267650600228229401496703205376L]</para></item>
+          <item><para>dict() - two new features for dict construction:
+keyword arguments to the dict() constructor are now a shorthand for
+creating a dictionary from the key/value pairs, and
+dict.fromkeys(iterable) returns a dict whose keys are taken from the
+given iterable (the values default to None). Also a new dict method
+was added, pop(key), which removes and returns the value corresponding
+to the given key.</para></item>
+          <item><para>filter() - now returns Unicode when the input is
+Unicode. Various bugs with subclasses of built-in types
+fixed.</para></item>
+          <item><para>int() - this can now return a long when
+converting a string with many digits, rather than raising
+OverflowError</para></item>
+          <item><para>isinstance(), super() - Now support instances
+whose type() is not equal to their __class__</para></item>
+          <item><para>raw_input() - can now return Unicode objects (if
+sys.stdin is Unicode-capable)</para></item>
+          <item><para>slice() and buffer() - these are now types
+rather than functions. The constructors have the same signature as the
+functions in the past.</para></item>
+          <item><para>PyThreadState_SetAsyncEnc() - A new API
+(deliberately accessible only from C) to interrupt a thread by sending
+it an exception</para></item>
+        </items>
+
+        <items name="New or upgraded modules and packages">
+          <item><para>Many new doctest extensions from Jim Fulton,
+which among other enhancements, allows doctests to be run by
+unittests</para></item>
+          <item><para>csv - support for reading and writing files in
+so-called comma-separated-value format</para></item>
+          <item><para>timeit - module to time the speed of code
+snippets</para></item>
+          <item><para>platform - find out everything you always wanted
+to know about your platform, but were afraid to ask</para></item>
+          <item><para>shelve - optionally supports automatic
+writeback, and exposes pickle protocol versions</para></item>
+          <item><para>DocXMLRPCServer - a self-documenting XML server
+library</para></item>
+          <item><para>rotor - this module is deprecated. It is too
+easily cracked</para></item>
+          <item><para>re - the .*? pattern is now special-cased to
+avoid the recursion limit</para></item>
+          <item><para>Bastion and rexec - these modules are disabled,
+because they aren't safe in Python 2.3 (nor in Python
+2.2)</para></item>
+          <item><para>bsddb - the old bsddb module has finally been
+retired. The formerly 3rd party PyBSDDB wrapper is now available in
+Python 2.3, as the bsddb package. This is compatible with Sleepycat
+Berkeley DB versions 3.0 to 4.1. New in 2.3a2: the Windows installer
+now ships with Sleepycat's 4.1.25.NC, the latest release without
+strong cryptography.</para></item>
+          <item><para>bz2 - interface to the bz2 compression
+library</para></item>
+          <item><para>datetime - a fast, compact implementation in C
+of date and time calculations ranging from the year 1 to 9999, with
+optional timezone support</para></item>
+          <item><para>heapq - implements the heap queue algoritm known
+from 1st year algorithms classes</para></item>
+          <item><para>imaplib - added SSL support</para></item>
+          <item><para>imp - exposed the "import lock"</para></item>
+          <item><para>itertools - high speed, memory efficient looping
+constructs inspired by Haskell and SML</para></item>
+          <item><para>logging - a flexible, configurable logging
+package based on log4j and our own PEP 282</para></item>
+          <item><para>optparse - a powerful command line option
+parser</para></item>
+          <item><para>ossaudiodev - an interface to OSS (Open Sound
+System), the standard audio API for Linux and some BSD
+flavors</para></item>
+          <item><para>pickle, cPickle and copy - a new pickling
+protocol was added for more efficient pickling of (especially)
+new-style class instances and to allow more pickling flexibility. (PEP
+307)</para></item>
+          <item><para>random - this now uses a new core generator, the
+Mersenne Twister algorithm. This is the current best practice random
+number generator algorithm, widely tested, with a period of
+2**19937-1.</para></item>
+          <item><para>sets - a new module implementing two flexible
+set data types</para></item>
+          <item><para>socket - sockets now support an optional timeout
+on all operations</para></item>
+          <item><para>ssl - the Windows installer now incorporates SSL
+support</para></item>
+          <item><para>Tkinter - now returns Tcl objects instead of
+strings. Support for Tcl/Tk 8.0 and 8.1 is dropped; support for
+threaded Tcl/Tk is added, as is support for various Tk 8.4 features.
+The Windows installer now ships with Tcl/Tk 8.4.3. In 2.3b1, variable
+wrappers now also pass objects directly to Tcl, instead of converting
+them to strings.</para></item>
+          <item><para>trace - a tool for tracing program execution and
+reporting code coverage</para></item>
+          <item><para>textwrap - simple but effective text paragraph
+wrapping</para></item>
+          <item><para>zipimport - import modules from
+zipfiles</para></item>
+        </items>
+
+        <items name="General">
+          <item><para>PYTHONINSPECT - A program can now set the
+environment variable $PYTHONINSPECT to some string value in Python,
+and cause the interpreter to enter the interactive prompt at program
+exit, as if Python had been invoked with the -i option</para></item>
+          <item><para>os.walk() - generator-based replacement for
+os.path.walk()</para></item>
+          <item><para>os.fsync() - now supported on
+Windows</para></item>
+          <item><para>winsound.MessageBeep() - new function on
+Windows</para></item>
+          <item><para>time.tzset() - interface to platform
+tzset()</para></item>
+          <item><para>sys.getfilesystemencoding() - returns the file
+system default encoding</para></item>
+          <item><para>sys.exc_clear() - clears the current exception
+(sys.exc_type etc.)</para></item>
+          <item><para>sys.call_tracing() - allows pdb to debug code
+recursively</para></item>
+          <item><para>gc.get_referents() - returns a list of objects
+directly referenced by an object</para></item>
+          <item><para>dict.pop() - now takes an optional argument
+specifying a default value to return if the key is not in the
+dict</para></item>
+          <item><para>list.insert(i, x) now interprets negative i as
+it would be interpreted by slicing, so negative values count from the
+end of the list</para></item>
+          <item><para>New-style classes that don't define __new__ or
+__init__ no longer ignore constructor arguments</para></item>
+          <item><para>Hex/oct literals prefixed with a minus sign were
+handled inconsistently. This has been fixed in accordance with PEP
+237.</para></item>
+          <item><para>Functions now have a __module__ attribute
+too</para></item>
+          <item><para>Passing a float to C functions expecting an
+integer now issues a DeprecationWarning; in the future this will
+become a TypeError</para></item>
+          <item><para>Package index and metadata for distutils. This
+is support of the Python catalog, now open for business at
+python.org/pypi.</para></item>
+          <item><para>Support for generators is on by default --
+'yield' is always a keyword, 'from __future__ import generators' is no
+longer necessary (but still allowed). (PEP 255)</para></item>
+          <item><para>Extended slices - the standard sequence types
+(string, list etc.) now support extended slices. Cute: s[::-1]
+reverses a string.</para></item>
+          <item><para>None - assignment to variables or attributes
+named None will now trigger a warning. In the future, None may become
+a keyword.</para></item>
+          <item><para>New-style classes now allow assignment to
+__name__ and __bases__</para></item>
+          <item><para>Interned strings are no longer
+immortal</para></item>
+          <item><para>sys.setcheckinterval() - the default value for
+this feature has changed from 10 to 100, for faster execution of
+interleaving multiple threads (by switching threads less
+frequently)</para></item>
+          <item><para>Universal newlines - files opened for reading
+with the special mode "U" (instead of "r") translate all three
+commonly found line ending conventions (\n, \r, \r\n) into Python's
+standard \n convention. Contributed by Jack Jansen. (PEP
+278)</para></item>
+          <item><para>Encoding declarations - you can put a comment of
+the form "# -*- coding: &lt;encodingname&gt; -*-" in the first or
+second line of a Python source file to indicate the encoding (e.g.
+utf-8). (PEP 263 phase 1)</para></item>
+          <item><para>Codec error handling callbacks - this allows for
+flexible handling of encoding errors. (PEP 293)</para></item>
+          <item><para>File objects are now their own iterators. This
+makes multiple interrupted iterations over the same file more
+reliable. The xreadlines() method and module are now
+deprecated.</para></item>
+          <item><para>The in operator can now be used for substring
+testing, e.g. 'ca' in 'abracadabra' returns True</para></item>
+          <item><para>Import from zipfiles - the name of a zipfile
+placed on sys.path (or in $PYTHONPATH) causes import to look for
+modules and packages in the zipfile. Other import hooks are also
+provided. (PEP 273 and PEP 302.)</para></item>
+          <item><para>Unicode filenames on platforms that support them
+(specifically, Windows of the NT/2000/XP variety). (PEP
+277)</para></item>
+          <item><para>A new warning, FutureWarning, is issued about
+certain uses of hex or octal constants that appear unsigned but are in
+fact negative, left shifts that can lose bits or change the sign, and
+certain conversions to hex or octal.</para></item>
+          <item><para>Tim Peters rewrote his list.sort()
+implementation - this one is a "stable sort" (equal inputs appear in
+the same order in the output) and faster than before.</para></item>
+          <item><para>Tim Peters also changed long int multiplication
+to use the Karatsuba algorithm, based on a patch by Christopher A.
+Craig. This speeds up multiplication of very long ints.</para></item>
+        </items>
+
+        <item><para>According to a couple of simple benchmark, Python
+2.3 is about 20-30% faster than Python 2.2.3. Some of this speed-up
+was obtained by removing the <command>SET_LINENO</command> opcodes,
+which means that the difference is less impressive when comparing
+"<command>python -O</command>"; the rest was various careful
+tune-ups.</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>Python was built with the following modules: Berkeley
+DB, Curses (via ncurses), Readline, Tcl/Tk (Tkinter), and Zlib. Each
+module is loaded dynamically. Therefore, additional packages must be
+installed for each of the above programs for the dynamic module in
+Python to run as the Python package does not have dependencies on
+these packages (the python binary does not need the above programs to
+run). In the case of Tru64 UNIX 4.0D, external packages are not
+required for the dynamic modules to load as the dynamic module has the
+external libraries compiled in statically (done to fix a deficiency in
+the Tru64 system loader).</para>
+      </note>
+
+      <note type="configuration">
+        <para>The list of module search paths can be augmented by
+editing the <command>${SB_INSTALL_PREFIX}/etc/include.paths</command> file, adding
+new search paths, one entry per line. The search paths in this
+configuration file are searched before the defaults and after paths
+set via the <command>PYTHONPATH</command> environment variable.</para>
+      </note>
+
+      <note type="installation">
+        <para>The postinstall scripts create a compiled wrapper script
+for <command>idle</command>, <command>pydoc</command>,
+<command>python</command>, and <command>python2.3</command> in the
+common bin directory. The compiled wrapper scripts sets
+<command>$TCL_LIBRARY</command> and <command>$TK_LIBRARY</command> as
+the Tkinter modules have been linked against Tcl/Tk 8.4.6.</para>
+      </note>
+
+      <note type="usage">
+        <para>The default python module search path:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python2.3
+${SB_INSTALL_PREFIX}/lib/python2.3/plat-&lt;arch&gt;
+${SB_INSTALL_PREFIX}/lib/python2.3/lib-tk
+${SB_INSTALL_PREFIX}/lib/python2.3/lib-dynload
+${SB_INSTALL_PREFIX}/lib/python2.3/site-packages
+${SB_INSTALL_BASE}/python232p/lib/python2.3/site-packages
+${SB_INSTALL_BASE}/python232p/lib/site-python
+        </screen>
+
+        <para>A separate package contains the python modules which
+will be updated separately as new modules are added and new versions
+of existing modules are released. XEmacs, Perl, and teTeX are
+distributed in the same manner. The goal is to keep the python
+distribution pristine. The module directory can be found in
+<command>${SB_INSTALL_BASE}/python232p</command>.</para>
+
+        <para>Unlike previous releases of Python which were compiled
+with the vendor C/C++ compliler, releases of Python beginning with the
+2.3.2 release are built with the GNU C/C++ compiler. This will make
+building 3rd-party modules easier as the vendor compiler is not
+required. A local copy of the GCC runtime libraries has been copied to
+the <command>${SB_INSTALL_PREFIX}/lib/support</command> directory to
+avoid depending on a specific version of GCC.</para>
+
+        <para>The following 3rd-party modules are provided: 4Suite
+1.0a3, Imaging 1.1.4, Numeric 23.0, Optik 1.4, PyQt 3.12, PyXML 0.8.3,
+ReportLab 1.17, SciPy-0.2.0, ScientificPython-2.4.1, egenix-mx-base
+2.0.5, gadfly 1.0.0, libxml 2.6.11, libxslt 1.1.8, numarray 0.11,
+py-xmlrpc 0.8.8.3, pygtk 2.0.0, python-fchksum 1.7, sip 3.10.2.</para>
+
+        <para>Package dependencies for some modules:</para>
+        <unorderedlist>
+          <item><para>The Imaging module needs v6b of the jpeg package
+and v1.1.4 of the zlib package</para></item>
+          <item><para>The PyQt module needs v3.3.2 of the Qt package
+and v1.2 of the QScintilla package</para></item>
+          <item><para>The PyXML and pyexpat modules need v1.95.6 of
+the expat package</para></item>
+          <item><para>The Tkinter module needs v8.4.6 of the Tcl/Tk
+package</para></item>
+          <item><para>The libxml module needs v2.6.11 of the libxml
+package</para></item>
+          <item><para>The libxslt module needs v1.1.8 of the libxslt
+package</para></item>
+          <item><para>The pycurl module needs v7.11.1 of the curl
+package</para></item>
+          <item><para>The python-fchksum module needs v1.1.4 of the
+zlib package</para></item>
+          <item><para>The python-ldap module needs v2.1.27 of the
+OpenLDAP package</para></item>
+          <item><para>The readline module needs v4.2a of the Readline
+package</para></item>
+          <item><para>The pygtk module needs v2.4.4 of the GTK+
+package and v2.3.6 of the libglade package</para></item>
+        </unorderedlist>
+
+        <para>SSL socket support has been enabled for the socket
+module. Because AIX, HP-UX, IRIX, Solaris, and Tru64 UNIX do not have
+a device file to generate random data (usually
+<command>/dev/random</command>), the EGD or PRNGD daemons must be used
+to provide such a device file. Prior to initiating the SSL connection,
+the <command>RAND_egd</command> method can be set to the path the
+EGD/PRNGD daemon is listening on. OpenSSL will, by default, query the
+socket at <command>/var${SB_INSTALL_BASE}/prngd/pool</command> for entropy. Additional
+methods that might be of interest are <command>RAND_add()</command>
+and <command>RAND_status()</command>. Redhat Linux and Solaris 9
+provide a <command>/dev/random</command> device-special file and
+therefore do not need PRNGD.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 11" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Support for Redhat Enterprise Linux
+3.0/AMD64</para></item>
+        <item><para>Merge change from 2.4a2 to Modules/zipimport.c for
+Redhat Enterprise Linux 3.0/AMD64</para></item>
+      </change>
+
+      <change date="2004 June 1" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Read <command>include.paths</command>
+configuration file to determine list of additional directories to add
+to runtime list of paths to search for modules</para></item>
+      </change>
+
+      <change date="2004 April 6" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Switch to dlopen() on AIX as load()/loadbind() 
+cannot load and bind bind C++ shared objects properly (constructors
+and destructors for static classes are not called with these system
+calls)</para></item>
+        <item><para>Upgrade Berkeley DB dependency from 4.1.25 to
+4.2.52</para></item>
+      </change>
+
+      <change date="2004 March 26" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Tcl/Tk dependency to 8.4.6</para></item>
+      </change>
+
+      <change date="2004 February 19" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade ncurses dependency to 5.4</para></item>
+      </change>
+
+      <change date="2003 December 25" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Test for loadAndInit on AIX only when
+--with-cxx=yes</para></item>
+        <item><para>Fix test for inet_ntop prototype by checking for
+inet_ntop first</para></item>
+        <item><para>Remove usage of curses KEY_COMMAND and KEY_HELP
+for AIX as they don't exist</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 November 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix bug in Lib/zipfile.py. When external file
+attribute value is calculated, st_mode parameter from stat() is
+shifted 16 bits. However, Python promotes this value to a long, too
+wide to fit into the 32-bit space required. So, we &amp; with 0xffff
+to strip the extra bits.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

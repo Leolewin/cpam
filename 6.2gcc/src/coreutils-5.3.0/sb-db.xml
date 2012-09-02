@@ -1,0 +1,869 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="coreutils" version="5.3.0" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}53</install-name>
+
+    <sources>
+      <source checksum="1733209e97ddb504651c30aefd77a1dd"
+        checksum-type="md5" size="3642097"
+        path="src/coreutils-5.3.0.tar.bz2"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for strndup()
+  export ac_cv_func_strndup=no
+  export ac_cv_have_decl_strndup=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} \
+--program-prefix=g --datadir="${_datadir}" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+RUN_EXPENSIVE_TESTS=yes gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/constants.texi \
+doc/coreutils.texi doc/doclicense.texi doc/getdate.texi \
+doc/perm.texi doc/version.texi ${_docdir}/texinfo
+
+# remove su and [
+rm ${SB_INSTALL_PREFIX}/bin/gsu ${SB_INSTALL_PREFIX}/man/man1/gsu.1 \
+${SB_INSTALL_PREFIX}/bin/g[
+]]>
+    </install>
+
+    <notes>
+      <change from="5.2.1" to="5.3.0">
+        <items name="Bug fixes">
+          <item><para>rm (without -f) no longer hangs when attempting
+to remove a symlink to a file on an off-line NFS-mounted
+partition</para></item>
+          <item><para>cut's --output-delimiter=D option works with
+abutting byte ranges</para></item>
+          <item><para>rm no longer gets a failed assertion under some
+unusual conditions</para></item>
+          <item><para>Several fixes to chgrp and chown for
+compatibility with POSIX and BSD:</para>
+          <unorderedlist>
+            <item><para>Do not affect symbolic links by default. Now,
+operate on whatever a symbolic points to, instead. To get the old
+behavior, use --no-dereference (-h).</para></item>
+            <item><para><command>--dereference</command> now works,
+even when the specified owner and/or group match those of an affected
+symlink</para></item>
+            <item><para>Check for incompatible options.  When -R and
+--dereference are both used, then either -H or -L must also be used.
+When -R and -h are both used, then -P must be in effect.</para></item>
+            <item><para>-H, -L, and -P have no effect unless -R is
+also specified. If -P and -R are both specified, -h is
+assumed.</para></item>
+            <item><para>Do not optimize away the chown() system call
+when the file's owner and group already have the desired value.  This
+optimization was incorrect, as it failed to update the last-changed
+time and reset special permission bits, as POSIX
+requires.</para></item>
+            <item><para>Do not report an error if the owner or group
+of a recursively-encountered symbolic link cannot be updated because
+the file system does not support it.</para></item>
+          </unorderedlist></item>
+          <item><para>rm no longer requires read access to the current
+directory</para></item>
+          <item><para>For some types of errors (e.g., read-only file
+system, I/O error) when first encountering a directory, "rm -r" would
+mistakenly fail to remove files under that directory.</para></item>
+          <item><para>If d/x is a directory and x a file, "ln x d/"
+now reports an error instead of incorrectly creating a link to
+d/x/x</para></item>
+          <item><para>ptx now diagnoses invalid values for its
+--width=N (-w) and --gap-size=N (-g) options</para></item>
+          <item><para>tee now exits when it gets a SIGPIPE signal, as
+POSIX requires. To get tee's old behavior, use the shell command
+"(trap '' PIPE; tee)".</para></item>
+          <item><para>ls no longer segfaults on systems for which
+SIZE_MAX != (size_t) -1</para></item>
+          <item><para>echo now conforms to POSIX better.  It supports
+the \0ooo syntax for octal escapes, and \c now terminates printing
+immediately.  If POSIXLY_CORRECT is set and the first argument is not
+"-n", echo now outputs all option-like arguments instead of treating
+them as options.</para></item>
+          <item><para>who now prints user names in full instead of
+truncating them after 8 bytes</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>For efficiency, "sort -m" no longer copies input
+to a temporary file merely because the input happens to come from a
+pipe.  As a result, some relatively-contrived examples like "cat F |
+sort -m -o F - G" are no longer safe, as "sort" might start writing F
+before "cat" is done reading it.  This problem cannot occur unless
+"-m" is used.</para></item>
+          <item><para>When outside the default POSIX locale, the 'who'
+and 'pinky' commands now output time stamps like "2004-06-21 13:09"
+instead of the traditional "Jun 21 13:09"</para></item>
+          <item><para>pwd now works even when run from a working
+directory whose name is longer than PATH_MAX</para></item>
+          <item><para>cp -pu and mv -u (when copying) now don't bother
+to update the destination if the resulting time stamp would be no
+newer than the preexisting time stamp.  This saves work in the common
+case when copying or moving multiple times to the same destination in
+a file system with a coarse time stamp resolution.</para></item>
+          <item><para>dd has new conversions for the conv=
+option:</para>
+          <screen>
+nocreat   do not create the output file
+excl      fail if the output file already exists
+fdatasync physically write output file data before finishing
+fsync     likewise, but also write metadata
+          </screen></item>
+          <item><para>dd has new iflag= and oflag= options with the
+following flags:</para>
+          <screen>
+append    append mode (makes sense for output file only)
+direct    use direct I/O for data
+dsync     use synchronized I/O for data
+sync      likewise, but also for metadata
+nonblock  use non-blocking I/O
+nofollow  do not follow symlinks
+          </screen></item>
+          <item><para>stty now provides support (iutf8) for setting
+UTF-8 input mode</para></item>
+          <item><para>With stat, a specified format is no longer
+automatically newline terminated. If you want a newline at the end of
+your output, append "\n" to the format string.</para></item>
+          <item><para>'df', 'du', and 'ls' now take the default block
+size from the BLOCKSIZE environment variable if the BLOCK_SIZE,
+DF_BLOCK_SIZE, DU_BLOCK_SIZE, and LS_BLOCK_SIZE environment variables
+are not set. Unlike the other variables, though, BLOCKSIZE does not
+affect values like 'ls -l' sizes that are normally displayed as bytes.
+This new behavior is for compatibility with BSD.</para></item>
+          <item><para>du accepts a new option --files0-from=FILE,
+where FILE contains a list of NUL-terminated file names</para></item>
+          <item><para>"date -d" and "touch -d" now accept integer
+counts of seconds since 1970 when prefixed by "@".  For example,
+"@321" represents 1970-01-01 00:05:21 UTC.</para></item>
+          <item><para>"date -d", "date -f" and "touch -d" now handle
+fractional time stamps like 2004-02-27
+14:19:13.489392193</para></item>
+          <item><para>"date" has a new option --iso-8601=ns that
+outputs nanosecond-resolution time stamps</para></item>
+          <item><para>echo -e '\xHH' now outputs a byte whose
+hexadecimal value is HH, for compatibility with bash</para></item>
+          <item><para>In the following cases POSIX allows the default
+GNU behavior, so when POSIXLY_CORRECT is set:</para>
+          <unorderedlist>
+            <item><para>false, printf, true, unlink, and yes all
+support --help and --option</para></item>
+            <item><para>ls supports TABSIZE</para></item>
+            <item><para>pr no longer depends on LC_TIME for the date
+format in non-POSIX locales</para></item>
+            <item><para>printf supports \u, \U, \x</para></item>
+            <item><para>tail supports two or more files when using the
+obsolete option syntax</para></item>
+          </unorderedlist></item>
+          <item><para>The usual "<command>--</command>" operand is now
+supported by chroot, hostid, hostname, pwd, sync, and
+yes</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.3" to="5.2.1">
+        <items name="Bug fixes">
+          <item><para>mv could mistakenly fail to preserve hard links
+when moving two or more arguments between partitions</para></item>
+          <item><para>"<command>cp --sparse=always F
+/dev/hdx</command>" no longer tries to use lseek to create holes in
+the destination</para></item>
+          <item><para>nohup now sets the close-on-exec flag for its
+copy of the stderr file descriptor. This avoids some nohup-induced
+hangs. For example, before this change, if you ran "<command>ssh
+localhost</command>", then "<command>nohup sleep 600 &lt;/dev/null
+&amp;</command>", and then exited that remote shell, the ssh session
+would hang until the 10-minute sleep terminated. With the fixed
+nohup, the ssh session terminates immediately.</para></item>
+          <item><para>"expr" now conforms to POSIX better:</para>
+          <unorderedlist>
+            <item><para>Integers like -0 and 00 are now treated as
+zero</para></item>
+            <item><para>The "<command>|</command>" operator now
+returns 0, not its first argument, if both arguments are null or zero.
+E.g., 'expr "" \| ""' now returns 0, not the empty
+string.</para></item>
+            <item><para>The "<command>|</command>" and
+"<command>&amp;</command>" operators now use short-circuit evaluation,
+e.g., "<command>expr 1 \| 1 / 0</command>" no longer reports a
+division by zero.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="New features">
+          <item><para>"<command>chown user.group file</command>" now
+has its traditional meaning even when conforming to POSIX 1003.1-2001,
+so long as no user has a name containing "<command>.</command>" that
+happens to equal "<command>user.group</command>".</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.2" to="5.1.3">
+        <items name="Bug fixes">
+          <item><para>"<command>cp -d</command>" now works as required
+even on systems like OSF V5.1 that declare stat and lstat as "static
+inline" functions</para></item>
+          <item><para>time stamps output by stat now include actual
+fractional seconds, when available -- or .0000000 for files without
+that information</para></item>
+          <item><para>seq no longer infloops when printing 2^31 or more
+numbers. For reference, seq "<command>echo 2^31|bc</command>" &gt;
+/dev/null takes about one hour on a 1.6 GHz Athlon 2000 XP. Now it can
+output 2^53-1 numbers before misbehaving.</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.1" to="5.1.2">
+        <items name="Bug fixes">
+          <item><para>rmdir -p exits with status 1 on error; formerly
+it sometimes exited with status 0 when given more than one
+argument.</para></item>
+          <item><para>nohup now always exits with status 127 when it
+finds an error, as POSIX requires; formerly it sometimes exited with
+status 1.</para></item>
+          <item><para>Several programs (including cut, date, dd, env,
+hostname, nl, pr, stty, and tr) now always exit with status 1 when
+they find an error; formerly they sometimes exited with status
+2.</para></item>
+          <item><para>factor no longer reports a usage error if stdin
+has the wrong format.</para></item>
+          <item><para>paste no longer infloops on ppc systems (bug
+introduced in 5.1.1)</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.0" to="5.1.1">
+        <items name="Configuration option">
+          <item><para>You can select the default level of POSIX
+conformance at configure-time, e.g., by ./configure
+DEFAULT_POSIX2_VERSION=199209</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>fold -s works once again on systems with
+differing sizes for int and size_t (bug introduced in
+5.1.0)</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>touch -r now specifies the origin for any
+relative times in the -d operand, if both options are given. For
+example, "touch -r FOO -d '-5 seconds' BAR" sets BAR's modification
+time to be five seconds before FOO's.</para></item>
+          <item><para>join: The obsolete options "-j1 FIELD", "-j2
+FIELD", and "-o LIST1 LIST2..." are no longer supported on POSIX
+1003.1-2001 systems. Portable scripts should use "-1 FIELD", "-2
+FIELD", and "-o LIST1,LIST2..." respectively. If join was compiled on
+a POSIX 1003.1-2001 system, you may enable the old behavior by setting
+_POSIX2_VERSION=199209 in your environment.</para></item>
+        </items>
+      </change>
+
+      <change from="5.0.91" to="5.1.0">
+        <items name="New features">
+          <item><para>chgrp, chmod, and chown can now process (with
+-R) hierarchies of virtually unlimited depth. Before, they would fail
+to operate on any file they encountered with a relative name of length
+PATH_MAX (often 4096) or longer.</para></item>
+          <item><para>chgrp, chmod, chown, and rm accept the new
+options: --preserve-root, --no-preserve-root (default)</para></item>
+          <item><para>chgrp and chown now accept POSIX-mandated -L,
+-H, and -P options</para></item>
+          <item><para>du can now process hierarchies of virtually
+unlimited depth. Before, du was limited by the user's stack size and
+it would get a stack overflow error (often a segmentation fault) when
+applied to a hierarchy of depth around 30,000 or larger.</para></item>
+          <item><para>du works even when run from an inaccessible
+directory</para></item>
+          <item><para>du -D now dereferences all symlinks specified on
+the command line, not just the ones that reference
+directories</para></item>
+          <item><para>du now accepts -P (--no-dereference), for
+compatibility with du of NetBSD and for consistency with e.g., chown
+and chgrp</para></item>
+          <item><para>du's -H option will soon have the meaning
+required by POSIX (--dereference-args, aka -D) rather then the current
+meaning of --si. Now, using -H elicits a warning to that
+effect.</para></item>
+          <item><para>When given -l and similar options, ls now
+adjusts the output column widths to fit the data, so that output lines
+are shorter and have columns that line up better. This may adversely
+affect shell scripts that expect fixed-width columns, but such shell
+scripts were not portable anyway, even with old GNU ls where the
+columns became ragged when a datum was too wide.</para></item>
+          <item><para>du accepts a new option, -0/--null, to make it
+produce NUL-terminated output lines</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>printf, seq, tail, and sleep now parse
+floating-point operands and options in the C locale. POSIX requires
+this for printf.</para></item>
+          <item><para>od -c -w9999999 no longer
+segfaults</para></item>
+          <item><para>csplit no longer reads from freed memory
+(dumping core on some systems)</para></item>
+          <item><para>csplit would mistakenly exhaust virtual memory
+in some cases</para></item>
+          <item><para>ls --width=N (for very large N) is no longer
+subject to an address arithmetic bug that could result in bounds
+violations.</para></item>
+          <item><para>ls --width=N (with -x or -C) no longer allocates
+more space (potentially much more) than necessary for a given
+directory.</para></item>
+          <item><para>dd "unblock" and "sync" may now be combined
+(e.g., dd conv=unblock,sync)</para></item>
+        </items>
+      </change>
+
+      <change from="5.0.90" to="5.0.91">
+        <items name="New features">
+          <item><para>date accepts a new option --rfc-2822, an alias
+for --rfc-822.</para></item>
+          <item><para>split accepts a new option -d or
+--numeric-suffixes.</para></item>
+          <item><para>cp, install, mv, and touch now preserve
+microsecond resolution on file timestamps, on platforms that have the
+'utimes' system call. Unfortunately there is no system call yet to
+preserve file timestamps to their full nanosecond resolution;
+microsecond resolution is the best we can do right now.</para></item>
+          <item><para>sort now supports the zero byte (NUL) as a field
+separator; use -t '\0'. The -t '' option, which formerly had no
+effect, is now an error.</para></item>
+          <item><para>sort option order no longer matters for the
+options -S, -d, -i, -o, and -t. Stronger options override weaker, and
+incompatible options are diagnosed.</para></item>
+          <item><para>"sha1sum --check" now accepts the BSD format for
+SHA1 message digests in addition to the BSD format for MD5
+ones.</para></item>
+          <item><para>who -l now means "who --login", not "who
+--lookup", per POSIX. who's -l option has been eliciting an
+unconditional warning about this impending change since
+sh-utils-2.0.12 (April 2002).</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Mistakenly renaming a file onto itself, e.g.,
+via "mv B b" when "B" is the same directory entry as "b" no longer
+destroys the directory entry referenced by both "b" and "B". Note
+that this would happen only on file systems like VFAT where two
+different names may refer to the same directory entry, usually due to
+lower-&gt;upper case mapping of file names. Now, the above can happen
+only on file systems that perform name mapping and that support hard
+links (stat.st_nlink &gt; 1). This mitigates the problem in two ways:
+few file systems appear to be affected (hpfs and ntfs are), when the
+bug is triggered, mv no longer removes the last hard link to a
+file.</para></item>
+          <item><para>stat no longer overruns a buffer for format
+strings ending in "%"</para></item>
+          <item><para>fold -s -wN would infloop for N &lt; 8 with TABs
+in the input. E.g., this would not terminate: printf 'a\t' | fold -w2
+-s</para></item>
+          <item><para>"split -a0", although of questionable utility,
+is accepted once again.</para></item>
+          <item><para>"df DIR" used to hang under some conditions on
+OSF/1 5.1. Now it doesn't.</para></item>
+          <item><para>seq's --width (-w) option now works properly
+even when the endpoint requiring the larger width is negative and
+smaller than the other endpoint.</para></item>
+          <item><para>seq's default step is 1, even if LAST &lt;
+FIRST</para></item>
+          <item><para>paste no longer mistakenly outputs 0xFF bytes
+for a nonempty input file without a trailing newline.</para></item>
+          <item><para>"tail -n0 -f FILE" and "tail -c0 -f FILE" no
+longer perform what amounted to a busy wait, rather than sleeping
+between iterations.</para></item>
+          <item><para>tail's long-undocumented --allow-missing option
+now elicits a warning</para></item>
+        </items>
+      </change>
+
+      <change from="5.0.1" to="5.0.90">
+        <items name="New features">
+          <item><para>sort is now up to 30% more CPU-efficient in some
+cases</para></item>
+          <item><para>"test" is now more compatible with Bash and
+POSIX:</para></item>
+          <item><para>"test -t", "test --help", and "test --version"
+now silently exit with status 0. To test whether standard output is a
+terminal, use "test -t 1". To get help and version info for "test",
+use "[ --help" and "[ --version".</para></item>
+          <item><para>"test" now exits with status 2 (not 1) if there
+is an error.</para></item>
+          <item><para>wc count field widths now are heuristically
+adjusted depending on the input size, if known. If only one count is
+printed, it is guaranteed to be printed without leading
+spaces.</para></item>
+          <item><para>Previously, wc did not align the count fields if
+POSIXLY_CORRECT was set, but POSIX did not actually require this
+undesirable behavior, so it has been removed.</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>kill no longer tries to operate on argv[0]
+(introduced in 5.0.1) Why wasn't this noticed?  Although many tests
+use kill, none of them made an effort to avoid using the shell's
+built-in kill.</para></item>
+          <item><para>"[" invoked with no arguments no longer evokes a
+segfault</para></item>
+          <item><para>rm without --recursive (aka -r or -R) no longer
+prompts regarding unwritable directories, as required by
+POSIX.</para></item>
+          <item><para>uniq -c now uses a SPACE, not a TAB between the
+count and the corresponding line, as required by POSIX.</para></item>
+          <item><para>expr now exits with status 2 if the expression
+is syntactically valid, and with status 3 if an error occurred. POSIX
+requires this.</para></item>
+          <item><para>expr now reports trouble if string comparison
+fails due to a collation error.</para></item>
+          <item><para>split now generates suffixes properly on EBCDIC
+hosts.</para></item>
+          <item><para>split -a0 now works, as POSIX
+requires.</para></item>
+          <item><para>"sort --version" and "sort --help" fail, as they
+should when their output is redirected to /dev/full.</para></item>
+          <item><para>"su --version &gt; /dev/full" now fails, as it
+should</para></item>
+        </items>
+
+        <items name="Fewer arbitrary limitations">
+          <item><para>cut requires 97% less memory when very large
+field numbers or byte offsets are specified</para></item>
+        </items>
+      </change>
+
+      <change from="5.0" to="5.0.1">
+        <items name="New programs">
+          <item><para>new program: "[" (much like
+"test")</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>head now accepts --lines=-N (--bytes=-N) to
+print all but the N lines (bytes) at the end of the file</para></item>
+          <item><para>md5sum --check now accepts the output of the BSD
+md5sum program, e.g., MD5 (f) =
+d41d8cd98f00b204e9800998ecf8427e</para></item>
+          <item><para>date -d DATE can now parse a DATE string like
+May-23-2003</para></item>
+          <item><para>chown: "." is no longer recognized as a
+separator in the OWNER:GROUP specifier on POSIX 1003.1-2001 systems.
+If chown *was not* compiled on such a system, then it still accepts
+".", by default. If chown was compiled on a POSIX 1003.1-2001 system,
+then you may enable the old behavior by setting _POSIX2_VERSION=199209
+in your environment.</para></item>
+          <item><para>chown no longer tries to preserve set-user-ID
+and set-group-ID bits; on some systems, the chown syscall resets those
+bits, and previous versions of the chown command would call chmod to
+restore the original, pre-chown(2) settings, but that behavior is
+problematic:</para>
+          <unorderedlist>
+            <item><para>There was a window whereby a malicious user,
+M, could subvert a chown command run by some other user and operating
+on files in a directory where M has write access.</para></item>
+            <item><para>Before (and even now, on systems with chown(2)
+that doesn't reset those bits), an unwary admin. could use chown
+unwittingly to create e.g., a set-user-ID root copy of
+/bin/sh.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>chown --dereference no longer leaks a file
+descriptor per symlink processed</para></item>
+          <item><para>"du /" once again prints the "/" on the last
+line</para></item>
+          <item><para>split's --verbose option works once again
+[broken in 4.5.10 and 5.0]</para></item>
+          <item><para>tail -f is no longer subject to a race condition
+that could make it delay displaying the last part of a file that had
+stopped growing. That bug could also make tail -f give an unwarranted
+"file truncated" warning.</para></item>
+          <item><para>du no longer runs out of file descriptors
+unnecessarily</para></item>
+          <item><para>df and "readlink --canonicalize" no longer
+corrupt the heap on non-glibc, non-solaris systems</para></item>
+          <item><para>"env -u UNSET_VARIABLE" no longer dumps core on
+non-glibc systems</para></item>
+          <item><para>readlink's --canonicalize option now works on
+systems like Solaris that lack the canonicalize_file_name function but
+do have resolvepath.</para></item>
+          <item><para>mv now removes "a" in this example on all
+systems: touch a; ln a b; mv a b This behavior is contrary to POSIX
+(which requires that the mv command do nothing and exit successfully),
+but I suspect POSIX will change.</para></item>
+          <item><para>date's %r format directive now honors locale
+settings</para></item>
+          <item><para>date's "-" (no-pad) format flag now affects the
+space-padded-by-default conversion specifiers, %e, %k,
+%l</para></item>
+          <item><para>fmt now diagnoses invalid obsolescent width
+specifications like "-72x"</para></item>
+          <item><para>fmt now exits nonzero when unable to open an
+input file</para></item>
+          <item><para>tsort now fails when given an odd number of
+input tokens, as required by POSIX. Before, it would act as if the
+final token appeared one additional time.</para></item>
+        </items>
+
+        <items name="Fewer arbitrary limitations">
+          <item><para>tail's byte and line counts are no longer
+limited to OFF_T_MAX. Now the limit is UINTMAX_MAX (usually
+2^64).</para></item>
+          <item><para>split can now handle --bytes=N and --lines=N
+with N=2^31 or more.</para></item>
+        </items>
+
+        <items name="Portability">
+          <item><para>"kill -t" now prints signal descriptions (rather
+than "?") on systems like Tru64 with __sys_siglist but no strsignal
+function.</para></item>
+          <item><para>stat.c now compiles on Ultrix
+systems</para></item>
+          <item><para>sleep now works on AIX systems that lack support
+for clock_gettime</para></item>
+          <item><para>rm now works around Darwin6.5's broken readdir
+function. Before "rm -rf DIR" would fail to remove all files in DIR if
+there were more than 338.</para></item>
+        </items>
+      </change>
+
+      <change from="4.5.12" to="5.0">
+        <item><para>false --help now exits nonzero</para></item>
+      </change>
+
+      <change from="4.5.11" to="4.5.12">
+        <item><para>printf no longer treats \x specially when
+POSIXLY_CORRECT is set</para></item>
+        <item><para>printf avoids buffer overrun with format ending in
+a backslash and</para></item>
+        <item><para>printf avoids buffer overrun with incomplete
+conversion specifier</para></item>
+        <item><para>printf accepts multiple flags in a single
+conversion specifier</para></item>
+      </change>
+
+      <change from="4.5.10" to="4.5.11">
+        <item><para>seq no longer requires that a field width be
+specified</para></item>
+        <item><para>seq no longer fails when given a field width of
+"0"</para></item>
+        <item><para>seq now accepts " " and "'" as valid format flag
+characters</para></item>
+        <item><para>df now shows a HOSTNAME: prefix for each
+remote-mounted file system on AIX 5.1</para></item>
+        <item><para>portability tweaks for HP-UX, AIX 5.1,
+DJGPP</para></item>
+      </change>
+
+      <change from="4.5.9" to="4.5.10">
+        <item><para>printf no longer segfaults for a negative field
+width or precision</para></item>
+        <item><para>shred now always enables --exact for non-regular
+files</para></item>
+        <item><para>du no longer lists hard-linked files more than
+once</para></item>
+        <item><para>du no longer dumps core on some systems due to
+"infinite" recursion via nftw's use of the buggy replacement function
+in getcwd.c</para></item>
+        <item><para>portability patches for a few vendor compilers and
+64-bit systems</para></item>
+        <item><para>du -S *really* now works like it did before the
+change in 4.5.5</para></item>
+      </change>
+
+      <change from="4.5.8" to="4.5.9">
+        <item><para>du no longer truncates file sizes or sums to fit
+in 32-bit size_t</para></item>
+        <item><para>work around Linux kernel bug in getcwd (fixed in
+2.4.21-pre4), so that pwd now fails if the name of the working
+directory is so long that getcwd truncates it. Before it would print
+the truncated name and exit successfully.</para></item>
+        <item><para>"df /some/mount-point" no longer hangs on a GNU
+libc system when another hard-mounted NFS file system (preceding
+/some/mount-point in /proc/mounts) is inaccessible.</para></item>
+        <item><para>rm -rf now gives an accurate diagnostic when
+failing to remove a file under certain unusual
+conditions</para></item>
+        <item><para>mv and "cp --preserve=links" now preserve multiple
+hard links even under certain unusual conditions where they used to
+fail</para></item>
+      </change>
+
+      <change from="4.5.7" to="4.5.8">
+        <item><para>du -S once again works like it did before the
+change in 4.5.5</para></item>
+        <item><para>stat accepts a new file format, %B, for the size
+of each block reported by %b</para></item>
+        <item><para>du accepts new option:
+--apparent-size</para></item>
+        <item><para>du --bytes (-b) works the same way it did in
+fileutils-3.16 and before</para></item>
+        <item><para>du reports proper sizes for directories (not zero)
+(broken in 4.5.6 or 4.5.7)</para></item>
+        <item><para>df now always displays under "Filesystem", the
+device file name corresponding to the listed mount point. Before, for
+a block- or character-special file command line argument, df would
+display that argument. E.g., "df /dev/hda" would list "/dev/hda" as
+the "Filesystem", rather than say /dev/hda3 (the device on which "/"
+is mounted), as it does now.</para></item>
+        <item><para>test now works properly when invoked from a set
+user ID or set group ID context and when testing access to files
+subject to alternate protection mechanisms. For example, without this
+change, a set-UID program that invoked "test -w F" (to see if F is
+writable) could mistakenly report that it *was* writable, even though
+F was on a read-only file system, or F had an ACL prohibiting write
+access, or F was marked as immutable.</para></item>
+      </change>
+
+      <change from="4.5.6" to="4.5.7">
+        <item><para>du would fail with more than one DIR argument when
+any but the last did not contain a slash (due to a bug in
+ftw.c)</para></item>
+      </change>
+
+      <change from="4.5.5" to="4.5.6">
+        <item><para>du no longer segfaults on Solaris systems (fixed
+heap-corrupting bug in ftw.c)</para></item>
+        <item><para>du --exclude=FILE works once again (this was
+broken by the rewrite for 4.5.5)</para></item>
+        <item><para>du no longer gets a failed assertion for certain
+hierarchy lay-outs involving hard-linked directories</para></item>
+        <item><para>"who -r" no longer segfaults when using
+non-C-locale messages</para></item>
+        <item><para>df now displays a mount point (usually "/") for
+non-mounted character-special and block files</para></item>
+      </change>
+
+      <change from="4.5.4" to="4.5.5">
+        <item><para>ls --dired produces correct byte offset for file
+names containing nonprintable characters in a multibyte
+locale</para></item>
+        <item><para>du has been rewritten to use a variant of GNU
+libc's ftw.c</para></item>
+        <item><para>du now counts the space associated with a
+directory's directory entry, even if it cannot list or chdir into that
+subdirectory.</para></item>
+        <item><para>du -S now includes the st_size of each entry
+corresponding to a subdirectory</para></item>
+        <item><para>rm on FreeBSD can once again remove directories
+from NFS-mounted file systems</para></item>
+        <item><para>ls has a new option
+--dereference-command-line-symlink-to-dir, which corresponds to the
+new default behavior when none of -d, -l -F, -H, -L has been
+specified.</para></item>
+        <item><para>ls dangling-symlink now prints "dangling-symlink".
+Before, it would fail with "no such file or directory".</para></item>
+        <item><para>ls -s symlink-to-non-dir and ls -i
+symlink-to-non-dir now print attributes of "symlink", rather than
+attributes of their referents.</para></item>
+        <item><para>Fix a bug introduced in 4.5.4 that made it so that
+ls --color would no longer highlight the names of files with the
+execute bit set when not specified on the command line.</para></item>
+        <item><para>shred's --zero (-z) option no longer gobbles up
+any following argument. Before, "shred --zero file" would produce
+"shred: missing file argument", and worse, "shred --zero f1 f2 ..."
+would appear to work, but would leave the first file
+untouched.</para></item>
+        <item><para>readlink: new program</para></item>
+        <item><para>cut: new feature: when used to select ranges of
+byte offsets (as opposed to ranges of fields) and when
+--output-delimiter=STRING is specified, output STRING between ranges
+of selected bytes.</para></item>
+        <item><para>rm -r can no longer be tricked into mistakenly
+reporting a cycle.</para></item>
+        <item><para>when rm detects a directory cycle, it no longer
+aborts the entire command, but rather merely stops processing the
+affected command line argument.</para></item>
+      </change>
+
+      <change from="4.5.3" to="4.5.4">
+        <item><para>cp no longer fails to parse options like this:
+--preserve=mode,ownership</para></item>
+        <item><para>"ls --color -F symlink-to-dir" works
+properly</para></item>
+        <item><para>ls is much more efficient on directories with
+valid dirent.d_type.</para></item>
+        <item><para>stty supports all baud rates defined in
+linux-2.4.19.</para></item>
+        <item><para>"du symlink-to-dir/" would improperly remove the
+trailing slash</para></item>
+        <item><para>'du ""' would evoke a bounds
+violation.</para></item>
+        <item><para>In the unlikely event that running "du /" resulted
+in 'stat ("/", ...)' failing, du would give a diagnostic about ""
+(empty string) rather than "/".</para></item>
+        <item><para>printf: a hexadecimal escape sequence has at most
+two hex. digits, not three.</para></item>
+        <item><para>The following features have been added to the
+--block-size option and similar environment variables of df, du, and
+ls:</para>
+        <unorderedlist>
+          <item><para>A leading "'" generates numbers with thousands
+separators. For example:</para>
+          <screen>
+$ ls -l --block-size="'1" file
+-rw-rw-r--    1 eggert   src      47,483,707 Sep 24 23:40 file
+          </screen></item>
+          <item><para>A size suffix without a leading integer
+generates a suffix in the output. For example:</para>
+          <screen>
+$ ls -l --block-size="K"
+-rw-rw-r--    1 eggert   src          46371K Sep 24 23:40 file
+          </screen></item>
+        </unorderedlist></item>
+        <item><para>ls's --block-size option now affects file sizes in
+all cases, not just for --block-size=human-readable and
+--block-size=si. Fractional sizes are now always rounded up, for
+consistency with df and du.</para></item>
+        <item><para>df now displays the block size using powers of
+1000 if the requested block size seems to be a multiple of a power of
+1000.</para></item>
+        <item><para>nl no longer gets a segfault when run like this
+"yes|nl -s%n"</para></item>
+      </change>
+
+      <change from="4.5.2" to="4.5.3">
+        <item><para>du --dereference-args (-D) no longer fails in
+certain cases</para></item>
+        <item><para>"ln --target-dir=DIR" no longer fails when given a
+single argument</para></item>
+      </change>
+
+      <change from="4.5.1" to="4.5.2">
+        <item><para>"rm -i dir" (without --recursive (-r)) no longer
+recurses into dir</para></item>
+        <item><para>"tail -c N FILE" now works with files of size &gt;=
+4GB</para></item>
+        <item><para>"mkdir -p" can now create very deep (e.g.
+40,000-component) directories</para></item>
+        <item><para>rmdir -p dir-with-trailing-slash/ no longer
+fails</para></item>
+        <item><para>printf now honors the "--" command line
+delimiter</para></item>
+        <item><para>od's 8-byte formats x8, o8, and u8 now
+work</para></item>
+        <item><para>tail now accepts fractional seconds for its
+--sleep-interval=S (-s) option</para></item>
+      </change>
+
+      <change from="4.1.11" to="4.5.1">
+        <item><para>du and ls now report sizes of symbolic links
+(before they'd always report 0)</para></item>
+        <item><para>uniq now obeys the LC_COLLATE locale, as per POSIX
+1003.1-2001 TC1.</para></item>
+      </change>
+
+      <change from="4.1.10" to="4.1.11">
+        <item><para>"rm symlink-to-unwritable" doesn't prompt
+[introduced in 4.1.10]</para></item>
+      </change>
+
+      <change from="4.1.9" to="4.1.10">
+        <item><para>rm once again gives a reasonable diagnostic when
+failing to remove a file owned by someone else in a sticky directory
+[introduced in 4.1.9]</para></item>
+        <item><para>df now rounds all quantities up, as per
+POSIX.</para></item>
+        <item><para>New ls time style: long-iso, which generates
+YYYY-MM-DD HH:MM.</para></item>
+        <item><para>Any time style can be preceded by "posix-"; this
+causes "ls" to use traditional timestamp format when in the POSIX
+locale.</para></item>
+        <item><para>The default time style is now posix-long-iso
+instead of posix-iso. Set TIME_STYLE="posix-iso" to revert to the
+behavior of 4.1.1 thru 4.1.9.</para></item>
+        <item><para>"rm dangling-symlink" doesn't prompt [introduced
+in 4.1.9]</para></item>
+        <item><para>stat: remove support for --secure/-s option and
+related %S and %C format specs</para></item>
+        <item><para>stat: rename --link/-l to --dereference/-L. The
+old options will continue to work for a while.</para></item>
+      </change>
+
+      <change from="4.1.8" to="4.1.9">
+        <item><para>rm can now remove very deep hierarchies, in spite
+of any limit on stack size</para></item>
+        <item><para>new programs: link, unlink, and stat</para></item>
+        <item><para>New ls option: --author (for the
+Hurd).</para></item>
+        <item><para>"touch -c no-such-file" no longer fails, per
+POSIX</para></item>
+      </change>
+
+      <change from="4.1.7" to="4.1.8">
+        <item><para>mv no longer mistakenly creates links to
+preexisting destination files that aren't moved</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The coreutils packages replaces the older fileutils,
+sh-utils, and textutils packages. We recommend removing these
+deprecated packages before installing coreutils.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

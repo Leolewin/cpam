@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="glib" version="1.2.10" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="6fe30dad87c77b91b632def29dd69ef9"
+        checksum-type="md5" size="421480"
+        path="src/glib-1.2.10.tar.gz"/>
+      <patch checksum="e79fc6749fb1aad4b058fa94f7f1885e"
+        checksum-type="md5" size="676447"
+        path="src/glib-1.2.10.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ARGS="--enable-threads" ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--with-threads=none" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--enable-threads" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ARGS="--enable-threads" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-threads" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  ARGS="--enable-threads";;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ./configure \
+--datadir="${_datadir}" ${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install texinfo source files
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 docs/glib.texi ${_docdir}
+
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS=":/usr/lib" ;;
+*-osf*|*-irix6*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-solaris2*)   
+  CC_LD_RT="-R" ;;
+esac
+
+# quote \@ for perl
+_p_install_prefix=$(echo ${SB_INSTALL_PREFIX} | sed 's/@/\\@/')
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!-bexpall!-Wl,-bexpall!; \
+s!-L(\\\${exec_prefix}/lib) !-L\$1 ${CC_LD_RT}\$1 !;" \
+${SB_INSTALL_PREFIX}/bin/glib-config
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 August 26" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.4.2
+release</para></item>
+      </change>
+
+      <change date="2004 February 24" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update config.guess and config.sub to properly
+detect AIX 5</para></item>
+        <item><para>Build SysV-style shared libraries on
+AIX 5</para></item>
+      </change>
+
+      <change date="2003 December 16" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Force use of shl_load on HP-UX 11.x</para></item>
+      </change>
+
+      <change date="2003 April 2" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

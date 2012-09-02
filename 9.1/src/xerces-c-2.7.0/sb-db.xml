@@ -1,0 +1,942 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="xerces-c" version="2.7.0" revision="7">
+    <build-name>${SB_PROG_NAME}-src_2_7_0</build-name>
+
+    <install-name>libxercesc27</install-name>
+
+    <sources>
+      <source checksum="04169609449a8846bc1e6891c04cadf4"
+        checksum-type="md5" size="7760004"
+        path="src/xerces-c-src_2_7_0.tar.gz"/>
+      <patch checksum="cc6c717a9799fbb194ac707b4c09d6cf"
+        checksum-type="md5" size="30689"
+        path="src/xerces-c-src_2_7_0.tww.patch"/>
+      <patch checksum="f3ba88c9ca08727b6d8469a019b992d6"
+        checksum-type="md5" size="507"
+        path="src/xerces-c-src_2_7_0.XERCESC-1578.patch"/>
+      <patch checksum="d216f0cb4b80ffd2ee2cca2a73e369b9"
+        checksum-type="md5" size="191375"
+        path="src/xerces-c-src_2_7_0.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend">v&gt;=2.4.3</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <validate>
+        <depend program="xerces-c" module="debug">v==2.7.0</depend>
+        <depend program="xerces-c" module="gcc44">v==2.7.0</depend>
+        <depend program="xerces-c"
+          module="gcc44-debug">v==2.7.0</depend>
+        <depend program="xerces-c" module="64bit"
+          systype="*-aix*|*-hpux11*|*-irix*|*-solaris2.[89]|*-solaris2.1?">v==2.7.0</depend>
+        <depend program="xerces-c" module="64bit-debug"
+          systype="*-aix*|*-hpux11*|*-irix*|*-solaris2.[89]|*-solaris2.1?">v==2.7.0</depend>
+        <depend program="xerces-c" module="XML-Xerces-5.12.2"
+          systype="*-hpux11*|*-irix*|*-linux*|*-solaris*">v==2.7.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC05 CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC05 CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux"
+  _bitstobuild=64 ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd src/xercesc
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+-L${SB_INSTALL_PREFIX_LIB} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX_LIB} ${LDFLAGS+${LDFLAGS}}" \
+XERCESCROOT=${SB_BUILD_PREFIX} ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -r pthread -b ${_bitstobuild:-32} -p ${PLATFORM} \
+-C --libdir=${SB_INSTALL_PREFIX_LIB} \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd src/xercesc
+XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd src/xercesc
+XERCESCROOT=${SB_BUILD_PREFIX} gmake install)
+
+# rebuild libxerces-depdom library to fix runtime path
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  rm lib/lib*
+  (cd src/xercesc
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+  rm ${SB_INSTALL_PREFIX_LIB}/lib*
+  (cd obj
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake install) ;;
+esac
+
+# install documentation
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+(cd doc/html
+${SB_PATH_TAR} cf - * | (cd ${_docdir}; ${SB_PATH_TAR} xf -))
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux11*|*-irix*|*-solaris2.[89]|*-solaris2.1?">
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC05 CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.8*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  ${SB_PATH_SED} -i -e 's|=v9|=sparc -m64|g'  src/xercesc/runConfigure
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -m64 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd src/xercesc
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_INSTALL_PREFIX}/${_libdir} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+XERCESCROOT=${SB_BUILD_PREFIX} ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -r pthread -b 64 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd src/xercesc
+XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX_LIB}/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  esac
+fi
+
+(cd obj
+XERCESCROOT=${SB_BUILD_PREFIX} gmake install)
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/${_libdir}/libxerces-c.s[lo]*
+rm ${SB_INSTALL_PREFIX}/${_libdir}/libxerces-depdom.s[lo]*
+
+rmdir ${SB_INSTALL_PREFIX}/${_libdir} && {
+  rm ${SB_INSTALL_PREFIX_LIB}/64
+}
+
+: ignore rmdir failure
+]]>
+      </uninstall>
+    </module>
+
+    <module name="XML-Xerces-5.12.2"
+    systype="*-hpux11*|*-irix*|*-linux*|*-solaris*">
+      <build-name>XML-Xerces-2.7.0-0</build-name>
+
+      <sources>
+        <source checksum="e5bd871026bee1b291c5634e6e4daf35"
+          checksum-type="md5" size="291199"
+          path="src/XML-Xerces-2.7.0-0.tar.gz"/>
+        <patch checksum="92065238e41fdf5244245fb62eef45a0"
+          checksum-type="md5" size="1096066"
+          path="src/XML-Xerces-2.7.0-0.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v==4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+        <depend program="xerces-c" var="LIBXERCESC"
+          module="gcc44">v==2.7.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gcc_subdir="gcc44"
+
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+XERCES_LIB="${SB_VAR_LIBXERCESC_LIB}/${_gcc_subdir}" \
+XERCES_INCLUDE="${SB_VAR_LIBXERCESC_INC}" \
+MAKE=gmake \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_perl_libdir}/include.paths.d
+cat >${_perl_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_perl_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/perl5122
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44">
+      <dependencies>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gcc" add-path="prepend">v==4.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gcc_subdir=gcc44
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc" CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CXXFLAGS="-O2 -fkeep-inline-functions"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd src/xercesc
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} -L${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir} \
+${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}:\
+${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+XERCESCROOT=${SB_BUILD_PREFIX} ./runConfigure -c gcc \
+-x g++ -r pthread -b 32 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd src/xercesc
+XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd obj
+XERCESCROOT=${SB_BUILD_PREFIX} gmake install)
+
+# rebuild libxerces-depdom library to fix runtime path
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  rm lib/lib*
+  (cd src/xercesc
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+  rm ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}/lib*
+  (cd obj
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake install) ;;
+esac
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}/libxerces-c.s[lo]*
+rm ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}/libxerces-depdom.s[lo]*
+
+rmdir ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir} || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit-debug"
+    systype="*-aix*|*-hpux11*|*-irix*|*-solaris2.[789]|*-solaris2.1?">
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC05 CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.8*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  ${SB_PATH_SED} -i -e 's|=v9|=sparc -m64|g'  src/xercesc/runConfigure
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -m64 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd src/xercesc
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_INSTALL_PREFIX}/${_libdir} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+XERCESCROOT=${SB_BUILD_PREFIX} ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -d -r pthread -b 64 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+
+# append _g to library name
+${SB_PATH_SED} -i -e "\
+/^LIBNAME/ { s!\$!_g!; }
+/^LINK_LIBNAME/ { s!\$!_g!; }
+/^LIBDEPDOM/ { s!\$!_g!; }" src/xercesc/Makefile.incl
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd src/xercesc
+XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX_LIB}/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  esac
+fi
+
+(cd obj
+XERCESCROOT=${SB_BUILD_PREFIX} gmake install)
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/${_libdir}/lib*_g*
+rmdir ${SB_INSTALL_PREFIX}/${_libdir} && {
+  rm ${SB_INSTALL_PREFIX_LIB}/64
+}
+
+: ignore rmdir failure
+]]>
+      </uninstall>
+    </module>
+
+    <module name="debug">
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Olit=all +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC05 CXXFLAGS="+O2 -AA -z +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC05 CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux"
+  _bitstobuild=64 ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings -model ansi \
+-timplicit_local"
+CFLAGS="-O1 -gall" CXXFLAGS="-O1 -gall -model ansi -timplicit_local"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd src/xercesc
+ CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+ LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+-L${SB_INSTALL_PREFIX_LIB} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX_LIB} ${LDFLAGS+${LDFLAGS}}" \
+ XERCESCROOT=${SB_BUILD_PREFIX} ./runConfigure -c ${CC:-gcc} \
+ -x ${CXX:-g++} -d -r pthread -b ${_bitstobuild:-32} -p ${PLATFORM} \
+ -C --libdir=${SB_INSTALL_PREFIX_LIB} \
+ ${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+
+# append _g to library name
+${SB_PATH_SED} -i -e "\
+/^LIBNAME/ { s!\$!_g!; }
+/^LINK_LIBNAME/ { s!\$!_g!; }
+/^LIBDEPDOM/ { s!\$!_g!; }" src/xercesc/Makefile.incl
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+XERCESCROOT=${SB_BUILD_PREFIX} gmake -C src/xercesc
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+XERCESCROOT=${SB_BUILD_PREFIX} gmake -C obj install
+
+# rebuild libxerces-depdom_g library to fix runtime path
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  rm lib/lib*
+  (cd src/xercesc
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+  rm ${SB_INSTALL_PREFIX_LIB}/lib*_g*
+  (cd obj
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake install) ;;
+esac
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX_LIB}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX_LIB}/lib*_g*
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44-debug">
+      <dependencies>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gcc" add-path="prepend">v==4.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gcc_subdir=gcc44
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc" CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CXXFLAGS="-O2 -fkeep-inline-functions"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd src/xercesc
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} -L${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir} \
+${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}:\
+${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+XERCESCROOT=${SB_BUILD_PREFIX} ./runConfigure -c gcc \
+-x g++ -d -r pthread -b 32 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+
+# append _g to library name
+${SB_PATH_SED} -i -e "\
+/^LIBNAME/ { s!\$!_g!; }
+/^LINK_LIBNAME/ { s!\$!_g!; }
+/^LIBDEPDOM/ { s!\$!_g!; }" src/xercesc/Makefile.incl
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd src/xercesc
+XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd obj
+XERCESCROOT=${SB_BUILD_PREFIX} gmake install)
+
+# rebuild libxerces-depdom_g library to fix runtime path
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  rm lib/lib*
+  (cd src/xercesc
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake)
+  rm ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}/lib*_g*
+  (cd obj
+  XERCESCROOT=${SB_BUILD_PREFIX} gmake install) ;;
+esac
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}/lib*_g*
+
+rmdir ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir} || :
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <note type="build">
+        <para>All libraries are built with POSIX thread
+support.</para>
+      </note>
+
+      <note type="usage">
+        <para>Versions of the library for the vendor C++ compiler and
+GCC 4.4.6 are available in the following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib             # Vendor C++ compiler
+${SB_INSTALL_PREFIX}/lib/gcc44       # GCC 4.4.6
+        </screen>
+
+        <para>64-bit libraries are available in
+<command>${SB_INSTALL_PREFIX}/lib/64</command> if the platform
+supports separate 64-bit object files.</para>
+        <para>Debug versions of the library are available in the same
+directories, with "<command>_g</command>" appended to the library
+name. The debug versions of the library are built with optimizations
+for all platforms except IRIX (-g3 would be required to build the
+library with debugging and optizations and, according to CC(1), -g3
+would make the debugger inaccurate).</para>
+        <para>The XML::Xerces Perl binding is available in the
+following directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>The directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST710.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 16" revision="6"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2010 November 10" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 August 13" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gcc dependency from 3.4.3 to
+4.2.4</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Add support for HP-UX 11.31</para></item>
+      </change>
+
+      <change date="2007 October 30" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Create entry in include.paths.d for new Perl
+include.paths.d module search directory</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+        <item><para>Add XML-Xerces Perl module</para></item>
+        <item><para>Update bison dependency from 2.1 to
+2.3</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

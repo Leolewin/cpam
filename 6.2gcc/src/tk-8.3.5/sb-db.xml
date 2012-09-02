@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="tk" version="8.3.5" revision="4">
+    <build-name>${SB_PROG_NAME}${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}83</install-name>
+
+    <sources>
+      <source checksum="363a55d31d94e05159e9212074c68004"
+        checksum-type="md5" size="2598030"
+        path="src/tk8.3.5-src.tar.gz"/>
+      <patch checksum="03d891bcb2e0dc823bf4ba14bad70dad"
+        checksum-type="md5" size="46477"
+        path="src/tk8.3.5-src.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+x86_64*-linux*)
+  ARGS="--x-libraries=/usr/X11R6/lib64" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+(cd unix; gmake CFLAGS="${CFLAGS:--O2}")
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies>
+        <depend program="tcl" state="build">v==8.3.5</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend var="TKP" install-name="tk83p"
+          set-var-only="1"/>
+        <depend program="tcl" var="TCL">v==8.3.5</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+cd unix
+rm -f config.cache
+CC="${CC:-gcc}" ./configure --enable-shared \
+--with-tcl=${SB_BUILD_BASE}/tcl8.3.5/unix ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# Modify TK_CC_SEARCH_FLAGS and TK_LD_SEARCH_FLAGS with path to tk
+# for use when linking with other applications
+sed -e "s!RUNTIME_DIR}:!RUNTIME_DIR}:${SB_INSTALL_PREFIX}/lib:!" \
+tkConfig.sh >/tmp/$$
+cp /tmp/$$ tkConfig.sh
+rm /tmp/$$
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+(cd unix && gmake install)
+
+# Fix runtime path to tk shared library
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  (cd unix
+  rm wish
+  gmake TCL_LIB_SPEC="-L${SB_VAR_TCL_LIB} -ltcl8.3" \
+  TK_BUILD_LIB_SPEC="-L${SB_INSTALL_PREFIX}/lib -ltk8.3" wish)
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 unix/wish \
+  ${SB_INSTALL_PREFIX}/bin/wish8.3 ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_VAR_TKP} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="static">
+      <dependencies>
+        <depend program="tcl" module="static"
+          state="build">v==8.3.5</depend>
+        <depend program="tk">v==8.3.5</depend>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+cd unix
+rm -f config.cache
+CC="${CC:-gcc}" ./configure --disable-shared \
+--with-tcl=${SB_BUILD_BASE}/tcl8.3.5/unix ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# Modify TK_CC_SEARCH_FLAGS and TK_LD_SEARCH_FLAGS with path to tk
+# for use when linking with other applications
+sed -e "s!RUNTIME_DIR}:!RUNTIME_DIR}:${SB_INSTALL_PREFIX}/lib:!" \
+tkConfig.sh >/tmp/$$
+cp /tmp/$$ tkConfig.sh
+rm /tmp/$$
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/lib
+
+${SB_PATH_INSTALL} -o root -g 0 unix/libtk8.3.a ${SB_INSTALL_PREFIX}/lib
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The default Tcl module search path directories
+are:</para>
+        <screen>
+${SB_INSTALL_BASE}/tk83p/lib/Tktable2.8
+${SB_INSTALL_BASE}/tk83p/lib/bwidget1.7
+${SB_INSTALL_BASE}/tcl83p/lib/itcl3.2
+${SB_INSTALL_BASE}/tcl83p/lib/itk3.2
+${SB_INSTALL_BASE}/tcl83p/lib/iwidgets4.0.1
+${SB_INSTALL_BASE}/tcl83p/lib/tclcurl0.11
+${SB_INSTALL_BASE}/tcl83p/lib/tcllib1.6
+${SB_INSTALL_BASE}/tcl83p/lib/tclx8.4
+${SB_INSTALL_BASE}/tk83p/lib/tix8.1
+        </screen>
+
+        <para>The default search path is set by the
+<command>TCLLIBPATH</command> environment variable. The executable
+wrapper for <command>wish8.3</command> sets the variable to the paths
+above.</para>
+
+        <para>The following 3rd-party modules are available: BWidget
+1.5, Tktable 2.8, tix 8.1.4, tkcon 2.4.</para>
+
+        <para>Tkcon, available as
+<command>${SB_INSTALL_BASE}/tk83p/bin/tkcon8.3</command>, contains a more
+feature-rich replacement for the wish shell.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 12" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Create lib directory for "static" module when
+installing so we don't assume "default" module installed
+first</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Search for X11 libraries on RHEL 3.0/AMD64 in
+/usr/X11R6/lib64</para></item>
+      </change>
+
+      <change date="2004 January 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix runtime path to -ltk8.3 in wish8.3 binary on
+HP-UX</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

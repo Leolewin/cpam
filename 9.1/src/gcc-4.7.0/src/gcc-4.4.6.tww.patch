@@ -1,0 +1,888 @@
+Index: gcc/version.c
+===================================================================
+--- gcc/version.c.orig	2007-08-21 15:35:30.000000000 +0000
++++ gcc/version.c	2011-08-22 05:25:35.010810619 +0000
+@@ -7,11 +7,13 @@
+    welcome to forward us bugs reported to you, if you determine that
+    they are not bugs in your modifications.)  */
+ 
++#define VERSUFFIX " [TWW]"
++
+ const char bug_report_url[] = BUGURL;
+ 
+ /* The complete version string, assembled from several pieces.
+    BASEVER, DATESTAMP, DEVPHASE, and REVISION are defined by the
+    Makefile.  */
+ 
+-const char version_string[] = BASEVER DATESTAMP DEVPHASE REVISION;
++const char version_string[] = BASEVER DATESTAMP DEVPHASE REVISION VERSUFFIX;
+ const char pkgversion_string[] = PKGVERSION;
+Index: config-ml.in
+===================================================================
+--- config-ml.in.orig	2008-05-14 17:15:51.000000000 +0000
++++ config-ml.in	2011-08-22 05:25:35.018893609 +0000
+@@ -520,6 +520,8 @@
+ 				CXXFLAGS="$(CXXFLAGS) $${flags}" \
+ 				LIBCFLAGS="$(LIBCFLAGS) $${flags}" \
+ 				LIBCXXFLAGS="$(LIBCXXFLAGS) $${flags}" \
++				LIBFFI_LDFLAGS="$(LIBFFI_LDFLAGS)" \
++				LIBGCJ_LDFLAGS="$(LIBGCJ_LDFLAGS)" \
+ 				LDFLAGS="$(LDFLAGS) $${flags}" \
+ 				MULTIFLAGS="$${flags}" \
+ 				DESTDIR="$(DESTDIR)" \
+Index: gcc/config/ia64/t-hpux
+===================================================================
+--- gcc/config/ia64/t-hpux.orig	2006-11-07 19:14:27.000000000 +0000
++++ gcc/config/ia64/t-hpux	2011-08-22 05:25:35.036088076 +0000
+@@ -37,7 +37,7 @@
+ # Must include -lunwind in the link, so that libgcc_s.so has the necessary
+ # DT_NEEDED entry for libunwind.
+ SHLIB_LINK = $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -shared -nodefaultlibs \
+-	-Wl,+h,@shlib_base_name@.so.0 \
++	-Wl,+nodefaultrpath -Wl,+h,@shlib_base_name@.so.0 \
+ 	-o @multilib_dir@/@shlib_base_name@.so @multilib_flags@ \
+ 	@shlib_objs@ -lunwind -lc && \
+ 	rm -f @multilib_dir@/@shlib_base_name@.so.0 && \
+Index: gcc/config/ia64/x-hpux
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gcc/config/ia64/x-hpux	2011-08-22 05:25:35.040997604 +0000
+@@ -0,0 +1,6 @@
++BOOT_LDFLAGS = -Wl,+nodefaultrpath
++
++host-hpux.o : $(srcdir)/config/host-hpux.c $(CONFIG_H) $(SYSTEM_H) \
++  coretypes.h hosthooks.h hosthooks-def.h $(HOOKS_H)
++	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
++		$(srcdir)/config/host-hpux.c
+Index: gcc/config/rs6000/t-aix43
+===================================================================
+--- gcc/config/rs6000/t-aix43.orig	2006-03-19 20:57:43.000000000 +0000
++++ gcc/config/rs6000/t-aix43	2011-08-22 05:25:35.057855055 +0000
+@@ -44,7 +44,8 @@
+ # Build a shared libgcc library.
+ SHLIB_EXT = .a
+ SHLIB_LINK = $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -shared -nodefaultlibs \
+-	-Wl,-bE:@shlib_map_file@ -o @multilib_dir@/shr.o \
++	-Wl,-bE:@shlib_map_file@ -Wl,-blibpath:/usr/lib \
++	-o @multilib_dir@/shr.o \
+ 	@multilib_flags@ @shlib_objs@ -lc \
+ 	`case @multilib_dir@ in \
+ 	*pthread*) echo -L/usr/lib/threads -lpthreads -lc_r /usr/lib/libc.a ;; \
+Index: gcc/config/rs6000/t-aix52
+===================================================================
+--- gcc/config/rs6000/t-aix52.orig	2008-09-14 13:55:29.000000000 +0000
++++ gcc/config/rs6000/t-aix52	2011-08-22 05:25:35.062698167 +0000
+@@ -25,7 +25,8 @@
+ # Build a shared libgcc library.
+ SHLIB_EXT = .a
+ SHLIB_LINK = $(GCC_FOR_TARGET) $(LIBGCC2_CFLAGS) -shared -nodefaultlibs \
+-	-Wl,-bE:@shlib_map_file@ -o @multilib_dir@/shr.o \
++	-Wl,-bE:@shlib_map_file@ -Wl,-blibpath:/usr/lib \
++	-o @multilib_dir@/shr.o \
+ 	@multilib_flags@ @shlib_objs@ -lc \
+ 	`case @multilib_dir@ in \
+ 	*pthread*) echo -L/usr/lib/threads -lpthreads -lc_r /usr/lib/libc.a ;; \
+Index: libffi/Makefile.am
+===================================================================
+--- libffi/Makefile.am.orig	2008-05-09 10:10:53.000000000 +0000
++++ libffi/Makefile.am	2011-08-22 05:25:35.073905660 +0000
+@@ -82,6 +82,8 @@
+ libffi_la_SOURCES = src/debug.c src/prep_cif.c src/types.c \
+ 		src/raw_api.c src/java_raw_api.c src/closures.c
+ 
++LIBFFI_LDFLAGS =
++
+ nodist_libffi_la_SOURCES =
+ 
+ if MIPS
+@@ -158,7 +160,8 @@
+ 
+ LTLDFLAGS = $(shell $(SHELL) $(top_srcdir)/../libtool-ldflags $(LDFLAGS))
+ 
+-libffi_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version` $(LTLDFLAGS)
++libffi_la_LDFLAGS = $(LIBFFI_LDFLAGS) \
++	-version-info `grep -v '^\#' $(srcdir)/libtool-version` $(LTLDFLAGS)
+ 
+ AM_CPPFLAGS = -I. -I$(top_srcdir)/include -Iinclude -I$(top_srcdir)/src
+ AM_CCASFLAGS = $(AM_CPPFLAGS)
+Index: libgfortran/Makefile.am
+===================================================================
+--- libgfortran/Makefile.am.orig	2009-06-03 19:39:09.000000000 +0000
++++ libgfortran/Makefile.am	2011-08-22 05:25:35.080661612 +0000
+@@ -5,6 +5,7 @@
+ 
+ ## May be used by toolexeclibdir.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ ## Symbol versioning (copied from libssp).
+ if LIBGFOR_USE_SYMVER
+@@ -17,10 +18,11 @@
+ 
+ toolexeclib_LTLIBRARIES = libgfortran.la
+ libgfortran_la_LINK = $(LINK)
+-libgfortran_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version` $(LTLDFLAGS) -lm $(extra_ldflags_libgfortran) $(version_arg)
++libgfortran_la_LDFLAGS = $(LIBGFORTRAN_LDFLAGS) \
++	-version-info `grep -v '^\#' $(srcdir)/libtool-version` $(LTLDFLAGS) -lm $(extra_ldflags_libgfortran) $(version_arg)
+ 
+ myexeclib_LTLIBRARIES = libgfortranbegin.la
+-myexeclibdir = $(libdir)/gcc/$(target_alias)/$(gcc_version)$(MULTISUBDIR)
++myexeclibdir = $(libdir)/gcc/$(target_alias)/$(gcc_dir_version)$(MULTISUBDIR)
+ libgfortranbegin_la_SOURCES = fmain.c
+ libgfortranbegin_la_LDFLAGS = -static
+ 
+@@ -765,6 +767,8 @@
+ 
+ endif
+ 
++LIBGFORTRAN_LDFLAGS =
++
+ I_M4_DEPS=m4/iparm.m4
+ I_M4_DEPS0=$(I_M4_DEPS) m4/iforeach.m4
+ I_M4_DEPS1=$(I_M4_DEPS) m4/ifunction.m4
+Index: libjava/Makefile.am
+===================================================================
+--- libjava/Makefile.am.orig	2009-12-09 18:46:11.000000000 +0000
++++ libjava/Makefile.am	2011-08-22 05:25:35.088749046 +0000
+@@ -6,6 +6,7 @@
+ 
+ # May be used by various substitution variables.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ SUBDIRS = $(DIRLTDL) gcj include classpath
+ if TESTSUBDIR
+@@ -34,9 +35,9 @@
+ target_noncanonical = @target_noncanonical@
+ 
+ # This is required by TL_AC_GXX_INCLUDE_DIR.
+-libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)
++libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ 
+-libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_version)
++libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ 
+ ##
+ ## What gets installed, and where.
+@@ -58,7 +59,7 @@
+ pkgconfigdir = $(libdir)/pkgconfig
+ 
+ jardir = $(datadir)/java
+-jar_DATA = libgcj-$(gcc_version).jar libgcj-tools-$(gcc_version).jar
++jar_DATA = libgcj-$(gcc_dir_version).jar libgcj-tools-$(gcc_dir_version).jar
+ if INSTALL_ECJ_JAR
+ jar_DATA += $(ECJ_BUILD_JAR)
+ endif
+@@ -68,7 +69,7 @@
+ BOOT_CLASS_PATH_DIR = $(JAVA_HOME)/lib/rt.jar
+ else
+ JAVA_HOME_DIR = $(prefix)
+-BOOT_CLASS_PATH_DIR = $(jardir)/libgcj-$(gcc_version).jar
++BOOT_CLASS_PATH_DIR = $(jardir)/libgcj-$(gcc_dir_version).jar
+ endif
+ 
+ ## Name of the default .db.
+@@ -199,6 +200,9 @@
+ JC1FLAGS = @LIBGCJ_JAVAFLAGS@ $(GCJFLAGS)
+ 
+ LIBFFIINCS = @LIBFFIINCS@
++LIBGCJ_LDFLAGS =
++LIBGIJ_LDFLAGS =
++LIBGCJ_TOOLS_LDFLAGS =
+ 
+ AM_CPPFLAGS = -I$(top_srcdir) \
+ 	-Iinclude -I$(top_srcdir)/include \
+@@ -221,7 +225,7 @@
+ ## See jv_convert_LDADD.
+ libgij_la_LIBADD = -L$(here)/.libs libgcj.la
+ ## The mysterious backslash in the grep pattern is consumed by make.
+-libgij_la_LDFLAGS = -rpath $(toolexeclibdir) \
++libgij_la_LDFLAGS = -rpath $(toolexeclibdir) $(LIBGIJ_LDFLAGS) \
+         -version-info `grep -v '^\#' $(srcdir)/libtool-version` $(LIBGCJ_LD_SYMBOLIC)
+ 
+ if INTERPRETER
+@@ -276,7 +280,8 @@
+ # Include THREADLIBS here to ensure that the correct version of
+ # certain linuxthread functions get linked:
+ ## The mysterious backslash in the grep pattern is consumed by make.
+-libgcj_la_LDFLAGS = -rpath $(toolexeclibdir) $(THREADLDFLAGS) $(extra_ldflags) $(THREADLIBS) \
++libgcj_la_LDFLAGS = -rpath $(toolexeclibdir) $(LIBGCJ_LDFLAGS) \
++	$(THREADLDFLAGS) $(extra_ldflags) $(THREADLIBS) \
+ 	$(LIBLTDL) $(SYS_ZLIBS) \
+ 	-version-info `grep -v '^\#' $(srcdir)/libtool-version` \
+ 	$(LIBGCJ_LD_SYMBOLIC_FUNCTIONS)
+@@ -289,7 +294,7 @@
+ 	$(bc_objects) \
+ 	$(propertyo_files) \
+ 	$(LIBFFI) $(ZLIBS) $(GCLIBS)
+-libgcj_la_DEPENDENCIES = libgcj-$(gcc_version).jar \
++libgcj_la_DEPENDENCIES = libgcj-$(gcc_dir_version).jar \
+ 	java/lang/Object.lo \
+ 	java/lang/Class.lo \
+ 	java/process-$(PLATFORM).lo \
+@@ -314,7 +319,7 @@
+ libgcj_tools_la_GCJFLAGS = $(AM_GCJFLAGS) -findirect-dispatch \
+  -fno-bootstrap-classes -fno-indirect-classes \
+  -fsource-filename=$(here)/classpath/tools/all-classes.lst
+-libgcj_tools_la_LDFLAGS = -rpath $(toolexeclibdir) \
++libgcj_tools_la_LDFLAGS = $(LIBGCJ_TOOLS_LDFLAGS) -rpath $(toolexeclibdir) \
+  -version-info `grep -v '^\#' $(srcdir)/libtool-version` \
+  $(LIBGCJ_LD_SYMBOLIC_FUNCTIONS)
+ libgcj_tools_la_DEPENDENCIES = libgcj.la libgcj.spec
+@@ -325,7 +330,7 @@
+ libjvm_la_DEPENDENCIES = libgcj.la libgcj.spec
+ ## See jv_convert_LDADD.
+ libjvm_la_LIBADD = -L$(here)/.libs libgcj.la
+-libjvm_la_LDFLAGS = -avoid-version $(LIBGCJ_LD_SYMBOLIC)
++libjvm_la_LDFLAGS = $(LIBGCJ_LDFLAGS) -avoid-version $(LIBGCJ_LD_SYMBOLIC)
+ 
+ ## The .db file.  This rule is only used for native builds, so it is
+ ## safe to invoke gcj-dbtool.
+@@ -339,7 +344,7 @@
+ 
+ lib_gnu_awt_xlib_la_SOURCES = $(xlib_nat_source_files)
+ lib_gnu_awt_xlib_la_LIBADD = gnu/awt/xlib.lo gnu/gcj/xlib.lo
+-lib_gnu_awt_xlib_la_DEPENDENCIES = libgcj-$(gcc_version).jar \
++lib_gnu_awt_xlib_la_DEPENDENCIES = libgcj-$(gcc_dir_version).jar \
+ 	libgcj.la libgcj.spec \
+ 	$(lib_gnu_awt_xlib_la_LIBADD)
+ ## We require libstdc++-v3 to be in the same build tree.
+@@ -388,17 +393,17 @@
+ 	$(mkinstalldirs) `dirname $@`; \
+ 	$(LTGCJCOMPILE) -o $@ -c $< -Wc,--resource,$(@:.lo=)
+ 
+-libgcj-$(gcc_version).jar: classpath/lib/compile-classes
++libgcj-$(gcc_dir_version).jar: classpath/lib/compile-classes
+ ## Note that this now omits the property files.
+ ## It doesn't matter since we don't use the jar at runtime.
+ 	here=`pwd`; cd $(srcdir)/classpath/lib; \
+ 	find gnu java javax org sun -name .svn -prune -o -name '*.class' -print | \
+-	$(JAR) -cfM@ $$here/libgcj-$(gcc_version).jar
++	$(JAR) -cfM@ $$here/libgcj-$(gcc_dir_version).jar
+ 
+-libgcj-tools-$(gcc_version).jar: classpath/tools/tools.zip
++libgcj-tools-$(gcc_dir_version).jar: classpath/tools/tools.zip
+ 	cp $< $@
+ 
+-CLEANFILES = libgcj-$(gcc_version).jar libgcj-tools-$(gcc_version).jar
++CLEANFILES = libgcj-$(gcc_dir_version).jar libgcj-tools-$(gcc_dir_version).jar
+ DISTCLEANFILES = native.dirs
+ 
+ mostlyclean-local:
+@@ -421,7 +426,7 @@
+ 	@echo Creating list of files to link...
+ 	@: $(call write_entries_to_file,$(lib_gnu_awt_xlib_la_OBJECTS) $(lib_gnu_awt_xlib_la_LIBADD),lib_gnu_awt_xlib.objectlist)
+ 	$(lib_gnu_awt_xlib_la_LINK) -objectlist lib_gnu_awt_xlib.objectlist \
+-	-rpath $(toolexeclibdir) $(lib_gnu_awt_xlib_la_LDFLAGS) $(LIBS)
++	$(lib_gnu_awt_xlib_la_LDFLAGS) $(LIBS)
+ 
+ ## ################################################################
+ 
+@@ -655,7 +660,7 @@
+ 	$(mkinstalldirs) $(DESTDIR)$(SDK_LIB_DIR); \
+ 	RELATIVE=$$(relative $(DESTDIR)$(datadir)/java \
+ 	  $(DESTDIR)$(JRE_LIB_DIR)); \
+-	ln -sf $$RELATIVE/libgcj-$(gcc_version).jar \
++	ln -sf $$RELATIVE/libgcj-$(gcc_dir_version).jar \
+ 	  $(DESTDIR)$(JRE_LIB_DIR)/rt.jar; \
+ 	RELATIVE=$$(relative $(DESTDIR)$(dbexecdir) \
+ 	  $(DESTDIR)$(JRE_LIB_DIR)/$(CPU)); \
+@@ -671,7 +676,7 @@
+ 	  $(DESTDIR)$(JRE_LIB_DIR)/$(CPU)/server/libjvm.so;	\
+ 	RELATIVE=$$(relative $(DESTDIR)$(datadir)/java \
+ 	  $(DESTDIR)$(SDK_LIB_DIR)); \
+-	ln -sf $$RELATIVE/libgcj-tools-$(gcc_version).jar \
++	ln -sf $$RELATIVE/libgcj-tools-$(gcc_dir_version).jar \
+ 	  $(DESTDIR)$(SDK_LIB_DIR)/tools.jar; \
+ 	for headername in jawt jni; do \
+ 	  DIRECTORY=$$(dirname $$($(DESTDIR)$(bindir)/`echo gcj | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'` \
+@@ -715,7 +720,7 @@
+ 
+ ## This rule can be used to see if the headers are more or less
+ ## correct.
+-header-check: libgcj-$(gcc_version).jar $(nat_headers)
++header-check: libgcj-$(gcc_dir_version).jar $(nat_headers)
+ 	rm -f htest.cc; \
+ 	for h in $(nat_headers); do \
+ 	  echo "#include \"$$h\"" >> htest.cc; \
+@@ -724,7 +729,7 @@
+ 
+ ## This rule can be used to see if all the .class files verify
+ ## correctly.
+-class-check: libgcj-$(gcc_version).jar
++class-check: libgcj-$(gcc_dir_version).jar
+ 	@ok=0; find . -name '*.class' -print | fgrep -v testsuite | \
+ 	while read f; do \
+ 	  echo "$(GCJ_WITH_FLAGS) --syntax-only $$f"; \
+@@ -1230,7 +1235,7 @@
+ sourcesdir = $(jardir)
+ 
+ install-src.zip: src.zip
+-	$(INSTALL_DATA) src.zip $(DESTDIR)$(sourcesdir)/src-$(gcc_version).zip
++	$(INSTALL_DATA) src.zip $(DESTDIR)$(sourcesdir)/src-$(gcc_dir_version).zip
+ 
+ 
+ ## ################################################################
+Index: libssp/Makefile.am
+===================================================================
+--- libssp/Makefile.am.orig	2008-08-21 11:58:40.000000000 +0000
++++ libssp/Makefile.am	2011-08-22 05:25:35.096925731 +0000
+@@ -10,6 +10,7 @@
+ 
+ # May be used by various substitution variables.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ if LIBSSP_USE_SYMVER
+ version_arg = -Wl,--version-script=$(srcdir)/ssp.map
+@@ -24,9 +25,9 @@
+ toolexeclib_LTLIBRARIES = libssp.la libssp_nonshared.la
+ 
+ target_noncanonical = @target_noncanonical@
+-libsubincludedir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/include
++libsubincludedir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)/include
+ nobase_libsubinclude_HEADERS = ssp/ssp.h ssp/string.h ssp/stdio.h ssp/unistd.h
+-
++LIBSSP_LDFLAGS =
+ libssp_la_SOURCES = \
+ 	ssp.c gets-chk.c memcpy-chk.c memmove-chk.c mempcpy-chk.c \
+ 	memset-chk.c snprintf-chk.c sprintf-chk.c stpcpy-chk.c \
+@@ -34,7 +35,8 @@
+ 	vsnprintf-chk.c vsprintf-chk.c
+ libssp_la_LIBADD = 
+ libssp_la_DEPENDENCIES = $(version_dep) $(libssp_la_LIBADD)
+-libssp_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version` \
++libssp_la_LDFLAGS = $(LIBSSP_LDFLAGS) \
++	-version-info `grep -v '^\#' $(srcdir)/libtool-version` \
+ 		    $(version_arg) -no-undefined
+ 
+ libssp_nonshared_la_SOURCES = \
+Index: libgomp/Makefile.am
+===================================================================
+--- libgomp/Makefile.am.orig	2008-08-31 18:16:09.000000000 +0000
++++ libgomp/Makefile.am	2011-08-22 05:25:35.117558569 +0000
+@@ -5,18 +5,20 @@
+ 
+ ## May be used by toolexeclibdir.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ config_path = @config_path@
+ search_path = $(addprefix $(top_srcdir)/config/, $(config_path)) $(top_srcdir)
+ 
+-fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/finclude
+-libsubincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
++fincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_dir_version)/finclude
++libsubincludedir = $(libdir)/gcc/$(target_alias)/$(gcc_dir_version)/include
+ 
+ vpath % $(strip $(search_path))
+ 
+ AM_CPPFLAGS = $(addprefix -I, $(search_path))
+ AM_CFLAGS = $(XCFLAGS)
+ AM_LDFLAGS = $(XLDFLAGS) $(SECTION_LDFLAGS) $(OPT_LDFLAGS)
++LIBGOMP_LDFLAGS =
+ 
+ toolexeclib_LTLIBRARIES = libgomp.la
+ nodist_toolexeclib_HEADERS = libgomp.spec
+@@ -27,7 +29,8 @@
+ libgomp_version_script =
+ endif
+ libgomp_version_info = -version-info $(libtool_VERSION)
+-libgomp_la_LDFLAGS = $(libgomp_version_info) $(libgomp_version_script) \
++libgomp_la_LDFLAGS = $(LIBGOMP_LDFLAGS) \
++	$(libgomp_version_info) $(libgomp_version_script) \
+         -no-undefined
+ 
+ libgomp_la_SOURCES = alloc.c barrier.c critical.c env.c error.c iter.c \
+Index: libmudflap/Makefile.am
+===================================================================
+--- libmudflap/Makefile.am.orig	2007-07-27 00:16:35.000000000 +0000
++++ libmudflap/Makefile.am	2011-08-22 05:25:35.123673570 +0000
+@@ -11,10 +11,12 @@
+ 
+ # May be used by various substitution variables.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ SECTION_FLAGS = @SECTION_FLAGS@
+ AM_CFLAGS = -Wall $(SECTION_FLAGS)
+-
++LIBMUDFLAP_LDFLAGS =
++LIBMUDFLAPTH_LDFLAGS =
+ if LIBMUDFLAPTH
+ libmudflapth = libmudflapth.la
+ else
+@@ -23,7 +25,7 @@
+ 
+ toolexeclib_LTLIBRARIES = libmudflap.la $(libmudflapth)
+ target_noncanonical = @target_noncanonical@
+-libsubincludedir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/include
++libsubincludedir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)/include
+ nobase_libsubinclude_HEADERS = mf-runtime.h
+ 
+ 
+@@ -34,7 +36,8 @@
+ 	mf-hooks2.c
+ libmudflap_la_LIBADD = 
+ libmudflap_la_DEPENDENCIES = $(libmudflap_la_LIBADD)
+-libmudflap_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version`
++libmudflap_la_LDFLAGS = $(LIBMUDFLAP_LDFLAGS) \
++	-version-info `grep -v '^\#' $(srcdir)/libtool-version`
+ 
+ 
+ libmudflapth_la_SOURCES = \
+@@ -46,7 +49,8 @@
+ libmudflapth_la_CFLAGS = -DLIBMUDFLAPTH
+ libmudflapth_la_LIBADD =
+ libmudflapth_la_DEPENDENCIES = $(libmudflapth_la_LIBADD)
+-libmudflapth_la_LDFLAGS = -version-info `grep -v '^\#' $(srcdir)/libtool-version`
++libmudflapth_la_LDFLAGS = $(LIBMUDFLAPTH_LDFLAGS) \
++	-version-info `grep -v '^\#' $(srcdir)/libtool-version`
+ 
+ 
+ # XXX hack alert
+Index: libjava/configure.ac
+===================================================================
+--- libjava/configure.ac.orig	2011-08-22 05:25:21.834000683 +0000
++++ libjava/configure.ac	2011-08-22 05:25:35.130143236 +0000
+@@ -1515,7 +1515,7 @@
+ 
+ # Determine where the standard .db file and GNU Classpath JNI
+ # libraries are found.
+-gcjsubdir=gcj-$gcjversion-$libgcj_soversion
++gcjsubdir=gcj
+ multi_os_directory=`$CC -print-multi-os-directory`
+ case $multi_os_directory in
+   .)
+Index: libjava/classpath/configure.ac
+===================================================================
+--- libjava/classpath/configure.ac.orig	2010-04-29 15:03:38.000000000 +0000
++++ libjava/classpath/configure.ac	2011-08-22 05:25:35.147427048 +0000
+@@ -328,7 +328,7 @@
+ 	     nativeexeclibdir=${withval}
+ 	    ],
+ 	    [
+-	     nativeexeclibdir='${toolexeclibdir}/gcj-'`cat ${srcdir}/../../gcc/BASE-VER`-`awk -F: '/^[[^#]].*:/ { print $1 }' ${srcdir}/../libtool-version`
++	     nativeexeclibdir='${toolexeclibdir}/gcj'
+ 	    ])
+ 
+ AC_SUBST(nativeexeclibdir)
+Index: gcc/Makefile.in
+===================================================================
+--- gcc/Makefile.in.orig	2010-09-07 11:07:31.000000000 +0000
++++ gcc/Makefile.in	2011-08-28 18:23:35.537570957 +0000
+@@ -480,9 +480,9 @@
+ # --------
+ 
+ # Directory in which the compiler finds libraries etc.
+-libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(version)
++libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ # Directory in which the compiler finds executables
+-libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(version)
++libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ # Used to produce a relative $(gcc_tooldir) in gcc.o
+ unlibsubdir = ../../..
+ # $(prefix), expressed as a path relative to $(libsubdir).
+@@ -769,6 +769,7 @@
+ endif
+ 
+ version     := $(BASEVER_c)
++gcc_dir_version := $(shell cat $(srcdir)/DIR-VER)
+ 
+ # For use in version.c - double quoted strings, with appropriate
+ # surrounding punctuation and spaces, and with the datestamp and
+@@ -1948,6 +1949,7 @@
+   -DSTANDARD_EXEC_PREFIX=\"$(libdir)/gcc/\" \
+   -DSTANDARD_LIBEXEC_PREFIX=\"$(libexecdir)/gcc/\" \
+   -DDEFAULT_TARGET_VERSION=\"$(version)\" \
++  -DDEFAULT_TARGET_DIRECTORY_VERSION=\"$(gcc_dir_version)\" \
+   -DDEFAULT_TARGET_MACHINE=\"$(target_noncanonical)\" \
+   -DSTANDARD_BINDIR_PREFIX=\"$(bindir)/\" \
+   -DTOOLDIR_BASE_PREFIX=\"$(libsubdir_to_prefix)$(prefix_to_exec_prefix)\" \
+Index: gcc/gcc.c
+===================================================================
+--- gcc/gcc.c.orig	2010-01-09 00:05:06.000000000 +0000
++++ gcc/gcc.c	2011-08-22 05:25:35.173989303 +0000
+@@ -237,6 +237,8 @@
+ 
+ static const char *const spec_version = DEFAULT_TARGET_VERSION;
+ 
++static const char *const dir_spec_version = DEFAULT_TARGET_DIRECTORY_VERSION ;
++
+ /* The target machine specified with -b.  */
+ 
+ static const char *spec_machine = DEFAULT_TARGET_MACHINE;
+@@ -4073,7 +4075,7 @@
+   tooldir_prefix
+     = concat (gcc_exec_prefix ? gcc_exec_prefix : standard_exec_prefix,
+ 	      spec_machine, dir_separator_str,
+-	      spec_version, dir_separator_str, tooldir_prefix, NULL);
++	      dir_spec_version, dir_separator_str, tooldir_prefix, NULL);
+ 
+   add_prefix (&exec_prefixes,
+ 	      concat (tooldir_prefix, "bin", dir_separator_str, NULL),
+@@ -6349,7 +6351,7 @@
+   /* Read specs from a file if there is one.  */
+ 
+   machine_suffix = concat (spec_machine, dir_separator_str,
+-			   spec_version, dir_separator_str, NULL);
++			   dir_spec_version, dir_separator_str, NULL);
+   just_machine_suffix = concat (spec_machine, dir_separator_str, NULL);
+ 
+   specs_file = find_a_file (&startfile_prefixes, "specs", R_OK, true);
+@@ -6493,7 +6495,7 @@
+   /* If we have a GCC_EXEC_PREFIX envvar, modify it for cpp's sake.  */
+   if (gcc_exec_prefix)
+     gcc_exec_prefix = concat (gcc_exec_prefix, spec_machine, dir_separator_str,
+-			      spec_version, dir_separator_str, NULL);
++			      dir_spec_version, dir_separator_str, NULL);
+ 
+   /* Now we have the specs.
+      Set the `valid' bits for switches that match anything in any spec.  */
+Index: fixincludes/Makefile.in
+===================================================================
+--- fixincludes/Makefile.in.orig	2009-04-09 23:23:07.000000000 +0000
++++ fixincludes/Makefile.in	2011-08-22 05:25:35.189540059 +0000
+@@ -50,11 +50,12 @@
+ 
+ # The version of GCC in this tree
+ gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(srcdir)/../gcc/DIR-VER)
+ 
+ # Directory in which the compiler finds libraries etc.
+-libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)
++libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ # Directory in which the compiler finds executables
+-libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_version)
++libexecsubdir = $(libexecdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ # Where our executable files go
+ itoolsdir = $(libexecsubdir)/install-tools
+ # Where our data files go
+@@ -147,8 +148,9 @@
+ 	CONFIG_FILES=mkheaders.almost:mkheaders.in \
+ 	CONFIG_HEADERS= ./config.status
+ 
+-mkheaders: mkheaders.almost $(srcdir)/../gcc/BASE-VER
+-	sed -e 's/@gcc_version@/$(gcc_version)/' < $< > $@T
++mkheaders: mkheaders.almost $(srcdir)/../gcc/BASE-VER $(srcdir)/../gcc/DIR-VER
++	sed -e 's/@gcc_version@/$(gcc_version)/' \
++	    -e 's/@dir_version@/$(gcc_dir_version)/' < $< > $@T
+ 	mv -f $@T $@
+ 
+ config.h: stamp-h
+Index: fixincludes/mkheaders.in
+===================================================================
+--- fixincludes/mkheaders.in.orig	2009-04-09 23:23:07.000000000 +0000
++++ fixincludes/mkheaders.in	2011-08-22 05:25:35.194641545 +0000
+@@ -22,7 +22,7 @@
+ target=@target@
+ target_noncanonical=@target_noncanonical@
+ version=@gcc_version@
+-
++dir_version=@gcc_dir_version@
+ VERBOSE=0
+ while [ x$1 = x-v ] ; do
+     shift
+@@ -70,9 +70,9 @@
+ libdir=@libdir@
+ libexecdir=@libexecdir@
+ # Directory in which the compiler finds libraries, etc.
+-libsubdir=${libdir}/gcc/${target_noncanonical}/${version}
++libsubdir=${libdir}/gcc/${target_noncanonical}/${dir_version}
+ # Directory in which the compiler finds executables
+-libexecsubdir=${libexecdir}/gcc/${target_noncanonical}/${version}
++libexecsubdir=${libexecdir}/gcc/${target_noncanonical}/${dir_version}
+ 
+ itoolsdir=${libexecsubdir}/install-tools
+ itoolsdatadir=${libsubdir}/install-tools
+Index: libobjc/Makefile.in
+===================================================================
+--- libobjc/Makefile.in.orig	2009-04-09 23:23:07.000000000 +0000
++++ libobjc/Makefile.in	2011-08-22 05:25:35.205326964 +0000
+@@ -33,6 +33,8 @@
+ exec_prefix = @exec_prefix@
+ target_noncanonical = @target_noncanonical@
+ gcc_version := $(shell cat $(srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
++
+ host_subdir = @host_subdir@
+ top_srcdir = @top_srcdir@
+ multi_basedir = @multi_basedir@
+@@ -50,7 +52,7 @@
+ -include ../boehm-gc/threads.mk
+ 
+ libdir = $(exec_prefix)/lib
+-libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)
++libsubdir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)
+ 
+ # Multilib support variables.
+ MULTISRCTOP =
+Index: gcc/java/Make-lang.in
+===================================================================
+--- gcc/java/Make-lang.in.orig	2008-12-05 08:01:58.000000000 +0000
++++ gcc/java/Make-lang.in	2011-08-22 05:25:35.220467352 +0000
+@@ -312,7 +312,7 @@
+ java/jcf-path.o: java/jcf-path.c $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+   java/jcf.h
+ 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+-	  -DLIBGCJ_ZIP_FILE='"$(datadir)/java/libgcj-$(version).jar"' \
++	  -DLIBGCJ_ZIP_FILE='"$(datadir)/java/libgcj-4.2.jar"' \
+ 	  -DDEFAULT_TARGET_VERSION=\"$(version)\" \
+ 	  $(srcdir)/java/jcf-path.c $(OUTPUT_OPTION)
+ 
+Index: libffi/include/Makefile.am
+===================================================================
+--- libffi/include/Makefile.am.orig	2006-09-12 16:51:43.000000000 +0000
++++ libffi/include/Makefile.am	2011-08-22 05:25:35.227697894 +0000
+@@ -7,6 +7,8 @@
+ 
+ # Where generated headers like ffitarget.h get installed.
+ gcc_version   := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
+-toollibffidir := $(libdir)/gcc/$(target_alias)/$(gcc_version)/include
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
++
++toollibffidir := $(libdir)/gcc/$(target_alias)/$(gcc_dir_version)/include
+ 
+ toollibffi_HEADERS = ffi.h ffitarget.h
+Index: libjava/include/Makefile.am
+===================================================================
+--- libjava/include/Makefile.am.orig	2005-09-23 21:31:04.000000000 +0000
++++ libjava/include/Makefile.am	2011-08-22 05:25:35.234093655 +0000
+@@ -4,11 +4,12 @@
+ 
+ # May be used by various substitution variables.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ # autoconf2.13's target_alias
+ target_noncanonical = @target_noncanonical@
+ 
+-tool_include_dir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/include
++tool_include_dir = $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)/include
+ ## The 'jni.h' here is fairly hacky, but it is simpler than trying to
+ ## tell Classpath about our peculiar install directory.
+ tool_include__HEADERS = jni_md.h ../classpath/include/jawt.h \
+Index: libjava/gcj/Makefile.am
+===================================================================
+--- libjava/gcj/Makefile.am.orig	2005-03-21 18:12:32.000000000 +0000
++++ libjava/gcj/Makefile.am	2011-08-22 05:25:35.240338322 +0000
+@@ -4,6 +4,7 @@
+ 
+ # May be used by various substitution variables.
+ gcc_version := $(shell cat $(top_srcdir)/../gcc/BASE-VER)
++gcc_dir_version := $(shell cat $(top_srcdir)/../gcc/DIR-VER)
+ 
+ # autoconf2.13's target_alias
+ target_noncanonical = @target_noncanonical@
+@@ -11,6 +12,6 @@
+ gcjdir = $(gxx_include_dir)/gcj
+ gcj_HEADERS = array.h cni.h field.h javaprims.h method.h
+ 
+-tool_include_dir := $(libdir)/gcc/$(target_noncanonical)/$(gcc_version)/include
++tool_include_dir := $(libdir)/gcc/$(target_noncanonical)/$(gcc_dir_version)/include
+ toolgcjdir       := $(tool_include_dir)/gcj
+ toolgcj_HEADERS = libgcj-config.h
+Index: gcc/DIR-VER
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ gcc/DIR-VER	2011-08-22 05:25:35.245270738 +0000
+@@ -0,0 +1 @@
++4.4
+Index: libjava/include/posix.h
+===================================================================
+--- libjava/include/posix.h.orig	2007-03-23 00:06:41.000000000 +0000
++++ libjava/include/posix.h	2011-08-22 05:25:35.249226737 +0000
+@@ -16,13 +16,13 @@
+    early so <standards.h> defines the correct version of __PIIX.  */
+ #define _POSIX_PII_SOCKET
+ 
+-#include <time.h>
+-#include <sys/types.h>
+-
+ #ifdef HAVE_SYS_TIME_H
+ #include <sys/time.h>
+ #endif
+ 
++#include <time.h>
++#include <sys/types.h>
++
+ #ifdef HAVE_SYS_SELECT_H
+ #include <sys/select.h>
+ #endif
+Index: gcc/ada/gcc-interface/Make-lang.in
+===================================================================
+--- gcc/ada/gcc-interface/Make-lang.in.orig	2008-12-05 08:01:58.000000000 +0000
++++ gcc/ada/gcc-interface/Make-lang.in	2011-08-22 05:25:35.273477520 +0000
+@@ -35,7 +35,7 @@
+ # - the compiler proper (eg: cc1plus)
+ # - define the names for selecting the language in LANGUAGES.
+ # tool definitions
+-CP = cp -p
++CP = cp
+ ECHO = echo
+ MV = mv
+ MKDIR = mkdir -p
+Index: gcc/ada/gcc-interface/Makefile.in
+===================================================================
+--- gcc/ada/gcc-interface/Makefile.in.orig	2009-10-24 10:58:53.000000000 +0000
++++ gcc/ada/gcc-interface/Makefile.in	2011-08-22 05:25:35.285352397 +0000
+@@ -80,7 +80,7 @@
+ CHMOD = chmod
+ LN = ln
+ LN_S = ln -s
+-CP = cp -p
++CP = cp
+ MV = mv -f
+ RM = rm -f
+ RMDIR = rm -rf
+@@ -187,6 +187,12 @@
+ MULTISUBDIR = 
+ RTSDIR = rts$(subst /,_,$(MULTISUBDIR))
+ 
++LIBADA_RPATH_DIR =
++LIBADA_RPATH_PREFIX =
++ifneq ($(strip $(LIBADA_RPATH_DIR)),)
++RPATH_LIBDIR = $(abspath $(LIBADA_RPATH_DIR)/$(strip $(shell $(GCC_FOR_TARGET) $(GNATLIBCFLAGS) -print-multi-os-directory)))
++LIBADA_RPATH_FLAGS = -L$(RPATH_LIBDIR) $(LIBADA_RPATH_PREFIX)$(RPATH_LIBDIR)
++endif
+ # End of variables for you to override.
+ 
+ all: all.indirect
+@@ -2087,13 +2093,13 @@
+ 		-o libgnat$(hyphen)$(LIBRARY_VERSION)$(soext) \
+ 		$(GNATRTL_NONTASKING_OBJS) $(LIBGNAT_OBJS) \
+ 		$(SO_OPTS)libgnat$(hyphen)$(LIBRARY_VERSION)$(soext) \
+-		$(MISCLIB) -lm
++		$(MISCLIB) $(LIBADA_RPATH_FLAGS) -lm
+ 	cd $(RTSDIR); ../../xgcc -B../../ -shared $(GNATLIBCFLAGS) \
+ 		$(TARGET_LIBGCC2_CFLAGS) \
+ 		-o libgnarl$(hyphen)$(LIBRARY_VERSION)$(soext) \
+ 		$(GNATRTL_TASKING_OBJS) \
+ 		$(SO_OPTS)libgnarl$(hyphen)$(LIBRARY_VERSION)$(soext) \
+-		$(THREADSLIB)
++		$(THREADSLIB) $(LIBADA_RPATH_FLAGS)
+ 	cd $(RTSDIR); $(LN_S) libgnat$(hyphen)$(LIBRARY_VERSION)$(soext) \
+ 		libgnat$(soext)
+ 	cd $(RTSDIR); $(LN_S) libgnarl$(hyphen)$(LIBRARY_VERSION)$(soext) \
+Index: libgfortran/configure.ac
+===================================================================
+--- libgfortran/configure.ac.orig	2011-08-22 05:25:28.925558042 +0000
++++ libgfortran/configure.ac	2011-08-22 05:25:35.293054001 +0000
+@@ -62,7 +62,7 @@
+ #            file in the top srcdir, etc, etc), so stop complaining.
+ #  -Wall:  turns on all automake warnings...
+ #  -Wno-portability:  ...except this one, since GNU make is required.
+-AM_INIT_AUTOMAKE([1.9.6 no-define foreign no-dist -Wall -Wno-portability])
++AM_INIT_AUTOMAKE([1.9 no-define foreign no-dist -Wall -Wno-portability])
+ 
+ AM_MAINTAINER_MODE
+ AM_ENABLE_MULTILIB(, ..)
+@@ -74,6 +74,13 @@
+   ac_configure_args="$ac_configure_args --disable-multilib"
+ fi
+ 
++AC_ARG_ENABLE(fortran-largefile,
++	AS_HELP_STRING([--disable-fortran-largefile], [do not build libgfortran with large files support]))
++if test "$enable_fortran_largefile" = no; then
++  enable_largefile=no
++  ac_configure_args="$ac_configure_args --disable-largefile"
++fi
++
+ # Handy for debugging:
+ #AC_MSG_NOTICE($build / $host / $target / $host_alias / $target_alias); sleep 5
+ 
+Index: configure.ac
+===================================================================
+--- configure.ac.orig	2010-10-02 11:40:32.000000000 +0000
++++ configure.ac	2011-08-22 05:25:35.301094003 +0000
+@@ -1197,6 +1197,12 @@
+ AC_ARG_WITH(mpfr-dir, [  --with-mpfr-dir=PATH    this option has been REMOVED],
+   AC_MSG_ERROR([The --with-mpfr-dir=PATH option has been removed.
+ Use --with-mpfr=PATH or --with-mpfr-include=PATH plus --with-mpfr-lib=PATH]))
++# Specify extra LDFLAGS for mpfr (such as runtime path)
++AC_ARG_WITH(mpfr-ldflags, [  --with-mpfr-ldflags=FLAGS Extra LDFLAGS to use whelinking MPFR library])
++
++if test "x$with_mpfr_ldflags" != x; then
++  gmplibs="$with_mpfr_ldflags $gmplibs"
++fi
+ 
+ AC_ARG_WITH(mpfr, [  --with-mpfr=PATH        specify prefix directory for installed MPFR package.
+                           Equivalent to --with-mpfr-include=PATH/include
+@@ -1230,6 +1236,14 @@
+   AC_MSG_ERROR([The --with-gmp-dir=PATH option has been removed.
+ Use --with-gmp=PATH or --with-gmp-include=PATH plus --with-gmp-lib=PATH]))
+ 
++# Specify extra LDFLAGS for gmp (such as runtime path)
++AC_ARG_WITH(gmp-ldflags, [  --with-gmp-ldflags=FLAGS Extra LDFLAGS to use when linking GMP library])
++
++if test "x$with_gmp_ldflags" != x; then
++  gmplibs="$with_gmp_ldflags $gmplibs"
++fi
++
++
+ AC_ARG_WITH(gmp, [  --with-gmp=PATH         specify prefix directory for the installed GMP package.
+                           Equivalent to --with-gmp-include=PATH/include
+                           plus --with-gmp-lib=PATH/lib])
+Index: libada/Makefile.in
+===================================================================
+--- libada/Makefile.in.orig	2009-10-24 10:58:53.000000000 +0000
++++ libada/Makefile.in	2011-08-22 05:25:35.318433483 +0000
+@@ -66,7 +66,8 @@
+ 
+ target_noncanonical:=@target_noncanonical@
+ version := $(shell cat $(srcdir)/../gcc/BASE-VER)
+-libsubdir := $(libdir)/gcc/$(target_noncanonical)/$(version)$(MULTISUBDIR)
++dir_version := $(shell cat $(srcdir)/../gcc/DIR-VER)
++libsubdir := $(libdir)/gcc/$(target_noncanonical)/$(dir_version)$(MULTISUBDIR)
+ ADA_RTS_DIR=$(GCC_DIR)/ada/rts$(subst /,_,$(MULTISUBDIR))
+ 
+ # exeext should not be used because it's the *host* exeext.  We're building
+Index: libgcc/Makefile.in
+===================================================================
+--- libgcc/Makefile.in.orig	2009-04-09 23:23:07.000000000 +0000
++++ libgcc/Makefile.in	2011-08-22 05:25:35.325388532 +0000
+@@ -159,8 +159,9 @@
+ STRIP = @STRIP@
+ STRIP_FOR_TARGET = $(STRIP)
+ 
++dir_version := $(shell cat $(srcdir)/../gcc/DIR-VER)
+ # Directory in which the compiler finds libraries etc.
+-libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(version)
++libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(dir_version)
+ # Used to install the shared libgcc.
+ slibdir = @slibdir@
+ 
+Index: libjava/classpath/tools/Makefile.am
+===================================================================
+--- libjava/classpath/tools/Makefile.am.orig	2010-06-02 17:08:19.000000000 +0000
++++ libjava/classpath/tools/Makefile.am	2011-08-22 05:25:35.333491784 +0000
+@@ -334,7 +334,7 @@
+ endif
+ endif
+ 	find $(srcdir)/external/asm -name '*.java' -print > asm.lst
+-	find $(srcdir)/gnu/classpath/tools \
++	gfind $(srcdir)/gnu/classpath/tools \
+ 	     $(srcdir)/com/sun/javadoc \
+ 	     $(srcdir)/com/sun/tools/doclets \
+ 	     $(srcdir)/com/sun/tools/javadoc \
+@@ -360,7 +360,7 @@
+ endif
+ ## END GCJ LOCAL
+ ## Copy over tools resource files.
+-	@list=`cd $(srcdir)/resource && find gnu/classpath/tools com/sun/tools/javac \
++	@list=`cd $(srcdir)/resource && gfind gnu/classpath/tools com/sun/tools/javac \
+ 	       sun/rmi/rmic $(GJDOC_EX) -name \*.properties -print -o -name \*.jav -print`; \
+ 	for p in $$list; do \
+ 	  dirname=classes/`dirname $$p`; \
+Index: libtool.m4
+===================================================================
+--- libtool.m4.orig	2009-03-01 17:49:31.000000000 +0000
++++ libtool.m4	2011-08-29 01:33:43.329750115 +0000
+@@ -4801,6 +4801,7 @@
+ 	  ;;
+ 	esac
+       fi
++      _LT_TAGVAR(archive_cmds_need_lc, $1)='no'
+       if test "$with_gnu_ld" = no; then
+ 	_LT_TAGVAR(hardcode_libdir_flag_spec, $1)='${wl}+b ${wl}$libdir'
+ 	_LT_TAGVAR(hardcode_libdir_separator, $1)=:

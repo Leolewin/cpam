@@ -1,0 +1,143 @@
+Index: configure.in
+===================================================================
+--- configure.in.orig	2009-06-04 18:17:56.000000000 +0000
++++ configure.in	2009-09-18 06:48:39.996294798 +0000
+@@ -39,8 +39,6 @@
+ 	*darwin*)
+ 	CFLAGS="$CFLAGS -DLIBSSH2_DARWIN"
+ 	;;
+-    *hpux*)
+-    ;;
+     *)
+     ;;
+ esac
+@@ -71,6 +69,7 @@
+      [/usr/sbin$PATH_SEPARATOR/usr/etc$PATH_SEPARATOR/etc])
+ AM_CONDITIONAL(SSHD, test -n "$SSHD")
+ AC_LIBTOOL_WIN32_DLL
++AC_LIBTOOL_TAGS()
+ AC_PROG_LIBTOOL
+ AC_C_BIGENDIAN
+ 
+@@ -95,7 +94,10 @@
+ 
+ # Look for libgcrypt
+ if test "$ac_cv_libssl" != "yes" && test "$use_libgcrypt" != "no"; then
+-  AC_LIB_HAVE_LINKFLAGS([gcrypt], [], [#include <gcrypt.h>])
++  PKG_CHECK_MODULES(GCRYPT,libgcrypt)
++  CFLAGS="$CFLAGS $GCRYPT_CFLAGS"
++  LDFLAGS="$LDFLAGS $GCRYPT_LIBS"
++  ac_cv_libgcrypt=yes
+ fi
+ 
+ if test "$ac_cv_libssl" != "yes" && test "$ac_cv_libgcrypt" != "yes"; then
+@@ -110,13 +112,10 @@
+ 
+ # Look for Libz
+ if test "$use_libz" != "no"; then
+-  AC_LIB_HAVE_LINKFLAGS([z], [], [#include <zlib.h>])
+-  if test "$ac_cv_libz" != yes; then
+-    AC_MSG_NOTICE([Cannot find libz, disabling compression])
+-    AC_MSG_NOTICE([Try --with-libz-prefix=PATH if you know you have it])
+-  else
+-    AC_DEFINE(LIBSSH2_HAVE_ZLIB, 1, [Compile in zlib support])
+-  fi
++  AC_CHECK_HEADER([zlib.h],
++    [AC_CHECK_LIB(z, inflate,
++      [LIBS="$LIBS -lz"
++       AC_DEFINE(LIBSSH2_HAVE_ZLIB, 1, [Compile in zlib support])])])
+ fi
+ 
+ #
+@@ -207,6 +206,13 @@
+ AC_C_CONST
+ AC_C_INLINE
+ 
++AC_SUBST(CRYPTLIB)
++if test "$use_libgcrypt" != "no"; then
++CRYPTLIB=libgcrypt
++else
++CRYPTLIB=openssl
++fi
++
+ CURL_CHECK_NONBLOCKING_SOCKET
+ 
+ AC_CONFIG_FILES([Makefile
+@@ -214,5 +220,6 @@
+                  tests/Makefile
+                  example/Makefile
+                  example/simple/Makefile
+-                 docs/Makefile])
++                 docs/Makefile
++                 libssh2.pc])
+ AC_OUTPUT
+Index: libssh2.pc.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ libssh2.pc.in	2009-09-18 06:48:40.002034920 +0000
+@@ -0,0 +1,11 @@
++prefix=@prefix@
++exec_prefix=${prefix}
++libdir=@libdir@
++includedir=${prefix}/include
++
++Name: libssh2
++Description: SSH2 library
++Version: @VERSION@
++Requires.private: @CRYPTLIB@
++Libs: -L${libdir} -lssh2
++Cflags: -I${includedir}
+Index: src/session.c
+===================================================================
+--- src/session.c.orig	2009-07-07 11:08:49.000000000 +0000
++++ src/session.c	2009-09-18 06:48:40.020646999 +0000
+@@ -36,6 +36,22 @@
+  * OF SUCH DAMAGE.
+  */
+ 
++#include "libssh2_config.h"
++/* AIX requires this to be the first thing in the file.  */
++#ifndef __GNUC__
++# if HAVE_ALLOCA_H
++#  include <alloca.h>
++# else
++#  ifdef _AIX
++ #pragma alloca
++#  else
++#   ifndef alloca /* predefined by HP cc +Olibcalls */
++char *alloca ();
++#   endif
++#  endif
++# endif
++#endif
++
+ #include "libssh2_priv.h"
+ #include <errno.h>
+ #ifdef HAVE_UNISTD_H
+Index: src/libssh2_priv.h
+===================================================================
+--- src/libssh2_priv.h.orig	2009-07-29 20:03:12.000000000 +0000
++++ src/libssh2_priv.h	2009-09-18 06:48:40.035965361 +0000
+@@ -685,7 +685,7 @@
+ 
+     /* Agreed Key Exchange Method */
+     const LIBSSH2_KEX_METHOD *kex;
+-    int burn_optimistic_kexinit:1;
++    unsigned int burn_optimistic_kexinit:1;
+ 
+     unsigned char *session_id;
+     unsigned long session_id_len;
+Index: Makefile.am
+===================================================================
+--- Makefile.am.orig	2009-07-29 12:37:56.000000000 +0000
++++ Makefile.am	2009-09-18 06:48:40.051193459 +0000
+@@ -2,6 +2,9 @@
+ 
+ SUBDIRS = src example tests docs
+ 
++pkgconfigdir = $(libdir)/pkgconfig
++nodist_pkgconfig_DATA = libssh2.pc
++
+ include_HEADERS =			\
+ 	include/libssh2.h		\
+ 	include/libssh2_publickey.h	\

@@ -1,0 +1,319 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="glib" version="2.4.4" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}24</install-name>
+
+    <sources>
+      <source checksum="ea37e29137cb988eb54ff43721143a81"
+        checksum-type="md5" size="2138838"
+        path="src/glib-2.4.4.tar.bz2"/>
+      <patch checksum="05175d95e15707bc998ec304fdbfc576"
+        checksum-type="md5" size="436431"
+        path="src/glib-2.4.4.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="libxml" install-name="libxml26"
+        add-path="prepend">v&gt;=2.6.11</depend>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"
+        type="build"/>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+_libdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-blibpath:"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--disable-threads" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  ARGS="--enable-threads" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-threads" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  ARGS="--enable-threads" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}}" \
+CFLAGS="${CFLAGS:=-O2}" LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}\
+${SB_VAR_LIBICONV_LIB+:${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --enable-static --enable-shared \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${SB_VAR_LIBICONV+--with-libiconv=gnu} \
+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+for _pc in glib-2.0.pc gmodule-2.0.pc gobject-2.0.pc gthread-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ${_pc}
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake configexecincludedir="${_includedir}" \
+glibincludedir="${_includedir}" \
+glibsubincludedir="${_includedir}/glib" \
+libgobjectincludedir="${_includedir}/gobject"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install configexecincludedir="${_includedir}" \
+glibincludedir="${_includedir}" \
+glibsubincludedir="${_includedir}/glib" \
+libgobjectincludedir="${_includedir}/gobject"
+]]>
+    </install>
+
+    <notes>
+      <change from="2.4.2" to="2.4.4">
+        <item><para>Win32 bug fixes</para></item>
+        <item><para>Other bug fixes</para></item>
+        <item><para>Documentation updates</para></item>
+        <item><para>New and updated translations
+(az,ne,sq)</para></item>
+      </change>
+
+      <change from="2.4.1" to="2.4.2">
+        <item><para>Win32 bug fixes:</para>
+        <unorderedlist>
+          <item><para>make printf accept ll format
+modifier</para></item>
+          <item><para>only believe HOME if it is an absolute path an
+exists</para></item>
+        </unorderedlist></item>
+        <item><para>Other bug fixes</para></item>
+        <item><para>New and updated translations
+(de,it,ja,ko,no,pt_BR,sq,wa,zh_CN)</para></item>
+      </change>
+
+      <change from="2.4.0" to="2.4.1">
+        <item><para>Win32 bug fixes</para></item>
+        <item><para>Miscellaneous bug and portability
+fixes</para></item>
+        <item><para>Documentation updates</para></item>
+        <item><para>New and updated translations
+(ca,cs,cy,el,en_CA,en_GB,es,eu,fi,fr,gu,he,id,nl,pt,pl,ru,sr,sr@ije,sr@Latn,sv,uk)</para></item>
+      </change>
+
+      <change from="2.3.6" to="2.4.0">
+        <item><para>Handle invalid-UTF-8 in g_log()
+properly</para></item>
+        <item><para>Win32 bug fixes</para></item>
+        <item><para>Miscellaneous bug and portability
+fixes</para></item>
+        <item><para>Documentation updates</para></item>
+        <item><para>Updated translations (hr,ro)</para></item>
+      </change>
+
+      <change from="2.3.5" to="2.3.6">
+        <item><para>GAtomic bug fixes</para></item>
+        <item><para>GMain threading fixes and
+improvements</para></item>
+        <item><para>Win32:</para>
+        <unorderedlist>
+          <item><para>restore some symbols extraneously exported from
+gobject to maintain ABI compatibility</para></item>
+          <item><para>Misc build improvements and fixes</para></item>
+        </unorderedlist></item>
+        <item><para>Documentation updates</para></item>
+        <item><para>New and updated translations
+(be,es,fi,ga,pa,sr@ije,zh_CN)</para></item>
+      </change>
+
+      <change from="2.3.3" to="2.3.5">
+        <item><para>Make glib-mkenums parse initializers with
+macros</para></item>
+        <item><para>Respect locale era in
+g_date_set_parse()</para></item>
+        <item><para>Add atomic operations and use it for the async
+queue and gonce implementation</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>Add g_main_depth() for finding the recursion depth
+of the main loop</para></item>
+        <item><para>Add g_spawn_close_pid(), needed on
+win32</para></item>
+        <item><para>Win32 fixes</para></item>
+        <item><para>Misc bugfixes</para></item>
+        <item><para>Updated translations (cy,et,ga,sq)</para></item>
+      </change>
+
+      <change from="2.3.2" to="2.3.3">
+        <item><para>Add a native AIX gmodule
+implementation</para></item>
+        <item><para>Add g_node_copy_deep()</para></item>
+        <item><para>Extend GQueue API to match the GList
+API</para></item>
+        <item><para>Add g_hash_table_find()</para></item>
+        <item><para>Add a G_MODULE_BIND_LOCAL flag</para></item>
+        <item><para>Inline g_string_append_c() when
+possible</para></item>
+        <item><para>Wrap waitpid() as a GSource</para></item>
+        <item><para>Add g_completion_complete_utf8()</para></item>
+        <item><para>Add g_strsplit_set()</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>Win32 build fixes</para></item>
+        <item><para>Misc bugfixes</para></item>
+        <item><para>Updated translations
+(nn,cs,it,ko,sq,ms,az,hr,uk,sr,sr@Latn,sq,ta)</para></item>
+      </change>
+
+      <change from="2.3.1" to="2.3.2">
+        <item><para>Add G_MAXSIZE</para></item>
+        <item><para>Add g_rand_new_with_seed_array(),
+g_rand_set_seed_array(), implementing the init-by-array functionality
+of the original mersenne twister. Add g_rand_copy(). Improve
+seeding.</para></item>
+        <item><para>Add a lowercase_name option to
+glib-mkenums</para></item>
+        <item><para>Add g_ptr_array_foreach()</para></item>
+        <item><para>Add g_timer_continue()</para></item>
+        <item><para>Fix a threadsafety issue in mem
+chunks</para></item>
+        <item><para>Fix g_filename_{to,from}_utf8() on Win32 and
+improve g_file_test() there too</para></item>
+        <item><para>Add a boxed type for NULL-terminated string
+arrays</para></item>
+        <item><para>Add G_DEFINE_TYPE() plus variants to ease the
+constuction of GObject boilerplate code</para></item>
+        <item><para>Support &amp; in password GECOS
+field</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>Win32 build fixes</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>Updated translations
+(ar,de,fa,ga,mn,nn,no,sq)</para></item>
+      </change>
+
+      <change from="2.3.0" to="2.3.1">
+        <item><para>Add glib/gi18n.h and glib/gi18n-lib.h for common
+gettext support, including a Q_() macro for translation with
+context</para></item>
+        <item><para>Add a more flexible G_FILENAME_ENCODING variable
+as a replacement for G_BROKEN_FILENAMES</para></item>
+        <item><para>Fix the return value g_main_context_iterate() for
+newly ready sources</para></item>
+        <item><para>Handle Hangul composition for
+normalization</para></item>
+        <item><para>Add G_{MIN,MAX,MAXU}INT{8,16,32}</para></item>
+        <item><para>Add G_GSIZE_FORMAT/G_SSIZE_FORMAT</para></item>
+        <item><para>Add G_STRFUNC as a portable wrapper for
+__func__</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>GObject:</para>
+        <unorderedlist>
+          <item><para>Support '-' in g_signal_connect()/disconnect()
+names like 'swapped-signal'</para></item>
+          <item><para>Add g_type_class_peek_static() and use to
+optimize g_object_new() for static types</para></item>
+          <item><para>Allow setting construct-only properties from
+within init() implementations</para></item>
+          <item><para>Enforce readability/writeability in
+g_object_set/get()</para></item>
+        </unorderedlist></item>
+        <item><para>Fix bug with g_ascii_strtod and multi-byte
+separator</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>Updated translations
+(ca,cs,da,es,fr,ja,nn,no,pt,ru)</para></item>
+      </change>
+
+      <change from="2.2.x" to="2.3.0">
+        <item><para>Replace Trio printf by gnulib
+vasnprintf</para></item>
+        <item><para>Update Unicode data to Unicode 4.0</para></item>
+        <item><para>Support XML-safe formatted output with
+g_markup_[v]printf_escaped</para></item>
+        <item><para>Add g_file_read_link to read symbolic
+links</para></item>
+        <item><para>Add g_unichar_get_mirror_char to obtain the
+mirrored variant of a character</para></item>
+        <item><para>Support for one-time initialization
+functions</para></item>
+        <item><para>Miscellaneous API additions: g_vasprintf
+g_string_chunk_insert_len, g_setenv, g_unsetenv</para></item>
+        <item><para>Docs improvements</para></item>
+        <item><para>Add support instance-private data on classed
+types</para></item>
+        <item><para>Optimize signal emissions</para></item>
+        <item><para>Support a "default vtable" per
+interface</para></item>
+        <item><para>Add support for properties on
+interfaces</para></item>
+        <item><para>Miscellaneous API additions:
+g_value_take_string(), g_value_take_param(), g_value_take_object(),
+g_value_take_boxed()</para></item>
+        <item><para>Win32 build fixes</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

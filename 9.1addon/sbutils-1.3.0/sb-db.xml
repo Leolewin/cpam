@@ -1,0 +1,4892 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="sbutils" version="1.3.0" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="55ec826c79fee2ccd72764ee056c4ffa"
+        checksum-type="md5" size="213668"
+        path="src/sbutils-1.3.0.tar.bz2"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  # No TWW libraries are linked
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="$CPPFLAGS"} CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="$LDFLAGS"} --program-prefix=g --disable-nls \
+--enable-shared --enable-static --disable-dependency-tracking \
+${ARGS+$ARGS} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies>
+        <depend program="sbutils" var="BASH" module="bash"
+          append="lib/aux/bash">v==1.3.0</depend>
+        <depend program="sbutils" var="COREUTILS" module="coreutils"
+          append="lib/aux/coreutils">v==1.3.0</depend>
+        <depend program="sbutils" var="FINDUTILS" module="findutils"
+          append="lib/aux/findutils">v==1.3.0</depend>
+        <depend program="sbutils" var="GAWK" module="gawk"
+          append="lib/aux/gawk">v==1.3.0</depend>
+        <depend program="sbutils" var="GCPIO" module="gcpio"
+          append="lib/aux/gcpio">v==1.3.0</depend>
+        <depend program="sbutils" var="GREP" module="grep"
+          append="lib/aux/grep">v==1.3.0</depend>
+        <depend program="sbutils" var="GTAR" module="gtar"
+          append="lib/aux/gtar">v==1.3.0</depend>
+        <depend program="sbutils" var="PYTHON" module="python"
+          append="lib/aux/python">v==1.3.0</depend>
+        <depend program="sbutils" var="SED" module="gsed"
+          append="lib/aux/gsed">v==1.3.0</depend>
+        <depend program="sbutils" var="TEXINFO" module="texinfo"
+          append="lib/aux/texinfo">v==1.3.0</depend>
+        <depend program="sbutils" var="UNZIP" module="unzip"
+          append="lib/aux/unzip">v==1.3.0</depend>
+        <depend program="sbutils" module="pycurl"
+          append="lib/aux/pythonp">v==1.3.0</depend>
+        <depend program="sbutils" module="python-fchksum"
+          append="lib/aux/pythonp">v==1.3.0</depend>
+        <depend program="sbutils" module="lxml"
+          append="lib/aux/pythonp">v==1.3.0</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="sbutils" module="bash">v==1.3.0</depend>
+        <depend program="sbutils" module="bzip2">v==1.3.0</depend>
+        <depend program="sbutils" module="coreutils">v==1.3.0</depend>
+        <depend program="sbutils" module="curl">v==1.3.0</depend>
+        <depend program="sbutils" module="findutils">v==1.3.0</depend>
+        <depend program="sbutils" module="gawk">v==1.3.0</depend>
+        <depend program="sbutils" module="gcpio">v==1.3.0</depend>
+        <depend program="sbutils" module="gmake">v==1.3.0</depend>
+        <depend program="sbutils" module="gnutls">v==1.3.0</depend>
+        <depend program="sbutils" module="gpatch">v==1.3.0</depend>
+        <depend program="sbutils" module="grep">v==1.3.0</depend>
+        <depend program="sbutils" module="gsed">v==1.3.0</depend>
+        <depend program="sbutils" module="gtar">v==1.3.0</depend>
+        <depend program="sbutils" module="gzip">v==1.3.0</depend>
+        <depend program="sbutils" module="libgcrypt">v==1.3.0</depend>
+        <depend program="sbutils"
+          module="libgpg-error">v==1.3.0</depend>
+        <depend program="sbutils" module="libssh2">v==1.3.0</depend>
+        <depend program="sbutils" module="libtasn1">v==1.3.0</depend>
+        <depend program="sbutils" module="libxml">v==1.3.0</depend>
+        <depend program="sbutils" module="libxslt">v==1.3.0</depend>
+        <depend program="sbutils" module="opencdk">v==1.3.0</depend>
+        <depend program="sbutils" module="openssl"
+          systype="!*-freebsd*">v==1.3.0</depend>
+        <depend program="sbutils" module="pth"
+          systype="*-hpux10*">v==1.3.0</depend>
+        <depend program="sbutils" module="python">v==1.3.0</depend>
+        <depend program="sbutils" module="texinfo">v==1.3.0</depend>
+        <depend program="sbutils" module="unzip">v==1.3.0</depend>
+        <depend program="sbutils" module="zlib"
+          systype="!*-freebsd*">v==1.3.0</depend>
+        <depend program="sbutils" module="pycurl">v==1.3.0</depend>
+        <depend program="sbutils"
+          module="python-fchksum">v==1.3.0</depend>
+        <depend program="sbutils" module="lxml">v==1.3.0</depend>
+      </validate>
+
+      <script-header replace="0">
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+ac_cv_path_AWK="${SB_VAR_GAWK}/bin/gawk" \
+ac_cv_path_BASH="${SB_VAR_BASH}/bin/bash" \
+ac_cv_path_PYTHON="${SB_VAR_PYTHON}/bin/python" \
+ac_cv_path_CHGRP="${SB_VAR_COREUTILS}/bin/gchgrp" \
+ac_cv_path_CHMOD="${SB_VAR_COREUTILS}/bin/gchmod" \
+ac_cv_path_CHOWN="${SB_VAR_COREUTILS}/bin/gchown" \
+ac_cv_path_CPIO="${SB_VAR_GCPIO}/bin/gcpio" \
+ac_cv_path_EGREP="${SB_VAR_GREP}/bin/gegrep" \
+ac_cv_path_FIND="${SB_VAR_FINDUTILS}/bin/gfind" \
+ac_cv_path_GREP="${SB_VAR_GREP}/bin/ggrep" \
+ac_cv_path_INSTALL="${SB_VAR_COREUTILS}/bin/ginstall" \
+ac_cv_path_LN="${SB_VAR_COREUTILS}/bin/gln" \
+ac_cv_path_TAR="${SB_VAR_GTAR}/bin/gtar" \
+ac_cv_path_TOUCH="${SB_VAR_COREUTILS}/bin/gtouch" \
+ac_cv_path_SED="${SB_VAR_SED}/bin/gsed" \
+ac_cv_path_UNZIP="${SB_VAR_UNZIP}/bin/unzip" \
+--datadir=${_datadir} --mandir="${SB_INSTALL_PREFIX}/man" \
+--sysconfdir=${_sysconfdir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# create config file
+cat >${_sysconfdir}/sbutils.conf <<_EOT_
+# show what actions would be performed while unpacking, configuring,
+# building, and installing
+verbose = 1
+
+# path to bash
+bash-path = "${SB_VAR_BASH}/bin/bash"
+
+# path to systype
+systype-path = "${SB_INSTALL_PREFIX}/lib/systype"
+
+# default build directory
+build-dir = "/opt/build"
+
+# default distribution
+dist = "${SB_DIST}"
+
+rename-matching-install-prefix-entries = 1
+
+unique-install-prefix = 1
+
+# variables specific to this distribution
+dist-opts ${SB_DIST} {
+  install-base = "${SB_INSTALL_BASE}"
+  install-path = "\${SB_INSTALL_NAME}"
+}
+
+# hard-code search path
+environment {
+  PATH = "\
+${SB_INSTALL_PREFIX}/lib/aux/bash/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/bzip2/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/coreutils/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/findutils/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gawk/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gcpio/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/grep/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gmake/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gpatch/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gsed/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gtar/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gzip/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/texinfo/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/unzip/bin:\\
+/bin:/usr/bin:/usr/ccs/bin:/usr/vac/bin:/usr/vacpp/bin:\\
+/sbin:/usr/sbin:/etc:/usr/etc:/usr/openwin/bin:/usr/dt/bin:\\
+/usr/bin/X11:/opt/imake/bin:/usr/ucb:/usr/bsd"
+}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="pth"
+    systype="*-hpux10*">
+      <build-name>pth-2.0.7</build-name>
+
+      <install-name append="lib/aux/libpth">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="9cb4a25331a4c4db866a31cbe507c793"
+          checksum-type="md5" size="652640"
+          path="src/pth-2.0.7.tar.gz"/>
+        <patch checksum="7a2f4051efd148eaf0c72e9b328c7371"
+          checksum-type="md5" size="28681"
+          path="src/pth-2.0.7.tww.patch"/>
+        <patch checksum="31f1c8e3601fe99fc4e5bff2761627c6"
+          checksum-type="md5" size="1239998"
+          path="src/pth-2.0.7.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\$pth_libdir\)!-L\1 ${CC_LD_RT}\1!" pth-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" libpth.pc
+
+${SB_PATH_SED} -i -e "\
+/typedef int socklen_t/ {
+i\
+#ifndef socklen_t
+a\
+#endif
+}" pth.h
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="gtar">
+      <build-name>tar-1.20</build-name>
+
+      <install-name append="lib/aux/gtar">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="1a7e17f27abf583b3b0bc059a827e68b"
+          checksum-type="md5" size="1912591"
+          path="src/tar-1.20.tar.bz2"/>
+        <patch checksum="f049517afa250d3701bb025432509f90"
+          checksum-type="md5" size="16952"
+          path="src/tar-1.20.tww.patch"/>
+        <patch checksum="bd05e525c5adb3f03d86f7a3425c7bb6"
+          checksum-type="md5" size="245841"
+          path="src/tar-1.20.gnulib.patch"/>
+        <patch checksum="fb519662d246e3d95ed69ce24009ab49"
+          checksum-type="md5" size="710"
+          path="src/tar-1.20.tww-gnulib.patch"/>
+        <patch checksum="3ca1a8a6ac77c9e04d302698d67ed0f8"
+          checksum-type="md5" size="1178636"
+          path="src/tar-1.20.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend" systype="hppa*-hpux*"
+          type="build">v==4.2.4</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--program-prefix=g --disable-dependency-tracking \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/libexec \
+${SB_INSTALL_PREFIX}/sbin
+]]>
+      </install>
+    </module>
+
+    <module name="libxml">
+      <build-name>libxml2-2.6.32</build-name>
+
+      <install-name append="lib/aux/libxml">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="2621d322c16f0257e30f0ff2b13384de"
+          checksum-type="md5" size="4722227"
+          path="src/libxml2-2.6.32.tar.gz"/>
+        <patch checksum="c5d8a1fbfda0c30c63226d5843f7871e"
+          checksum-type="md5" size="18178"
+          path="src/libxml2-2.6.32.tww.patch"/>
+        <patch checksum="60b969397e7e20c21f48b01f9caa27f7"
+          checksum-type="md5" size="1803573"
+          path="src/libxml2-2.6.32.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+<!--
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r
+  ARGS="--enable-ipv6=no" ;;
+*-hpux11.[01]*)
+  ARGS="--enable-ipv6=no" ;;
+*-hpux10*)
+  CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED" ;;
+*-osf*)
+  ARGS="--enable-ipv6=no" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="$CPPFLAGS"} CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBZ_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--enable-shared --enable-static --disable-dependency-tracking \
+--without-readline --without-history --without-threads \
+--with-python=no --with-zlib=${SB_VAR_LIBZ} ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+# Fix library path in pkgconfig files
+${SB_PATH_SED} -i -e \
+'s!-L\(${libdir}\) !-L\1 '"${CC_LD_RT}"'\1 !g' \
+xml2-config libxml-2.0.pc
+
+# Remove iconv dependency from pkgconfig file
+${SB_PATH_SED} -i -e '/Requires: libiconv/d' \
+libxml-2.0.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# remove manual pages, gtk-doc guide and aclocal macros
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="unzip">
+      <build-name>unzip-5.52</build-name>
+
+      <install-name append="lib/aux/unzip">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="9d23919999d6eac9217d1f41472034a9"
+          checksum-type="md5" size="1140291"
+          path="src/unzip552.tar.gz"/>
+        <patch checksum="aa567e50ec8070b3104118f055691e86"
+          checksum-type="md5" size="1272"
+          path="src/unzip-5.52.CVE-2005-2475.patch"/>
+        <patch checksum="815141eaae43cc20d4e49a03af87c946"
+          checksum-type="md5" size="1474"
+          path="src/unzip-5.52.CVE-2008-0888.patch"/>
+        <patch checksum="83d826ec7e550142800271b5f7b6a59a"
+          checksum-type="md5" size="1980"
+          path="src/unzip-5.52.tww.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+# There is no configure
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  # No TWW libraries are linked
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+esac
+
+gmake -f unix/Makefile CC="${CC:-gcc}" OPT="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" prefix=${SB_INSTALL_PREFIX} generic3
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -f unix/Makefile prefix=${SB_INSTALL_PREFIX} install
+
+# Remove manual pages
+rm -rf ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="findutils">
+      <build-name>findutils-4.4.0</build-name>
+
+      <install-name append="lib/aux/findutils">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="49e769ac4382fae6f104f99d54d0a112"
+          checksum-type="md5" size="2029809"
+          path="src/findutils-4.4.0.tar.gz"/>
+        <patch checksum="c37e5c8250b99a9926062f841e77bdea"
+          checksum-type="md5" size="3611"
+          path="src/findutils-4.4.0.tww.patch"/>
+        <patch checksum="0f876c0356c698e2844481d793feaa4e"
+          checksum-type="md5" size="14627"
+          path="src/findutils-4.4.0.gnulib.patch"/>
+        <patch checksum="f5597fc1d197ddb016a256e4b00cacc6"
+          checksum-type="md5" size="1047831"
+          path="src/findutils-4.4.0.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison23"
+          add-path="prepend" type="build">v&gt;=2.3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-osf*)
+  # isblank() is C99
+  export ac_cv_have_decl_isblank=no ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" --program-prefix=g \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/var ${SB_INSTALL_PREFIX}/libexec \
+${SB_INSTALL_PREFIX}/bin/glocate ${SB_INSTALL_PREFIX}/bin/gupdatedb \
+${SB_INSTALL_PREFIX}/man ${SB_INSTALL_PREFIX}/info
+]]>
+      </install>
+    </module>
+
+    <module name="libxslt">
+      <build-name>libxslt-1.1.24</build-name>
+
+      <install-name append="lib/aux/libxslt">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="e83ec5d27fc4c10c6f612879bea9a153"
+          checksum-type="md5" size="3363961"
+          path="src/libxslt-1.1.24.tar.gz"/>
+        <patch checksum="9203aa9cf31db27a50818daad1f24f11"
+          checksum-type="md5" size="13140"
+          path="src/libxslt-1.1.24.tww.patch"/>
+        <patch checksum="87c923dbc7632571519d8a4883914d5d"
+          checksum-type="md5" size="1607875"
+          path="src/libxslt-1.1.24.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="LIBGCRYPT" module="libgcrypt"
+          append="lib/aux/libgcrypt">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error"
+          append="lib/aux/libgpgerror">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBXML" module="libxml"
+          append="lib/aux/libxml">v==1.3.0</depend>
+<!--
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.23</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="$CPPFLAGS"} CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig" \
+--disable-dependency-tracking --enable-shared \
+--enable-static --with-crypto --with-python=no \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+# Fix library path in pkgconfig files
+${SB_PATH_SED} -i -e \
+'s!-L\(${libdir}\) !-L\1 '"${CC_LD_RT}"'\1 !g' \
+xslt-config libxslt.pc libexslt.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# remove manual pages, html docs and aclocal macros
+rm -rf ${SB_INSTALL_PREFIX}/doc
+rm -rf ${SB_INSTALL_PREFIX}/man
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="curl">
+      <build-name>curl-7.19.6</build-name>
+
+      <install-name append="lib/aux/curl">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="8402c1f654c51ad7287aad57c3aa79be"
+          checksum-type="md5" size="2347791"
+          path="src/curl-7.19.6.tar.bz2"/>
+        <patch checksum="05811eb401e8f7c860399fdfa55db5dc"
+          checksum-type="md5" size="42541"
+          path="src/curl-7.19.6.tww.patch"/>
+        <patch checksum="e18391b85fe534149fd75fd2f11c3f19"
+          checksum-type="md5" size="1438278"
+          path="src/curl-7.19.6.auto.patch"/>
+        <source checksum="ef3d365a301006dd6a4e35a6c2938f1f"
+          checksum-type="md5" size="669565"
+          path="src/ca-bundle.crt"
+          noop="1" var="CA_BUNDLE"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.23</depend>
+        <depend program="bison" install-name="bison23"
+          add-path="prepend">v&gt;=2.3</depend>
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-aix5.1*|*-hpux10*|*-hpux11.[01]*|*-irix*|*-osf*|*-solaris2.[67]*">v&gt;=0.9.25</depend>
+<!--
+        <depend program="perl" add-path="prepend">v==5.8.8</depend>
+-->
+        <depend program="sbutils" var="LIBGNUTLS" module="gnutls"
+          append="lib/aux/libgnutls">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGCRYPT" module="libgcrypt"
+          append="lib/aux/libgcrypt">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error"
+          append="lib/aux/libgpgerror">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBSSH2" module="libssh2"
+          append="lib/aux/libssh2">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CPP="${CPP+${CPP}}" CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${SB_VAR_LIBSSH2_LIB}\
+${SB_VAR_LIBIDN+:${SB_VAR_LIBIDN_LIB}}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGNUTLS_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:\
+${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBSSH2_LIB}/pkgconfig" \
+${SB_VAR_LIBZ+--with-zlib=${SB_VAR_LIBZ}} \
+${SB_VAR_PRNGD+--with-egd-socket=${_prngd_socket}} \
+--with-zlib=${SB_VAR_LIBZ} \
+${SB_VAR_PRNGD+--with-egd-socket=${_prngd_socket}} \
+--with-ca-bundle="${SB_INSTALL_PREFIX}/share/ca-bundle.crt" \
+--without-ssl --with-gnutls --disable-ldap \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\$libdir\) !-L\1 ${CC_LD_RT}\1 !" curl-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libcurl.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/share
+${SB_PATH_INSTALL} -m 644 -o root -g 0 ${SB_SRC_CA_BUNDLE} \
+${SB_INSTALL_PREFIX}/share/ca-bundle.crt
+]]>
+      </install>
+    </module>
+
+    <module name="texinfo">
+      <build-name>texinfo-4.13</build-name>
+
+      <install-name append="lib/aux/texinfo">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="71ba711519209b5fb583fed2b3d86fcb"
+          checksum-type="md5" size="2751071"
+          path="src/texinfo-4.13a.tar.gz"/>
+        <patch checksum="554d38aa5e95c4ef8f348d2318b93f92"
+          checksum-type="md5" size="109783"
+          path="src/texinfo-4.13.tww.patch"/>
+        <patch checksum="6ebefa56c992a6a676172b5f9ae0f7de"
+          checksum-type="md5" size="221035"
+          path="src/texinfo-4.13.gnulib.patch"/>
+        <patch checksum="1418e2a828c63882fdd1145c72daee5a"
+          checksum-type="md5" size="661764"
+          path="src/texinfo-4.13.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--disable-nls --disable-dependency-tracking \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+# Avoid calling help2man
+touch doc/*.1
+
+gmake
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/share ${SB_INSTALL_PREFIX}/bin/info \
+${SB_INSTALL_PREFIX}/bin/infokey
+]]>
+      </install>
+    </module>
+
+    <module name="bzip2">
+      <build-name>bzip2-1.0.5</build-name>
+
+      <install-name append="lib/aux/bzip2">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="3c15a0c8d1d3ee1c46a1634d00617b1a"
+          checksum-type="md5" size="841402"
+          path="src/bzip2-1.0.5.tar.gz"/>
+        <patch checksum="17c79169158e3f62f9d2c6cab0bad20d"
+          checksum-type="md5" size="102429"
+          path="src/bzip2-1.0.5.tww.patch"/>
+        <patch checksum="8ed1910629f62230e8fb270d32d55268"
+          checksum-type="md5" size="1286628"
+          path="src/bzip2-1.0.5.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} \
+--enable-shared --enable-static --disable-dependency-tracking \
+${ARGS+$ARGS} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/bin/bzip2recover ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="lxml">
+      <build-name>lxml-2.2.4</build-name>
+
+      <install-name append="lib/aux/pythonp">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="077841e74ee728e7746b65d8483274be"
+          checksum-type="md5" size="2964382"
+          path="src/lxml-2.2.4.tgz"/>
+        <patch checksum="3b6ce6d928a05f7a5d47eaf9df34b857"
+          checksum-type="md5" size="435"
+          path="src/lxml-2.2.4.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" module="libxml"
+          append="lib/aux/libxml/bin"
+          add-path="prepend">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBXML" module="libxml"
+          append="lib/aux/libxml">v==1.3.0</depend>
+        <depend program="sbutils" module="libxslt"
+          append="lib/aux/libxslt/bin"
+          add-path="prepend">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBXSLT" module="libxslt"
+          append="lib/aux/libxslt">v==1.3.0</depend>
+        <depend program="sbutils" var="PYTHON" module="python"
+          append="lib/aux/python">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs=${SB_VAR_LIBXML_INC}:${SB_VAR_LIBXSLT_INC}:${SB_VAR_LIBZ_INC}
+library_dirs=${SB_VAR_LIBXML_LIB}:${SB_VAR_LIBXSLT_LIB}:${SB_VAR_LIBZ_LIB}
+rpath=${SB_VAR_LIBXML_LIB}:${SB_VAR_LIBXSLT_LIB}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_pyver=`${SB_VAR_PYTHON}/bin/python -c 'import sys; print sys.version[:3]'`
+_install_prefix=${SB_INSTALL_PREFIX}/lib/python${_pyver}/site-packages
+
+rm -rf ${_install_prefix}/lxml-2.2-py${_pyver}*.egg
+]]>
+      </uninstall>
+    </module>
+
+    <module name="libgpg-error">
+      <build-name>libgpg-error-1.6</build-name>
+
+      <install-name append="lib/aux/libgpgerror">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="f3e9870e213518b407a959f8d29cd554"
+          checksum-type="md5" size="382110"
+          path="src/libgpg-error-1.6.tar.bz2"/>
+        <patch checksum="27283e3e23af09179cc369dc5048e28c"
+          checksum-type="md5" size="4053"
+          path="src/libgpg-error-1.6.tww.patch"/>
+        <patch checksum="135ea06ee7f516c19e7b86d8c9b92ba6"
+          checksum-type="md5" size="1230606"
+          path="src/libgpg-error-1.6.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="$CPPFLAGS"} CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="$LDFLAGS"} --disable-nls \
+--enable-shared --enable-static --disable-dependency-tracking \
+${ARGS+$ARGS} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# remove common lisp and aclocal macros
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="coreutils">
+      <build-name>coreutils-6.12</build-name>
+
+      <install-name append="lib/aux/coreutils">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="2ca9ac69823dbd567b905a9e9f53c4f6"
+          checksum-type="md5" size="9001890"
+          path="src/coreutils-6.12.tar.gz"/>
+        <patch checksum="6763da4d00b34c0d8f2e75c6a38073b6"
+          checksum-type="md5" size="4926"
+          path="src/coreutils-6.12.c99-to-c89.diff"/>
+        <patch checksum="5bc09035541c129b90587b062dfacb1a"
+          checksum-type="md5" size="3078"
+          path="src/coreutils-6.12.accomodate_older_selinux.patch"/>
+        <patch checksum="8ee7b4e4ecf839ba3a8a2cd3f2caec55"
+          checksum-type="md5" size="489"
+          path="src/coreutils-6.12.address_root_cause_of_compilation_failures.patch"/>
+        <patch checksum="d702bc39922e57c3650d77b276e0f57a"
+          checksum-type="md5" size="2346"
+          path="src/coreutils-6.12.other_upstream_fixes.patch"/>
+        <patch checksum="910a0aa774edbf31d9cea3ab8d771a2f"
+          checksum-type="md5" size="3684"
+          path="src/coreutils-6.12.tww.patch"/>
+        <patch checksum="9695655dd4d8e87e6417fe8004a2fee1"
+          checksum-type="md5" size="428"
+          path="src/coreutils-6.12.gnulib.patch"/>
+        <patch checksum="3215a7f99e2976f50df2c6f6405d7e5b"
+          checksum-type="md5" size="365915"
+          path="src/coreutils-6.12.auto.patch"/>
+      </sources>
+
+      <dependencies>
+<!-- not needed in ubuntu 12.04
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-irix*)
+  ARGS="ac_cv_prog_cc_c99=no" ;;
+*-osf*)
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist.
+  ARGS="--disable-acl ac_cv_have_decl_isblank=no" ;;
+*-solaris*)
+  ARGS="ac_cv_prog_cc_c99=no" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--program-prefix=g --disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install || :
+
+rm -f ${SB_INSTALL_PREFIX}/bin/gsu ${SB_INSTALL_PREFIX}/bin/g[
+
+# Remove manual pages and info docs
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="opencdk">
+      <build-name>opencdk-0.6.6</build-name>
+
+      <install-name append="lib/aux/libopencdk">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="813d62d7afe7b2c2d8f3df0a6c9d9331"
+          checksum-type="md5" size="481904"
+          path="src/opencdk-0.6.6.tar.bz2"/>
+        <patch checksum="454f805bbcb29ea73f6a99f32793cf8b"
+          checksum-type="md5" size="10980"
+          path="src/opencdk-0.6.6.tww.patch"/>
+        <patch checksum="7cf4621f527c30e2b6e2731a7b3790d6"
+          checksum-type="md5" size="1607847"
+          path="src/opencdk-0.6.6.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.23</depend>
+<!--
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+        <depend program="sbutils" var="LIBGCRYPT" module="libgcrypt"
+          append="lib/aux/libgcrypt">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error"
+          append="lib/aux/libgpgerror">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}" \
+LDFLAGS="${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:\
+${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig" \
+--disable-dependency-tracking  \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" src/opencdk.pc
+]]>
+      </configure>
+    </module>
+
+    <module name="gsed">
+      <build-name>sed-4.1.5</build-name>
+
+      <install-name append="lib/aux/gsed">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="7a1cbbbb3341287308e140bd4834c3ba"
+          checksum-type="md5" size="799584"
+          path="src/sed-4.1.5.tar.gz"/>
+        <patch checksum="aa9e4ebfbacc8cd3612a0f953ccb7911"
+          checksum-type="md5" size="13897"
+          path="src/sed-4.1.5.tww.patch"/>
+        <patch checksum="5af3059654bf61c6f12a5d5858c64f7b"
+          checksum-type="md5" size="739073"
+          path="src/sed-4.1.5.gnulib.patch"/>
+        <patch checksum="89abe61d56a4300a394512ef2fe2a535"
+          checksum-type="md5" size="8124"
+          path="src/sed-4.1.5.tww-gnulib.patch"/>
+        <patch checksum="b58398e2b197c894731b01b9afbca008"
+          checksum-type="md5" size="1165311"
+          path="src/sed-4.1.5.auto.patch"/>
+      </sources>
+
+      <dependencies>
+<!--
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --program-prefix=g \
+--disable-dependency-tracking --infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="python">
+      <build-name>Python-2.5.2</build-name>
+
+      <install-name append="lib/aux/python">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="afb5451049eda91fbde10bd5a4b7fadc"
+          checksum-type="md5" size="9807597"
+          path="src/Python-2.5.2.tar.bz2"/>
+        <patch checksum="95bf2ea9d751091f4ba573f63ebef687"
+          checksum-type="md5" size="1734"
+          path="src/Python-2.5.2.tk85.patch"/>
+        <patch checksum="99e3f4a1a2749c0dba1b481046ac2869"
+          checksum-type="md5" size="2630"
+          path="src/Python-2.5.2.fc-db47.patch"/>
+        <patch checksum="9133e78538cd9fedc6c091f9fb43b7dd"
+          checksum-type="md5" size="26632"
+          path="src/Python-2.5.2.freebsd.patch"/>
+        <patch checksum="7f278ded95cfc84418170a73d4ee526d"
+          checksum-type="md5" size="89758"
+          path="src/Python-2.5.2.tww.patch"/>
+        <patch checksum="9b4dcad02dd0c91b520f04b21f0f5e92"
+          checksum-type="md5" size="9440"
+          path="src/Python-2.5.2.incpaths.patch"/>
+        <patch checksum="ffd6ee75c97bee15a21b59e805807ead"
+          checksum-type="md5" size="832428"
+          path="src/Python-2.5.2.auto.patch"/>
+        <source checksum="6d4834890453572f6350a5db082d1968"
+          checksum-type="md5" size="317271"
+          path="src/BIG5.TXT"
+          noop="1" var="TEST_CODEC_BIG5"/>
+        <source checksum="61c70aad79357a2b312a873aaca6d78f"
+          checksum-type="md5" size="69103"
+          path="src/BIG5HKSCS.TXT"
+          noop="1" var="TEST_CODEC_BIG5HKSCS"/>
+        <source checksum="fb58bf0d56a8598d4f9b751e4bb47d63"
+          checksum-type="md5" size="295319"
+          path="src/CP932.TXT"
+          noop="1" var="TEST_CODEC_CP932"/>
+        <source checksum="51d914bc2d2f37be4d5d8f5179f6e461"
+          checksum-type="md5" size="817305"
+          path="src/CP936.TXT"
+          noop="1" var="TEST_CODEC_CP936"/>
+        <source checksum="ad4f5291824ec2c5cdb664e5f29143d6"
+          checksum-type="md5" size="790731"
+          path="src/CP949.TXT"
+          noop="1" var="TEST_CODEC_CP949"/>
+        <source checksum="4a2b871615638c9f9a882a9b771ecb80"
+          checksum-type="md5" size="508973"
+          path="src/CP950.TXT"
+          noop="1" var="TEST_CODEC_CP950"/>
+        <source checksum="8ca2abef779fcd0eb670cae5edf0a322"
+          checksum-type="md5" size="105766"
+          path="src/EUC-CN.TXT"
+          noop="1" var="TEST_CODEC_EUCCN"/>
+        <source checksum="c00fb9a013e325a26cb36f85b58dff22"
+          checksum-type="md5" size="164871"
+          path="src/EUC-JISX0213.TXT"
+          noop="1" var="TEST_CODEC_EUCJISX0213"/>
+        <source checksum="119c99f26dd7f32b384c12ade936fea6"
+          checksum-type="md5" size="195780"
+          path="src/EUC-JP.TXT"
+          noop="1" var="TEST_CODEC_EUCJP"/>
+        <source checksum="947729f8faf64bbc9e61275a9eba3856"
+          checksum-type="md5" size="116700"
+          path="src/EUC-KR.TXT"
+          noop="1" var="TEST_CODEC_EUCKR"/>
+        <source checksum="fa6a0a92d36d06f140cc939b559d79f7"
+          checksum-type="md5" size="760219"
+          path="src/JOHAB.TXT"
+          noop="1" var="TEST_CODEC_JOHAB"/>
+        <source checksum="a0b1821a1920e7e3649f031cd12a9677"
+          checksum-type="md5" size="169236"
+          path="src/SHIFTJIS.TXT"
+          noop="1" var="TEST_CODEC_SHIFTJIS"/>
+        <source checksum="f2b59e133f6ef73b06226c80fd011347"
+          checksum-type="md5" size="159821"
+          path="src/SHIFT_JISX0213.TXT"
+          noop="1" var="TEST_CODEC_SHIFTJISX0213"/>
+        <source checksum="d2bcaf4d397c0691ed05aefc7e78b4d4"
+          checksum-type="md5" size="2025975"
+          path="src/NormalizationTest-3.2.0.txt"
+          noop="1" var="TEST_NORMALIZATION"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="LIBOPENSSL" module="openssl"
+          append="lib/aux/libopenssl">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBPTH" module="pth"
+          append="lib/aux/libpth" systype="*-hpux10*">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+        <depend var="PYTHONP" version="1.3" append="lib/aux/pythonp"
+          set-var-only="1"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CPPFLAGS="-D_LARGE_FILES=1 -D_THREAD_SAFE"
+  OPT="-O2 -qro -qroconst -qfloat=nomaf -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -blibpath:/usr/lib"
+  LD_RT="-brtl -blibpath:" LD_RT_POST=":/usr/lib"
+
+  ARGS="--with-threads" ;;
+*-freebsd*)
+  OPT="-O2 -fwrapv -mtune=pentium4 -march=pentium4"
+  LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-threads" ;;
+ia64*-hpux*)
+  CC=cc CPPFLAGS="-D_FILE_OFFSET_BITS=64 "
+  OPT="-z +O2 +Ofltacc +Olit=all +Oentrysched +Odataprefetch \
++Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  LD_RT="+b "
+
+  ARGS="--with-threads" ;;
+*-hpux10*)
+  CC=cc CPPFLAGS="-I${SB_VAR_LIBPTH_INC} -D_FILE_OFFSET_BITS=64"
+  OPT="-z -Ae +O2 +Ofltacc +ESlit +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-L${SB_VAR_LIBPTH_LIB} -Wl,+s,+b,${SB_VAR_LIBPTH_LIB}"
+  LD_RT="+s +b "
+
+  ARGS="--with-pth" ;;
+*-hpux11.[01]*)
+  CC=cc CPPFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-z +O2 +Ofltacc +Olit=all +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  LD_RT="+s +b "
+
+  ARGS="--with-threads"
+
+  # getnameinfo requires newer libc
+  export ac_cv_func_getnameinfo=no ;;
+*-hpux*)
+  CC=cc CPPFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-z +O2 +Ofltacc +Olit=all +Oentrysched +Odataprefetch \
++Onolimit"
+  LD_RT="+s +b "
+
+  ARGS="--with-threads" ;;
+*-irix*)
+  CC=cc
+  OPT="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 -use_readonly_const \
+-G0 -rdata_shared -DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  LD_RT="-rpath "
+
+  ARGS="--with-threads"
+
+  # disable for compatibility with older OS releases
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_func_getnameinfo=no ;;
+x86_64*-linux*)
+  LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-threads" ;;
+i?86-redhat-linuxe3)
+  # No -fwrapv support in system gcc 3.2.3
+  OPT="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-threads" ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  OPT="-O2 -fwrapv -mtune=pentiumpro -march=pentiumpro"
+  LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-threads" ;;
+*-linux*)
+  # Let the python configure script figure out -fwrapv support since
+  # we don't set OPT here
+  LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-threads" ;;
+*-osf*)
+  CC=cc
+  OPT="-O2 -msym"
+  CFLAGS="-arch ev5 -readonly_strings"
+  LD_RT="-rpath "
+
+  _ssl_client_ldflags="-B symbolic"
+  ARGS="--with-dec-threads" ;;
+i?86*-solaris*)
+  CC=cc CPPFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  LD_RT="-R"
+
+  ARGS="--with-threads" ;;
+*-solaris2.9|*-solaris2.1?)
+  CC=cc CPPFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  LD_RT="-R"
+
+  ARGS="--with-threads" ;;
+*-solaris*)
+  CC=cc CPPFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  LD_RT="-R"
+
+  ARGS="--with-threads" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >Modules/Setup.local <<_EOT_
+resource resource.c
+syslog syslogmodule.c
+termios termios.c
+timing timingmodule.c
+
+*shared*
+_ssl _ssl.c -DUSE_SSL -I${SB_VAR_LIBOPENSSL_INC} \
+ -L${SB_VAR_LIBOPENSSL_LIB} \
+ ${_ssl_client_ldflags+${_ssl_client_ldflags}} \
+ ${LD_RT}${SB_VAR_LIBOPENSSL_LIB}${LD_RT_POST+${LD_RT_POST}} \
+ -lssl -lcrypto
+_hashlib _hashopenssl.c -I${SB_VAR_LIBOPENSSL_INC} \
+ -L${SB_VAR_LIBOPENSSL_LIB} \
+ ${_ssl_client_ldflags+${_ssl_client_ldflags}} \
+ ${LD_RT}${SB_VAR_LIBOPENSSL_LIB}${LD_RT_POST+${LD_RT_POST}} \
+ -lssl -lcrypto
+zlib zlibmodule.c -I${SB_VAR_LIBZ_INC} -L${SB_VAR_LIBZ_LIB} \
+ ${LD_RT}${SB_VAR_LIBZ_LIB}${LD_RT_POST+${LD_RT_POST}} -lz
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-linux*)
+  cat >>Modules/Setup.local <<_EOT_
+crypt cryptmodule.c -lcrypt
+_EOT_
+  ;;
+*)
+  cat >>Modules/Setup.local <<_EOT_
+crypt cryptmodule.c
+_EOT_
+  ;;
+esac
+
+# add path to 3rd-party libraries to default search path
+${SB_PATH_SED} -i -e "\
+s!prefixes = .*!prefixes = [sys.prefix, '${SB_VAR_PYTHONP}']!" \
+Lib/site.py
+
+# curses KEY_COMMAND and KEY_HELP don't exist on AIX
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_SED} -i -e "\
+/KEY_COMMAND/ d
+/KEY_HELP/ d" Lib/curses/has_key.py ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" ${OPT+OPT="${OPT}"} \
+${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} ${CFLAGS+BASECFLAGS="${CFLAGS}"} \
+LDFLAGS="-L${SB_VAR_LIBZ_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--disable-ipv6 ${ARGS+${ARGS}} --sysconfdir=${SB_INSTALL_PREFIX}/etc \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test auto-include="0">
+<![CDATA[
+# Copy test locale source files
+cp ${SB_SRC_TEST_CODEC_BIG5} ${SB_SRC_TEST_CODEC_BIG5HKSCS} \
+${SB_SRC_TEST_CODEC_CP932} ${SB_SRC_TEST_CODEC_CP936} \
+${SB_SRC_TEST_CODEC_CP949} ${SB_SRC_TEST_CODEC_CP950} \
+${SB_SRC_TEST_CODEC_EUCCN} ${SB_SRC_TEST_CODEC_EUCJISX0213} \
+${SB_SRC_TEST_CODEC_EUCJP} ${SB_SRC_TEST_CODEC_EUCKR} \
+${SB_SRC_TEST_CODEC_JOHAB} ${SB_SRC_TEST_CODEC_SHIFTJIS} \
+${SB_SRC_TEST_CODEC_SHIFTJISX0213} .
+
+# Copy test_normalization source files
+cp ${SB_SRC_TEST_NORMALIZATION} .
+
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}
+
+gmake install
+
+# Create module directory
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_VAR_PYTHONP} \
+${SB_VAR_PYTHONP}/lib ${SB_VAR_PYTHONP}/lib/python2.5 \
+${SB_VAR_PYTHONP}/lib/python2.5/site-packages \
+${SB_VAR_PYTHONP}/lib/site-python
+
+# BLDSHARED used at build-time only. switch to LDSHARED
+${SB_PATH_SED} -i -e "\
+s!BLDSHARED!LDSHARED!" \
+${SB_INSTALL_PREFIX}/lib/python2.5/config/makesetup
+
+# Remove cruft
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.5/lib-old
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.5/lib-tk
+rm -rf ${SB_INSTALL_PREFIX}/share/man
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.5/test
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.5/*.py
+
+# Remove .py file when .pyc file exists
+find ${SB_INSTALL_PREFIX}/lib/python2.5 \
+-name '*.py' 2>/dev/null | while read _py; do
+  _pyc=${_py}c
+  test -f ${_pyc} && rm -f ${_py}
+done
+
+# Remove .pyo file when .pyc file exists
+find ${SB_INSTALL_PREFIX}/lib/python2.5 \
+-name '*.pyc' 2>/dev/null | while read _pyc; do
+  _pyo=${_pyc%%c}o
+  rm -f ${_pyo}
+done
+]]>
+      </install>
+    </module>
+
+    <module name="libssh2">
+      <build-name>libssh2-1.2</build-name>
+
+      <install-name append="lib/aux/libssh2">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="751f4b5b5d8091f84cfe25fa52226cf9"
+          checksum-type="md5" size="532299"
+          path="src/libssh2-1.2.tar.gz"/>
+        <patch checksum="0a83f49ce463de5412732f65263e977c"
+          checksum-type="md5" size="3841"
+          path="src/libssh2-1.2.tww.patch"/>
+        <patch checksum="61ee22f44b3bccaeabb1413a432b7eaf"
+          checksum-type="md5" size="1616879"
+          path="src/libssh2-1.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.23</depend>
+        <depend program="bison" install-name="bison23"
+          add-path="prepend">v&gt;=2.3</depend>
+        <depend program="sbutils" var="LIBGCRYPT" module="libgcrypt"
+          append="lib/aux/libgcrypt">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error"
+          append="lib/aux/libgpgerror">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}" \
+LDFLAGS="${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB} \
+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig" \
+ac_cv_path_SSHD= --with-libgcrypt \
+--disable-dependency-tracking \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" libssh2.pc
+]]>
+      </configure>
+    </module>
+
+    <module name="gawk">
+      <build-name>gawk-3.1.6</build-name>
+
+      <install-name append="lib/aux/gawk">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="c9926c0bc8c177cb9579708ce67f0d75"
+          checksum-type="md5" size="1861630"
+          path="src/gawk-3.1.6.tar.bz2"/>
+        <patch checksum="988f3de153c9cf0c4085e3ca6dbabcc7"
+          checksum-type="md5" size="2069"
+          path="src/gawk-3.1.6.tww.patch"/>
+        <patch checksum="952d530fffc9f1b120d3593fc26d8a25"
+          checksum-type="md5" size="434172"
+          path="src/gawk-3.1.6.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison23"
+          add-path="prepend">v&gt;=2.3</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--disable-nls --disable-dependency-tracking --datadir=${_datadir} \
+--infodir="${SB_INSTALL_PREFIX}/info" --mandir="${SB_INSTALL_PREFIX}/man"  \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# remove link from awk -> gawk
+rm -f ${SB_INSTALL_PREFIX}/bin/awk
+
+# Remove manual pages and info docs
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="python-fchksum">
+      <build-name>python-fchksum-1.7</build-name>
+
+      <install-name append="lib/aux/pythonp">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="0d35b64eb2c99e6463025611cdc081a8"
+          checksum-type="md5" size="26678"
+          path="src/python-fchksum-1.7.tar.gz"/>
+        <patch checksum="71ddc8e3c27590a385ab69c30732c973"
+          checksum-type="md5" size="1728"
+          path="src/python-fchksum-1.7.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="PYTHON" module="python"
+          append="lib/aux/python">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:"
+  CC_LD_RT_POST=":/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="+b " ;;
+*-hpux*)
+  CC_LD_RT="+s +b " ;;
+*-freebsd*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-osf*)
+  CC_LD_RT="-rpath " ;;
+*-solaris*)
+  CC_LD_RT="-Wl,-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+: There is no configure
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBZ_LIB}${CC_LD_RT_POST+${CC_LD_RT_POST}}" \
+${SB_VAR_PYTHON}/bin/python setup.py --zlib-prefix=${SB_VAR_LIBZ} \
+build_ext --inplace
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBZ_LIB}${CC_LD_RT_POST+${CC_LD_RT_POST}}" \
+${SB_VAR_PYTHON}/bin/python setup.py --zlib-prefix=${SB_VAR_LIBZ} \
+install --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <module name="gcpio">
+      <build-name>cpio-2.9</build-name>
+
+      <install-name append="lib/aux/gcpio">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="e387abfdae3a0b9a8a5f762db653a96d"
+          checksum-type="md5" size="758195"
+          path="src/cpio-2.9.tar.bz2"/>
+        <patch checksum="4a5a9c2ee6e163b9ca56b55347a996e9"
+          checksum-type="md5" size="2734"
+          path="src/cpio-2.9.tww.patch"/>
+        <patch checksum="75fdf138cd3be730d4721eb985093c45"
+          checksum-type="md5" size="996162"
+          path="src/cpio-2.9.gnulib.patch"/>
+        <patch checksum="3f666fc1b8b9a812262275d7e8f97181"
+          checksum-type="md5" size="1512937"
+          path="src/cpio-2.9.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison23"
+          add-path="prepend" type="build">v&gt;=2.3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} \
+--program-prefix=g --disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/libexec \
+${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="gnutls">
+      <build-name>gnutls-nosrp-2.4.2</build-name>
+
+      <install-name append="lib/aux/libgnutls">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="b8da11d4e50e9a2f77c7463dba6e7216"
+          checksum-type="md5" size="5200746"
+          path="src/gnutls-nosrp-2.4.2.tar.bz2"/>
+        <patch checksum="e90e26e54ea562895735d9406311eeef"
+          checksum-type="md5" size="33854"
+          path="src/gnutls-nosrp-2.4.2.tww.patch"/>
+        <patch checksum="ee93cafa3533a12e5494a0e89bb5715f"
+          checksum-type="md5" size="409898"
+          path="src/gnutls-nosrp-2.4.2.gnulib.patch"/>
+        <patch checksum="17679743e3c94d90b30157ff4be59e43"
+          checksum-type="md5" size="1213"
+          path="src/gnutls-nosrp-2.4.2.tww-gnulib.patch"/>
+        <patch checksum="e9494127bc8fed79556e5f5b33ec8602"
+          checksum-type="md5" size="2732765"
+          path="src/gnutls-nosrp-2.4.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.23</depend>
+<!--
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+        <depend program="sbutils" var="LIBGCRYPT" module="libgcrypt"
+          append="lib/aux/libgcrypt">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error"
+          append="lib/aux/libgpgerror">v==1.3.0</depend>
+        <depend program="sbutils" var="OPENCDK" module="opencdk"
+          append="lib/aux/libopencdk">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBTASN" module="libtasn1"
+          append="lib/aux/libtasn">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBZ" module="zlib"
+          append="lib/aux/libz">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-osf*)
+  CFLAGS="-O2 -arch ev5 -msym -readonly_strings \
+-D_XOPEN_SOURCE=500" ;;
+*-solaris*)
+  ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}"  CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_OPENCDK_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_OPENCDK_LIB} ${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${CC_LD_RT}${SB_VAR_OPENCDK_LIB}${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_OPENCDK_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:\
+${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBTASN_LIB}/pkgconfig" ${ARGS+${ARGS}} \
+--with-included-libcfg --disable-guile \
+--disable-dependency-tracking --disable-cxx \
+--disable-gtk-doc --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" \
+lib/gnutls.pc libextra/gnutls-extra.pc
+
+touch doc/gnutls.texi
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/share/info ${SB_INSTALL_PREFIX}/share/man
+]]>
+      </install>
+    </module>
+
+    <module name="libgcrypt">
+      <build-name>libgcrypt-1.4.3</build-name>
+
+      <install-name append="lib/aux/libgcrypt">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="46e50e811ed51f1e0e8dd677dded967d"
+          checksum-type="md5" size="1087215"
+          path="src/libgcrypt-1.4.3.tar.bz2"/>
+        <patch checksum="e8c967cec7ce3106744d0805f742bc08"
+          checksum-type="md5" size="21227"
+          path="src/libgcrypt-1.4.3.tww.patch"/>
+        <patch checksum="7f470bb749a5b2dd646b440f6501482a"
+          checksum-type="md5" size="1648168"
+          path="src/libgcrypt-1.4.3.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error"
+          append="lib/aux/libgpgerror">v==1.3.0</depend>
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-aix5.1*|*-hpux10*|*-hpux11.00|*-hpux11.11|*-irix*|*-osf*|*-solaris2.[67]*">v&gt;=0.9.25</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.23</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-solaris*)
+  ARGS="--disable-asm" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="$CPPFLAGS"} CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="$LDFLAGS"} \
+PKG_CONFIG_PATH="${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig" \
+--enable-shared --enable-static \
+--disable-dependency-tracking --disable-padlock-support \
+${SB_VAR_PRNGD+--disable-dev-random --enable-random=egd \
+--with-egd-socket=$_prngd_socket} \
+${ARGS+$ARGS} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+# Fix library path in pkgconfig file
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" src/libgcrypt.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# remove info docs and aclocal macros
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="bash">
+      <build-name>bash-3.2</build-name>
+
+      <install-name append="lib/aux/bash">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="00bfa16d58e034e3c2aa27f390390d30"
+          checksum-type="md5" size="2529838"
+          path="src/bash-3.2.tar.gz"/>
+        <patch checksum="d8e10c754f477e3f3a581af566b89301"
+          checksum-type="md5" size="1539"
+          path="src/bash-3.2.001.patch"/>
+        <patch checksum="d38a5288b2f0ea6c9ac76b66cc74ef7d"
+          checksum-type="md5" size="1524"
+          path="src/bash-3.2.002.patch"/>
+        <patch checksum="0b90d37911827d8cb95f3b4353cc225e"
+          checksum-type="md5" size="4599"
+          path="src/bash-3.2.003.patch"/>
+        <patch checksum="8062f3a59631f58d78b180d83759b68a"
+          checksum-type="md5" size="2585"
+          path="src/bash-3.2.004.patch"/>
+        <patch checksum="585b5943fadf0875ced243b245adde58"
+          checksum-type="md5" size="5910"
+          path="src/bash-3.2.005.patch"/>
+        <patch checksum="1d5732e01ea938aeed42f3def131fa4d"
+          checksum-type="md5" size="1298"
+          path="src/bash-3.2.006.patch"/>
+        <patch checksum="dcd0cc5d801607827f7c851e72b0eabc"
+          checksum-type="md5" size="1375"
+          path="src/bash-3.2.007.patch"/>
+        <patch checksum="bb3c7dd11198c0ab93d0e960bebf6256"
+          checksum-type="md5" size="1302"
+          path="src/bash-3.2.008.patch"/>
+        <patch checksum="434a6f29b0ca5f1ab784b2437ae8eaed"
+          checksum-type="md5" size="1882"
+          path="src/bash-3.2.009.patch"/>
+        <patch checksum="2efff04dd246fcf63bd4b99f77c9a081"
+          checksum-type="md5" size="6293"
+          path="src/bash-3.2.010.patch"/>
+        <patch checksum="1dd104342f6920dfaf5efb3131e922e0"
+          checksum-type="md5" size="4776"
+          path="src/bash-3.2.011.patch"/>
+        <patch checksum="4f24b696ab78bdfae4f9cb7eb59b835d"
+          checksum-type="md5" size="2555"
+          path="src/bash-3.2.012.patch"/>
+        <patch checksum="7c40addbf1187a26ae1c8373ed383442"
+          checksum-type="md5" size="1852"
+          path="src/bash-3.2.013.patch"/>
+        <patch checksum="28e88c9f8679e99ac590d4a4a8227c56"
+          checksum-type="md5" size="8141"
+          path="src/bash-3.2.014.patch"/>
+        <patch checksum="0492e2369ef27fdc86a6977c6aff38a9"
+          checksum-type="md5" size="2489"
+          path="src/bash-3.2.015.patch"/>
+        <patch checksum="a1edaa98b4449fe2205fa75448b7b105"
+          checksum-type="md5" size="1620"
+          path="src/bash-3.2.016.patch"/>
+        <patch checksum="889ed119bbf9d363660b9a0127f35efa"
+          checksum-type="md5" size="2611"
+          path="src/bash-3.2.017.patch"/>
+        <patch checksum="a7d3f85fa687d2c1b5a134839f6d395d"
+          checksum-type="md5" size="2433"
+          path="src/bash-3.2.018.patch"/>
+        <patch checksum="f0399da4007e46fc5820ce25d07425b9"
+          checksum-type="md5" size="8618"
+          path="src/bash-3.2.019.patch"/>
+        <patch checksum="b76602281c3104d904fd064510fe0c21"
+          checksum-type="md5" size="5182"
+          path="src/bash-3.2.020.patch"/>
+        <patch checksum="923374ae4403c92820f711e62e1d01a5"
+          checksum-type="md5" size="1814"
+          path="src/bash-3.2.021.patch"/>
+        <patch checksum="c82d3bd14e373878b2a680dce18d1596"
+          checksum-type="md5" size="3034"
+          path="src/bash-3.2.022.patch"/>
+        <patch checksum="987c949a77b4b0ffe4a2597141e77635"
+          checksum-type="md5" size="1321"
+          path="src/bash-3.2.023.patch"/>
+        <patch checksum="5a2b976e761ab83f0fc7daae11451b86"
+          checksum-type="md5" size="3228"
+          path="src/bash-3.2.024.patch"/>
+        <patch checksum="08668dc2825f65eced9cac6b09ce1b45"
+          checksum-type="md5" size="1935"
+          path="src/bash-3.2.025.patch"/>
+        <patch checksum="f35b2b217f088ff009f956894550d41d"
+          checksum-type="md5" size="2438"
+          path="src/bash-3.2.026.patch"/>
+        <patch checksum="b5ff2b9610c61290f773c4b02cc1a37d"
+          checksum-type="md5" size="2690"
+          path="src/bash-3.2.027.patch"/>
+        <patch checksum="016f5b56c93404d32aea09385f0fc13e"
+          checksum-type="md5" size="1750"
+          path="src/bash-3.2.028.patch"/>
+        <patch checksum="a81420626d4d88d0dce2ffac0ac56341"
+          checksum-type="md5" size="1330"
+          path="src/bash-3.2.029.patch"/>
+        <patch checksum="11f91baf970c132949f9072ee93f2ea6"
+          checksum-type="md5" size="1558"
+          path="src/bash-3.2.030.patch"/>
+        <patch checksum="23569ca59b5b48ccd17708689f8d545b"
+          checksum-type="md5" size="1881"
+          path="src/bash-3.2.031.patch"/>
+        <patch checksum="8180ec936770579bce69f0816c2dd878"
+          checksum-type="md5" size="1304"
+          path="src/bash-3.2.032.patch"/>
+        <patch checksum="3cec33c3711860c4c6b7614afeec7870"
+          checksum-type="md5" size="2181"
+          path="src/bash-3.2.033.patch"/>
+        <patch checksum="7bc6c5b5f38b7027152f8db0458a2e14"
+          checksum-type="md5" size="1866"
+          path="src/bash-3.2.034.patch"/>
+        <patch checksum="e42777e07207a5db7f4693456132af15"
+          checksum-type="md5" size="4301"
+          path="src/bash-3.2.035.patch"/>
+        <patch checksum="95c70c7ae9de5bd3659c86284be7fb76"
+          checksum-type="md5" size="1264"
+          path="src/bash-3.2.036.patch"/>
+        <patch checksum="62b876a3d7cd192cc8db2476fbb6b7b9"
+          checksum-type="md5" size="3227"
+          path="src/bash-3.2.037.patch"/>
+        <patch checksum="aca3afc341bd3e5a0d8a3b4ca40dbb3f"
+          checksum-type="md5" size="2412"
+          path="src/bash-3.2.038.patch"/>
+        <patch checksum="2dec4ee3488de851bb0fe079be524dc2"
+          checksum-type="md5" size="5377"
+          path="src/bash-3.2.039.patch"/>
+        <patch checksum="30f6b3eafc3f4d6d51fd8f854e7b1adb"
+          checksum-type="md5" size="1988"
+          path="src/bash-3.2.tww.patch"/>
+        <patch checksum="511021a91d9b0d1ce97f53ab3bb2448a"
+          checksum-type="md5" size="1206738"
+          path="src/bash-3.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+<!--
+        <depend program="bison" install-name="bison23"
+          add-path="prepend" type="build">v&gt;=2.3</depend>
+-->
+
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  # No TWW libraries are linked
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-irix*)
+  # Use -O1 rather than -O2 to work around a compiler bug
+  CFLAGS="${CFLAGS/-O2/-O1}" ;;
+*-osf*)
+  CPPFLAGS="-D_OSF_SOURCE" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" ${CPPFLAGS+CPPFLAGS="$CPPFLAGS"} \
+CFLAGS="${CFLAGS:--O2}" CFLAGS_FOR_BUILD="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="$LDFLAGS"} --disable-nls \
+EMACS=no --enable-alias -enable-array-variables --enable-bang-history \
+--enable-brace-expansion --enable-command-timing \
+--enable-cond-command --enable-debugger --enable-directory-stack \
+--enable-dparen-arithmetic --enable-extended-glob \
+--enable-help-builtin --enable-history --enable-job-control \
+--enable-process-substitution --enable-progcomp \
+--enable-prompt-string-decoding --disable-readline \
+--enable-restricted --with-bash-malloc=no --with-curses \
+${ARGS+$ARGS} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/bin/bashbug \
+${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="pycurl">
+      <build-name>pycurl-7.19.0</build-name>
+
+      <install-name append="lib/aux/pythonp">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="919d58fe37e69fe87ce4534d8b6a1c7b"
+          checksum-type="md5" size="71346"
+          path="src/pycurl-7.19.0.tar.gz"/>
+        <patch checksum="205f06c59ffb50b3f8e7aae6a6903c2c"
+          checksum-type="md5" size="6221"
+          path="src/pycurl-7.19.0.tww.patch"/>
+        <patch checksum="a6d6539a9b41ba133050b14bc3614161"
+          checksum-type="md5" size="8196"
+          path="src/pycurl-7.19.0.ssh-known-hosts.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="CURL" module="curl"
+          append="lib/aux/curl">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGCRYPT" module="libgcrypt"
+          append="lib/aux/libgcrypt" type="build">v==1.3.0</depend>
+        <depend program="sbutils" var="LIBGPG_ERROR"
+          module="libgpg-error" append="lib/aux/libgpgerror"
+          type="build">v==1.3.0</depend>
+        <depend program="sbutils" var="PYTHON" module="python"
+          append="lib/aux/python">v==1.3.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs=${SB_VAR_CURL_INC}:${SB_VAR_LIBGCRYPT_INC}:\
+${SB_VAR_LIBGPG_ERROR_INC}
+library_dirs=${SB_VAR_CURL_LIB}
+rpath=${SB_VAR_CURL_LIB}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py \
+--curl-config="${SB_VAR_CURL}/bin/curl-config" build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py \
+--curl-config="${SB_VAR_CURL}/bin/curl-config" install --skip-build \
+--prefix=${SB_INSTALL_PREFIX}
+
+rm -rf ${SB_INSTALL_PREFIX}/doc
+]]>
+      </install>
+    </module>
+
+    <module name="gmake">
+      <build-name>make-3.81</build-name>
+
+      <install-name append="lib/aux/gmake">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="354853e0b2da90c527e35aabb8d6f1e6"
+          checksum-type="md5" size="1151445"
+          path="src/make-3.81.tar.bz2"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+ia64*-hpux*)
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+esac
+
+${SHELL} ./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS=-O2}" \
+--disable-dependency-tracking --program-prefix=g \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+./make install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/share
+
+# setgid unnecessary
+case "${SB_SYSTYPE}" in
+*-linux*)
+  chgrp 0 ${SB_INSTALL_PREFIX}/bin/gmake
+  chmod g-s ${SB_INSTALL_PREFIX}/bin/gmake ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <module name="grep">
+      <build-name>grep-2.5.1</build-name>
+
+      <install-name append="lib/aux/grep">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="ddd99e2d5d4f4611357e31e97f080cf2"
+          checksum-type="md5" size="559232"
+          path="src/grep-2.5.1.tar.bz2"/>
+        <patch checksum="f998fe0dfce1387b1d140330826e16bc"
+          checksum-type="md5" size="179712"
+          path="src/grep-2.5.1.tww.patch"/>
+        <patch checksum="75a6f88d8ece52c9c635977ee0b63b92"
+          checksum-type="md5" size="872048"
+          path="src/grep-2.5.1.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--program-prefix=g --disable-nls --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/man ${SB_INSTALL_PREFIX}/info
+]]>
+      </install>
+    </module>
+
+    <module name="gpatch">
+      <build-name>patch-2.5.8</build-name>
+
+      <install-name append="lib/aux/gpatch">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="0e84970b1f7cf226af37ce7ebee012aa"
+          checksum-type="md5" size="189013"
+          path="src/patch-2.5.8.tar.gz"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  # No TWW libraries are linked
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-osf*)
+  # put the compiler in a mode compatible with the source-code!
+  CC="cc -std1" ;;
+esac
+
+${SHELL} ./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --program-prefix=g \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="zlib">
+      <build-name>zlib-1.2.3</build-name>
+
+      <install-name append="lib/aux/libz">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="debc62758716a169df9f62e6ab2bc634"
+          checksum-type="md5" size="496597"
+          path="src/zlib-1.2.3.tar.gz"/>
+        <patch checksum="b1c6805c599db6968356c6a1c43f07c7"
+          checksum-type="md5" size="15086"
+          path="src/zlib-1.2.3.tww.patch"/>
+        <patch checksum="147ea991cd12e61de6550f301ac65240"
+          checksum-type="md5" size="272338"
+          path="src/zlib-1.2.3.gnulib.patch"/>
+        <patch checksum="6ac1574212c845d666eea8e1900dfd0b"
+          checksum-type="md5" size="1980"
+          path="src/zlib-1.2.3.tww-gnulib.patch"/>
+        <patch checksum="552fa0bd5b234960d5e82bd41942303d"
+          checksum-type="md5" size="1237734"
+          path="src/zlib-1.2.3.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" \
+${CPPFLAGS+CPPFLAGS="${CPPFLAGS}"} CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --enable-shared --enable-static \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+${ARGS+$ARGS} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x install-sh
+
+# Fix library path in pkgconfig file
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" zlib.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# Remove manual pages
+rm -rf ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="libtasn1">
+      <build-name>libtasn1-1.5</build-name>
+
+      <install-name append="lib/aux/libtasn">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="7d7e8e21d1159a0b4c0aa69469eef565"
+          checksum-type="md5" size="1547211"
+          path="src/libtasn1-1.5.tar.gz"/>
+        <patch checksum="84b1089171d3fdb73d43a975412f6e51"
+          checksum-type="md5" size="3067"
+          path="src/libtasn1-1.5.tww.patch"/>
+        <patch checksum="0c8b94b5e1f7bfd03ff66c5d17ba46b2"
+          checksum-type="md5" size="1595149"
+          path="src/libtasn1-1.5.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="help2man" install-name="help2man136"
+          add-path="prepend" type="build">v&gt;=1.36.4</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure ${CPP+CPP="${CPP}"} CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--disable-gtk-doc --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" lib/libtasn1.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="openssl"
+    systype="!*-freebsd*">
+      <build-name>openssl-0.9.8h</build-name>
+
+      <install-name append="lib/aux/libopenssl">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="7d3d41dafc76cf2fcb5559963b5783b3"
+          checksum-type="md5" size="3439981"
+          path="src/openssl-0.9.8h.tar.gz"/>
+        <patch checksum="067dcf658ffef6404907c5d21d87e670"
+          checksum-type="md5" size="5376"
+          path="src/openssl-0.9.8h.CVE-2008-5077.patch"/>
+        <patch checksum="040bd074bbde06ec6a7e43fb008045aa"
+          checksum-type="md5" size="2825"
+          path="src/openssl-0.9.8h.CVE-2009-0590.patch"/>
+        <patch checksum="4abd3982455f810d461dcca5adcacaf1"
+          checksum-type="md5" size="535"
+          path="src/openssl-0.9.8h.CVE-2009-0591.patch"/>
+        <patch checksum="f383675bf1fa14fd3159d4977507f9c3"
+          checksum-type="md5" size="415"
+          path="src/openssl-0.9.8h.CVE-2009-0789.patch"/>
+        <patch checksum="54ba819c8f1c92f55ba9cb01c709cec9"
+          checksum-type="md5" size="1371"
+          path="src/openssl-0.9.8h.CVE-2009-1377.patch"/>
+        <patch checksum="99acd01671f8004f3483e46e2f45da1e"
+          checksum-type="md5" size="927"
+          path="src/openssl-0.9.8h.CVE-2009-1378.patch"/>
+        <patch checksum="af0109ab7d6876ac3c579feb9acce542"
+          checksum-type="md5" size="1952"
+          path="src/openssl-0.9.8h.fc-enginesdir.patch"/>
+        <patch checksum="ed0ed8cff37194db8267d749e7b6d097"
+          checksum-type="md5" size="40151"
+          path="src/openssl-0.9.8h.tww.patch"/>
+      </sources>
+
+      <dependencies>
+<!--
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.8.8</depend>
+-->
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-aix5.1*|*-hpux10*|*-hpux11.00|*-hpux11.11|*-irix*|*-osf*|*-solaris2.[67]*">v&gt;=0.9.25</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ARCH=aix-cc ;;
+*-freebsd*)
+  ARCH=BSD-x86-elf ;;
+ia64*-hpux*)
+  ARCH=hpux-ia64-cc ;;
+*-hpux10*|*-hpux11.[01]*)
+  ARCH=hpux-parisc-cc ;;
+*-hpux*)
+  ARCH=hpux-parisc2-cc ;;
+*-irix*)
+  ARCH=irix-mips3-cc ;;
+x86_64-*-linux*)
+  ARCH=linux-x86_64 ;;
+i?86*-linuxe3)
+  ARCH=rhel3-elf ;;
+i?86*-linuxe[45])
+  ARCH=rhel4-elf ;;
+*-linux*)
+  ARCH=linux-elf ;;
+*-osf*)
+  ARCH=tru64-alphaev5-cc ;;
+i?86*-solaris*)
+  ARCH=solaris-x86-cc ;;
+*-solaris2.[5678])
+  ARCH=solaris-sparcv8-cc ;;
+*-solaris2.*)
+  ARCH=solaris-sparcultra2-cc ;;
+esac
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  # set path to PRNGD socket
+  ${SB_PATH_SED} -i -e "\
+s!^is located at.*!is located at ${_prngd_socket}.!" \
+  doc/crypto/RAND_egd.pod
+fi
+
+perl ./Configure ${ARCH} no-idea no-mdc2 no-rc5 no-ec \
+no-ecdh no-ecdsa shared --openssldir=${SB_INSTALL_PREFIX} \
+${SB_VAR_PRNGD+-DDEVRANDOM_EGD=\"$_prngd_socket\"} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake LIBDIR=${SB_INSTALL_PREFIX_LIB}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install LIBDIR="${SB_INSTALL_PREFIX_LIB}"
+
+# Embed runtime library path
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  rm libssl.sl.0.9.8 libssl.sl
+  gmake libssl.sl.0.9.8
+  gmake install_lib
+
+  rm apps/openssl
+  gmake build_apps
+  gmake install_apps
+
+  gmake -C engines clean_libobj
+  gmake build_engines
+  gmake install_engines ;;
+esac
+
+# Fix library path in pkgconfig files
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" \
+${SB_INSTALL_PREFIX_LIB}/pkgconfig/libcrypto.pc \
+${SB_INSTALL_PREFIX_LIB}/pkgconfig/libssl.pc \
+${SB_INSTALL_PREFIX_LIB}/pkgconfig/openssl.pc
+
+# copy certificate files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/share/certs
+${SB_PATH_FIND} certs | egrep -v -e 'demo|expired' | cpio -pdmuv ${SB_INSTALL_PREFIX}/share
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/share/certs
+${SB_PATH_CHMOD} 644 ${SB_INSTALL_PREFIX}/share/certs/*
+
+# c_rehash seems to be useless
+rm ${SB_INSTALL_PREFIX}/bin/c_rehash
+
+# Remove manual pages
+rm -rf ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="gzip">
+      <build-name>gzip-1.3.12</build-name>
+
+      <install-name append="lib/aux/gzip">${SB_PROG_NAME}13</install-name>
+
+      <sources>
+        <source checksum="b5bac2d21840ae077e0217bc5e4845b1"
+          checksum-type="md5" size="462169"
+          path="src/gzip-1.3.12.tar.gz"/>
+        <patch checksum="ad7914a3adf58c78ff802521177b308f"
+          checksum-type="md5" size="3882"
+          path="src/gzip-1.3.12.CVE-2006-4337.patch"/>
+        <patch checksum="679891480fafc8f8a68f734dc4029aea"
+          checksum-type="md5" size="965"
+          path="src/gzip-1.3.12.CVE-2006-4338.patch"/>
+        <patch checksum="fe4a1d2df7d382be70fab9d72fea1dbf"
+          checksum-type="md5" size="975"
+          path="src/gzip-1.3.12.tww.patch"/>
+        <patch checksum="d0b1ab524a81f28ee9a21731c7a728cf"
+          checksum-type="md5" size="10430"
+          path="src/gzip-1.3.12.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_prngd_socket=${SB_VAR_PRNGD+/var$SB_VAR_PRNGD/pool}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # realpath() broken
+  export ac_cv_func_realpath=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # getaddrinfo is broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b"
+
+  # force dlopen() over shl_load()
+  export ac_cv_func_shl_load=no
+  export ac_cv_lib_dld_shl_load=no ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # strtoimax not available before IRIX 6.5.19m
+  export ac_cv_func_strtoimax=no
+
+  # getaddrinfo requires newer version of IRIX
+  export ac_cv_func_getaddrinfo=no
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+i?86-redhat-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86-redhat-linuxe[45]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # isblank is declared in /usr/include.dtk/ctypes.h,
+  # but does not exist
+  export ac_cv_have_decl_isblank=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # configure seems to think this is a c99 compiler :(
+  export ac_cv_prog_cc_c99=no ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+esac
+
+${SHELL} ./configure SHELL=/bin/sh CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# Remove manual pages and info docs
+rm -rf ${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="1.2.12" to="1.3.0">
+        <item><para>Use PycURL for all URL access
+methods</para></item>
+        <item><para>gen-sb-db, sb accepts urls for file
+locations</para></item>
+        <item><para>DTD validation on all XML input</para></item>
+        <item><para>New &lt;licenses&gt; section instead of package
+licenses subdirectory</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

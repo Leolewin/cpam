@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="unzip" version="5.50" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}55</install-name>
+
+    <sources>
+      <source checksum="798592d62e37f92571184236947122ed"
+        checksum-type="md5" size="1068662"
+        path="src/unzip550.tar.gz"/>
+      <patch checksum="a23d4a6ad87121ab05622ad8b45cb6c3"
+        checksum-type="md5" size="513"
+        path="src/unzip550.patch"/>
+      <patch checksum="d6aae953d7a5b8341a614f8a6e493547"
+        checksum-type="md5" size="5134"
+        path="src/unzip-5.50-dotdot.patch"
+        arg="-p1"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+gmake -f unix/Makefile CC="${CC:-gcc}" OPT="${CFLAGS:--O2}" \
+prefix=${SB_INSTALL_PREFIX} generic3
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake -f unix/Makefile prefix=${SB_INSTALL_PREFIX} install
+]]>
+    </install>
+
+    <changelog>
+      <change date="2003 August 20" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Updated patch from r2 to fix a case missed where
+the path component included a quoted slash (cf <ulink url="https://rhn.redhat.com/errata/RHSA-2003-199.html">https://rhn.redhat.com/errata/RHSA-2003-199.html</ulink>)</para></item>
+      </change>
+
+      <change date="2003 July 3" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply Redhat patch to fix vulnerability allowing
+attackers to overwrite arbitrary files during archive extraction by
+placing invalid (non-printable) characters between two "." characters
+(cf <ulink url="http://marc.theaimsgroup.com/?l=bugtraq&amp;m=105259038503175">http://marc.theaimsgroup.com/?l=bugtraq&amp;m=105259038503175</ulink>).</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

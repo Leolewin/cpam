@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="atk" version="1.4.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="d7830bdf1e05d8395794f75097d291be"
+        checksum-type="md5" size="444235"
+        path="src/atk-1.4.1.tar.bz2"/>
+      <patch checksum="4c2ef246e255f06e233fe4c07ee0e953"
+        checksum-type="md5" size="962476"
+        path="src/atk-1.4.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="gtk-doc" var="GTKDOC" install-name="gtkdoc11"
+        add-path="prepend"
+        systype="*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib22"
+        add-path="prepend">v&gt;=2.2.3</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:=-O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB}/lib/pkgconfig\
+${SB_VAR_GTKDOC+:${SB_VAR_GTKDOC}/lib/pkgconfig}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} --disable-gtk-doc \
+--enable-static --enable-shared --datadir="${_datadir}" \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake libatkincludedir="${_includedir}/atk"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install libatkincludedir="${_includedir}/atk" \
+HTML_DIR="${_docdir}"
+
+case "${SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+for _pc in atk.pc; do
+  ${SB_VAR_PERL}/bin/perl -pi -e "\
+s!-L(\\\${libdir})!-L\$1 ${CC_LD_RT}\$1!" \
+  ${SB_INSTALL_PREFIX}/lib/pkgconfig/${_pc}
+done
+]]>
+    </install>
+  </program>
+</programs>

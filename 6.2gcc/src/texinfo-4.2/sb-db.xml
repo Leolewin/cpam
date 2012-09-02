@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="texinfo" version="4.2" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}42</install-name>
+
+    <sources>
+      <source checksum="41a97498d34ddbf245df40a95977be7f"
+        checksum-type="md5" size="1666333"
+        path="src/texinfo-4.2.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" install-name="gettext"
+        add-path="prepend" type="build">v&gt;=0.10.40</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  ARGS="--with-included-gettext" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--with-included-gettext --datadir="${_datadir}" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir} \
+${_datadir}/texmf/tex/texinfo ${_datadir}/texmf/tex/pdftex \
+${_datadir}/texmf/tex/plain/dvips
+
+# copy texinfo files
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/*.texi ${_docdir}
+
+# copy TeX files
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/epsf.tex \
+${_datadir}/texmf/tex/plain/dvips
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/pdfcolor.tex \
+${_datadir}/texmf/tex/pdftex
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/texinfo.tex \
+${_datadir}/texmf/tex/texinfo
+${SB_PATH_GINSTALL} -o root -g 0 -m 644 doc/txi-??.tex \
+${_datadir}/texmf/tex/texinfo
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 March 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 4.3.3. While stpcpy() is in
+libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+
+      <change date="2003 March 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,224 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="subversion" version="1.0.6" revision="2"
+  systype="*-aix*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}106</install-name>
+
+    <sources>
+      <source checksum="bb05fe041fef7491b3555904d97f5e1c"
+        checksum-type="md5" size="6022074"
+        path="src/subversion-1.0.6.tar.bz2"/>
+      <patch checksum="22eafebc4cba56c236e82178954203e9"
+        checksum-type="md5" size="3369807"
+        path="src/subversion-1.0.6.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="apache" var="APACHE">v==2.0.49</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="doxygen" var="DOXYGEN"
+        install-name="doxygen13" type="build">v&gt;=1.3.6</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb42">v&gt;=4.2.52</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="*-hpux*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml26"
+        add-path="prepend">v&gt;=2.6.11</depend>
+      <depend program="libxslt" install-name="libxslt11"
+        add-path="prepend">v&gt;=1.1.8</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.8.2</depend>
+      <depend program="pkgconfig" add-path="prepend"
+        type="build">v==0.15.0</depend>
+      <depend program="python" var="PYTHON" add-path="prepend"
+        type="build">v==2.3.2</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+      <depend program="xmlcatalog" var="XMLCATALOG"
+        module="docbook-xml-4.0" type="build">v==1.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_xsl_stylesheets="${SB_VAR_XMLCATALOG}/share"
+
+_prngdsocket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--disable-ipv6"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ARGS="--disable-ipv6" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+# quote \@ for perl
+_p_python_prefix=$(echo ${SB_VAR_PYTHON} | sed 's/@/\\@/')
+_p_sysconfdir=$(echo ${_sysconfdir} | sed 's/@/\\@/')
+_p_xsl_stylesheets=$(echo ${_xsl_stylesheets} | sed 's/@/\\@/')
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!/usr/bin/env.*!${_p_python_prefix}/bin/python!" \
+gen-make.py build/getversion.py 
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!/etc/subversion!${_p_sysconfdir}!" doc/book/book/ch07.xml 
+
+# set up docbook build
+(cd doc/book
+rm -f book/version.xml
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!href=\"xsl/(html/docbook.xsl)\"!\
+href=\"${_p_xsl_stylesheets}/docbook/stylesheet/xsl/nwalsh/\$1\"!;" \
+tools/html-stylesheet.xsl
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!href=\"xsl/(html/chunk.xsl)\"!\
+href=\"${_p_xsl_stylesheets}/docbook/stylesheet/xsl/nwalsh/\$1\"!;" \
+tools/chunk-stylesheet.xsl)
+
+./configure PKG_CONFIG_PATH="${SB_VAR_LIBOPENSSL_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig" CC="${CC:-gcc}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+-I${SB_VAR_ZLIB_INC}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBEXPAT_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBDB_LIB}:${SB_VAR_LIBEXPAT_LIB}:\
+${SB_VAR_LIBOPENSSL_LIB}:${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--with-berkeley-db=${SB_VAR_LIBDB} \
+${SB_VAR_APACHE+--with-apxs="${SB_VAR_APACHE}/bin/apxs"} \
+${SB_VAR_APACHE+--with-apr=${SB_VAR_APACHE}/bin/apr-config} \
+${SB_VAR_APACHE+--with-apr-util=${SB_VAR_APACHE}/bin/apu-config} \
+${SB_VAR_PRNGD+--with-egd=${_prngdsocket}} \
+${SB_VAR_LIBICONV+--with-iconv=${SB_VAR_LIBICONV}} \
+--with-ssl --with-zlib --disable-mod-activation \
+--enable-layout=TWW --enable-swig-bindings=no \
+--sysconfdir=${_sysconfdir} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# build HTML documentation
+(cd doc/book
+PATH=${SB_BUILD_PREFIX}/subversion/svnversion:$PATH gmake all-html)
+
+# build Doxygen documentation
+(${SB_VAR_DOXYGEN}/bin/doxygen doc/doxygen.conf)
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/config
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/servers
+
+# install HTML and PDF documentation
+(cd doc/book/book
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/html \
+${_docdir}/pdf
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 book.pdf ${_docdir}/pdf
+
+${SB_PATH_GFIND} images | cpio -pdmuv ${_docdir}/html
+cd html-chunk
+${SB_PATH_GFIND} . | cpio -pdmuv ${_docdir}/html)
+
+# install Doxygen documentation
+(cd doc/doxygen/html
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/doxygen
+${SB_PATH_GFIND} . | cpio -pdmuv ${_docdir}/doxygen)
+
+${SB_PATH_GCHOWN} -hR 0:0 ${_docdir} ${SB_INSTALL_PREFIX}/include
+]]>
+    </install>
+
+    <notes>
+      <note type="configuration">
+        <para>The Apache modules, <command>mod_dav_svn.so</command>
+and <command>mod_authz_svn.so</command>, are installed in
+<command>${SB_INSTALL_PREFIX}/modules</command>. It is automatically
+added to the default Apache configuration file,
+<command>/httpd.conf</command>, if the
+configuration file exists:</para>
+        <screen>
+LoadModule dav_svn_module ${SB_INSTALL_PREFIX}/modules/mod_dav_svn.so
+LoadModule authz_svn_module ${SB_INSTALL_PREFIX}/modules/mod_authz_svn.so
+&lt;IfModule mod_dav_svn.c&gt;
+  &lt;Location @REPOSITORY_LOCATION@&gt;
+  DAV svn
+  SVNPath @PATH_TO_SUBVERSION_REPOSITORY@
+  &lt;/Location&gt;
+&lt;/IfModule&gt;
+        </screen>
+
+        <para>The "<command>@REPOSITORY_LOCATION@</command>" text
+should be replaced with the basename of the URL path to the subversion
+repository and "<command>@PATH TO SUBVERSION REPOSITORY@</command>"
+should be replaced with the absolution path to the subversion
+repository on disk.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 14" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

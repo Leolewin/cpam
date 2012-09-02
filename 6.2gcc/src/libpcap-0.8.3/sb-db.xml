@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libpcap" version="0.8.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}08</install-name>
+
+    <sources>
+      <source checksum="56a9d4615d8354fcfe8cff8c8443c77b"
+        checksum-type="md5" size="302551"
+        path="src/libpcap-0.8.3.tar.gz"/>
+      <patch checksum="36bddb7db78fcad8aff527f3de27faa8"
+        checksum-type="md5" size="80630"
+        path="src/libpcap-0.8.3.patch"/>
+    </sources>
+
+    <build>
+<![CDATA[
+gmake CCOPT="${CFLAGS:--O2}"
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="bison" install-name="bison13"
+          add-path="prepend" type="build">v&gt;=1.35</depend>
+        <depend program="flex" install-name="flex" add-path="prepend"
+          type="build">v&gt;=2.5.4a</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +DAportable +Onofltacc +ESlit \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-O2 -OPT:Olimit=0" ARGS="--enable-ipv6" ;;
+*-linux*)
+  ARGS="--enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-ipv6" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 README README.aix \
+README.hpux README.linux README.tru64 ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="0.8.2" to="0.8.3">
+        <item><para>Fixed minor problem in gencode.c that would appear
+on 64-bit platforms</para></item>
+      </change>
+
+      <change from="0.8.1" to="0.8.2">
+        <item><para>fixes for ppp interfaces for freebsd
+4.1</para></item>
+        <item><para>pcap gencode can generate code for 802.11,
+IEEE1394, and pflog</para></item>
+      </change>
+
+      <platform name="Tru64 UNIX">
+        <para>For applications linked against libpcap to work, the
+kernel must be compiled to support the packetfilter(7) pseudo-device
+driver. This is done by adding the option '<command>options
+PACKETFILTER</command>' to your kernel configuration file in
+<command>/sys/conf/[KERNEL CONFIG]</command>. Once added, recompile
+the kernel with '<command>doconfig -c [KERNEL CONFIG]</command>' and
+reboot to use the new kernel. The packetfilter devices must be created
+as well:</para>
+        <screen>
+$ /bin/su
+# cd /dev
+# ./MAKEDEV pfilt
+        </screen>
+
+        <para>Finally, the interface you wish to listen on must be
+allowed to enter promiscuous mode. This is done as follows:</para>
+        <screen>
+# /usr/sbin/pfconfig +promisc [INTERFACE]
+# /usr/sbin/pfconfig +copyall [INTERFACE]
+        </screen>
+      </platform>
+    </notes>
+  </program>
+</programs>

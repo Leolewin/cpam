@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="pcre" version="4.4" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="89fc389191d9611b314c3fc23235377b"
+        checksum-type="md5" size="341388"
+        path="src/pcre-4.4.tar.bz2"/>
+      <patch checksum="0072b681dbd485dc5a45cf64160f4f5e"
+        checksum-type="md5" size="692359"
+        path="src/pcre-4.4.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <install>
+<![CDATA[
+gmake install
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LD_RT="-Wl,-blibpath:" ;;
+*-osf*|*-irix6*|*-linux*)
+  LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  LD_RT="-Wl,+s -Wl,+b," ;;
+*-solaris2*)   
+  LD_RT="-R" ;;
+esac
+
+sed -e 's!-L\(${exec_prefix}/lib\) !-L\1 '"${LD_RT}\1"' !' \
+${SB_INSTALL_PREFIX}/bin/pcre-config > /tmp/$$
+cp /tmp/$$ ${SB_INSTALL_PREFIX}/bin/pcre-config
+rm -f /tmp/$$
+]]>
+    </install>
+
+    <module name="default">
+      <install-name>lib${SB_PROG_NAME}44</install-name>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onolimit +Onofltacc +DAportable \
++DS1.1 +Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-utf8 \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <module name="tww-static">
+      <install-name>lib${SB_PROG_NAME}44s</install-name>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onolimit +Onofltacc +DAportable \
++DS1.1 +Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" --enable-utf8 \
+--disable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

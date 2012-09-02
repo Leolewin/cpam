@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="autoconf" version="2.13" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="f17672fa61dcb22f2ae0ca23d4deeec4"
+        checksum-type="md5" size="443873"
+        path="src/autoconf-2.13.tar.gz"/>
+      <patch checksum="cf044195d63353241a0a9e022b9d3d26"
+        checksum-type="md5" size="1542"
+        path="src/autoconf-2.13.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="m4" var="M4">v&gt;=1.4</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+M4=${M4}/bin/gm4 PERL=${PERL}/bin/perl ./configure \
+--datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# replace '@sys' with '\@sys'
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+
+# install texinfo source files
+ginstall -m 644 -o root -g 0 autoconf.texi install.texi \
+make-stds.texi standards.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 January 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Upgrade texinfo dependency to 4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

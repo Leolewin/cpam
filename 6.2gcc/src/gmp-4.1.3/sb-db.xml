@@ -1,0 +1,135 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gmp" version="4.1.3" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}41</install-name>
+
+    <sources>
+      <source checksum="65598b329290cdc1fcb73b6b18891baf"
+        checksum-type="md5" size="1679079"
+        path="src/gmp-4.1.3.tar.bz2"/>
+      <patch checksum="c4d8e42cc545fe22f9e4e216ff25ee3f"
+        checksum-type="md5" size="1163966"
+        path="src/gmp-4.1.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="flex" install-name="flex" add-path="prepend"
+        type="build">v&gt;=2.5.4a</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC_r CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ARCH=powerpc-ibm-aix5.1.0.0 ;;
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl" ARCH=powerpc-ibm-aix4.3.2.0 ;;
+*-osf5*)
+  CC=cc CFLAGS="-O2 -std" CXX=cxx CXXFLAGS="-O2"
+  ARCH=alpha-dec-osf5.1 ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std" CXX=cxx CXXFLAGS="-O2"
+  ARCH=alpha-dec-osf4.0d ;;
+*-hpux11.11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DA2.0 \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DA2.0 \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--enable-cxx" ABI=standard ARCH=hppa1.1-hp-hpux11.11 ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DA2.0 \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DA2.0 \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--enable-cxx" ABI=standard ARCH=hppa1.1-hp-hpux11.00 ;;
+*-hpux10*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DA2.0 \
++Oentrysched +Odataprefetch +Onolimit"
+  ABI=standard ARCH=hppa1.1-hp-hpux10.20 ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-LANG:std -Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-O2 -OPT:Olimit=0"
+  ABI=n32 ;;
+*-linux*)
+  ARGS="--enable-cxx" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-cxx"
+  case "${SB_SYSTYPE}" in
+  *-solaris2.9)
+    ARCH=sparcv8-sun-solaris2.9 ;;
+  *-solaris2.8)
+    ARCH=sparcv8-sun-solaris2.8 ;;
+  esac ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v8"
+  ARGS="--enable-cxx"
+  case "${SB_SYSTYPE}" in
+  *-solaris2.7)
+    ARCH=sparcv8-sun-solaris2.7 ;;
+  *-solaris2.6)
+    ARCH=sparcv8-sun-solaris2.6 ;;
+  *-solaris2.5.1)
+    ARCH=sparcv8-sun-solaris2.5.1 ;;
+  esac ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} ${ABI+ABI=${ABI}} --enable-shared \
+--enable-static --disable-dependency-tracking \
+${ARCH+--build=${ARCH}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 fdl.texi gmp.texi \
+version.texi ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="4.1.2" to="4.1.3">
+        <item><para>Bug fixes</para></item>
+        <item><para>mpz_export allows NULL for countp
+parameter</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

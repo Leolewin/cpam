@@ -1,0 +1,476 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="cvs" version="1.12.13" revision="7">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}112</install-name>
+
+    <sources>
+      <source checksum="956ab476ce276c2d19d583e227dbdbea"
+        checksum-type="md5" size="3911104"
+        path="src/cvs-1.12.13.tar.bz2"/>
+      <patch checksum="b6db77299d6d23b5d9f08eaa933d5141"
+        checksum-type="md5" size="1205"
+        path="src/cvs-1.12.13.PR14840.patch"/>
+      <patch checksum="7e31241e6ef71ddc72b40a29f6618dd9"
+        checksum-type="md5" size="9191"
+        path="src/cvs-1.12.13.tww.patch"/>
+      <patch checksum="d905354cc71f69e9a0f8031e1254a793"
+        checksum-type="md5" size="184009"
+        path="src/cvs-1.12.13.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="ac_cv_func_vasprintf=no" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+${ARGS+${ARGS}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-libintl-prefix=${SB_VAR_GETTEXT} --datadir=${_datadir} \
+--disable-dependency-tracking --enable-server --without-gssapi \
+--with-external-zlib=${SB_VAR_ZLIB} --prefix=${SB_INSTALL_PREFIX}
+
+# remove old info files so we can regenerate
+rm -f doc/cvs.info* doc/cvsclient.info* >/dev/null 2>&1
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir} MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/cvsclient.texi \
+doc/getdate-cvs.texi doc/getdate.texi doc/version-client.texi \
+doc/version.texi ${_docdir}/texinfo
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.12.12" to="1.12.13">
+        <items name="New features">
+          <item><para>A hang in the Windows client, which had pretty
+much rendered the client useless, has been fixed</para></item>
+          <item><para>A minor problem preventing build of the
+Kerberos4 client has been fixed</para></item>
+          <item><para>The path to the config file may be set as an
+argument to the CVS server commands</para></item>
+          <item><para>Sections of directives specific to one or more
+repositories and not others may now be specified in the config
+file</para></item>
+          <item><para>%{sV} format strings are now available to the
+verifymsg trigger, similar to the %{stVv} available to
+loginfo</para></item>
+          <item><para>"cvs watch add" on an empty directory no longer
+clears watchers, and specifying a directory for "cvs watch add" now
+(correctly) sets default attributes</para></item>
+          <item><para>Missing CVSROOT/history files will now cause CVS
+to attempt to create one. To suppress history logging, set LogHistory
+equal to the empty string in CVSROOT/config.</para></item>
+          <item><para>There are several new options available in
+CVSROOT/config. These are TmpDir, HistoryLogPath, HistorySearchPath,
+MinCompressionLevel, &amp; MaxCompressionLevel. Please see the manual
+for more.</para></item>
+          <item><para>CVS on Solaris 10 was refusing to parse command
+options. This has been fixed.</para></item>
+          <item><para>The Windows client now creates locks compatible
+with older versions of CVS by default. This should only be relevant if
+your client is accessing a local repository concurrently with another,
+older client. If you would like to disable compatibility mode (because
+it is slightly faster), edit the LOCK_COMPATIBILITY flag in
+windows-NT/config.h and recompile.</para></item>
+          <item><para>Misc efficiency and portability
+improvements</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>CVS with Kerberos 5 GSSAPI should automatically
+link on FreeBSD 5.x (bug #14639)</para></item>
+          <item><para>Heavily loaded systems suffering from a disk
+crash or power failure will not lose data they claimed to have
+committed</para></item>
+          <item><para>CVS server now handles conflict markers in Entry
+requests as documented</para></item>
+          <item><para>CVS now remembers that binary file merge
+conflicts occurred until the timestamp of the updated binary file
+changes</para></item>
+          <item><para>CVS client now saves some bandwidth by not
+sending the contents of files with conflicts to the server when it
+isn't needed</para></item>
+          <item><para>CVS now does correct locking during
+import</para></item>
+          <item><para>A problem where the server could block
+indefinitely waiting for an EOF from the client when compression was
+enabled has been fixed</para></item>
+          <item><para>"cvs diff" no longer splits its arguments on
+spaces</para></item>
+          <item><para>A potential crash in response to a corrupt RCS
+file has been fixed</para></item>
+          <item><para>CVS now locks the history and val-tags files
+before writing to them. Especially with large repositories, users
+should no longer see new warnings about corrupt history records when
+using the "cvs history" command. Existing corrupt history records will
+still need to be removed manually. val-tags corruption should have had
+less obvious effects, but removing the CVSROOT/val-tags file and
+allowing a 1.11.21 or later version of CVS to regenerate it may
+eliminate a few odd behaviors and possibly cause a slight speed up of
+read transactions in large repositories over time.</para></item>
+        </items>
+
+        <items name="Build notes">
+          <item><para>The RPM spec file works again with the most
+modern versions of "rpm". It also finds the correct version of
+install-sh when building the CVS with GSSAPI.</para></item>
+        </items>
+      </change>
+
+      <change from="1.12.11" to="1.12.12">
+        <items name="Server security fixes">
+          <item><para>Several minor security issues have been
+addressed. One was a buffer overflow that is potentially serious but
+which may not be exploitable, assigned CAN-2005-0753 by the Common
+Vulnerabilities and Exposures Project. Other fixes resulting from
+Alen's report include repair of an arbitrary free with no known
+exploit and several plugged memory leaks and potentially freed NULL
+pointers which may have been exploitable for a denial of service
+attack.</para></item>
+          <item><para>Minor potential vulnerabilities in the
+contributed Perl scripts have been fixed. The confirmed vulnerability
+could allow the execution of arbitrary code on the CVS server, but
+only if a user already had commit access and if one of the contrib
+scripts was installed improperly, a condition which should have been
+quickly visible to any administrator. The complete description of the
+problem is here: <ulink url="https://ccvs.cvshome.org/issues/show_bug.cgi?id=224">https://ccvs.cvshome.org/issues/show_bug.cgi?id=224</ulink>.
+If you were making use of any of the contributed trigger scripts on a
+CVS server, you should probably still replace them with the new
+versions, to be on the safe side.</para>
+          <para>Unfortunately, our fix is incomplete. Taint-checking
+has been enabled in all the contributed Perl scripts intended to be
+run as trigger scripts, but no attempt has been made to ensure that
+they still run in taint mode. You will most likely have to tweak the
+scripts in some way to make them run.</para>
+          <para>You should also make sure that any home-grown Perl
+scripts that you might have installed as CVS triggers also have
+taint-checking enabled. This can be done by adding "-T" on the
+scripts' #! lines. Please try running "perldoc perlsec" if you would
+like more information on general Perl security and
+taint-checking.</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>A problem that caused CVS to stop with broken
+assertions in certain time zones when daylight savings is in effect
+has been fixed</para></item>
+          <item><para>A problem where a proxy server could fail to
+notice that its primary closed the connection has been
+fixed</para></item>
+          <item><para>Failures to open the CVS_CLIENT_LOG,
+CVS_SERVER_LOG, and CVS_SECONDARY_LOG are no longer
+fatal</para></item>
+          <item><para>CVS's client and server IO buffers now rely on a
+GNULIB modules for memory management rather than taking on the task
+themseleves. This should be faster on any system but may increase
+memory usage noticably on systems without the POSIX mmap()
+function.</para></item>
+          <item><para>Some more GNULIB functions have been imported
+and/or updated for portability reasons. This change should not be
+visible to most users, though CVS may now compile on a few more
+platforms.</para></item>
+          <item><para>CVS creates a unique session id that gets
+written to the RCS files during import and commit. When committing
+several files at once, they all get the same 'commitid'. The commitid
+becomes visible with log and status commands, and is derived and
+compatible with the cvsnt project. </para></item>
+          <item><para>CVS once again compiles correctly configured
+with various combinations of --disable-client, --disable-server, and
+--disable-proxy</para></item>
+          <item><para>CVS now accepts the &lt;tag&gt;:&lt;date&gt;
+format, which has long been acceptable as an argument to -j options,
+in most places where &lt;tag&gt; used to be acceptable. An empty tag
+in this format (e.g. ":&lt;date&gt;"), which used to be rejected, is
+now interpreted as specifying a date on the trunk.</para></item>
+          <item><para>"cvs -n release" now does what it should (see
+changes to the info-cleanup-0 test in sanity.sh for
+more).</para></item>
+          <item><para>The configure script now prefers "ssh" to "rsh"
+when determining a default executable to use when connecting via the
+:ext: method</para></item>
+          <item><para>A problem in the compression buffer that was
+causing some incompatibility with some 3rd party CVS clients when
+compression was enabled has been fixed</para></item>
+          <item><para>Some files missing from the distribution have
+been added or readded. The missing files were mostly development
+support files, with a few docs and .cvsignore files thrown
+in.</para></item>
+          <item><para>The incomplete Brazillian Portugese translation
+of the CVS manual is now included in the distribution</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Misc bug and documentation fixes</para></item>
+          <item><para>CVS now detects write errors on standard output.
+Before, e.g., "cvs update -p FILE &gt; /dev/full" would fail to report
+the write error.</para></item>
+          <item><para>CVS now builds without error on IRIX
+5.3</para></item>
+        </items>
+      </change>
+
+      <change from="1.12.10" to="1.12.11">
+        <items name="New features">
+          <item><para>The date formats which CVS accepts are now
+documented more fully in the manual</para></item>
+          <item><para>CVS commands which accept dates now understand
+some more time zones, including those which are some hours plus some
+fraction of an hour off of universal coordinated time</para></item>
+          <item><para>"cvs ls filename" no longer causes an assertion
+failure</para></item>
+          <item><para>The maximum length of the discovered comment
+leader used in a Log keyword substitution is now limited to 20
+characters by default. If a longer leader is discovered, then the
+keyword is not expanded. This default behavior may be altered using
+the new MaxCommentLeaderLength &amp; UseArchiveCommentLeader config
+options.</para></item>
+          <item><para>Commit messages once again include the full
+relative path to the file being committed</para></item>
+          <item><para>"write proxy" functionality has been added to
+the CVS server. Write proxy functionality allows any of multiple,
+read-only "secondary" servers to relay write requests from clients to
+a single primary CVS server, allowing for a massive redistribution of
+server load which is transparent to all known CVS
+clients.</para></item>
+          <item><para>Some code has been added which second-guesses
+the system file cache for a performance boost.</para></item>
+          <item><para>The loginfo scripting hook now runs after the
+administrative files in CVSROOT are rebuilt, rather than
+before</para></item>
+          <item><para>Misc error message improvements</para></item>
+          <item><para>New scripting hooks have been added to the CVS
+server. These are the postadmin, posttag, and postwatch hooks. See the
+manual for more info.</para></item>
+          <item><para>All the existing scripting hooks may now
+optionally be passed a command name argument</para></item>
+          <item><para>New tags are cached in the val-tags file at the
+time of tag creation</para></item>
+          <item><para>CVS now supports PAM session
+management</para></item>
+          <item><para>The demo PAM configuration files mentioned in
+the manual are actually being distributed</para></item>
+          <item><para>"cvs log" and "cvs ls" now actually output local
+times when the server is version 1.12.9 or greater and the client is
+version  1.12.10 or greater. </para></item>
+          <item><para>The CVS server now sends paths to files relative
+to the repository. CVS clients have been able to handle this since at
+least the 10 year old CVS 1.9.2 release, so no attempt at verifying
+compatibility of clients has been made. This saves a small amount of
+bandwidth and may enable some future functionality.</para></item>
+          <item><para>The CVS client will send relative Directory
+requests if the server claims to support it. This saves a very small
+amount of bandwidth but may enable some future
+functionality.</para></item>
+          <item><para>"cvs import" now has a new option, "-X", which
+causes new files to be imported in a way that they appear only on the
+vendor branch, and do not automatically appear on the main
+trunk.</para>
+          <para>This option may be made the default on a
+repository-wide basis using the new
+ImportNewFilesToVendorBranchOnly=yes option in
+CVSROOT/config.</para></item>
+          <item><para>contrib/cvs_acls.in has been revised. Users of
+the old version will want to upgrade to use the new format. See the
+documentation in contrib/cvs_acls.html for more
+information.</para></item>
+          <item><para>The contrib/validate_repo script now accepts and
+logs corrupted revision numbers in RCS archives</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>CVS no longer exits when it encounters links
+pointing to paths containing more than 128 characters</para></item>
+          <item><para>Error messages from GSSAPI servers are no longer
+truncated</para></item>
+          <item><para>attempts to resurrect a file on the trunk that
+was added on a branch no longer causes an assertion
+failure</para></item>
+          <item><para>Imports to branches like "1.1." no longer create
+corrupt RCS archives</para></item>
+          <item><para>We think we have finally corrected the Windows
+"red-file" (daylight savings time) bug once and for all</para></item>
+          <item><para>The log_accum.pl script should no longer elicit
+warnings from Perl 5.8.5</para></item>
+          <item><para>The r* commands (rlog, rls, etc.) can once again
+handle requests to run against the entire repository (e.g. "cvs rlog
+.")</para></item>
+          <item><para>A problem where the attempted access of files
+via tags beginning with spaces could cause the CVS server to hang has
+been fixed. This was a particular problem with WinCVS clients because
+users would sometimes accidentally include spaces in tags pasted into
+a dialog box. This fix also altered some of the error messages
+generated by the use of invalid tags.</para></item>
+          <item><para>For a bug fix to modules processing "gcc-core -a
+!gcc/f gcc" will no longer exclude gcc/fortran by
+mistake.</para></item>
+          <item><para>The Windows build works once again</para></item>
+          <item><para>Misc updates to the manual</para></item>
+        </items>
+      </change>
+
+      <change from="1.12.9" to="1.12.10">
+        <items name="Server security fixes">
+          <item><para>Several potential security problems have been
+fixed. The ones which were considered dangerous enough to catalogue
+were assigned issue numbers CAN-2004-0416, CAN-2004-0417, and
+CAN-2004-0418 by the Common Vulnerabilities and Exposures
+Project</para></item>
+          <item><para>A potential buffer overflow vulnerability in the
+server has been fixed. This addresses the Common Vulnerabilities and
+Exposures Project's issue CAN-2004-0414</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>"cvs log" &amp; "cvs ls" now output local times
+when both the server and client are 1.12.9 or greater</para></item>
+        </items>
+
+        <items name="Developer notes">
+          <item><para>The windows-NT/config.h.in file is now generated
+dynamically from the root config.h.in file and a few inputs in the
+windows-NT directory in hopes of keeping it more in sync with the root
+config.h.in file.</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 August 14" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Disable vasprintf() on Solaris/x86 because it
+requires a newer libc</para></item>
+      </change>
+
+      <change date="2012 August 6" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Incorporate patch for bug #14840: zlib.c
+(compress_bufer_input): Don't assume the number of bytes the caller
+requested will be available from the stream underlying the compression
+buffer - the data is compressed and should be shorter by
+definition.</para></item>
+      </change>
+
+      <change date="2012 January 24" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for AIX 7.1</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+      </change>
+
+      <change date="2010 November 2" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 November 9" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Add support for HPUX 11.31</para></item>
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add compiler optimisations for
+i?86*-linuxe[345]*</para></item>
+        <item><para>Update compiler optimisations for *-aix*,
+*-hpux*, *-osf* and *-solaris*</para></item>
+        <item><para>Update gettext dependency from 0.14.1 to
+0.17</para></item>
+        <item><para>Update libiconv dependency from 1.9.2 to
+1.12</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+
+      <change date="2007 May 2" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

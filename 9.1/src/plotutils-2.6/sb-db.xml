@@ -1,0 +1,301 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="plotutils" version="2.6" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="c08a424bd2438c80a786a7f4b5bb6a40"
+        checksum-type="md5" size="3657562"
+        path="src/plotutils-2.6.tar.gz"/>
+      <patch checksum="308a0f51b306a0f87addc5f3d7fcca45"
+        checksum-type="md5" size="13406"
+        path="src/plotutils-2.6.tww.patch"/>
+      <patch checksum="323897b731d60c93be9ec1d1039c1c21"
+        checksum-type="md5" size="1869308"
+        path="src/plotutils-2.6.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="flex" install-name="flex25"
+        add-path="prepend">v&gt;=2.5.35</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qobjmodel=ibm -qro -qroconst \
+-qnotempinc -qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-libplotter --with-motif" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-libplotter --with-athena=/usr/contrib/X11R6 \
+--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-motif" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," 
+
+  ARGS="--enable-libplotter --with-athena=/usr/contrib/X11R6 \
+--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-motif" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," 
+
+  ARGS="--enable-libplotter --with-athena=/usr/contrib/X11R6 \
+--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-motif" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-libplotter --with-motif" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-libplotter" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-libplotter" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-libplotter --with-motif" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--with-motif" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  LDFLAGS="-R/usr/openwin/lib"
+  CC_LD_RT="-R"
+
+  ARGS="--with-motif" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  ARGS="--with-motif" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+$LDFLAGS}\
+${SB_VAR_LIBPNG+ ${CC_LD_RT}$SB_VAR_LIBPNG_LIB}\
+${SB_VAR_LIBZ+ ${CC_LD_RT}$SB_VAR_LIBZ_LIB}\
+${SB_VAR_XPM+ ${CC_LD_RT}$SB_VAR_XPM_LIB}" \
+--enable-shared --enable-static --enable-libxmi \
+${SB_VAR_LIBZ+--with-zlib=${SB_VAR_LIBZ}} \
+${SB_VAR_LIBPNG+--with-libpng=${SB_VAR_LIBPNG}} \
+${SB_VAR_XPM+--with-xpm=${SB_VAR_XPM}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir="${SB_INSTALL_PREFIX_LIB}" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 libxmi/info/libxmi.texi \
+info/plotutils.texi ${_docdir}
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.4.1" to="2.5">
+        <item><para>package: bug reporting address has changed to
+bug-plotutils@gnu.org</para></item>
+        <item><para>libplot: support for rotated and sheared (i.e.,
+"anamorphically transformed") X Window System fonts has been
+completely rewritten. Core X fonts are still used, but it is no longer
+assumed that the X display has the ability to rasterize rotated and
+sheared glyphs. (Recent releases of XFree86 are broken in this
+regard.)  Instead, unrotated glyphs are retrieved from the server, and
+rotated or transformed within libplot.  See new module
+libplot/x_afftext.c.</para></item>
+        <item><para>graph: plotting of rotated y-axis labels by the
+`-Y' option, when `-T X' is specified (so that output is to an X
+Window System display) should now work, even when recent broken
+releases of XFree86 are used. This is due to the above change to
+libplot.</para></item>
+        <item><para>libplot: URW versions of the standard 35 Adobe
+fonts (Helvetica, Times-Roman etc.) are now checked for under their
+own names on any X Window System display, as well as under the Adobe
+names.  This fixes a problem with recent SuSE GNU/Linux distributions,
+of `graph -T X' being unable to use even the default Helvetica
+font.</para></item>
+        <item><para>libplot: SVG output is now conformant SVG 1.1, and
+should not be rejected by the Firefox browser.</para></item>
+        <item><para>libplot: vertical positioning of text strings by
+the SVG driver is improved; libplot now does vertical positioning
+itself, since many SVG renderers, e.g. Firefox 1.5, can't do it
+properly.</para></item>
+        <item><para>libplot: the ROTATION parameter, which is the
+angle in degrees at which the viewport in the output (device) frame
+should be rotated, can now take values other than 0, 90, 180, and
+270.</para></item>
+        <item><para>graph,plot,tek2plot,plotfont,pic2plot: the
+--rotation option no longer requires that the specified angle be 0,
+90, 180, or 270 degrees. Some quite postmodern effects can now be
+obtained.</para></item>
+        <item><para>libplot: modifiers such as "xsize=6in",
+"yoffset=8cm" appended to the PAGESIZE parameter by the user, to do
+fine positioning of the viewport on the output page, are no longer
+sometimes ignored.</para></item>
+        <item><para>graph,plot,tek2plot,plotfont,pic2plot: modifiers
+such as "xsize=6in", "yoffset=8cm" appended to the argument of the
+--page-size option, by the user, to do fine positioning of the
+viewport on the output page, are no longer sometimes
+ignored.</para></item>
+        <item><para>libplotter,pic2plot: problems with compilation by
+recent C++ compilers now fixed: unsigned char* is cast to char* as
+needed, deprecated C++ headers have had their names modernized, etc.
+Support for `bool' in the C++ compiler is now assumed (this could be
+trivially backed out of, if needed).</para></item>
+        <item><para>installation: entire package can now be compiled
+by a C++ compiler if desired; request this by doing e.g. `CC=g++
+./configure'.</para></item>
+        <item><para>installation: support for pre-ANSI C compilers,
+such the SunOS 4.1.3 one, now largely dropped.  Non-working `const' is
+still checked for, but compiler support for prototypes and void is now
+assumed. Removal of preprocessor macros that supported pre-ANSI C,
+from many source files, considerably improved
+maintainability.</para></item>
+        <item><para>installation: updated GNU autotools now used
+(autoconf-2.59, libtool-1.5.6, and the older automake-1.4-p6 for
+safety's sake).  Also, recent flex/bison have been used to prepare the
+scanner and parser supplied with the ode source (flex-2.5.31 and
+bison-1.875d).</para></item>
+        <item><para>graph: new short `-Q' option, which is equivalent
+to the long option `--toggle-rotate-y-axis-label'</para></item>
+        <item><para>graph,plot,tek2plot,plotfont,pic2plot:
+`--display-type' long option, the name of which confused some users,
+has been changed to `--output-format'.  The old option is still
+supported but is now deprecated.  The short option `-T' continues to
+work.</para></item>
+        <item><para>libplot: problems with PS output triggering an
+error in some versions of ghostscript (and hence ghostview, gv), due
+to changes in the way ghostscript handles FontBBox, now
+fixed.</para></item>
+        <item><para>libplot: most external symbols not meant to be
+publicly accessible now have names beginning with the prefix "_pl_",
+to reduce the possibility of namespace collisions.  This will be
+completed in a later release. executables: output of "--help" has been
+altered to agree with current GNU coding standards.</para></item>
+        <item><para>package: copyright and license notices added to
+nearly all source files.</para></item>
+      </change>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2010 October 29" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 June 4" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2009 February 13" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2008 December 15" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Updated flex dependency from 2.5.31 to
+2.5.35</para></item>
+        <item><para>Updated libpng dependency from 1.2.18 to
+1.2.29</para></item>
+        <item><para>Updated flags for latest Sun compilers on Solaris
+9 and 10</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

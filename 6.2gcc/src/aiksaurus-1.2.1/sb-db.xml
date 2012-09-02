@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="aiksaurus" version="1.2.1" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="3eae03b7c49843ccc9262e52846ea6b4"
+        checksum-type="md5" size="928893"
+        path="src/aiksaurus-1.2.1.tar.gz"/>
+      <patch checksum="3226dcd12bd925cfcef29bc66c031831"
+        checksum-type="md5" size="819517"
+        path="src/aiksaurus-1.2.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk16">v&gt;=1.6.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage22">v&gt;=2.2</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v==2.1.4</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014">v&gt;=0.14.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib24">v&gt;=2.4.4</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+24">v==2.4.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango14">v&gt;=1.4.0</depend>
+      <depend var="GCC_RT" install-name="gcc332r"/>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  CXXFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CFLAGS="-O2" CXXFLAGS="-O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  # Override XFree86 versions in /usr/X11R6/lib
+  LDFLAGS="-L${FCPACKAGE_LIB}" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CXX="${CXX:-g++}" \
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${SB_VAR_GCC_RT+LDFLAGS="${GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}"} \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --disable-dependency-tracking --with-gtk \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\) !-L\1 ${CC_LD_RT}\1 !" \
+base/aiksaurus-1.0.pc gtk/gaiksaurus-1.0.pc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir="${_datadir}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir="${_datadir}"
+]]>
+    </install>
+
+    <notes>
+      <note type="usage">
+        <para>The Aiksaurus shared library was compiled with GCC
+3.3.2. Because the GCC ABI is incompatible with the vendor
+compilers, programs linked against the shared library must use
+GCC.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

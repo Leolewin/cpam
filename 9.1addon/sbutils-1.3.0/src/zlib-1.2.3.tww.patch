@@ -1,0 +1,565 @@
+Index: Makefile
+===================================================================
+--- Makefile	2007-11-02 00:17:32.092903489 +0000
++++ Makefile	1970-01-01 00:00:00.000000000 +0000
+@@ -1,154 +0,0 @@
+-# Makefile for zlib
+-# Copyright (C) 1995-2005 Jean-loup Gailly.
+-# For conditions of distribution and use, see copyright notice in zlib.h
+-
+-# To compile and test, type:
+-#    ./configure; make test
+-# The call of configure is optional if you don't have special requirements
+-# If you wish to build zlib as a shared library, use: ./configure -s
+-
+-# To use the asm code, type:
+-#    cp contrib/asm?86/match.S ./match.S
+-#    make LOC=-DASMV OBJA=match.o
+-
+-# To install /usr/local/lib/libz.* and /usr/local/include/zlib.h, type:
+-#    make install
+-# To install in $HOME instead of /usr/local, use:
+-#    make install prefix=$HOME
+-
+-CC=cc
+-
+-CFLAGS=-O
+-#CFLAGS=-O -DMAX_WBITS=14 -DMAX_MEM_LEVEL=7
+-#CFLAGS=-g -DDEBUG
+-#CFLAGS=-O3 -Wall -Wwrite-strings -Wpointer-arith -Wconversion \
+-#           -Wstrict-prototypes -Wmissing-prototypes
+-
+-LDFLAGS=libz.a
+-LDSHARED=$(CC)
+-CPP=$(CC) -E
+-
+-LIBS=libz.a
+-SHAREDLIB=libz.so
+-SHAREDLIBV=libz.so.1.2.3
+-SHAREDLIBM=libz.so.1
+-
+-AR=ar rc
+-RANLIB=ranlib
+-TAR=tar
+-SHELL=/bin/sh
+-EXE=
+-
+-prefix = /usr/local
+-exec_prefix = ${prefix}
+-libdir = ${exec_prefix}/lib
+-includedir = ${prefix}/include
+-mandir = ${prefix}/share/man
+-man3dir = ${mandir}/man3
+-
+-OBJS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
+-       zutil.o inflate.o infback.o inftrees.o inffast.o
+-
+-OBJA =
+-# to use the asm code: make OBJA=match.o
+-
+-TEST_OBJS = example.o minigzip.o
+-
+-all: example$(EXE) minigzip$(EXE)
+-
+-check: test
+-test: all
+-	@LD_LIBRARY_PATH=.:$(LD_LIBRARY_PATH) ; export LD_LIBRARY_PATH; \
+-	echo hello world | ./minigzip | ./minigzip -d || \
+-	  echo '		*** minigzip test FAILED ***' ; \
+-	if ./example; then \
+-	  echo '		*** zlib test OK ***'; \
+-	else \
+-	  echo '		*** zlib test FAILED ***'; \
+-	fi
+-
+-libz.a: $(OBJS) $(OBJA)
+-	$(AR) $@ $(OBJS) $(OBJA)
+-	-@ ($(RANLIB) $@ || true) >/dev/null 2>&1
+-
+-match.o: match.S
+-	$(CPP) match.S > _match.s
+-	$(CC) -c _match.s
+-	mv _match.o match.o
+-	rm -f _match.s
+-
+-$(SHAREDLIBV): $(OBJS)
+-	$(LDSHARED) -o $@ $(OBJS)
+-	rm -f $(SHAREDLIB) $(SHAREDLIBM)
+-	ln -s $@ $(SHAREDLIB)
+-	ln -s $@ $(SHAREDLIBM)
+-
+-example$(EXE): example.o $(LIBS)
+-	$(CC) $(CFLAGS) -o $@ example.o $(LDFLAGS)
+-
+-minigzip$(EXE): minigzip.o $(LIBS)
+-	$(CC) $(CFLAGS) -o $@ minigzip.o $(LDFLAGS)
+-
+-install: $(LIBS)
+-	-@if [ ! -d $(exec_prefix) ]; then mkdir -p $(exec_prefix); fi
+-	-@if [ ! -d $(includedir)  ]; then mkdir -p $(includedir); fi
+-	-@if [ ! -d $(libdir)      ]; then mkdir -p $(libdir); fi
+-	-@if [ ! -d $(man3dir)     ]; then mkdir -p $(man3dir); fi
+-	cp zlib.h zconf.h $(includedir)
+-	chmod 644 $(includedir)/zlib.h $(includedir)/zconf.h
+-	cp $(LIBS) $(libdir)
+-	cd $(libdir); chmod 755 $(LIBS)
+-	-@(cd $(libdir); $(RANLIB) libz.a || true) >/dev/null 2>&1
+-	cd $(libdir); if test -f $(SHAREDLIBV); then \
+-	  rm -f $(SHAREDLIB) $(SHAREDLIBM); \
+-	  ln -s $(SHAREDLIBV) $(SHAREDLIB); \
+-	  ln -s $(SHAREDLIBV) $(SHAREDLIBM); \
+-	  (ldconfig || true)  >/dev/null 2>&1; \
+-	fi
+-	cp zlib.3 $(man3dir)
+-	chmod 644 $(man3dir)/zlib.3
+-# The ranlib in install is needed on NeXTSTEP which checks file times
+-# ldconfig is for Linux
+-
+-uninstall:
+-	cd $(includedir); \
+-	cd $(libdir); rm -f libz.a; \
+-	if test -f $(SHAREDLIBV); then \
+-	  rm -f $(SHAREDLIBV) $(SHAREDLIB) $(SHAREDLIBM); \
+-	fi
+-	cd $(man3dir); rm -f zlib.3
+-
+-mostlyclean: clean
+-clean:
+-	rm -f *.o *~ example$(EXE) minigzip$(EXE) \
+-	   libz.* foo.gz so_locations \
+-	   _match.s maketree contrib/infback9/*.o
+-
+-maintainer-clean: distclean
+-distclean: clean
+-	cp -p Makefile.in Makefile
+-	cp -p zconf.in.h zconf.h
+-	rm -f .DS_Store
+-
+-tags:
+-	etags *.[ch]
+-
+-depend:
+-	makedepend -- $(CFLAGS) -- *.[ch]
+-
+-# DO NOT DELETE THIS LINE -- make depend depends on it.
+-
+-adler32.o: zlib.h zconf.h
+-compress.o: zlib.h zconf.h
+-crc32.o: crc32.h zlib.h zconf.h
+-deflate.o: deflate.h zutil.h zlib.h zconf.h
+-example.o: zlib.h zconf.h
+-gzio.o: zutil.h zlib.h zconf.h
+-inffast.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+-inflate.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+-infback.o: zutil.h zlib.h zconf.h inftrees.h inflate.h inffast.h
+-inftrees.o: zutil.h zlib.h zconf.h inftrees.h
+-minigzip.o: zlib.h zconf.h
+-trees.o: deflate.h zutil.h zlib.h zconf.h trees.h
+-uncompr.o: zlib.h zconf.h
+-zutil.o: zutil.h zlib.h zconf.h
+Index: Makefile.am
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ Makefile.am	2007-11-07 16:38:21.546273273 +0000
+@@ -0,0 +1,38 @@
++## Process this file with automake to produce Makefile.in
++
++AUTOMAKE_OPTIONS = foreign no-dependencies
++
++# libz release 1.2.3
++libz_la_LDFLAGS = -version-info 3:0:1 -no-undefined
++
++include_HEADERS = zconf.h zlib.h
++
++lib_LTLIBRARIES = libz.la
++
++libz_la_SOURCES = adler32.c compress.c crc32.c crc32.h deflate.c \
++	deflate.h gzio.c infback.c inffast.c inffast.h inffixed.h \
++	inflate.c inflate.h inftrees.c inftrees.h trees.c trees.h \
++	uncompr.c zutil.c zutil.h
++
++pkgconfigdir = $(libdir)/pkgconfig
++pkgconfig_DATA = zlib.pc
++
++man_MANS = zlib.3
++
++# test suite
++check_PROGRAMS = example minigzip
++
++example_SOURCES = example.c
++example_LDADD = libz.la
++
++minigzip_SOURCES = minigzip.c
++minigzip_LDADD = libz.la
++
++check-local: example minigzip
++	@echo hello world | ./minigzip | ./minigzip -d || \
++	  echo '		*** minigzip test FAILED ***' ; \
++	if ./example; then \
++	  echo '		*** zlib test OK ***'; \
++	else \
++	  echo '		*** zlib test FAILED ***'; \
++	fi
+Index: configure.ac
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ configure.ac	2007-11-07 16:38:21.504419036 +0000
+@@ -0,0 +1,31 @@
++dnl Process this file with autoconf to produce a configure script.
++AC_INIT(gzio.c)
++AM_INIT_AUTOMAKE(zlib, 1.2.3)
++
++dnl Checks for programs
++AC_PROG_CC
++AC_ISC_POSIX
++AM_C_PROTOTYPES
++if test "x$U" != "x"; then
++  AC_MSG_ERROR(Compiler not ANSI compliant)
++fi
++AC_LIBTOOL_TAGS([])
++AC_PROG_LIBTOOL
++AC_PROG_INSTALL
++
++dnl support for files >2GB
++AC_SYS_LARGEFILE
++
++AC_HEADER_STDC
++AC_CHECK_HEADERS([unistd.h],
++  [AC_DEFINE(ZLIB_HAVE_UNISTD_H, 1, [If <unistd.h> available])])
++AC_CHECK_HEADERS(errno.h, ,
++  [AC_DEFINE(NO_ERRNO_H, 1, [If <errno.h> available])])
++AC_FUNC_MMAP
++
++dnl Checks for typedefs, structures, and compiler characteristics.
++AC_C_CONST
++AC_CONFIG_HEADERS([config.h zconf.h:zconf.in.h])
++AC_CONFIG_FILES([Makefile])
++AC_CONFIG_FILES([zlib.pc])
++AC_OUTPUT
+Index: gzio.c
+===================================================================
+--- gzio.c.orig	2007-11-02 00:17:32.107253196 +0000
++++ gzio.c	2007-11-02 01:09:04.602873426 +0000
+@@ -7,6 +7,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #include <stdio.h>
+ 
+ #include "zutil.h"
+@@ -591,6 +593,9 @@
+     return (int)(len - s->stream.avail_in);
+ }
+ 
++#ifndef HAVE_VSNPRINTF
++#define vsnprintf zlib_vsnprintf
++#endif
+ 
+ /* ===========================================================================
+      Converts, formats, and writes the args to the compressed file under
+@@ -599,7 +604,6 @@
+ */
+ #ifdef STDC
+ #include <stdarg.h>
+-
+ int ZEXPORTVA gzprintf (gzFile file, const char *format, /* args */ ...)
+ {
+     char buf[Z_PRINTF_BUFSIZE];
+@@ -608,26 +612,8 @@
+ 
+     buf[sizeof(buf) - 1] = 0;
+     va_start(va, format);
+-#ifdef NO_vsnprintf
+-#  ifdef HAS_vsprintf_void
+-    (void)vsprintf(buf, format, va);
+-    va_end(va);
+-    for (len = 0; len < sizeof(buf); len++)
+-        if (buf[len] == 0) break;
+-#  else
+-    len = vsprintf(buf, format, va);
+-    va_end(va);
+-#  endif
+-#else
+-#  ifdef HAS_vsnprintf_void
+-    (void)vsnprintf(buf, sizeof(buf), format, va);
+-    va_end(va);
+-    len = strlen(buf);
+-#  else
+     len = vsnprintf(buf, sizeof(buf), format, va);
+     va_end(va);
+-#  endif
+-#endif
+     if (len <= 0 || len >= (int)sizeof(buf) || buf[sizeof(buf) - 1] != 0)
+         return 0;
+     return gzwrite(file, buf, (unsigned)len);
+@@ -645,26 +631,8 @@
+     int len;
+ 
+     buf[sizeof(buf) - 1] = 0;
+-#ifdef NO_snprintf
+-#  ifdef HAS_sprintf_void
+-    sprintf(buf, format, a1, a2, a3, a4, a5, a6, a7, a8,
+-            a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
+-    for (len = 0; len < sizeof(buf); len++)
+-        if (buf[len] == 0) break;
+-#  else
+-    len = sprintf(buf, format, a1, a2, a3, a4, a5, a6, a7, a8,
+-                a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
+-#  endif
+-#else
+-#  ifdef HAS_snprintf_void
+-    snprintf(buf, sizeof(buf), format, a1, a2, a3, a4, a5, a6, a7, a8,
+-             a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
+-    len = strlen(buf);
+-#  else
+     len = snprintf(buf, sizeof(buf), format, a1, a2, a3, a4, a5, a6, a7, a8,
+                  a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20);
+-#  endif
+-#endif
+     if (len <= 0 || len >= sizeof(buf) || buf[sizeof(buf) - 1] != 0)
+         return 0;
+     return gzwrite(file, buf, len);
+Index: zconf.in.h
+===================================================================
+--- zconf.in.h.orig	2007-11-02 00:17:32.129997829 +0000
++++ zconf.in.h	2007-11-07 16:40:49.739215976 +0000
+@@ -7,6 +7,12 @@
+ 
+ #ifndef ZCONF_H
+ #define ZCONF_H
++/* The following defines are substituted by configure */
++#undef ZLIB_HAVE_UNISTD_H
++#undef NO_ERRNO_H
++
++/* End of substituted macros */
++
+ 
+ /*
+  * If you *really* need a unique prefix for all types and library functions,
+@@ -284,7 +290,8 @@
+    typedef Byte       *voidp;
+ #endif
+ 
+-#if 0           /* HAVE_UNISTD_H -- this line is updated by ./configure */
++
++#if ZLIB_HAVE_UNISTD_H           /* HAVE_UNISTD_H -- this line is updated by ./configure */
+ #  include <sys/types.h> /* for off_t */
+ #  include <unistd.h>    /* for SEEK_* and off_t */
+ #  ifdef VMS
+Index: zutil.c
+===================================================================
+--- zutil.c.orig	2007-11-02 00:17:32.172005790 +0000
++++ zutil.c	2007-11-02 00:17:34.067806016 +0000
+@@ -5,6 +5,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #include "zutil.h"
+ 
+ #ifndef NO_DUMMY_DECL
+@@ -85,30 +87,6 @@
+ #ifdef FASTEST
+     flags += 1L << 21;
+ #endif
+-#ifdef STDC
+-#  ifdef NO_vsnprintf
+-        flags += 1L << 25;
+-#    ifdef HAS_vsprintf_void
+-        flags += 1L << 26;
+-#    endif
+-#  else
+-#    ifdef HAS_vsnprintf_void
+-        flags += 1L << 26;
+-#    endif
+-#  endif
+-#else
+-        flags += 1L << 24;
+-#  ifdef NO_snprintf
+-        flags += 1L << 25;
+-#    ifdef HAS_sprintf_void
+-        flags += 1L << 26;
+-#    endif
+-#  else
+-#    ifdef HAS_snprintf_void
+-        flags += 1L << 26;
+-#    endif
+-#  endif
+-#endif
+     return flags;
+ }
+ 
+Index: zlib.pc.in
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ zlib.pc.in	2007-11-02 00:17:34.076584770 +0000
+@@ -0,0 +1,10 @@
++prefix=@prefix@
++exec_prefix=@exec_prefix@
++libdir=@libdir@
++includedir=@includedir@
++
++Name: Zlib
++Description: free, lossless data compression library
++Version: @VERSION@
++Libs: -L${libdir} -lz
++Cflags: -I${includedir}
+Index: adler32.c
+===================================================================
+--- adler32.c.orig	2007-11-02 00:17:32.181901894 +0000
++++ adler32.c	2007-11-02 00:17:34.082161404 +0000
+@@ -5,6 +5,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #define ZLIB_INTERNAL
+ #include "zlib.h"
+ 
+Index: compress.c
+===================================================================
+--- compress.c.orig	2007-11-02 00:17:32.118134304 +0000
++++ compress.c	2007-11-02 00:17:34.088707778 +0000
+@@ -5,6 +5,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #define ZLIB_INTERNAL
+ #include "zlib.h"
+ 
+Index: crc32.c
+===================================================================
+--- crc32.c.orig	2007-11-02 00:17:32.071405023 +0000
++++ crc32.c	2007-11-02 00:17:34.095728583 +0000
+@@ -19,6 +19,8 @@
+   one thread to use crc32().
+  */
+ 
++#include <config.h>
++
+ #ifdef MAKECRCH
+ #  include <stdio.h>
+ #  ifndef DYNAMIC_CRC_TABLE
+Index: deflate.c
+===================================================================
+--- deflate.c.orig	2007-11-02 00:17:32.056920908 +0000
++++ deflate.c	2007-11-02 00:17:34.104418548 +0000
+@@ -49,6 +49,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #include "deflate.h"
+ 
+ const char deflate_copyright[] =
+Index: infback.c
+===================================================================
+--- infback.c.orig	2007-11-02 00:17:32.088312888 +0000
++++ infback.c	2007-11-02 00:17:34.113108221 +0000
+@@ -10,6 +10,8 @@
+    inflate_fast() can be used with either inflate.c or infback.c.
+  */
+ 
++#include <config.h>
++
+ #include "zutil.h"
+ #include "inftrees.h"
+ #include "inflate.h"
+Index: inffast.c
+===================================================================
+--- inffast.c.orig	2007-11-02 00:17:32.165710987 +0000
++++ inffast.c	2007-11-02 00:17:34.119585988 +0000
+@@ -3,6 +3,8 @@
+  * For conditions of distribution and use, see copyright notice in zlib.h
+  */
+ 
++#include <config.h>
++
+ #include "zutil.h"
+ #include "inftrees.h"
+ #include "inflate.h"
+Index: inflate.c
+===================================================================
+--- inflate.c.orig	2007-11-02 00:17:32.043421551 +0000
++++ inflate.c	2007-11-02 00:17:34.126876485 +0000
+@@ -80,6 +80,8 @@
+  * The history for versions after 1.2.0 are in ChangeLog in zlib distribution.
+  */
+ 
++#include <config.h>
++
+ #include "zutil.h"
+ #include "inftrees.h"
+ #include "inflate.h"
+Index: inftrees.c
+===================================================================
+--- inftrees.c.orig	2007-11-02 00:17:32.123504582 +0000
++++ inftrees.c	2007-11-02 00:17:34.134752191 +0000
+@@ -3,6 +3,8 @@
+  * For conditions of distribution and use, see copyright notice in zlib.h
+  */
+ 
++#include <config.h>
++
+ #include "zutil.h"
+ #include "inftrees.h"
+ 
+Index: trees.c
+===================================================================
+--- trees.c.orig	2007-11-02 00:17:32.202082453 +0000
++++ trees.c	2007-11-02 00:17:34.142710792 +0000
+@@ -33,6 +33,8 @@
+ 
+ /* #define GEN_TREES_H */
+ 
++#include <config.h>
++
+ #include "deflate.h"
+ 
+ #ifdef DEBUG
+Index: uncompr.c
+===================================================================
+--- uncompr.c.orig	2007-11-02 00:17:32.188320344 +0000
++++ uncompr.c	2007-11-02 00:17:34.150699403 +0000
+@@ -5,6 +5,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #define ZLIB_INTERNAL
+ #include "zlib.h"
+ 
+Index: example.c
+===================================================================
+--- example.c.orig	2004-10-24 00:11:55.000000000 +0000
++++ example.c	2007-11-07 16:42:30.588849031 +0000
+@@ -5,6 +5,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #include <stdio.h>
+ #include "zlib.h"
+ 
+Index: minigzip.c
+===================================================================
+--- minigzip.c.orig	2005-05-28 06:40:50.000000000 +0000
++++ minigzip.c	2007-11-07 16:42:38.273664243 +0000
+@@ -15,6 +15,8 @@
+ 
+ /* @(#) $Id$ */
+ 
++#include <config.h>
++
+ #include <stdio.h>
+ #include "zlib.h"
+ 

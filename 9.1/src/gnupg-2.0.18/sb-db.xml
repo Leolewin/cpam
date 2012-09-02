@@ -1,0 +1,546 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="gnupg" version="2.0.18" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}20</install-name>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend">v&gt;=2.4.3</depend>
+      <depend program="curl" install-name="curl722"
+        add-path="prepend">v&gt;=7.22.0</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip210">v&gt;=1.0.6</depend>
+      <depend program="openldap" var="OPENLDAP"
+        install-name="openldap24">v&gt;=2.4.26</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libassuan" install-name="libassuan20"
+        add-path="prepend">v&gt;=2.0.2</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libgcrypt" var="LIBGCRYPT"
+        install-name="libgcrypt14">v&gt;=1.4.6</depend>
+      <depend program="libgpg-error" var="LIBGPG_ERROR"
+        install-name="libgpgerror110">v&gt;=1.10</depend>
+      <depend program="libksba" var="KSBA"
+        install-name="libksba12">v&gt;=1.2.0</depend>
+      <depend program="pth" install-name="libpth20"
+        add-path="prepend">v&gt;=2.0.7</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="prngd" var="PRNGD"
+        systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <sources>
+        <source checksum="2f37e0722666a0fedbe4d9f9227ac4d7"
+          checksum-type="md5" size="4016606"
+          path="src/gnupg-2.0.18.tar.bz2"/>
+        <patch checksum="a07d486302a26d82adf47d752d0ef54a"
+          checksum-type="md5" size="48411"
+          path="src/gnupg-2.0.18.tww.patch"/>
+        <patch checksum="93d0084a093bd1c8ddf3625d2e1c67f2"
+          checksum-type="md5" size="1033143"
+          path="src/gnupg-2.0.18.gnulib.patch"/>
+        <patch checksum="d4714bbf80b7d855b7559b517ccdb7c7"
+          checksum-type="md5" size="1247491"
+          path="src/gnupg-2.0.18.auto.patch"/>
+      </sources>
+
+      <validate>
+        <depend program="gnupg" module="pinentry">v==2.0.18</depend>
+        <depend program="gnupg" module="dirmngr">v==2.0.18</depend>
+      </validate>
+
+      <script-header replace="0">
+<![CDATA[
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  _prngd_socket="/var${SB_VAR_PRNGD}/pool"
+fi
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_BZIP2+-I${SB_VAR_BZIP2_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_OPENLDAP+-I${SB_VAR_OPENLDAP_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_OPENLDAP+-L${SB_VAR_OPENLDAP_LIB} \
+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB}} \
+${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_BZIP2+${CC_LD_RT}${SB_VAR_BZIP2_LIB}} \
+${SB_VAR_GETTEXT+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_BZIP2+-L${SB_VAR_BZIP2_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_LIB}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:${SB_VAR_KSBA_LIB}/pkgconfig" \
+MAKE=gmake --enable-ldap --datadir=${_datadir} \
+--datarootdir=${_datadir} --docdir=${_docdir} \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" --prefix=${SB_INSTALL_PREFIX}
+
+# rebuild info files
+(rm doc/*.info*) >/dev/null 2>&1 || :
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+gmake check
+
+: ignore testsuite failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# need to make gpg and gpgsm SUID to enable memory locking
+case "${SB_SYSTYPE}" in
+*-aix*|*-osf*|*-hpux*|*-linux*|*-solaris*)
+  ${SB_PATH_CHMOD} u+s ${SB_INSTALL_PREFIX}/bin/gpg2
+  ${SB_PATH_CHMOD} u+s ${SB_INSTALL_PREFIX}/bin/gpgsm ;;
+esac
+
+${SB_PATH_CHMOD} u-w ${SB_INSTALL_PREFIX}/bin/*
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/contrib.texi \
+doc/debugging.texi doc/glossary.texi doc/gpl.texi doc/gpg.texi \
+doc/gpg-agent.texi doc/gpgsm.texi doc/gpgv.texi \
+doc/howto-create-a-server-cert.texi doc/howtos.texi \
+doc/instguide.texi doc/opt-homedir.texi doc/scdaemon.texi \
+doc/see-also-note.texi doc/specify-user-id.texi doc/sysnotes.texi \
+doc/tools.texi doc/version.texi ${_docdir}/texinfo
+]]>
+      </install>
+    </module>
+
+    <module name="dirmngr">
+      <build-name>dirmngr-1.1.0</build-name>
+
+      <sources>
+        <source checksum="f2570f0248f5947daac200e85291b328"
+          checksum-type="md5" size="556406"
+          path="src/dirmngr-1.1.0.tar.bz2"/>
+        <patch checksum="b2bfb5467dec912a64589fb3bda1759f"
+          checksum-type="md5" size="92513"
+          path="src/dirmngr-1.1.0.tww.patch"/>
+        <patch checksum="192bd383e73eeb46702e35a6ca58430c"
+          checksum-type="md5" size="892209"
+          path="src/dirmngr-1.1.0.gnulib.patch"/>
+        <patch checksum="ea53f27cff9cc54ee3e4a8cff05d6d5b"
+          checksum-type="md5" size="767200"
+          path="src/dirmngr-1.1.0.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC-gcc}" CFLAGS="${CFLAGS--O2}" \
+CPPFLAGS="${SB_VAR_OPENLDAP+-I${SB_VAR_OPENLDAP_INC}}" \
+LDFLAGS="${SB_VAR_OPENLDAP+-L${SB_VAR_OPENLDAP_LIB}} \
+${SB_VAR_OPENLDAP+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig:${SB_VAR_KSBA_LIB}/pkgconfig" \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--disable-dependency-tracking --infodir=${SB_INSTALL_PREFIX}/info \
+--mandir="${SB_INSTALL_PREFIX}/man" --docdir=${_docdir} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo/dirmngr
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/dirmngr.texi doc/gpl.texi \
+doc/see-also-note.texi doc/version.texi ${_docdir}/texinfo/dirmngr
+]]>
+      </install>
+    </module>
+
+    <module name="pinentry">
+      <build-name>pinentry-0.8.1</build-name>
+
+      <sources>
+        <source checksum="81f99904daee5331eb6738408bb024b6"
+          checksum-type="md5" size="504101"
+          path="src/pinentry-0.8.1.tar.gz"/>
+        <patch checksum="6c671ca2caf193362d6c3e656a41a206"
+          checksum-type="md5" size="71854"
+          path="src/pinentry-0.8.1.tww.patch"/>
+        <patch checksum="3e46fb4d50ebcabc961a43a96648b1cd"
+          checksum-type="md5" size="567945"
+          path="src/pinentry-0.8.1.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="flex" install-name="flex25"
+          add-path="prepend">v&gt;=2.5.35</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+          install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib226">v&gt;=2.26.1</depend>
+        <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+          add-path="prepend">v&gt;=2.22.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          add-path="prepend">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="ncurses" var="NCURSES"
+          install-name="ncurses57">v&gt;=5.7</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128">v&gt;=1.28.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS=-D_XOPEN_SOURCE_EXTENDED
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS=-D_XOPEN_SOURCE_EXTENDED
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS=-D_XOPEN_SOURCE_EXTENDED
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CPPFLAGS="-DNCURSES_ENABLE_STDBOOL_H=0"
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CPPFLAGS="-DNCURSES_ENABLE_STDBOOL_H=0"
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC-gcc}" CFLAGS="${CFLAGS--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC} \
+-I${SB_VAR_NCURSES_INC}/ncurses} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB} \
+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--enable-ncurses --enable-pinentry-gtk2 \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--disable-pinentry-gtk --disable-pinentry-qt --disable-pinentry-qt4 \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--disable-dependency-tracking --infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" --docdir=${_docdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# rebuild info file
+rm -f doc/pinentry.info || :
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo/pinentry
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/gpl.texi doc/pinentry.texi \
+doc/version.texi ${_docdir}/texinfo/pinentry
+
+
+# need to make gpg and gpgsm SUID to enable memory locking
+#case "${SB_SYSTYPE}" in
+#*-aix*|*-osf*|*-hpux*|*-linux*|*-solaris*)
+#  ${SB_PATH_CHMOD} u+s ${SB_INSTALL_PREFIX}/bin/pinentry
+#  ${SB_PATH_CHMOD} u+s ${SB_INSTALL_PREFIX}/bin/pinentry-curses ;;
+#esac
+
+#${SB_PATH_CHMOD} u-w ${SB_INSTALL_PREFIX}/bin/*
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="2.0.17" to="2.0.18">
+        <item><para>Bug fix for newer versions of
+Libgcrypt</para></item>
+        <item><para>Support the SSH confirm flag and show SSH
+fingerprints in ssh related pinentries</para></item>
+        <item><para>Improved dirmngr/gpgsm interaction for
+OCSP</para></item>
+        <item><para>Allow generation of card keys up to 4096
+bit</para></item>
+      </change>
+
+      <change from="2.0.16" to="2.0.17">
+        <item><para>Allow more hash algorithms with the OpenPGP v2
+card</para></item>
+        <item><para>The gpg-agent now tests for a new gpg-agent.conf
+on a HUP</para></item>
+        <item><para>Fixed output of "gpgconf
+--check-options"</para></item>
+        <item><para>Fixed a bug where Scdaemon sends a signal to
+Gpg-agent running in non-daemon mode</para></item>
+        <item><para>Fixed TTY management for pinentries and session
+variable update problem</para></item>
+      </change>
+
+      <change from="2.0.15" to="2.0.16">
+        <item><para>If the agent's --use-standard-socket option is
+active, all tools try to start and daemonize the agent on the fly.  In
+the past this was only supported on W32; on non-W32 systems the new
+configure option --enable-standard-socket may now be used to use this
+feature by default.</para></item>
+        <item><para>The gpg-agent commands KILLAGENT and RELOADAGENT
+are now available on all platforms</para></item>
+        <item><para>Minor bug fixes</para></item>
+      </change>
+
+      <change from="2.0.14" to="2.0.15">
+        <item><para>New command --passwd for GPG</para></item>
+        <item><para>Fixes a regression in 2.0.14 which prevented
+unprotection of new or changed gpg-agent passphrases</para></item>
+        <item><para>Make use of libassuan 2.0 which is available as a
+DSO</para></item>
+      </change>
+
+      <change from="2.0.13" to="2.0.14">
+        <item><para>The default for --include-cert is now to include
+all certificates in the chain except for the root
+certificate</para></item>
+        <item><para>Numerical values may now be used as an alternative
+to the debug-level keywords</para></item>
+        <item><para>The GPGSM --audit-log feature is now more
+complete</para></item>
+        <item><para>GPG now supports DNS lookups for SRV, PKA and CERT
+on W32</para></item>
+        <item><para>New GPGSM option
+--ignore-cert-extension</para></item>
+        <item><para>New and changed passphrases are now created with
+an iteration count requiring about 100ms of CPU work</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>AIX does not have the <command>mlock()</command>
+function used to lock a region of memory and prevent it from being
+swapped to disk (necessary so the GPG secret key does not appear on
+disk). The <command>plock()</command> function is used instead.
+<command>plock()</command> locks the entire data segment of the
+process in memory. While not as fine-grained as
+<command>mlock()</command>, it achieves the desired goal of creating a
+secure memory region.</para>
+      </note>
+
+      <note type="usage">
+        <para>Because a device file to gather entropy is not available
+on all systems to generate random data, the PRNGD daemon should be
+used to provide such a device file for GnuPG. AIX 5.2, Redhat Linux,
+and Solaris 8, 9 provide a <command>/dev/random</command> device to
+provide this feature and therefore PRNGD is not required. GnuPG was
+compiled to expect the device file <command>/var${SB_INSTALL_BASE}/prngd/pool</command>
+for the platforms where PRNGD is a requirement. This can be changed at
+runtime by specifying the command-line option
+<command>-E=PATH</command>, <command>--egd-socket=PATH</command> where
+PATH is the name of the socket PRNGD is listening on.</para>
+        <para>On AIX, HP-UX, Solaris, and Tru64 UNIX, the
+<command>gpg2</command> binary,
+<command>${SB_INSTALL_PREFIX}/bin/gpg2</command> is SUID root to allow
+locks on memory regions. IRIX does not need the binary to be SUID root
+to allow this.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 March 15" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix <command>get_max_fds()</command> on AIX by
+correctly handling how <command>getrlimit()</command>
+behaves</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

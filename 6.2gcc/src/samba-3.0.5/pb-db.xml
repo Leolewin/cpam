@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="samba" version="3.0.5" revision="2">
+    <package-manager name="pkgadd">
+      <category>System Environment/Daemons</category>
+      <title>Samba SMB Server</title>
+      <vendor>Samba Team</vendor>
+
+      <description attribution="FreeBSD Ports Collection">
+The Samba suite is a set of programs which run under the FreeBSD
+operating system. These programs deliver most of the important
+functionality of a Microsoft Lan Manager server. That is, they support
+remote access to the UNIX filespace and UNIX printers from Lan Manager
+compatible clients.
+
+Some of the most popular Lan Manager compatible clients include Lan
+Manager itself, Windows for Workgroups, OS/2 and Windows NT.
+      </description>
+
+      <install-name>samba305</install-name>
+
+      <pkgname-base>TWWsm305</pkgname-base>
+
+      <version>3.0.5</version>
+      <revision>2</revision>
+
+      <init name="/etc/init.d/TWWsamba305"
+        path="pkg/init-sol"
+        checksum="aad6d89996489093944acfa75a38daf6"
+        checksum-type="md5" size="1466"/>
+      <init link-src="/etc/rc2.d/S79TWWsamba305"
+        link-dest="/etc/init.d/TWWsamba305"/>
+      <init link-src="/etc/rc1.d/K19TWWsamba305"
+        link-dest="/etc/init.d/TWWsamba305"/>
+      <init link-src="/etc/rc0.d/K19TWWsamba305"
+        link-dest="/etc/init.d/TWWsamba305"/>
+
+      <config>/etc/init.d/TWWsamba305</config>
+      <config>etc/lmhosts</config>
+      <config>etc/smb.conf</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWicn19"
+          title="Iconv Library"
+          subpkg="runtime">v&gt;=1.9.2</depend>
+        <depend pkgname-base="TWWld21c"
+          title="OpenLDAP LDAP Server"
+          subpkg="runtime">v&gt;=2.1.27</depend>
+        <depend pkgname-base="TWWxml26"
+          title="XML C Library"
+          subpkg="runtime">v&gt;=2.6.11</depend>
+      </subpkg>
+
+      <replace pkgname-base="TWWsm302"
+        install-name="samba302"/>
+      <replace pkgname-base="TWWsm301"
+        install-name="samba301"/>
+      <replace pkgname-base="TWWsm300"
+        install-name="samba30"/>
+      <replace pkgname-base="TWWsm22a"
+        install-name="samba2210"/>
+      <replace pkgname-base="TWWsm228"
+        install-name="samba228"/>
+      <replace pkgname-base="TWWsm227"
+        install-name="samba227"/>
+
+      <changelog>
+        <change date="2004 September 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Apply patch for CAN-2004-0807 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0807">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0488</ulink>)
+to fix a defect in smbd's ASN.1 parsing which allows an attacker to
+send a specially crafted packet during the authentication request
+which will send the newly spawned smbd process into an infinite loop.
+Given enough of these packets, it is possible to exhaust the available
+memory on the server.</para></item>
+          <item><para>Apply patch for CAN-2004-0808 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0808">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0808</ulink>)
+to fix a defect in nmbd's process of mailslot packets which can allow
+an attacker to anonymously crash nmbd.</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <changelog>
+      <change date="2004 September 15" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0807 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0807">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0488</ulink>)
+to fix a defect in smbd's ASN.1 parsing which allows an attacker to
+send a specially crafted packet during the authentication request
+which will send the newly spawned smbd process into an infinite loop.
+Given enough of these packets, it is possible to exhaust the available
+memory on the server.</para></item>
+        <item><para>Apply patch for CAN-2004-0808 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0808">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0808</ulink>)
+to fix a defect in nmbd's process of mailslot packets which can allow
+an attacker to anonymously crash nmbd.</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libexif" version="0.6.9" revision="1"
+  systype="*-aix*|*-hpux*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}06</install-name>
+
+    <sources>
+      <source checksum="0aa142335a8a00c32bb6c7dbfe95fc24"
+        checksum-type="md5" size="520956"
+        path="src/libexif-0.6.9.tar.gz"/>
+      <patch checksum="8eb5bc9f2ffeb1c5dbb621002b184d0d"
+        checksum-type="md5" size="1210614"
+        path="src/libexif-0.6.9.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014"
+        add-path="prepend">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS="-Wl,-brtl"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae +O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+${LIBICONV+--with-libiconv-prefix=${LIBICONV}} \
+--with-libintl-prefix=${GETTEXT} --datadir=${_datadir} \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in libexif/libexif.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+test/test-mem
+]]>
+    </test>
+  </program>
+</programs>

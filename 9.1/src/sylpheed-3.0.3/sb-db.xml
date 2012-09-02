@@ -1,0 +1,403 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="sylpheed" version="3.0.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}30</install-name>
+
+    <sources>
+      <source checksum="0428c2625961d76ecb62f3965eb6ee88"
+        checksum-type="md5" size="2988634"
+        path="src/sylpheed-3.0.3.tar.bz2"/>
+      <patch checksum="ea077fe069d597aa386bdfe129d43dbd"
+        checksum-type="md5" size="20193"
+        path="src/sylpheed-3.0.3.tww.patch"/>
+      <patch checksum="fe902e801140bc70cba220285cfcbe67"
+        checksum-type="md5" size="2400728"
+        path="src/sylpheed-3.0.3.auto.patch"/>
+      <patch checksum="84c830d6d76d7c04afea33091f44360c"
+        checksum-type="md5" size="2093"
+        path="src/sylpheed-3.0.3.tww-auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="aspell" var="LIBASPELL"
+        install-name="aspell06" type="build">v&gt;=0.60.6.1</depend>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="openldap" var="OPENLDAP"
+        install-name="openldap24">v&gt;=2.4.26</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="enchant" var="LIBENCHANT"
+        install-name="libenchant16">v&gt;=1.6.0</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="gpgme" var="LIBGPGME"
+        install-name="libgpgme13">v&gt;=1.3.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="gtkspell" var="LIBGTKSPELL"
+        install-name="libgtkspell20">v&gt;=2.0.16</depend>
+      <depend program="libgpg-error" var="LIBGPG_ERROR"
+        install-name="libgpgerror110">v&gt;=1.10</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="nmh" var="NMH"
+        install-name="nmh13">v&gt;=1.3</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+      <depend program="prngd" var="PRNGD" install-name="prngd"
+        systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_gccsubdir="gcc44"
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -ma -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--disable-ipv6" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libenchant_lib=${SB_VAR_LIBENCHANT_LIB} ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libenchant_lib=${SB_VAR_LIBENCHANT_LIB} ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--disable-ipv6" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s|/usr/bin/mh/inc|${SB_VAR_NMH}/bin/inc|" libsylph/defs.h
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${SB_VAR_LIBASPELL+-I${SB_VAR_LIBASPELL_INC}} \
+${SB_VAR_OPENLDAP+-I${SB_VAR_OPENLDAP_INC}} \
+${SB_VAR_PRNGD+-DEGD_SOCKET_PATH=\\\"\"${_prngd_socket}\"\\\"}" \
+LDFLAGS="${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_OPENLDAP+-L${SB_VAR_OPENLDAP_LIB}/gnutls} \
+${SB_VAR_GETTEXT+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_LIBICONV+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_OPENLDAP+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB}/gnutls} \
+${LDFLAGS+${LDFLAGS}}" PKG_CONFIG_PATH="\
+${SB_VAR_LIBGPGME_LIB}/pkgconfig:\
+${SB_VAR_LIBGPG_ERROR_LIB}/pkgconfig:\
+${_libenchant_lib:-${SB_VAR_LIBENCHANT_LIB}/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_LIBGDKPIXBUF+:${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig}\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBGTKSPELL+:${SB_VAR_LIBGTKSPELL_LIB}/pkgconfig}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--with-manualdir="${_docdir}/manual" --with-faqdir="${_docdir}/faq" \
+--with-plugindir="${SB_INSTALL_PREFIX_LIB}/plugins" \
+${SB_VAR_OPENLDAP+--enable-ldap} --disable-dependency-tracking \
+--disable-updatecheck ${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <notes>
+      <change from="3.0.2" to="3.0.3">
+        <item><para>Update check can also show alternative version as
+well as internal version now.</para></item>
+        <item><para>'Open' menu was added to the attach context menu
+of the message</para></item>
+        <item><para>composition window. This allows users to open
+attached files before sending.</para></item>
+        <item><para>English Sylpheed FAQ was updated.</para></item>
+        <item><para>Plug-ins are also loaded from user plug-in
+directory now.</para></item>
+        <item><para>Unix: the default web browser command was changed
+to xdg-open, and obsolete commands were removed.</para></item>
+        <item><para>Unix: the crash when using %f on IMAP messages at
+the action tool was fixed.</para></item>
+        <item><para>The crash when clicking tray icon menu 'Get from
+current account' when no account exist was fixed.</para></item>
+        <item><para>The crash on 64-bit architecture with LDAP was
+fixed (debian BTS #463366).</para></item>
+        <item><para>Some GTK+ warnings were removed.</para></item>
+        <item><para>Redundant debug or error messages were
+removed.</para></item>
+        <item><para>The bug that MIME flags were not set to imported
+mbox file and filtered sent messages was fixed.</para></item>
+        <item><para>The crash when POP3 session was cancelled while
+processing received mail was fixed.</para></item>
+        <item><para>Win32: included libpng library was updated to
+1.2.44 (security fix).</para></item>
+        <item><para>Win32: included libtiff library was updated to
+3.9.4 (security fix).</para></item>
+      </change>
+
+      <change from="3.0.1" to="3.0.2">
+        <item><para>The random scrolling problem on selecting folders
+with GTK+ 2.12 or later was fixed.</para></item>
+        <item><para>The problem that config files are not updated
+after creating new accounts was fixed.</para></item>
+        <item><para>The problem that folder config file was not
+updated after changing IMAP or News account name was
+fixed.</para></item>
+        <item><para>Win32: OpenSSL was updated to 0.9.8n (security
+fix).</para></item>
+      </change>
+
+      <change from="3.0.0" to="3.0.1">
+        <item><para>Several typos in dialogs were fixed.</para></item>
+        <item><para>The Japanese manual was updated.</para></item>
+        <item><para>Win32: included libpng library was updated to
+1.2.43 (security fix).</para></item>
+        <item><para>Win32: included libtiff library was updated to
+3.9.2 (security fix).</para></item>
+      </change>
+
+      <change from="3.0.0rc" to="3.0.0">
+        <item><para>The message catalogs were updated.</para></item>
+        <item><para>The bug that caused freeze when sending or
+receiving messages with STARTTLS and 'SSL certificate verify failed'
+dialog popped up.</para></item>
+      </change>
+
+      <change from="3.0.0beta8" to="3.0.0rc">
+        <item><para>The Japanese manual was updated.</para></item>
+        <item><para>The 'Enable address auto-completion' setting was
+added.</para></item>
+        <item><para>Curl command timeout was set to 10
+seconds.</para></item>
+        <item><para>The compile error with OpenSSL disabled was
+fixed.</para></item>
+        <item><para>Win32: multiple reference to a folder with
+different letter case is prohibited when creating a new
+one.</para></item>
+        <item><para>Some minor bugs were fixed.</para></item>
+      </change>
+
+      <change from="3.0.0beta7" to="3.0.0beta8">
+        <item><para>The new filter match type 'is in addressbook' was
+added. This can be used from filtering, query search and quick
+search.</para></item>
+        <item><para>The new account setup dialog was implemented. It
+also supports easy Gmail setup.</para></item>
+        <item><para>The address completion was modified.</para></item>
+        <item><para>The spell-checking and PGP settings are preserved
+for draft messages now.</para></item>
+        <item><para>The crash problem when trying to check PGP
+signatures while GnuPG was not available was fixed.</para></item>
+      </change>
+
+      <change from="3.0.0beta6" to="3.0.0beta7">
+        <item><para>The feature to add new recipients to address book
+on sending was added.</para></item>
+        <item><para>Color labels are saved on IMAP server now
+(partially compatible with Thunderbird).</para></item>
+        <item><para>The auto-wrapping setting is preserved for draft
+messages now.</para></item>
+        <item><para>The problem that beep sound was out when opening
+folders which were sorted in descending order was fixed.</para></item>
+        <item><para>The new plug-in APIs for compose window were
+added.</para></item>
+      </change>
+
+      <change from="3.0.0beta5" to="3.0.0beta6">
+        <item><para>The bug that IMAP caches get wrongly deleted was
+fixed.</para></item>
+        <item><para>The copyright year was updated.</para></item>
+      </change>
+
+      <change from="3.0.0beta4" to="3.0.0beta5">
+        <item><para>The feature to customize the color label text was
+added.</para></item>
+        <item><para>The option to set only mail address of recipients
+when replying was added.</para></item>
+        <item><para>When messages are added to IMAP folders,
+received-date information is also set using Date header (mainly for
+Gmail).</para></item>
+        <item><para>The configure option '--disable-updatecheck' which
+disables the update check feature was added.</para></item>
+        <item><para>The configure option '--enable-silent-rules' is
+enabled if automake is equal or greater than 1.11.</para></item>
+        <item><para>A workaround for crash caused by enchant with
+zemberek was added (requires dbus-glib-1 if enchant is equal or
+greater than 1.4.2).</para></item>
+        <item><para>The bug that caused freeze when remote IPC
+commands were executed.</para></item>
+        <item><para>The bug that IMAP caches with UIDs larger than
+INT_MAX were never deleted was fixed.</para></item>
+      </change>
+
+      <change from="3.0.0beta3" to="3.0.0beta4">
+        <item><para>The folder icons were renewed.</para></item>
+        <item><para>'Last 7 days' was added to the quick search
+options.</para></item>
+        <item><para>The number of matched messages is displayed at the
+side of quick search now.</para></item>
+        <item><para>Description is displayed on the quick search entry
+when it does not have focus.</para></item>
+        <item><para>Always show warning dialog when SSL certificate is
+expired.</para></item>
+        <item><para>The menu item to request disposition notification
+was added to the compose window.</para></item>
+        <item><para>The setup dialog on the first run became
+user-friendly.</para></item>
+        <item><para>The update check dialog will not be displayed if
+modal dialog exists or receiving of mail is active to prevent dialogs
+becoming uncontrollable.</para></item>
+        <item><para>The button order of folder selection dialog was
+modified.</para></item>
+        <item><para>Win32: the button order of close confirmation
+dialog of compose window was modified.</para></item>
+      </change>
+
+      <change from="3.0.0beta2" to="3.0.0beta3">
+        <item><para>SHA1/MD5 fingerprint and validity period of
+certificate is now displayed when verification of server SSL
+certificate failed.</para></item>
+        <item><para>Address book is now sortable by each
+column.</para></item>
+        <item><para>Address book search feature was
+added.</para></item>
+        <item><para>The visibility of message number columns in the
+folder view is now configurable for each column.</para></item>
+        <item><para>The error check of socket connection became more
+strict.</para></item>
+        <item><para>Win32: OpenSSL was updated to
+0.9.8l.</para></item>
+      </change>
+
+      <change from="3.0.0beta1" to="3.0.0beta2">
+        <item><para>Many important bugs related to multi-threading
+were fixed.</para></item>
+        <item><para>The unintended drag start on IMAP folders was
+fixed.</para></item>
+        <item><para>The libtool version was increased to prevent
+linking problem.</para></item>
+        <item><para>Several new APIs were added to the plug-in
+library.</para></item>
+        <item><para>Win32: 48x48(32bpp) icon was added.</para></item>
+      </change>
+
+      <change from="2.7.1" to="3.0.0beta1">
+        <item><para>Multi-threading was introduced. (can be disabled
+by --disable-threads configure option)</para></item>
+        <item><para>Win32: network connection runs on another thread
+to prevent blocking of the user interface.</para></item>
+        <item><para>Execution of external commands (such as bsfilter)
+on filtering will not block the user interface anymore.</para></item>
+        <item><para>The major part of IMAP protocol communication runs
+on another thread to prevent blocking of the user
+interface.</para></item>
+        <item><para>The query search is executed on another
+thread.</para></item>
+        <item><para>LibSylph is (almost) thread-safe
+now.</para></item>
+        <item><para>Summary caches are updated on the fly (on
+receive/move/copy/delete). This improves the performance of opening
+folders with many new messages.</para></item>
+        <item><para>Progress is displayed while scanning
+folders.</para></item>
+        <item><para>The user interface of address book was rewritten
+using the new API (GtkTreeView). This will reduce the glitches in the
+older versions.</para></item>
+        <item><para>Included Sylpheed FAQ (English) was
+updated.</para></item>
+        <item><para>Some bugfixes are made.</para></item>
+      </change>
+
+      <note type="usage">
+        <para>Because some platforms do not have a
+<command>/dev/random</command> device (or equivalent), sylpheed has
+been compiled to gather entropy from the PRNG daemon.</para>
+        <para>The default path to the entropy pool is
+<command>/var${SB_INSTALL_BASE}/prngd/pool</command>. This can be changed by editing
+the <command>.sylpheed-2.0/sylpheedrc</command> file in the users home
+directory and changing the <command>egd_socket_path</command>
+preference.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

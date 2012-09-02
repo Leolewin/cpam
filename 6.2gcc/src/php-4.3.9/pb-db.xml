@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="php" version="4.3.9">
+    <package-manager name="pkgadd">
+      <category>Development/Languages</category>
+      <title>PHP scripting language</title>
+      <vendor>The PHP Group</vendor>
+
+      <description attribution="The OpenPKG Project">
+PHP is an HTML-embedded scripting language. Much of its syntax is
+borrowed from C, Java and Perl with a couple of unique PHP-specific
+features thrown in. The goal of the language is to allow web
+developers to write dynamically generated pages quickly.
+      </description>
+
+      <install-name>php439</install-name>
+
+      <pkgname-base>TWWph439</pkgname-base>
+
+      <version>4.3.9</version>
+      <revision>1</revision>
+
+      <variable>
+        <path name="APACHE"
+          install-name="apache2049"></path>
+      </variable>
+
+      <config upgrade="1">/etc${INSTALL_PREFIX}/php.ini</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWa2049"
+          title="Apache Web Server"
+          subpkg="runtime">v&gt;=2.0.49</depend>
+        <depend pkgname-base="TWWa2049"
+          title="Apache Web Server"
+          subpkg="conf">v&gt;=2.0.49</depend>
+        <depend pkgname-base="TWWexpat"
+          title="XML parser Library"
+          subpkg="runtime">v&gt;=1.95.6</depend>
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWldb42"
+          title="Berkeley DB"
+          subpkg="runtime">v&gt;=4.2.52</depend>
+        <depend pkgname-base="TWWss097"
+          title="OpenSSL SSL/TLS Crypto Toolkit"
+          subpkg="runtime">v&gt;=0.9.7b</depend>
+
+        <postinstall path="pkg/add-to-httpd.conf"
+          checksum="3b8383fb1116e0d4d5b9b1b05fa066a7"
+          checksum-type="md5" size="3243"/>
+        <preremove path="pkg/remove-from-httpd.conf"
+          checksum="8c83b2337218212f2056ef7097a89697"
+          checksum-type="md5" size="2880"/>
+      </subpkg>
+
+      <replace pkgname-base="TWWph438"
+        install-name="php438"/>
+      <replace pkgname-base="TWWph437"
+        install-name="php437"/>
+      <replace pkgname-base="TWWph435"
+        install-name="php435"/>
+      <replace pkgname-base="TWWph434"
+        install-name="php434"/>
+    </package-manager>
+  </package>
+</packages>

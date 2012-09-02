@@ -1,0 +1,975 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gtk+" version="2.4.4" revision="3">
+    <install-name>lib${SB_PROG_NAME}24</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+_libdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="6e6ffc9003aee319ed99336b147ad19f"
+          checksum-type="md5" size="9325261"
+          path="src/gtk+-2.4.4.tar.bz2"/>
+        <patch checksum="40fe1611229fd088335b2f3128ae3540"
+          checksum-type="md5" size="657698"
+          path="src/gtk+-2.4.4.patch"/>
+        <patch checksum="6431cbbe46c0dba4d1429b0631130024"
+          checksum-type="md5" size="782"
+          path="src/bmploop.patch"
+          arg="-p1"/>
+        <patch checksum="c9c977305abf18b882d78bb72dbf2cf9"
+          checksum-type="md5" size="2954"
+          path="src/loaders.patch"
+          arg="-p1"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="indent" install-name="indent2"
+          add-path="prepend" type="build">v&gt;=2.2.9</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk16">v&gt;=1.6.1</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage22">v&gt;=2.2 r&gt;=11</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf21"
+          add-path="prepend">v==2.1.4</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext014"
+          add-path="prepend">v&gt;=0.14.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib24"
+          add-path="prepend">v&gt;=2.4.4</depend>
+        <depend program="jpeg" var="JPEG"
+          install-name="jpeg">v&gt;=6b</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19" add-path="prepend"
+          systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng12">v&gt;=1.2.4</depend>
+        <depend program="libxml" install-name="libxml26"
+          add-path="prepend" type="build">v&gt;=2.6.11</depend>
+        <depend program="libxslt" install-name="libxslt11"
+          add-path="prepend" type="build">v&gt;=1.1.8</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango14">v&gt;=1.4.0</depend>
+        <depend program="tiff" var="LIBTIFF"
+          install-name="libtiff35">v&gt;=3.5.7</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+        <depend program="perl" var="PERL" add-path="prepend"
+          type="build">v==5.8.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z -Wp,-H32768 +Onofltacc +ESlit \
++DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  # override system Xft
+  CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC}"
+  LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB}"
+
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CPPFLAGS="-DANSICPP" CC_LD_RT="-R" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO" LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ARGS="--enable-xkb=no" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPPFLAGS="-DANSICPP -DFUNCPROTO" LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ARGS="--enable-xkb=no" ;;
+esac
+
+./configure CC="${CC:-gcc}" CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+-I${SB_VAR_LIBTIFF_INC} -I${SB_VAR_JPEG_INC} \
+-I${SB_VAR_LIBPNG_INC} -I${SB_VAR_ZLIB_INC} \
+${CPPFLAGS+${CPPFLAGS}}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="-L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+-L${SB_VAR_LIBTIFF_LIB} -L${SB_VAR_JPEG_LIB} \
+-L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_ZLIB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBTIFF_LIB}:${SB_VAR_JPEG_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-html-dir="${_docdir}" --disable-gtk-doc --disable-man \
+--enable-static --enable-shared --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+for _pc in gdk-2.0.pc gdk-pixbuf-2.0.pc \
+contrib/gdk-pixbuf-xlib/gdk-pixbuf-xlib-2.0.pc gtk+-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" ${_pc}
+done
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake \
+configexecincludedir="${_libdir}/include" \
+democodedir="${_datadir}/demo" \
+gdkincludedir="${_includedir}/gdk" \
+gtkincludedir="${_includedir}/gtk" \
+libgdk_pixbuf_xlibincludedir="${_includedir}/gdk-pixbuf-xlib" \
+libgdk_pixbufincludedir="${_includedir}/gdk-pixbuf" \
+libgdkincludedir="${_includedir}/gdk" \
+libgtkincludedir="${_includedir}/gtk"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install \
+configexecincludedir="${_libdir}/include" \
+democodedir="${_datadir}/demo" \
+gdkincludedir="${_includedir}/gdk" \
+gtkincludedir="${_includedir}/gtk" \
+libgdk_pixbuf_xlibincludedir="${_includedir}/gdk-pixbuf-xlib" \
+libgdk_pixbufincludedir="${_includedir}/gdk-pixbuf" \
+libgdkincludedir="${_includedir}/gdk" \
+libgtkincludedir="${_includedir}/gtk"
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/gtkrc
+]]>
+      </install>
+    </module>
+
+    <module name="hicolor-icon-theme">
+      <build-name>hicolor-icon-theme-0.5</build-name>
+
+      <sources>
+        <source checksum="947c7f6eb68fd95c7b86e87f853ceaa0"
+          checksum-type="md5" size="31611"
+          path="src/hicolor-icon-theme-0.5.tar.gz"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+./configure --datadir=${_datadir} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <notes>
+      <change from="2.4.3" to="2.4.4">
+        <items name="GtkFileChooser">
+          <item><para>Use Save button in save mode</para></item>
+          <item><para>Check for errors when opening
+folders</para></item>
+          <item><para>Fall back to stock icons if icon theme is not
+found</para></item>
+          <item><para>Bug fixes</para></item>
+        </items>
+
+        <items name="GtkComboBox">
+          <item><para>Make it work without a model</para></item>
+          <item><para>Improve placement of popup</para></item>
+        </items>
+
+        <items name="GtkImage">
+          <item><para>Fix issues with partial redrawing</para></item>
+        </items>
+
+        <items name="GtkEntry">
+          <item><para>Fix cursor movement with combining
+marks</para></item>
+          <item><para>Protect passwords better</para></item>
+        </items>
+
+        <items name="Win32 fixes">
+          <item><para>Fix build without wintab</para></item>
+          <item><para>Improve Clipboard handling</para></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>Make RGBA cursors work</para></item>
+          <item><para>Work with odd XServers</para></item>
+          <item><para>Handle _NET_WM_STATE_ABOVE/_BELOW
+better</para></item>
+          <item><para>Don't leak DND contexts</para></item>
+        </items>
+
+        <items name="gdk-pixbuf">
+          <item><para>Make tiff loader work with libtiff
+3.6.1</para></item>
+          <item><para>Fix math for GDK_INTERP_HYPER</para></item>
+          <item><para>Fix Win32 exported symbols</para></item>
+        </items>
+
+        <item><para>Documentation improvements</para></item>
+        <item><para>Other bug fixes</para></item>
+        <item><para>Updated translations
+(bg,he,hu,ne,sq)</para></item>
+      </change>
+
+      <change from="2.4.2" to="2.4.3">
+        <items name="GtkButton">
+          <item><para>Give extra space to children of !CAN_FOCUS
+buttons</para></item>
+        </items>
+
+        <items name="GtkFileChooser">
+          <item><para>Make DND work when the dialog is
+modal</para></item>
+        </items>
+
+        <items name="GtkToolbar">
+          <item><para>Don't show empty overflow menu</para></item>
+          <item><para>Don't show initial separator in overflow
+menu</para></item>
+          <item><para>Handle dynamic changes to overflow
+menu</para></item>
+        </items>
+
+        <item><para>Documentation improvements</para></item>
+        <item><para>Other bug fixes</para></item>
+        <item><para>Updated translations (hu,ne)</para></item>
+      </change>
+
+      <change from="2.4.1" to="2.4.2">
+        <items name="GtkUIManager">
+          <item><para>Install signals correctly</para></item>
+          <item><para>Make the output of gtk_ui_manager_get_ui()
+parsable</para></item>
+          <item><para>Add a way to suppress stock
+accelerators</para></item>
+        </items>
+
+        <items name="GtkClipboard">
+          <item><para>Fix INCRemental transfer of MULTIPLE
+targets</para></item>
+          <item><para>Increase the chunk size for INCRemental
+transfers</para></item>
+        </items>
+
+        <items name="GtkFileChooser">
+          <item><para>Hide the combo box when
+appropriate</para></item>
+          <item><para>bug fixes</para></item>
+        </items>
+
+        <items name="GtkComboBox">
+          <item><para>add mouse/wheel bindings on the
+cellview</para></item>
+          <item><para>improve positioning of popup</para></item>
+          <item><para>make the selection follow the
+mouse</para></item>
+        </items>
+
+        <items name="GtkEntryCompletion">
+          <item><para>make the selection follow the
+mouse</para></item>
+          <item><para>restrict popup size to monitor
+size</para></item>
+          <item><para>don't complete on paste</para></item>
+        </items>
+
+        <items name="Win32">
+          <item><para>bug fixes</para></item>
+        </items>
+
+        <items name="GtkButton/GtkArrow">
+          <item><para>Don't draw the focus over the button
+child</para></item>
+          <item><para>Increase default arrow size to
+compensate</para></item>
+        </items>
+
+        <item><para>Documentation improvements</para></item>
+        <item><para>Other bug fixes</para></item>
+        <item><para>Updated translations
+(bg,it,nl,tk,wa,zh_CN)</para></item>
+      </change>
+
+      <change from="2.4.0" to="2.4.1">
+        <items name="GtkFileChooser">
+          <item><para>bug fixes</para></item>
+          <item><para>pre-fill the location entry</para></item>
+          <item><para>internal api changes to allow setting a busy
+cursor while loading</para></item>
+          <item><para>improve pathbar button sizing</para></item>
+          <item><para>add keybindings for removing
+bookmarks</para></item>
+        </items>
+
+        <items name="GtkComboBox, GtkEntryCompletion">
+          <item><para>fix repositioning logic</para></item>
+          <item><para>make keynav wrap around</para></item>
+          <item><para>improve theme compliance</para></item>
+        </items>
+
+        <items name="GtkUIManager">
+          <item><para>accept unnamed &lt;separator&gt;s</para></item>
+          <item><para>robustify against
+gtk_widget_show_all()</para></item>
+          <item><para>warn if an accelerator cannot be
+parsed</para></item>
+        </items>
+
+        <items name="Win32">
+          <item><para>fix DND positioning</para></item>
+          <item><para>update gtkfilesystemwin32</para></item>
+          <item><para>make filechooser work on Windows</para></item>
+          <item><para>draw arcs more correctly</para></item>
+          <item><para>disable tables support by support, add
+--use-wintab to get it back</para></item>
+        </items>
+
+        <item><para>Make color wheel accessible</para></item>
+        <item><para>Support _NET_WM_USER_TIME</para></item>
+        <item><para>Doc improvements</para></item>
+        <item><para>Misc bug</para></item>
+        <item><para>Updated translations
+(af,ar,az,bn,br,ca,cs,cy,da,de,el,en_CA,en_GB,es,et,eu,fi,fr,ga,gu,he,hr,hu,id,is,it,ja,ko,lt,mi,ml,mn,mr,ms,ne,nl,nn,no,pa,pl,pt,pt_BR,sk,ru,sq,sr,sr@ije,sr@Latn,sv,tr,uk,uz,wa,zh_CN)</para></item>
+      </change>
+
+      <change from="2.3.6" to="2.4.0">
+        <items name="GtkFileChooser">
+          <item><para>Handle icon theme changes</para></item>
+          <item><para>Add reordering bookmarks via DND</para></item>
+          <item><para>Cache filesystem data inside GtkFileSystemUnix
+backend</para></item>
+          <item><para>Implement local-only mode so that apps don't get
+remote paths they don't expect</para></item>
+          <item><para>Add Alt-Down keybinding</para></item>
+          <item><para>Major rewrite of location dialog completion
+code</para></item>
+          <item><para>Bug fixes</para></item>
+        </items>
+
+        <items name="GtkComboBox">
+          <item><para>Handle the case of no-active-row
+properly</para></item>
+          <item><para>Improve positioning of popup</para></item>
+          <item><para>Miscellaneous bug fixes</para></item>
+        </items>
+
+        <items name="Win32">
+          <item><para>Handle different install locations for
+gdk-pixbuf loaders</para></item>
+          <item><para>Bug fixes</para></item>
+        </items>
+
+        <item><para>Improve handling of foreign GdkWindows on
+destruction</para></item>
+        <item><para>Require Control-Tab to focus labels</para></item>
+        <item><para>RTL flipping for GtkArrow</para></item>
+        <item><para>Support justifcation with wrapping off in
+GtkTextView</para></item>
+        <item><para>Change layout algorithm for mixed
+gridded/non-gridded menus to fix performance problems</para></item>
+        <item><para>Doc improvements</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>Updated translations
+(ar,az,ca,cs,da,de,es,fr,ga,hr,it,ja,lt,no,nl,pt,ro,ru,sq,uk,zh_CN)</para></item>
+      </change>
+
+      <change from="2.3.5" to="2.3.6">
+        <items name="GtkComboBox">
+          <item><para>Make menu positioning more like
+GtkOptionMenu</para></item>
+          <item><para>Improve keybindings</para></item>
+          <item><para>Bug fixes</para></item>
+        </items>
+
+        <items name="GtkFileChooser">
+          <item><para>Keep child directories in pathbar when changing
+to a parent</para></item>
+          <item><para>Reroot pathbar inside home directory, use
+icons</para></item>
+          <item><para>Make the user actually select a file before
+hitting OK</para></item>
+          <item><para>Fix folder mode to not have tree</para></item>
+          <item><para>Add gboolean return values to operations that
+can fail</para></item>
+          <item><para>Improve internal error handling</para></item>
+          <item><para>Bug fixes</para></item>
+        </items>
+
+        <items name="Win32">
+          <item><para>Implement/stub missing GDK
+functions</para></item>
+          <item><para>.defs file updates</para></item>
+          <item><para>Misc fixes</para></item>
+        </items>
+
+        <item><para>GtkTextView bug fixes</para></item>
+        <item><para>Fix problem with excess symbol exports on
+Linux</para></item>
+        <item><para>Fix problem with 32-bit BMPs</para></item>
+        <item><para>Include config.h first everywhere</para></item>
+        <item><para>Fix performance problem destroying
+menus</para></item>
+        <item><para>Doc fixes and improvements</para></item>
+        <item><para>Updated translations
+(az,cs,cy,da,de,el,en_CA,es,fi,fr,ga,hu,ja,ko,lt,mn,nl,no,pl,pt,sq,sr,sr@ije,sr@Latn,sv,th,zh_CN)</para></item>
+        <item><para>Misc bug fixes</para></item>
+      </change>
+
+      <change from="2.3.4" to="2.3.5">
+        <items name="GtkFileChooser">
+          <item><para>Enable DND in the shortcuts list</para></item>
+          <item><para>More folder modes</para></item>
+          <item><para>Resizing toplevel as contents
+change</para></item>
+          <item><para>Make the backend settable via
+GtkSetting</para></item>
+          <item><para>Miscellaneous fixes</para></item>
+          <item><para>Add combo box to pick folder in Save
+mode</para></item>
+        </items>
+
+        <items name="GtkComboBox">
+          <item><para>Memory leak/crash fixes</para></item>
+          <item><para>Always grab when popping the list
+up</para></item>
+          <item><para>Fixes for dynamic changes to the
+model</para></item>
+          <item><para>Improve popup positioning</para></item>
+        </items>
+
+        <item><para>"Implement computation of bidi-base direction from
+text in GtkEntry, GtkTextView, GtkLabel</para></item>
+        <item><para>Add gtk_entry_set_alignment()</para></item>
+        <item><para>Fix wrong interpretation of new_order array for
+gtk_tree/list_store_reorder()</para></item>
+        <item><para>Improve space allocation in menubars</para></item>
+        <item><para>Improve key bindings in
+GtkEntryCompletion</para></item>
+        <item><para>Hide XCursor dependency</para></item>
+        <item><para>Make mouse wheel scrolling usable</para></item>
+        <item><para>Use resize cursors for resize grips</para></item>
+        <item><para>Set the right window group for menu and combo
+popups</para></item>
+        <item><para>Add a way to list the mnemonic labels of a
+widget</para></item>
+        <item><para>Add a group-changed signal to
+GtkRadioButton</para></item>
+        <item><para>Export insertion cursor drawing
+functionality</para></item>
+        <item><para>Support squiggly red underlines in text
+views</para></item>
+        <item><para>Export GtkWindow key-press-event internals to
+allow custom implementations</para></item>
+        <item><para>Add
+gtk_drag_source_set/get_target_list()</para></item>
+        <item><para>Fix drag-and-drop in GtkTextView to
+move</para></item>
+        <item><para>Memory leak fixes</para></item>
+        <item><para>Win32 fixes</para></item>
+        <item><para>Misc. fixes</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>Updated translations
+(ar,cs,da,de,en_CA,es,et,fi,fr,it,ja,ko,nl,pt,ru,sr,sr@ije,sr@Latn,sq,sv,th,zh_CN)</para></item>
+      </change>
+
+      <change from="2.3.3" to="2.3.4">
+        <item><para>Fix broken gtk_binary_age setting causing wrong
+soname</para></item>
+        <item><para>Add some extra GtkExpander docs</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <item><para>Updated translation (ga)</para></item>
+      </change>
+
+      <change from="2.3.2" to="2.3.3">
+        <items name="GtkFileChooser">
+          <item><para>Support bookmarks in
+GtkFileSystemUnix</para></item>
+          <item><para>Correctly handle typed-in filenames in save
+mode, folder mode, and multiple-selection mode in all
+combinations</para></item>
+          <item><para>Don't erase the filename in the entry when
+changing folders</para></item>
+          <item><para>Support icons in GtkFileSystemUnix</para></item>
+          <item><para>GtkFileChooserDialog now comes up at a
+reasonable size</para></item>
+          <item><para>GtkFileSystemUnix now notifies correctly on
+::create_folder()</para></item>
+          <item><para>Slight GUI reorganization</para></item>
+          <item><para>File system module support</para></item>
+          <item><para>Pathbar widget</para></item>
+          <item><para>Miscellaneous fixes</para></item>
+          <item><para>Win32 fixes, GtkFileSystemWin32
+work</para></item>
+          <item><para>Memory leak fixes</para></item>
+        </items>
+
+        <items name="GtkTreeView">
+          <item><para>Fix return values</para></item>
+          <item><para>Properly cancel the arrow
+animation</para></item>
+          <item><para>Allow custom icon sizes in pixbuf cell
+renderer</para></item>
+          <item><para>Don't darken the sort column unless there are
+three visible columns</para></item>
+        </items>
+
+        <items name="GtkToolbar">
+          <item><para>Improve the sliding implementation</para></item>
+          <item><para>Add writeonly ::group property to
+GtkRadioToolButton</para></item>
+          <item><para>Misc fixes</para></item>
+        </items>
+
+        <items name="Menus">
+          <item><para>Make menus work better on Xinerama</para></item>
+          <item><para>Fix keynav in RTL mode</para></item>
+          <item><para>Fix grid mode, removing of items</para></item>
+          <item><para>Make tearoff menu items work anywhere in
+menus</para></item>
+          <item><para>Improve popup/popdown behaviour</para></item>
+        </items>
+
+        <items name="gdk-pixbuf">
+          <item><para>Fix some problems with indexed
+BMPs</para></item>
+          <item><para>Work around some libjpeg header file
+craziness</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>New section on how to check for modifier keys
+correctly</para></item>
+          <item><para>Miscellaneous improvements</para></item>
+        </items>
+
+        <item><para>Assume gravity works</para></item>
+        <item><para>Cache GCs for drawing</para></item>
+        <item><para>Handle focus adjustment correctly for deeply
+nested focus locations</para></item>
+        <item><para>Use reference counting for shared data in
+GtkActionGroup</para></item>
+        <item><para>Add a "use-separator" style property to
+GtkMessageDialog, and make it not resizable</para></item>
+        <item><para>Add 'const' to uses of GdkColor that need
+it</para></item>
+        <item><para>Put focusable labels in the focus
+chain</para></item>
+        <item><para>Make destroying widgets in focus-out-event
+work</para></item>
+        <item><para>Add properties to GtkAdjustment</para></item>
+        <item><para>Add change notification to
+GtkAccelMap</para></item>
+        <item><para>Add settings to suppress icons in buttons and
+menus</para></item>
+        <item><para>Add Xft settings for hinting and
+antialiasing</para></item>
+        <item><para>Make size of indicator in menu items
+themeable</para></item>
+        <item><para>Fixes to GtkIconTheme</para></item>
+        <item><para>Improve drawing of GtkExpander</para></item>
+        <item><para>Improve drawing of paned handles</para></item>
+        <item><para>Remove broken hangul input module</para></item>
+        <item><para>Remove C++-style comments</para></item>
+        <item><para>Memory leak fixes</para></item>
+        <item><para>RTL mode (flipping) fixes</para></item>
+        <item><para>Accessibility improvements for tooltips,
+GtkScale.</para></item>
+        <item><para>Make the ZOOM_100 and ZOOM_FIT labels
+HIG-compliant</para></item>
+        <item><para>Win32 fixes</para></item>
+        <item><para>New and updated translations (ar,az,cs,da,de,en_CA,el,es,fi,fr,ga,hr,it,ja,ko,mi,mn,ms,nl,nn,no,pl,pt,ru,sq,sr,sr@Latn,sv,ta,th,uz,uz@Latn)</para></item>
+      </change>
+
+      <change from="2.3.1" to="2.3.2">
+        <items name="GdkPixbuf">
+          <item><para>Add functions to save pixbufs to non-file
+locations</para></item>
+          <item><para>Add a function to determine the type and size of
+a file without loading it completely</para></item>
+          <item><para>Turn pixbuf attributes into construct-only
+properties</para></item>
+          <item><para>Fix building gdk-pixbuf with --disable-modules
+--with-included-loaders</para></item>
+        </items>
+
+        <items name="GtkFileChooser">
+          <item><para>Fix new filename entry in Save
+mode</para></item>
+          <item><para>Improved the look of
+GtkFileChooserDefault</para></item>
+          <item><para>Added support for file system volumes such as
+CD-ROMs, floppies, and network shares</para></item>
+          <item><para>Add a "New Folder" button for Save mode in
+GtkFileChooser</para></item>
+          <item><para>Better support for Folder mode</para></item>
+        </items>
+
+        <items name="GtkTreeView">
+          <item><para>Speed up by adding a fixed height
+mode</para></item>
+          <item><para>Add a single-paragraph mode and a language
+property to GtkCellRendererText</para></item>
+          <item><para>Add a editing-canceled signal to
+GtkCellRenderer</para></item>
+          <item><para>Misc GtkTreeView bug fixes</para></item>
+        </items>
+
+        <item><para>Fix the logic for changing the toplevelness of a
+window</para></item>
+        <item><para>Do not interpret distant clicks as double clicks,
+using a new double-click-distance setting</para></item>
+        <item><para>Improve the GDK API for dealing with group
+leaders</para></item>
+        <item><para>Utility function for application launching in
+multi-screen scenarios</para></item>
+        <item><para>Support big and small and alpha-blended icons
+under Win32</para></item>
+        <item><para>Misc Win32 improvements</para></item>
+        <item><para>Add a way to list the supported targets of a
+clipboard</para></item>
+        <item><para>Add stock icons: harddisk, indent,
+unindent</para></item>
+        <item><para>Improve the GtkCalendar drawing code</para></item>
+        <item><para>GtkCalendar supports starting the week on any
+day</para></item>
+        <item><para>Make GtkToolbar compatible with 2.2
+again</para></item>
+        <item><para>Misc GtkToolbar fixes and API
+improvements</para></item>
+        <item><para>Misc GtkUIManager fixes and API
+improvements</para></item>
+        <item><para>Add a way to lock individual accelerator
+paths</para></item>
+        <item><para>Add gtk_menu_shell_cancel() to emit the "cancel"
+signal on a menu shell</para></item>
+        <item><para>Fix dynamic menus</para></item>
+        <item><para>Add xalign, yalign properties to
+GtkButton</para></item>
+        <item><para>Implement or improve RTL support in GtkComboBox,
+GtkCellView, GtkViewport</para></item>
+        <item><para>Support for "no focus" windows</para></item>
+        <item><para>Documentation improvements</para></item>
+        <item><para>FAQ updates</para></item>
+        <item><para>Split the translations into two domains: ui
+strings and error messages go to gtk20, property nicks and blurbs to
+gtk20-properties</para></item>
+        <item><para>New and updated translations (af,ar,bn,br,cs,cy,da,de,es,et,fa,fr,ga,hr,it,ja,ko,lt,mn,ms,nl,nn,no,pl,pt,pt_BR,ru,sr,sr@Latn,sv,sq,wa)</para></item>
+      </change>
+
+      <change from="2.3.0" to="2.3.1">
+        <items name="GDK">
+          <item><para>Add GDK_DEBUG=xinerama that fakes a 2x2 Xinerama
+mode</para></item>
+          <item><para>Make gdk_drawable_copy_to_image
+public</para></item>
+        </items>
+
+        <items name="Action-based menu/toolbar API">
+          <item><para>Add "name" construct-only parameter to
+GtkActionGroup</para></item>
+          <item><para>Bug fixes</para></item>
+        </items>
+
+        <items name="GtkComboBox">
+          <item><para>Make model and text_column properties not
+construct-only</para></item>
+          <item><para>Fix sizing</para></item>
+          <item><para>Add mouse wheel support</para></item>
+        </items>
+
+        <items name="GtkExpander">
+          <item><para>Add a "use_markup" property,
+gtk_expander_set/get_use_markup</para></item>
+          <item><para>Fix bugs when
+unrealizing/destroying</para></item>
+        </items>
+
+        <items name="GtkFileChooser">
+          <item><para>Add a GtkFileSystemWin32</para></item>
+          <item><para>Use GtkEntryCompletion in GtkFileChooserEntry
+</para></item>
+          <item><para>Add a render_icon to GtkFileSystemIface to allow
+the GnomeVFS backend to supply appropriate icons</para></item>
+          <item><para>Improve selection handling in bookmarks
+list</para></item>
+          <item><para>Support drops on the bookmarks
+list</para></item>
+          <item><para>Display error dialogs on failed
+operations</para></item>
+          <item><para>Many UI tweaks</para></item>
+          <item><para>Ignore filters for folders</para></item>
+          <item><para>Misc file chooser bug fixes</para></item>
+        </items>
+
+        <items name="Menus">
+          <item><para>Make torn-off menus transient-for the window
+they were torn from</para></item>
+          <item><para>Fix menu positioning for Xinerama, add
+gtk_menu_set_monitor() for use by position functions</para></item>
+          <item><para>Tweak menu delay parameters, add a default
+width</para></item>
+        </items>
+
+        <items name="GtkToolbar">
+          <item><para>Support gaps in the toolbar with
+expand=true/draw=false separators</para></item>
+          <item><para>Improve drop-location preview
+handling</para></item>
+          <item><para>Take a GtkRadioToolButton as the parameter to
+gtk_radio_tool_button_new_from_widget</para></item>
+          <item><para>Many misc toolbar bug fixes</para></item>
+        </items>
+
+        <item><para>Change ranges for Saturation/Value to be 0-100 in
+GtkColorSelection</para></item>
+        <item><para>Improve sanity checks on gdk-pixbuf
+loaders</para></item>
+        <item><para>Misc Win32 bug fixes</para></item>
+        <item><para>Various GtkEntryCompletion bug fixes</para></item>
+        <item><para>Make g_message_dialog_new_with_markup()
+automatically escape arguments, add
+g_message_dialog_set_markup()</para></item>
+        <item><para>Add read-only min-position/max-position properties
+to GtkPaned</para></item>
+        <item><para>GtkTreeView bug fixes</para></item>
+        <item><para>Add
+gtk_window_is_active()/gtk_has_toplevel_focus() getters to go along
+with properties</para></item>
+        <item><para>Add gtk_widget_can_activate_accel() /
+::can-activate-accel signal to fix handling of accelerators on
+insensitive parent menu-items.</para></item>
+        <item><para>Implement or improve RTL support in GtkAlignment,
+GtkCombo, GtkNotebook, GtkScrolledWindow, GtkTreeView,
+GtkViewport</para></item>
+        <item><para>Fix string setters for
+self-assignment</para></item>
+        <item><para>Finish multi-head handling in
+gtk-demo</para></item>
+        <item><para>Fix install rules for generating
+gdk-pixbuf.loaders</para></item>
+        <item><para>Reference doc improvements</para></item>
+        <item><para>FAQ updates</para></item>
+        <item><para>New and updated translations (ca,cs,cy,de,el,es,ja,mn,nl,nn,no,pl,pt,sr,sr@Latn,sv,th)</para></item>
+      </change>
+
+      <change from="2.2.x" to="2.3.0">
+        <items name="New Widgets">
+          <item><para>GtkFileChooser: a replacement for
+GtkFileSelection with replaceable backends, many new API features,
+better user interface (UI is still a work in progress)</para></item>
+          <item><para>New combo box widgets: GtkComboBox,
+GtkComboBoxEntry</para></item>
+          <item><para>New "disclosure triangle" widget:
+GtkExpander</para></item>
+          <item><para>"Picker button" widgets based on code from
+libgnomeui: GtkFontButton, GtkColorButton</para></item>
+        </items>
+
+        <items name="Widget improvements:">
+          <item><para>Autocompletion for entries:
+GtkEntryCompletion</para></item>
+          <item><para>Add separate padding for all 4 sides of
+GtkAlignment</para></item>
+          <item><para>Add input-only event boxes for trapping
+events</para></item>
+          <item><para>Support RTL flipping for GtkHPaned, tab
+navigation</para></item>
+          <item><para>Support up to four scroll arrows on GtkNotebook
+and make which ones are displayed themeable</para></item>
+          <item><para>GtkCalendar improvements: make the arrows spin,
+support RTL flipping, automatic week start selection, DND support,
+improve API for setting options; mousewheel support</para></item>
+          <item><para>New properties: GtkButton::focus_on_click,
+GtkCheckMenuItem::draw_as_radio</para></item>
+          <item><para>New functions: gtk_window_set_default_icon(),
+gtk_message_dialog_add_buttons(),
+gtk_button_box_get_child_secondary()</para></item>
+          <item><para>Add missing "role", "decorated", "gravity"
+properties for GtkWindow, "has_resize_grip" for
+GtkStatusBar</para></item>
+          <item><para>Add child properties for GtkPaned</para></item>
+        </items>
+
+        <items name="Menus">
+          <item><para>New action-based menu API: GtkUIManager,
+GtkActionGroup, GtkAction, etc.</para></item>
+          <item><para>Support for tabular menus</para></item>
+          <item><para>New positioning algorithm for popup
+menus</para></item>
+        </items>
+
+        <items name="GtkTextView">
+          <item><para>Add properties "accepts_tab", "overwrite"
+property, "buffer"</para></item>
+          <item><para>Add gtk_text_buffer_select_range()</para></item>
+          <item><para>Implement drag-selection by words/lines (also
+for Gtkentry)</para></item>
+          <item><para>Some fixes to invisible text
+handling</para></item>
+          <item><para>Add support for GTK_WRAP_WORD_CHAR</para></item>
+          <item><para>Clean up handling of horizontal
+paging</para></item>
+          <item><para>Fix scrolling with non-visible
+cursor</para></item>
+          <item><para>Add internals documentation</para></item>
+        </items>
+
+        <items name="GtkToolbar">
+          <item><para>Add a more constistent and extensible toolbar
+API; preserve old API for backwards compatibility</para></item>
+          <item><para>Support for sliding buttons like OS
+X</para></item>
+          <item><para>Keyboard navigation</para></item>
+          <item><para>Support "priority text"</para></item>
+          <item><para>Overflow menu</para></item>
+          <item><para>Better handling of really wide
+buttons</para></item>
+          <item><para>Drawing improvements</para></item>
+          <item><para>Support context menu</para></item>
+        </items>
+
+        <items name="GtkTreeView">
+          <item><para>Handle RTL</para></item>
+          <item><para>Add expand flag to column packing
+parameters</para></item>
+          <item><para>gtk_tree_path_free now silently returns on NULL
+paths</para></item>
+          <item><para>Move row reference updating code to
+closures</para></item>
+          <item><para>Fix TreeView DnD: make TreeStore DnD work, make
+drops on empty views work, get rid of
+gtk-tree-model-drop-append</para></item>
+          <item><para>Add a filtering tree model:
+GtkTreeModelFilter</para></item>
+        </items>
+
+        <items name="gdk-pixbuf">
+          <item><para>Add a loader for PCX files</para></item>
+          <item><para>Improve calculation of filter weights for
+scaling</para></item>
+          <item><para>Support TGA files with arbitrary
+origins</para></item>
+          <item><para>Add gdk_pixbuf_loader_new_with_mime_type(),
+gdk_pixbuf_new_from_file_at_size()</para></item>
+          <item><para>Add saving support for ICO and CUR</para></item>
+          <item><para>Improve handling of GIFs with oversized
+frames</para></item>
+        </items>
+
+        <items name="GDK">
+          <item><para>Support for full-color / alpha-channel
+cursors</para></item>
+          <item><para>Remove support for non-X fonts and for
+pango-1.0; always require Xft2</para></item>
+          <item><para>Fix handling of recursive calls to
+gdk_window_begin_paint()</para></item>
+          <item><para>Many small changes to reduce round trips on
+startup; add gdk_display_flush()</para></item>
+          <item><para>Use Xlib asynchronous APIs to reduce roundtrips
+on startup and during DND</para></item>
+          <item><para>Other changes to improve DND for large-latency
+connections</para></item>
+          <item><para>Add support for EWMH "above" and "below"
+states</para></item>
+          <item><para>Add Add GDK_MOUSE_DEVICE envvar for linux-fb
+backend</para></item>
+          <item><para>Other small linux-fb fixes</para></item>
+        </items>
+
+        <items name="Miscellaneous">
+          <item><para>Add support for named themable icons; use this
+facility to provide the default stock icon images</para></item>
+          <item><para>Add gtk_widget_queue_resize_no_redraw() for more
+efficient resizing; use for GtkTextView. Redraw less on focus
+changes</para></item>
+          <item><para>Add
+gtk_widget_queue_resize_no_redraw()</para></item>
+          <item><para>Default theme improvements, especially for
+menus. Add some more style properties.</para></item>
+          <item><para>Add authentication stock icon</para></item>
+          <item><para>Allow "none" to be set for input method
+GtkSettings</para></item>
+          <item><para>Convert build system to automake-1.7; many
+cleanups and improvements</para></item>
+          <item><para>Win32 fixes for new widgets</para></item>
+          <item><para>Add right-to-left variants of some stock
+icons</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Use XML source for man pages; add man pages for
+tools that didn't have them before</para></item>
+          <item><para>Tutorial improvements</para></item>
+          <item><para>FAQ improvements</para></item>
+          <item><para>Misc documentation improvements</para></item>
+        </items>
+
+        <items name="Deprecations">
+          <item><para>GtkItemFactory</para></item>
+          <item><para>GtkCombo, GtkOptionMenu</para></item>
+          <item><para>Miscellaneous functions that were renamed in
+GTK+-2.0 and GTK+-2.2</para></item>
+        </items>
+      </change>
+
+      <note type="build">
+        <para>Antialias font support is enabled for all
+platforms.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 16" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0753 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0753">http://cve.mit re.org/cgi-bin/cvename.cgi?name=CAN-2004-0753</ulink>)
+to fix infinite loop vulnerability with a bad BMP image</para></item>
+        <item><para>Apply patch for CAN-2004-0782 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0782">http://cve.mit re.org/cgi-bin/cvename.cgi?name=CAN-2004-0782</ulink>)
+and CAN-2004-0783 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0783">http://cve.mit re.org/cgi-bin/cvename.cgi?name=CAN-2004-0783</ulink>)
+to fix a heap-based overflow and stack-based overflow in the xpm
+loader</para></item>
+        <item><para>Apply patch for CAN-2004-0788 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0788">http://cve.mit re.org/cgi-bin/cvename.cgi?name=CAN-2004-0788</ulink>)
+to fix an integer overflow in the ico loader</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

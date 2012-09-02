@@ -1,0 +1,320 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="openldap" version="2.1.27" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}2127</install-name>
+
+    <sources>
+      <source checksum="b3aff479e1f946ce9906c5d3b0eb451d"
+        checksum-type="md5" size="2044311"
+        path="src/openldap-2.1.27.tgz"/>
+      <patch checksum="e3c3ba557502ef6c2e98dbe16117a103"
+        checksum-type="md5" size="396021"
+        path="src/openldap-2.1.27.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix4*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_func_getnameinfo=no ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s -Wl,+b," ARGS="--enable-ipv6=no"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s -Wl,+b,"
+
+  # warning from <arpa/nameser.h> forces autoconf to ignore
+  # the header file so bypass autoconf and force available
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux10*)
+  CPP="cc -E -Ae" CC=cc CFLAGS="+O2 -Ae -z +ESlit \
++Onofltacc +DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s -Wl,+b,"
+
+  # HP-UX has CMA threads but no POSIX threads
+  export ac_cv_header_pthread_h=no ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="db" var="LIBDB"
+          install-name="libdb42">v&gt;=4.2.52</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21">v&gt;=2.1.15</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+rm -f config.cache
+CC="${CC:-gcc}" CPP="${CPP+${CPP}}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+${SB_VAR_LIBSASL+-I${SB_VAR_LIBSASL_INC} }\
+${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC} }\
+-I${SB_VAR_LIBDB_INC}" LDFLAGS="${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+${SB_VAR_LIBSASL+-L${SB_VAR_LIBSASL_LIB} }\
+${SB_VAR_LIBOPENSSL+-L${SB_VAR_LIBOPENSSL_LIB} }\
+-L${SB_VAR_LIBDB_LIB} ${CC_LD_RT}${SB_INSTALL_PREFIX}/lib:\
+${SB_VAR_LIBDB_LIB}${SB_VAR_LIBSASL+:${SB_VAR_LIBSASL_LIB}}\
+${SB_VAR_LIBOPENSSL_LIB+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" ./configure \
+${SB_VAR_LIBSASL+--with-cyrus-sasl} \
+${SB_VAR_LIBSASL+--enable-spasswd} \
+${SB_VAR_LIBOPENSSL+--with-tls=openssl} \
+--enable-syslog --without-readline --enable-ldbm \
+--with-ldbm-api=berkeley --enable-passwd \
+--enable-static --enable-shared --with-subdir=no \
+--disable-dependency-tracking --enable-slurpd --enable-bdb \
+--enable-crypt ${_localstatedir+--localstatedir=${_localstatedir}} \
+--sysconfdir=${_sysconfdir} --datadir="${_datadir}" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/devel
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/drafts
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/rfc
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/devel/* ${_docdir}/devel
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/drafts/* ${_docdir}/drafts
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/rfc/* ${_docdir}/rfc
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="nossl">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="db" var="LIBDB"
+          install-name="libdb42">v&gt;=4.2.52</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+rm -f config.cache
+CC="${CC:-gcc}" CPP="${CPP+${CPP}}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+-I${SB_VAR_LIBDB_INC}" LDFLAGS="${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+-L${SB_VAR_LIBDB_LIB} ${CC_LD_RT}${SB_INSTALL_PREFIX}/lib:\
+${SB_VAR_LIBDB_LIB} ${LDFLAGS+${LDFLAGS}}" ./configure \
+--enable-syslog --with-cyrus-sasl=no --with-tls=no \
+--without-readline --enable-ldbm --with-ldbm-api=berkeley \
+--enable-passwd --enable-static --enable-shared \
+--with-subdir=no --disable-dependency-tracking \
+--enable-slurpd --enable-bdb --enable-crypt \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+--sysconfdir=${_sysconfdir} --datadir="${_datadir}" \
+${ARGS+${ARGS}} --libdir="${SB_INSTALL_PREFIX}/lib/nossl" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+(cd libraries && gmake install)
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/nossl
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.1.26" to="2.1.27">
+        <items name="Build Environment">
+          <item><para>Fixed gai_strerr portability problem
+(ITS#2643)</para></item>
+          <item><para>Fixed DNS res_query portabilitiy
+problem</para></item>
+        </items>
+
+        <item><para>Fixed slapd replog ordering bug
+(ITS#2512)</para></item>
+        <item><para>Fixed slapd uninitialized variable
+bug</para></item>
+        <item><para>Fixed libldap SASL client callbacks
+(ITS#2926)</para></item>
+      </change>
+
+      <change from="2.1.25" to="2.1.26">
+        <items name="Build Environment">
+          <item><para>Updated release documents</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Misc man page updates</para></item>
+        </items>
+
+        <item><para>Fixed slapd bdb error recovery bug
+(ITS#2865)</para></item>
+        <item><para>Fixed slapd bdb IDL cache cleanup bug
+(ITS#2917)</para></item>
+        <item><para>Fixed slapd SASL auxprop typo
+(ITS#2909)</para></item>
+        <item><para>Fixed slapd backglue segfault
+(ITS#2924)</para></item>
+        <item><para>Fixed slapd bind mech in authDN
+(ITS#2871)</para></item>
+        <item><para>Fixed back-ldap compare operation
+(ITS#2893)</para></item>
+        <item><para>Fixed back-ldap suffix massage when
+--enable-rewrite=no (ITS#2923)</para></item>
+        <item><para>Fixed libldap sort references bug
+(ITS#2494)</para></item>
+        <item><para>Fixed libldap SASL_MECH bug
+(ITS#2717)</para></item>
+        <item><para>Fixed lutil_passwd base64 length bugs (ITS#2835,
+ITS#2869)</para></item>
+        <item><para>Updated librewrite (ITS#2787)</para></item>
+        <item><para>Updated slurpd (misc bug fixes)</para></item>
+      </change>
+
+      <change from="2.1.24" to="2.1.25">
+        <items name="Build Environment">
+          <item><para>Fix LDBM link bug (ITS#2863)</para></item>
+        </items>
+      </change>
+
+      <change from="2.1.23" to="2.1.24">
+        <items name="Build Environment">
+          <item><para>Added Berkeley DB 4.2 detection
+(ITS#2839)</para></item>
+          <item><para>Fixed liblber libdir handling
+(ITS#2797)</para></item>
+          <item><para>Fixed libldbm dependency
+(ITS#2726)</para></item>
+          <item><para>Fixed perl LDFLAGS (ITS#2764)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Updated release documents</para></item>
+          <item><para>Misc man page updates (ITS#2822,
+ITS#2823)</para></item>
+          <item><para>Fixed README in ldapsasl
+(ITS#2838)</para></item>
+        </items>
+
+        <item><para>Fixed slapd "exact" v "base" handling
+(ITS#2782)</para></item>
+        <item><para>Fixed slapd running as NT service
+(ITS#2769)</para></item>
+        <item><para>Fixed slapd SASL internal searches
+(ITS#2825)</para></item>
+        <item><para>Fixed slapd extended op referrals (ITS#2678,
+ITS#2781)</para></item>
+        <item><para>Fixed slapd group ACL caching
+(ITS#2779)</para></item>
+        <item><para>Fixed slapd berbuf align bugs</para></item>
+        <item><para>Fixed slurpd memory leaks (ITS#2423,
+ITS#2620)</para></item>
+        <item><para>Fixed slurpd TLS retry (ITS#2570)</para></item>
+        <item><para>Fixed back-bdb compatibility with BDB 4.2
+(ITS#2848)</para></item>
+        <item><para>Fixed lunicode insufficient buffer allocation bug
+(ITS#2727)</para></item>
+        <item><para>Fixed libldap destructor bug
+(ITS#2758)</para></item>
+        <item><para>Fixed libldap SASL maxbuf usage
+(ITS#2770)</para></item>
+        <item><para>Fixed libldap_r pthread support
+(ITS#2820)</para></item>
+        <item><para>Fixed liblutil NS_MTA_MD5 hash
+(ITS#2773)</para></item>
+        <item><para>Added lutil_passwd extensions</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>A database dump/restore is required for this release of
+OpenLDAP as the version of the Berkeley DB library has changed. The
+<command>slapcat(8)</command> and <command>slapadd(8)</command>
+commands can be used for the dump/restore operation.</para>
+      </note>
+
+      <note type="usage">
+        <para>Configuration files are located in
+"<command>/etc${SB_INSTALL_PREFIX}</command>". The default path for the database
+is "<command>/var${INSTALL_PREFIX}</command>". An alternate configuration file
+can be specified with the "<command>-f</command>" flag to
+<command>slapd</command>. In the configuration file, an alternate path
+to a database can be specified.</para>
+
+        <para>The 2.x version of OpenLDAP supports the LDAP v3
+protocol with SSL/TLS. OpenSSL has been linked against the OpenLDAP
+libraries to provide the SSL/TLS support. Because a device file is not
+available for AIX, HP-UX, IRIX, Solaris, and Tru64 UNIX to generate
+random data, the EGD or PRNGD daemons must be used to provide such a
+device file. The path to the device file can be set with the
+environment variable <command>RANDFILE</command> before starting slapd
+or with the variable "<command>TLSRandfilePath</command>" in the
+<command>slapd.conf</command> file. Because Redhat Linux and Solaris 9
+provide a <command>/dev/random</command> device file to provide random
+data, these settings are not needed.</para>
+
+        <para>The "<command>${SB_INSTALL_PREFIX}/lib/nossl</command>"
+directory contains a version of the OpenLDAP libraries linked without
+OpenSSL and Cyrus SASL. While the OpenLDAP license is GPL compatible,
+the OpenSSL and Cyrus SASL licenses are not. Therefore, we are making
+separate versions of the library available for linking against GPL
+programs.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

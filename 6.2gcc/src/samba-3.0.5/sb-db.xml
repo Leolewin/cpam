@@ -1,0 +1,688 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="samba" version="3.0.5" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}305</install-name>
+
+    <sources>
+      <source checksum="5896ad33676e3c26efaab5dcd897c466"
+        checksum-type="md5" size="15076996"
+        path="src/samba-3.0.5.tar.gz"/>
+      <patch checksum="88fe06f0ba64cd55834fe6a7ec443c27"
+        checksum-type="md5" size="914219"
+        path="src/samba-3.0.5.patch"/>
+      <patch checksum="9d1ef517d9441013629b16d177030642"
+        checksum-type="md5" size="8386"
+        path="src/samba-3.0.5-DoS.patch"
+        arg="-p1"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="!*-aix*">v&gt;=1.9.2</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml26">v&gt;=2.6.11</depend>
+      <depend program="openldap" var="OPENLDAP">v==2.1.27</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+      <depend program="readline" var="READLINE"
+        module="tww-static">v==4.3</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_configdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+cd source
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--with-acl-support" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ARGS="--with-acl-support --with-smbwrapper" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ARGS="--with-smbwrapper --with-smbmount \
+--with-pam --with-pam_smbpass" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--with-acl-support" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ARGS="--with-acl-support --with-smbwrapper" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ARGS="--with-acl-support --with-smbwrapper" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_OPENLDAP_LIB}/nossl \
+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB}/nossl\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+CPPFLAGS="-I${SB_VAR_OPENLDAP_INC}" --enable-shared \
+--enable-static --without-pam \
+--localstatedir=${_localstatedir} \
+--with-lockdir=${_localstatedir}/locks \
+--with-piddir=${_localstatedir}/run \
+--with-logfilebase=${_localstatedir}/log \
+--with-privatedir=${_sysconfdir}/private \
+--with-configdir=${_configdir} \
+--with-swatdir=${SB_INSTALL_PREFIX}/lib/swat \
+--with-sambabook=${SB_INSTALL_PREFIX}/doc/using-samba \
+--with-readline=${SB_VAR_READLINE} --with-included-popt \
+--with-automount --with-ldap --with-manpages-langs=en \
+${SB_VAR_LIBICONV+--with-libiconv=${SB_VAR_LIBICONV}} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+(cd source
+
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  gmake LDSHFLAGS="-B symbolic -b -z -L${SB_VAR_OPENLDAP_LIB}/nossl \
++s +b ${SB_VAR_OPENLDAP_LIB}/nossl"
+  ;;
+*)
+  gmake
+  ;;
+esac
+)
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+(cd source; gmake install)
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/log
+
+# install mksmbpasswd.sh
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 source/script/mksmbpasswd.sh \
+${SB_INSTALL_PREFIX}/bin/mksmbpasswd.sh
+
+# install Redhat-specific files
+case "${SB_SYSTYPE}" in
+*-linux*)
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d \
+  ${SB_INSTALL_PREFIX}/lib/security
+
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+  source/nsswitch/libnss_winbind.so source/nsswitch/libnss_wins.so \
+  ${SB_INSTALL_PREFIX}/lib
+
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 \
+  source/nsswitch/pam_winbind.so source/bin/pam_smbpass.so \
+  ${SB_INSTALL_PREFIX}/lib/security
+  ;;
+esac
+
+# empty configuration files
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_configdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null ${_configdir}/smb.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null ${_configdir}/lmhosts
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 WHATSNEW.txt \
+docs/Samba-HOWTO-Collection.pdf ${SB_INSTALL_PREFIX}/doc
+
+# copy smbwrapper documentation
+case "${SYSTYPE}" in
+*-irix6*|*-linux*|*-solaris2*)
+  ${SB_PATH_GINSTALL} -o root -g 0 -m 755 \
+  ${SB_BUILD_PREFIX}/source/bin/smbsh ${SB_INSTALL_PREFIX}/bin
+  ${SB_PATH_GINSTALL} -o root -g 0 -m 755 \
+  ${SB_BUILD_PREFIX}/source/bin/smbwrapper.so ${SB_INSTALL_PREFIX}/lib
+
+  ${SB_PATH_GINSTALL} -o root -g 0 -m 644 source/smbwrapper/README \
+  ${SB_INSTALL_PREFIX}/doc/README.SMBWRAPPER ;;
+esac
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_configdir} ${SB_INSTALL_PREFIX} ${_localstatedir} \
+${_sysconfdir}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="3.0.4" to="3.0.5">
+        <item><para>Fix buffer overrun in routine used by SWAT to
+decode the base64 data during HTTP basic authentication (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0600">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0600</ulink></para></item>
+        <item><para>Fix buffer overrun in the code used to support the
+'mangling method = hash' smb.conf option (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0686">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0686</ulink></para></item>
+      </change>
+
+      <change from="3.0.3" to="3.0.4">
+        <item><para>Fix path processing for
+DeletePrinterDriverEx()</para></item>
+        <item><para>BUG 1303: Fix for Microsoft hotfix MS04-011
+password change breakage</para></item>
+        <item><para>Fix alignment bug in GetDomPwInfo()</para></item>
+        <item><para>Fix utime[s]() issues in smbwrapper on systems
+that can boot both the 2.4 and 2.6 Linux kernels</para></item>
+        <item><para>Fedora packaging fixes</para></item>
+        <item><para>BUG 1302: Fix seg fault by not trying to optimize
+a list of invalid gids using the wrong array size</para></item>
+        <item><para>BUG 1309: fix seg fault caused by trying to
+strdup(NULL) seen when 'security = share'</para></item>
+        <item><para>Fix problems when using IBM's compiler on
+AIX</para></item>
+        <item><para>Link Developer's Guide, Example Guide, and
+multi-page HOWTO into SWAT's welcome page</para></item>
+        <item><para>BUG 1293: fix double free in printer publishing
+code</para></item>
+        <item><para>Fix for handling timeouts in socket
+connections</para></item>
+        <item><para>BUG 483: patch from  to fix password hash creation
+in SWAT</para></item>
+        <item><para>Close the open NT pipes before the
+tdis</para></item>
+        <item><para>Fix AFS related build issues</para></item>
+        <item><para>Handle error conditions when base64 encoding a
+blob of 0 bytes</para></item>
+        <item><para>Added 'acls' debug class</para></item>
+        <item><para>Multiple variable initialization and memory leak
+fixes</para></item>
+        <item><para>Fix string length bug in libsmbclient that caused
+KDE's Konqueror to crash</para></item>
+        <item><para>BUG 429: More libsmbclient fixes</para></item>
+        <item><para>BUG 1007, 1279: Store the print job using a
+little-endian key</para></item>
+        <item><para>Compile fix for OpenBSD (ENOTSUP not
+supported)</para></item>
+        <item><para>Correct bug in disks quota views from
+explorer</para></item>
+        <item><para>BUG 1305: Correct debug output</para></item>
+        <item><para>Fix incorrect error code mapping</para></item>
+        <item><para>Add additional NT_STATUS errorm
+mappings</para></item>
+      </change>
+
+      <change from="3.0.2a" to="3.0.3">
+        <item><para>Ensure that Kerberos mutex is always properly
+unlocked</para></item>
+        <item><para>Removed Heimdal "in-memory keytab"
+support</para></item>
+        <item><para>Fixup the 'multiple-vuids' bugs in our server
+code</para></item>
+        <item><para>Correct return code from lsa_lookup_sids() on
+unmapped sids</para></item>
+        <item><para>Fix the "too many fcntl locks" scalability problem
+raised by tridge</para></item>
+        <item><para>Fixup correct (as per W2K3) returns for lookupsids
+as well as lookupnames</para></item>
+        <item><para>Fixups for delete-on-close semantics as per Win2k3
+behavior</para></item>
+        <item><para>Make SMB_FILE_ACCESS_INFORMATION call work
+correctly</para></item>
+        <item><para>Fix "unable to initialize" bug when smbd hasn't
+been run with new system and a user is being added via
+pdbedit/smbpasswd</para></item>
+        <item><para>Added NTrename SMB (0xA5)</para></item>
+        <item><para>Fixup correct timeout values for blocking lock
+timeouts</para></item>
+        <item><para>Fix various bugs reported by
+'gentest'</para></item>
+        <item><para>More locking fixes in the case where we own the
+lock</para></item>
+        <item><para>Fix up regression in IS_NAME_VALID and
+renames</para></item>
+        <item><para>Don't set allocation size on
+directories</para></item>
+        <item><para>Return correct error code on fail if file exists
+and target is a directory</para></item>
+        <item><para>Added client "hardlink" comment to test doing NT
+rename with hard links. Added hardlink_internals() code - UNIX
+extensions now use this as well.</para></item>
+        <item><para>Use a common function to parse all pathnames from
+the wire for much closer emulation of Win2k3 error return
+codes</para></item>
+        <item><para>Implement check_path_syntax() and rewrite string
+sub functions for better multibyte support</para></item>
+        <item><para>Ensure msdfs referrals are multibyte
+safe</para></item>
+        <item><para>Allow msdfs symlink syntax to be more
+forgiving:</para>
+        <screen>
+eg. sym_link -&gt; msdfs://server/share/path/in/share 
+or  sym_link -&gt; msdfs:\\server\share\path\in\share.
+        </screen></item>
+        <item><para>Cleanup multibyte netbios name support in
+nmbd</para></item>
+        <item><para>Fix check_path_syntax() for multibyte encodings
+which have no '\' as second byte</para></item>
+        <item><para>Fix the "dfs self-referrals as anonymous user"
+problem</para></item>
+        <item><para>BUG 1064: Ensure truncate attribute checking is
+done correctly on "hidden" dot files</para></item>
+        <item><para>Fix bug in anonymous dfs self-referrals
+again</para></item>
+        <item><para>Fix get/set of EA's in client
+library</para></item>
+        <item><para>Added support for OS/2 EA's in smbd
+server</para></item>
+        <item><para>Added 'ea support' parameter to
+smb.conf</para></item>
+        <item><para>Added 'store dos attributes' parameter to
+smb.conf</para></item>
+        <item><para>Fix wildcard identical rename.</para></item>
+        <item><para>Fix reply_ctemp - make compatible with
+w2k3</para></item>
+        <item><para>Fix wildcard unlink</para></item>
+        <item><para>Fix wildcard src with wildcard dest renames.
+</para></item>
+        <item><para>BUG 1139: swap lookups for user and group - group
+will do an algorithmic lookup if it fails, user won't</para></item>
+        <item><para>Make EA's lookups case independent</para></item>
+        <item><para>Fix SETPATHINFO in 'unix extensions'
+support</para></item>
+        <item><para>Make 3.x pass the Samba 4.x RAW-SEARCH tests -
+except for the UNIX info levels, and the short case preserve
+names</para></item>
+        <item><para>BUG 1144: only set --with-fhs when the argument is
+'yes'</para></item>
+        <item><para>BUG 1152: Allow python modules to build despite
+libraries added to LDFLAGS instead of LDPATH</para></item>
+        <item><para>BUG 1141: Fix nss*.so names on FreeBSD
+5.x</para></item>
+        <item><para>BUG 389: Allow multiple exclude arguments with
+smbclient tar -Xr options (better support for Amanda backup
+client)</para></item>
+        <item><para>Include support for linking with cracklib for
+enforcing strong password changes.</para></item>
+        <item><para>Add support for &gt;14 character password changes
+from Windows clients.</para></item>
+        <item><para>Add 'admin set password' capability to 'net
+rpc'</para></item>
+        <item><para>Allow 'net rpc samdump' to work with any joined
+domain regardless of smb.conf settings</para></item>
+        <item><para>Use an allocated buffer for
+count_chars</para></item>
+        <item><para>Add sanity checks for changes in the domain SID in
+an LDAP DIT</para></item>
+        <item><para>Implement python unit tests for Samba's multibyte
+string support</para></item>
+        <item><para>Remove 'unicode' smb.conf option</para></item>
+        <item><para>BUG 1138: Fix support for 'optional' SMB signing
+and other signing bugs</para></item>
+        <item><para>BUG 169: Fix NTLMv2-only behavior</para></item>
+        <item><para>Ensure 'net' honors the 'netbios name' in the
+smb.conf by default</para></item>
+        <item><para>Support SMB signing on connections using only the
+LANMAN password and generate the correct the 'session key' for these
+connections</para></item>
+        <item><para>Implement --required-membership-of=, an ntlm_auth
+option that restricts all authentication to members of this particular
+group</para></item>
+        <item><para>Improve our fall back code for password
+changes</para></item>
+        <item><para>Only send the ntlm_auth 'ntlm-server-1' helper
+client a '.' after the server had said something (such as an
+error)</para></item>
+        <item><para>Add 'ntlm-server-1' helper protocol to
+ntlm_auth</para></item>
+        <item><para>Fix incorrect size calculation of the directory
+name in recycle.so</para></item>
+        <item><para>Fix problems with very long filenames in both smbd
+and smbclient caused by truncating paths during character
+conversions</para></item>
+        <item><para>Fix smbfs problem with Tree Disconnect issued
+before smbfs starts its work</para></item>
+        <item><para>BUG 850: Fix 'make installmodules' bug on
+Tru64</para></item>
+        <item><para>BUG 66: mark 'only user' deprecated</para></item>
+        <item><para>Remove corrupt tdb and shutdown (only for printing
+tdbs, connections, sessionid &amp; locking)</para></item>
+        <item><para>decrement smbd counter in connections.tdb in
+smb_panic()</para></item>
+        <item><para>Fix xattr.h build issue on Debian testing and SuSE
+8.2</para></item>
+        <item><para>BUG 1147; bad pointer case in
+get_stored_queue_info() causing seg fault</para></item>
+        <item><para>BUG 761: read the config file before initialized
+default values for printing options; don't default to bsd printing
+Linux</para></item>
+        <item><para>Allow the 'printing' parameter to be set on a per
+share basis</para></item>
+        <item><para>BUG 503: RedHat/Fedora packaging fixes regarding
+logrotate</para></item>
+        <item><para>BUG 848: don't create winbind local users/groups
+that already exist in the tdb</para></item>
+        <item><para>BUG 1080: fix declaration of SMB_BIG_UINT (broke
+compile on LynxOS/ppc)</para></item>
+        <item><para>BUG 488: fix the 'show client in col 1' button and
+correctly enumerate active connections</para></item>
+        <item><para>BUG 1007 (partial): Fix abort in smbd caused by
+byte ordering problem when storing the updating pid for the lpq
+cache</para></item>
+        <item><para>BUG 1007 (partial): Fix print change notify
+bugs</para></item>
+        <item><para>BUG 1165, 1126: Fix bug with secondary groups
+(security = ads) and winbind use default domain = yes</para></item>
+        <item><para>BUG 1151: Ensure that winbindd users are passed
+through the username map</para></item>
+        <item><para>Fix client rpc binds for ASU derived servers (pc
+netlink, etc...)</para></item>
+        <item><para>BUG 417, 1128: Ensure that the current_user_info
+is set consistently so that %[UuGg] is expanded
+correctly</para></item>
+        <item><para>BUG 1195: Fix crash in winbindd when the ADS
+server is unavailable</para></item>
+        <item><para>BUG 1185: Set reconnect time to be the same as the
+'winbind cache time'</para></item>
+        <item><para>Ensure that we return the sec_desc in
+smb_io_printer_info_2</para></item>
+        <item><para>Change Samba printers Win32 attribute to
+PRINTER_ATTRIBUTE_LOCAL</para></item>
+        <item><para>BUG 1095: Honor the '-l' option in
+smbclient</para></item>
+        <item><para>BUG 1023: surround get_group_from_gid() with
+become_unbecome_root() block</para></item>
+        <item><para>Ensure server schannel uses the auth level
+requested by the client</para></item>
+        <item><para>Removed --with-cracklib option due to potential
+crash issue</para></item>
+        <item><para>Fix -lcrypto linking problem with
+wbinfo</para></item>
+        <item><para>BUG 761: allow printing parameter to set defaults
+on a per share basis</para></item>
+        <item><para>Add 'cups options' parameter to allow raw printing
+without changing /etc/cups/cupsd.conf</para></item>
+        <item><para>BUG 1081, 1183: Added remove_duplicate_gids() to
+smbd and winbindd</para></item>
+        <item><para>BUG 1246: Fix typo in Fedora
+/etc/init.d/winbind</para></item>
+        <item><para>BUG 1288: resolve any machine netbios name (0x00)
+and not just servers (0x20)</para></item>
+        <item><para>BUG 1199: Fix potential symlink issue in
+examples/printing/smbprint</para></item>
+        <item><para>BUG 1048: Don't return short names when when
+'mangled names = no'</para></item>
+        <item><para>Remove hard coded attribute name in the ads ranged
+retrieval code</para></item>
+        <item><para>Add --with-libdir and --with-mandir to autoconf
+script</para></item>
+        <item><para>BUG 1046: Fix  getpwent_list() so that the
+username is not overwritten by other fields</para></item>
+        <item><para>BUG 1232: patch to fix user/group enumeration on
+systems whose libc does not call setgrent() before trying to enumerate
+users (i.e. FreeBSD 5.2)</para></item>
+        <item><para>Update mount.cifs to version 1.1</para></item>
+        <item><para>Disable dev (MS_NODEV) on user mounts from cifs
+vfs</para></item>
+        <item><para>Fixes to minor security bug in the mount
+helper</para></item>
+        <item><para>Fix credential file mounting for cifs
+vfs</para></item>
+        <item><para>Fix free of incremented pointer in cifsvfs mount
+helper</para></item>
+        <item><para>Fix path canonicalization of the mount target path
+and help text display in the cifs mount helper</para></item>
+        <item><para>Add missing guest mount option for
+mount.cifs</para></item>
+        <item><para>BUG 1055; formatting fixes for 'net
+share'</para></item>
+        <item><para>BUG 692: correct truncation of share names and
+workgroup names in smbclient</para></item>
+        <item><para>BUG 1088: use strchr_m() for query_host (smbclient
+-L)</para></item>
+        <item><para>Patch from to internally count characters
+correctly</para></item>
+        <item><para>Update VOS _POSIX_C_SOURCE macro to
+200112L</para></item>
+        <item><para>Fix bug in configure.in by moving the first use of
+AC_CHECK_HEADERS so it is always executed</para></item>
+        <item><para>Fix configure.in to only use $BLDSHARED to select
+whether to build static or shared libraries.</para></item>
+        <item><para>Make the session_users list dynamic (max of
+128K)</para></item>
+        <item><para>Fix for for 'pam_smbpass migrate'
+functionality</para></item>
+        <item><para>fix enumeration of shares 12 characters in length
+via smbclient</para></item>
+        <item><para>BUG 932: fix local password change using
+pam_smbpass</para></item>
+        <item><para>Implement 'net rpc group delete'</para></item>
+        <item><para>Return NSS_SUCCESS once the max number of gids
+possible has been found in initgroups() on Solaris</para></item>
+        <item><para>BUG 1182: Re-enable the -n 'no cache' option for
+winbindd</para></item>
+        <item><para>Fix success message for net groupmap
+modify</para></item>
+        <item><para>Fix errors when enumerating members of groups in
+'net rpc'</para></item>
+        <item><para>Match Windows behavior in samr_lookup_names() by
+returning ALIAS(4) when you search in BUILTIN.</para></item>
+        <item><para>Fix server SAMR code to be able to set alias info
+for builtin as well.</para></item>
+        <item><para>Fix duplication of logic when creating groups via
+smbd</para></item>
+        <item><para>Ensure that the HWM values are set correctly after
+running 'net idmap'</para></item>
+        <item><para>Add 'net rpc group add'</para></item>
+        <item><para>Implement 'net groupmap set' and 'net groupmap
+cleanup'</para></item>
+        <item><para>Add 'net rpc group [add|del]mem' for domain groups
+and aliases</para></item>
+        <item><para>Fix wb_delgrpmem (wbinfo -o)</para></item>
+        <item><para>As a DC we should not reply to lsalookupnames on
+DCNAME\\user</para></item>
+        <item><para>Fix sambaUserWorkstations on a Samba
+DC</para></item>
+        <item><para>Implement wbinfo -k: Have winbind generate an AFS
+token after authenticating the user</para></item>
+        <item><para>Add expand_msdfs VFS module for providing
+referrals based on the the client's IP address</para></item>
+        <item><para>Implement client side NETLOGON GetDCName
+function</para></item>
+        <item><para>Fix caching of name-&gt;sid lookups</para></item>
+        <item><para>Add support in winbindd for expanding nested local
+groups</para></item>
+        <item><para>Fix memleak in winbindd</para></item>
+        <item><para>Fix msdfs proxy</para></item>
+        <item><para>Don't list domain groups from
+BUILTIN</para></item>
+        <item><para>Fix memleak in policy handle utility
+functions</para></item>
+        <item><para>Decrease winbindd startup time by only contacting
+trusted domains as necessary</para></item>
+        <item><para>Allow winbindd to ask the DC for its domain for a
+trusted DC</para></item>
+        <item><para>Fix Netscape DS schema based on comments from
+</para></item>
+        <item><para>Correct case where adding a domain user to a XP
+local group did a lsalookupname on the user without domain prefix, and
+failed</para></item>
+        <item><para>Fix segfault in winbindd caused by 'wbinfo
+-a'</para></item>
+        <item><para>Fix typo for tag in proto file</para></item>
+        <item><para>Truncate Samba's netbios name at the first '.'
+(not right to left)</para></item>
+        <item><para>Bug fixes and enhancements to libsmbclient
+library</para></item>
+        <item><para>Enforce the 'user must change password at next
+login' flag</para></item>
+        <item><para>Decode meaning of 'fields present' flags (improves
+support for usrmgr.exe).</para></item>
+        <item><para>NTLMv2 fixes</para></item>
+        <item><para>Don't force an upper case domain name in the
+ntlmssp code</para></item>
+        <item><para>Add versioning support to tdbsam</para></item>
+        <item><para>Update the IBM Directory Server schema with the
+OpenLDAP file</para></item>
+        <item><para>Various decoding fixes to improve usrmgr.exe
+support</para></item>
+        <item><para>Fix statfs redeclaration of statfs struct on
+ppc</para></item>
+        <item><para>Implement support for password lockout of Samba
+domain controllers and standalone servers</para></item>
+        <item><para>Get MungedDial attribute actually working with
+full TS strings in it for pdb_ldap</para></item>
+        <item><para>BUG 1208 (partial): Improvements for working with
+expired krb5 tickets in winbindd</para></item>
+        <item><para>Use timegm, or our already existing replacement
+instead of timezone</para></item>
+        <item><para>Remove modifyTimestamp from list of our
+attributes</para></item>
+        <item><para>Fix lsalookupnames to check for domain users as
+well as local users</para></item>
+        <item><para>Merge struct uuid replacement for GUID from
+trunk</para></item>
+        <item><para>BUG 1208: Finish support for handling expired
+tickets in winbindd</para></item>
+        <item><para>Implement new VERSION schema based on subversion
+revision numbers</para></item>
+        <item><para>Add shadow_copy vfs module</para></item>
+        <item><para>Fix segault in login_cache support</para></item>
+        <item><para>BUG 979 -- Fix quota display on AIX</para></item>
+        <item><para>Correct check for printf() format when using the
+SGI MIPSPro compiler</para></item>
+        <item><para>BUG 1038: support backtrace for 'panic action' on
+IRIX</para></item>
+        <item><para>BUG 768: Accept profileing arg to IRIX init
+script</para></item>
+        <item><para>BUG 748: Relax arg parsing to sambalp script
+(IRIX)</para></item>
+        <item><para>BUG 758: Fix pdma build</para></item>
+        <item><para>Add example shell script for migrating drivers and
+printers from a Windows print server to a Samba print server using
+smbclient/rpcclient
+(examples/printing/VamireDriversFunctions)</para></item>
+        <item><para>Fix logic bug in tdb non-blocking lock routines
+when errno == EAGAIN</para></item>
+        <item><para>BUG 1025: Include sys/acl.h in check for broken
+nisplus include files</para></item>
+        <item><para>BUG 1066: s/printf/d_printf/g in
+SWAT</para></item>
+        <item><para>BUG 1098: rename internal msleep() function to fix
+build problems on AIX</para></item>
+        <item><para>BUG 1112: Fix for writable printerdata problem in
+python bindings</para></item>
+        <item><para>BUG 1154: Remove reference to &lt;sys/mman.h&gt;
+in tdbdump.c</para></item>
+        <item><para>BUG 1155: enclose use of fchown() with
+guards</para></item>
+        <item><para>Relicense tdb python module as LGPL</para></item>
+        <item><para>Add support to smbclient for multiple logins on
+the same session</para></item>
+        <item><para>Correct blocking condition in smbd's use of
+accept() on IRIX</para></item>
+        <item><para>Add support for printing out the MAC address on
+nmblookup</para></item>
+        <item><para>Replace unknown_3 with fields_present in SAMR
+code</para></item>
+        <item><para>More length checks in strlcat()</para></item>
+        <item><para>Rewrote the AIX UESS backend for
+winbindd</para></item>
+        <item><para>Fixed compilation with
+--enable-dmalloc</para></item>
+        <item><para>Change tdb license to LGPL (see
+source/tdb/tdb.c)</para></item>
+        <item><para>Force winbindd to use schannel in clients
+connections to DC's if possible</para></item>
+        <item><para>Fix ETA Calculation when resuming downloads in
+smbget</para></item>
+        <item><para>Add -O (for writing downloaded files to standard
+out) </para></item>
+        <item><para>Fix syntax error in example mysql
+table</para></item>
+        <item><para>BUG 900: fix token processing in cmd_symlink,
+cmd_link, cmd_chown, cmd_chmod smbclient functions</para></item>
+        <item><para>BUG 1129: install image files for
+SWAT</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>Beginning with Samba 3.0.2, passwords for accounts with
+a last change time (<command>LCT-XXX</command> in smbpasswd,
+sambaPwdLastSet attribute in ldapsam, etc...) of zero (0) will be
+regarded as uninitialized strings. This will cause authentication to
+fail for such accounts. If you have valid passwords that meet this
+criteria, you must update the last change time to a non-zero value. If
+you do not, then  '<command>pdbedit
+--force-initialized-passwords</command>' will disable these accounts
+and reset the password hashes to a string of X's.</para>
+
+        <para><command>${SB_INSTALL_PREFIX}/doc/WHATSNEW.txt</command>
+and
+<command>${SB_INSTALL_PREFIX}/doc/Samba-HOWTO-Collection.pdf</command>
+contain information on upgrading from Samba 2.x to Samba 3.x.</para>
+      </note>
+
+      <note type="installation">
+        <para>The default location for log files and other runtime
+information is stored in <command>/var${SB_INSTALL_PREFIX}</command>. The
+configuration files, lmhosts, printers.def, and smb.conf are stored in
+<command>/etc${SB_INSTALL_PREFIX}</command>. The "<command>-s</command>" switch
+can be used to specify an alternate path to the configuration
+file.</para>
+
+        <para>The local configuration file installs startup scripts
+for smbd and nmbd into the <command>/etc/init.d</command> or
+<command>/sbin/init.d</command> directory, depending on the platform.
+The startup scripts will start Samba when the system is restarted and
+shut Samba down when the system is shut down.</para>
+
+        <para>ACL support has been compiled in for AIX, IRIX, Solaris,
+and Tru64 UNIX. <command>mmap(2)</command> support has been disabled
+on HP-UX because the page and buffer cache are not kept in sync. This
+causes corruption in the TDB database.</para>
+
+        <para>Smbwrapper support has been compiled in for IRIX, Redhat
+Linux, and Solaris.</para>
+      </note>
+
+      <platform name="AIX 4.3.3">
+        <para>A newer version of the libc library might be required 
+for <command>mkstemp64()</command>. Version 4.3.3.93 of bos.rte.libc 
+or later is required.</para>
+      </platform>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHKL_20349</command> or one of its
+successors is required for HP-UX 11.00. This patch introduces the
+<command>pread()</command> function call. Without it, the smbd daemon
+will core dump on startup. If <command>PHKL_20349</command> is
+installed and the following error message is reported then patch
+<command>PHCO_24723</command> (libc cumulative patch) or one of its
+successors needs to be installed:</para>
+        <screen>
+/usr/lib/dld.sl: Unresolved symbol: pread (code) ...
+        </screen>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 15" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0807 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0807">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0488</ulink>)
+to fix a defect in smbd's ASN.1 parsing which allows an attacker to
+send a specially crafted packet during the authentication request
+which will send the newly spawned smbd process into an infinite loop.
+Given enough of these packets, it is possible to exhaust the available
+memory on the server.</para></item>
+        <item><para>Apply patch for CAN-2004-0808 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0808">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0808</ulink>)
+to fix a defect in nmbd's process of mailslot packets which can allow
+an attacker to anonymously crash nmbd.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

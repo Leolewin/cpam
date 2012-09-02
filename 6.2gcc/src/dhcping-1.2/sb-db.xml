@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="dhcping" version="1.2" revision="1">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}12</install-name>
+
+    <sources>
+      <source checksum="c4b22bbf3446c8567e371c40aa552d5d"
+        checksum-type="md5" size="75485"
+        path="src/dhcping-1.2.tar.gz"/>
+      <patch checksum="d24bac665cbb39ed9e8127fe133334fd"
+        checksum-type="md5" size="128341"
+        path="src/dhcping-1.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--prefix=${INSTALL_PREFIX}
+]]>
+    </configure>
+  </program>
+</programs>

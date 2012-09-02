@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="expect" version="5.40" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}54</install-name>
+
+    <sources>
+      <source checksum="6ae1b87c9af993a69b901b6e52962c18"
+        checksum-type="md5" size="521414"
+        path="src/expect.tar.gz"/>
+      <patch checksum="9c3f5cb7005f6a1b580f2aab7b941886"
+        checksum-type="md5" size="170025"
+        path="src/expect.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcl" state="build">v==8.4.6</depend>
+      <depend program="tk" state="build">v==8.4.6</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="tcl" var="TCL">v==8.4.6</depend>
+      <depend program="tk" var="TK">v==8.4.6</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--enable-shared --with-tcl="${TCL_LIB}" --with-tk="${TK_LIB}" \
+--with-tclinclude=${SB_BUILD_BASE}/tcl8.4.6 \
+--with-tkinclude=${SB_BUILD_BASE}/tk8.4.6 \
+--cache-file=/dev/null --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <notes>
+      <change from="5.39.0" to="5.40.0">
+        <item><para>Troff-related fixes for the expect, lib, and
+dislocate man pages</para></item>
+        <item><para>Bug having to do with our caching of whether we
+have registered a filehandler. This broke when Tcl was setting a
+handler on the same file.</para></item>
+        <item><para>Leak in spawn error handling</para></item>
+        <item><para>autopasswd example broke on Solaris which
+capitalized prompts</para></item>
+      </change>
+
+      <change from="5.38.4" to="5.39.0">
+        <item><para>grantpt/unlockpt order was backward. Strange that
+this was never a prob before!</para></item>
+        <item><para>In exp_command.c, Tcl_GetChannelHandle expected a
+ClientData*, but got an int*. sizeof(int) != sizeof(ClientData) on
+64bit platforms. Crashed the command on a PA-RISC 2.0 machine with
+--enable-64bit set. Fix: Use temp. variables of type ClientData to
+retrieve the fd's, and copy this into the actual variables, with a
+cast to int.</para></item>
+        <item><para>More fixes to sync this version with SF. Fixed:
+exp_chan, weather, exp_main_tk.</para></item>
+        <item><para>Troff-related fix for the multixterm man
+page</para></item>
+      </change>
+
+      <change from="5.38.3" to="5.38.4">
+        <item><para>Confusion with md5 so I made the Expect page more
+explicit about which file that hash was based on</para></item>
+      </change>
+
+      <change from="5.38.2" to="5.38.3">
+        <item><para>Exit on INT/TERM should cause Expect to exit with
+signal embedded in status</para></item>
+      </change>
+
+      <change from="5.38.1" to="5.38.2">
+        <item><para>fixline1 rewrote scripts to be expect scripts even
+if they were expectk scripts</para></item>
+      </change>
+
+      <change from="5.38.0" to="5.38.1">
+        <item><para>any_spawn_id used to work but did no longer. Looks
+like a bug left over from the the I18L conversion.</para></item>
+        <item><para>exp_log_file -open channel failed</para></item>
+        <item><para>Fixed bug from 5.31 that prevent stty from
+returning messages from underlying program</para></item>
+        <item><para>Ncurses ignores 2-char term names because of,
+well, poor assumptions and coding. Changed tkterm to use longer
+names.</para></item>
+        <item><para>exp_clib could lock up if remtime happened to be
+precisely 0. Recoded to avoid.</para></item>
+        <item><para>Wrote script to read from stdin and echo passwords
+(exercise 9 in Tk chapter of Expect book). Added to example directory
+as passwdprompt.</para></item>
+        <item><para>By default, SIGINT/TERM should cause expect's
+return status to be 1, not 0.</para></item>
+        <item><para>unbuffer shouldn't postprocess its output. Added
+stty_init.</para></item>
+        <item><para>log_file wasn't recording -append
+status</para></item>
+        <item><para>Weather example needed new source</para></item>
+        <item><para>Interact dumped core with <command>interact {
+timeout 1 }</command></para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

@@ -1,0 +1,872 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="cyrus-sasl" version="2.1.25" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libsasl21</install-name>
+
+    <sources>
+      <source checksum="341cffe829a4d71f2a6503d669d5a946"
+        checksum-type="md5" size="5209240"
+        path="src/cyrus-sasl-2.1.25.tar.gz"/>
+      <patch checksum="438574f4b2f29b99c01491d87f4a21a5"
+        checksum-type="md5" size="2926"
+        path="src/cyrus-sasl-2.1.25.fc-inttypes_h.patch"/>
+      <patch checksum="00c8f2195f8f11423340909fb7e656f6"
+        checksum-type="md5" size="2176"
+        path="src/cyrus-sasl-2.1.25.fc-db_bundle.patch"/>
+      <patch checksum="83007e53af2469b4f54643d369be526b"
+        checksum-type="md5" size="12434"
+        path="src/cyrus-sasl-2.1.25.gcrypt.patch"/>
+      <patch checksum="c708b50f4fc4b151eb9f626e8ced844e"
+        checksum-type="md5" size="65508"
+        path="src/cyrus-sasl-2.1.25.tww.patch"/>
+      <patch checksum="67b10b1f2954fc9b1108492e016f2c05"
+        checksum-type="md5" size="2558694"
+        path="src/cyrus-sasl-2.1.25.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="mysql" var="MYSQL"
+        module="libruntime">v==5.5.15</depend>
+      <depend program="postgresql" var="PGSQL"
+        module="libruntime">v==9.0.6</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb47">v&gt;=4.7.25</depend>
+      <depend program="libgcrypt" var="LIBGCRYPT"
+        install-name="libgcrypt14">v&gt;=1.4.6</depend>
+      <depend program="libgpg-error" var="LIBGPGERROR"
+        install-name="libgpgerror110">v&gt;=1.10</depend>
+      <depend program="sqlite" var="SQLITE"
+        install-name="libsqlite37">v&gt;=3.7.7.1</depend>
+      <depend program="groff" install-name="groff121"
+        add-path="prepend" type="build">v&gt;=1.21</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-lib-subdir=lib" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_dbpath="${_localstatedir}/db/sasldb"
+
+if [ "${_localstatedir+set}" = set ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    _with_saslauthd=no ;;
+  *)
+    _with_saslauthd="${_localstatedir}/run" ;;
+  esac
+fi
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="cyrus-sasl"
+          module="saslauthd">v==2.1.25</depend>
+        <depend program="cyrus-sasl" module="64bit"
+          systype="*-aix*|*-hpux|*-irix*|*-solaris*">v==2.1.25</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-lib-subdir=lib" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_dbpath="${_localstatedir}/db/sasldb"
+
+if [ "${_localstatedir+set}" = set ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    _with_saslauthd=no ;;
+  *)
+    _with_saslauthd="${_localstatedir}/run" ;;
+  esac
+fi
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBDB_INC} -I${SB_VAR_LIBGCRYPT_INC} \
+-I${SB_VAR_LIBGPGERROR_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBDB_LIB} -L${SB_VAR_LIBGCRYPT_LIB} \
+-L${SB_VAR_LIBGPGERROR_LIB} ${CC_LD_RT}${SB_VAR_LIBDB_LIB}:\
+${SB_VAR_LIBGCRYPT_LIB}:${SB_VAR_LIBGPGERROR_LIB}\
+${SB_VAR_MYSQL+:${SB_VAR_MYSQL_LIB}}\
+${SB_VAR_PGSQL+:${SB_VAR_PGSQL_LIB}}\
+${SB_VAR_SQLITE+:${SB_VAR_SQLITE_LIB}}\
+ ${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_MYSQL+--enable-sql} \
+${SB_VAR_MYSQL+--with-mysql} \
+${SB_VAR_MYSQL+--with-mysql-inc=${SB_VAR_MYSQL_INC}} \
+${SB_VAR_MYSQL+--with-mysql-lib=${SB_VAR_MYSQL_LIB}} \
+${SB_VAR_PGSQL+--enable-sql} \
+${SB_VAR_PGSQL+--with-pgsql} \
+${SB_VAR_PGSQL+--with-pgsql-inc=${SB_VAR_PGSQL_INC}} \
+${SB_VAR_PGSQL+--with-pgsql-lib=${SB_VAR_PGSQL_LIB}} \
+${SB_VAR_SQLITE+--enable-sql} \
+${SB_VAR_SQLITE+--with-sqlite3} \
+${SB_VAR_SQLITE+--with-sqlite3-inc=${SB_VAR_SQLITE_INC}} \
+${SB_VAR_SQLITE+--with-sqlite3-lib=${SB_VAR_SQLITE_LIB}} \
+--with-saslauthd=${_with_saslauthd} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+${_sysconfdir+--with-configdir=${_sysconfdir}} \
+--with-dbpath=${_dbpath} \
+${SB_VAR_PRNGD+--with-devrandom=${_prngd_socket}} \
+--with-des --with-rc4 --without-openssl \
+--with-plugindir=${SB_INSTALL_PREFIX}/lib/sasl \
+--with-dblib=berkeley --disable-gssapi --disable-krb4 \
+--enable-shared --enable-static --with-staticsasl \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+if [ "${_sysconfdir+set}" = set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+fi
+
+if [ "${_localstatedir+set}" = set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/db \
+  ${_localstatedir}/run
+fi
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir+${_sysconfdir}} \
+${_localstatedir+${_localstatedir}} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="mysql" var="MYSQL"
+          module="64bit">v==5.5.15</depend>
+        <depend program="postgresql" var="PGSQL" module="64bit"
+          systype="*-aix*|*-hpux11.[123]*|*-irix*|*-solaris*">v==9.0.6</depend>
+        <depend program="db" var="LIBDB" install-name="libdb47"
+          module="64bit">v&gt;=4.7.25</depend>
+        <depend program="libgcrypt" var="LIBGCRYPT"
+          install-name="libgcrypt14"
+          module="64bit">v&gt;=1.4.6</depend>
+        <depend program="libgpg-error" var="LIBGPGERROR"
+          install-name="libgpgerror110"
+          module="64bit">v&gt;=1.10</depend>
+        <depend program="sqlite" var="SQLITE"
+          install-name="libsqlite37"
+          module="64bit">v&gt;=3.7.7.1</depend>
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+        <depend program="groff" install-name="groff121"
+          add-path="prepend" type="build">v&gt;=1.21</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_dbpath="${_localstatedir}/db/sasldb"
+
+if [ "${_localstatedir+set}" = set ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    _with_saslauthd=no ;;
+  *)
+    _with_saslauthd="${_localstatedir}/run" ;;
+  esac
+fi
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1 -qarch=ppc64"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-lib-subdir=lib" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBDB_INC} -I${SB_VAR_LIBGCRYPT_INC} \
+-I${SB_VAR_LIBGPGERROR_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBDB}/${_libdir} \
+-L${SB_VAR_LIBGCRYPT}/${_libdir} \
+-L${SB_VAR_LIBGPGERROR}/${_libdir} \
+${CC_LD_RT}${SB_VAR_LIBDB}/${_libdir}:\
+${SB_VAR_LIBGCRYPT}/${_libdir}:\
+${SB_VAR_LIBGPGERROR}/${_libdir}\
+${SB_VAR_MYSQL+:${SB_VAR_MYSQL}/${_libdir}}\
+${SB_VAR_PGSQL+:${SB_VAR_PGSQL}/${_libdir}}\
+${SB_VAR_SQLITE+:${SB_VAR_SQLITE}/${_libdir}}\
+ ${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_MYSQL+--enable-sql} \
+${SB_VAR_MYSQL+--with-mysql} \
+${SB_VAR_MYSQL+--with-mysql-inc=${SB_VAR_MYSQL_INC}} \
+${SB_VAR_MYSQL+--with-mysql-lib=${SB_VAR_MYSQL}/${_libdir}} \
+${SB_VAR_PGSQL+--enable-sql} \
+${SB_VAR_PGSQL+--with-pgsql} \
+${SB_VAR_PGSQL+--with-pgsql-inc=${SB_VAR_PGSQL_INC}} \
+${SB_VAR_PGSQL+--with-pgsql-lib=${SB_VAR_PGSQL}/${_libdir}} \
+${SB_VAR_SQLITE+--enable-sql} \
+${SB_VAR_SQLITE+--with-sqlite3} \
+${SB_VAR_SQLITE+--with-sqlite3-inc=${SB_VAR_SQLITE_INC}} \
+${SB_VAR_SQLITE+--with-sqlite3-lib=${SB_VAR_SQLITE}/${_libdir}} \
+--with-saslauthd=${_with_saslauthd} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+${_sysconfdir+--with-configdir=${_sysconfdir}} \
+--with-dbpath=${_dbpath} \
+${SB_VAR_PRNGD+--with-devrandom=${_prngd_socket}} \
+--with-des --without-rc4 --without-openssl \
+--with-plugindir="${SB_INSTALL_PREFIX}/${_libdir}/sasl" \
+--with-dblib=berkeley --disable-gssapi --disable-krb4 \
+--enable-shared --enable-static --with-staticsasl \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C lib install-libLTLIBRARIES
+gmake -C plugins install-saslLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="saslauthd">
+      <dependencies>
+        <depend program="db" var="LIBDB"
+          install-name="libdb47">v&gt;=4.7.25</depend>
+        <depend program="groff" install-name="groff121"
+          add-path="prepend" type="build">v&gt;=1.21</depend>
+        <depend program="openldap" var="OPENLDAP"
+          install-name="openldap24">v&gt;=2.4.26</depend>
+        <depend program="libgcrypt" var="LIBGCRYPT"
+          install-name="libgcrypt14">v&gt;=1.4.6</depend>
+        <depend program="libgpg-error" var="LIBGPGERROR"
+          install-name="libgpgerror110">v&gt;=1.10</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-lib-subdir=lib" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_dbpath="${_localstatedir}/db/sasldb"
+
+if [ "${_localstatedir+set}" = set ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    _with_saslauthd=no ;;
+  *)
+    _with_saslauthd="${_localstatedir}/run" ;;
+  esac
+fi
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBDB_INC} -I${SB_VAR_LIBGCRYPT_INC} \
+-I${SB_VAR_LIBGPGERROR_INC}" LDFLAGS="-L${SB_VAR_LIBDB_LIB} \
+-L${SB_VAR_LIBGCRYPT_LIB} -L${SB_VAR_LIBGPGERROR_LIB} \
+${CC_LD_RT}${SB_VAR_LIBDB_LIB}:${SB_VAR_LIBGCRYPT_LIB}:\
+${SB_VAR_LIBGPGERROR_LIB}:${SB_VAR_OPENLDAP_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+--with-des --with-rc4 --without-openssl \
+--with-dbpath="${_localstatedir}/db" \
+--with-saslauthd="${_localstatedir}/run" \
+--sysconfdir="${_sysconfdir}" \
+--with-plugindir=${SB_INSTALL_PREFIX}/lib/sasl \
+--with-dblib=berkeley --disable-gssapi --disable-krb4 \
+--enable-shared --enable-static --with-staticsasl \
+--with-ldap=${SB_VAR_OPENLDAP} --disable-dependency-tracking \
+${ARGS+${ARGS}} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake
+
+gmake -C saslauthd testsaslauthd
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -C saslauthd install
+
+# install testsaslauthd
+if [ -f saslauthd/testsaslauthd ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 saslauthd/testsaslauthd \
+  ${SB_INSTALL_PREFIX}/bin
+fi
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+/etc${SB_INSTALL_PREFIX}/saslauthd.conf
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/sbin/saslauthd \
+${SB_INSTALL_PREFIX}/man/cat8/saslauthd.8
+
+rmdir ${SB_INSTALL_PREFIX}/man/cat8 || :
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.1.24" to="2.1.25">
+        <item><para>Make sure that a failed authorization doesn't
+preclude further server-side SASL authentication attempts from
+working</para></item>
+        <item><para>Fixed a crash caused by aborted SASL
+authentication and initiation of another one using the same SASL
+context</para></item>
+        <item><para>(Windows) Fixed the random number generator to
+actually produce random output on each run</para></item>
+        <item><para>Be protective against calling sasl_server_step
+once authentication has failed (multiple SASL plugins)</para></item>
+        <item><para>Fixed several bugs in the mech_avail callback
+handling in the server side code</para></item>
+        <item><para>Added support for channel bindings</para></item>
+        <item><para>Added support for ordering SASL mechanisms by
+strength (on the client side), or using the "client_mech_list"
+option</para></item>
+        <item><para>server_idle needs to obey server's SASL mechanism
+list from the server context</para></item>
+        <item><para>Better server plugin API mismatch
+reporting</para></item>
+        <item><para>Build:</para>
+        <unorderedlist>
+          <item><para>Updated config to the latest GNU
+snapshot</para></item>
+          <item><para>Fixed SASL's libtool MacOS/X 64-bit file
+magic</para></item>
+        </unorderedlist></item>
+        <item><para>New SASL plugin: SCRAM</para></item>
+        <item><para>New SASL plugin: GS2</para></item>
+        <item><para>DIGEST-MD5 plugin:</para>
+        <unorderedlist>
+          <item><para>Allow DIGEST-MD5 plugin to be used for
+client-side and server-side HTTP Digest, including running over
+non-persistent connections (RFC 2617)</para></item>
+          <item><para>Use the same username for reauthentication cache
+lookup and update</para></item>
+          <item><para>Minimize the number of auxprop lookups in the
+server side DIGEST-MD5 plugin for the most common case when
+authentication and authorization identities are the same</para></item>
+          <item><para>Updated digestmd5_server_mech_step2() to be more
+defensive against empty client input</para></item>
+          <item><para>Fixed some memory leaks on failed plugin
+initialization. Prevent potential race condition when freeding plugin
+state. Set the freed reauthentication cache mutex to NULL, to make
+errors due to mutex access after free more obvious.</para></item>
+          <item><para>Test against broken UTF-8 based hashes if
+calculation using special ISO-8859-1 code fails</para></item>
+          <item><para>Fixed an interop problem with some LDAP clients
+ignoring server advertised realm and providing their own</para></item>
+        </unorderedlist></item>
+        <item><para>GSSAPI plugin:</para>
+        <unorderedlist>
+          <item><para>Fix to build GSSAPI with Heimdal</para></item>
+          <item><para>Properly set serveroutlen to 0 in one place.
+Don't send empty challenge once server context establishment is done,
+as this is in violation of the RFC 2222 and its
+successor.</para></item>
+          <item><para>Don't send maxbuf, if no security layer can be
+established. Added additional checks for buffer lengths.</para></item>
+        </unorderedlist></item>
+        <item><para>LDAPDB plugin:</para>
+        <unorderedlist>
+          <item><para>build fixes</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="2.1.23" to="2.1.24">
+        <item><para>Order advertised server-side SASL mechanisms per
+the specified 'mech_list' option or by relative
+"strength"</para></item>
+        <item><para>Make sure that sasl_set_alloc() has no effect once
+sasl_client_init() or sasl_server_init() is called</para></item>
+        <item><para>Fixed sasl_set_mutex() to disallow changing mutex
+management functions once sasl_server_init()/sasl_client_init() is
+called (bug # 3083)</para></item>
+        <item><para>Removed unused mutexes in lib/client.c and
+lib/server.c (bug # 3141)</para></item>
+        <item><para>Added direct support for hashed password to
+auxprop API</para></item>
+        <item><para>Don't treat a constraint violation as an error to
+store an auxprop property</para></item>
+        <item><para>Extended libsasl (auxprop) to support user
+deletion</para></item>
+        <item><para>Extended SASL auxprop_lookup to return error
+code</para></item>
+        <item><para>Updated sasl_user_exists() so that it can handle
+passwordless accounts (e.g. disabled)</para></item>
+        <item><para>(Windows) Free handles of shared libraries on
+Windows that were loaded but are not SASL plugins (bug #
+2089)</para></item>
+        <item><para>Prevent freeing of common state on a subsequent
+call to _sasl_common_init. Make sure that the last global callback
+always wins.</para></item>
+        <item><para>Implemented
+sasl_client_done()/sasl_server_done()</para></item>
+        <item><para>Added automatic hostname canonicalization inside
+libsasl</para></item>
+        <item><para>Made sasl_config_init() public</para></item>
+        <item><para>Strip trailing spaces from server config file
+option values (bug # 3139, bug # 3041)</para></item>
+        <item><para>Fixed potential buffer overflow in
+saslautd_verify_password().</para></item>
+        <item><para>Fixed segfault in dlclose() on HPUX</para></item>
+        <item><para>Various bugfixes for 64bit platforms</para></item>
+        <item><para>Fixed bug # 2895 (passing LF to sasl_decode64) in
+sample/sample-client.c, sample/sample-server.c,
+utils/smtptest.c</para></item>
+        <item><para>pluginviewer: Code cleanup, improved human
+readable messages</para></item>
+        <item><para>Build:</para>
+        <unorderedlist>
+          <item><para>(Windows) Updated makefiles to build with VC 8.0
+(VC++ 2005)</para></item>
+          <item><para>(Windows) Added Windows64 build</para></item>
+          <item><para>Updated to use .plugin extension on
+MacOS</para></item>
+          <item><para>Changed 64bit HP-UX build to use .so for shared
+libraries</para></item>
+        </unorderedlist></item>
+        <item><para>saslauthd:</para>
+        <unorderedlist>
+          <item><para>Fixed bug counting double-quotes in
+username/password in auth_rimap.c. Also fixed bug zeroing
+password.</para></item>
+          <item><para>auth_krb.c: improved diagnostic in the
+k5support_verify_tgt() function.</para></item>
+          <item><para>auth_sasldb.c: pid_file_lock is created with a
+mask of 644 instead of 0644</para></item>
+          <item><para>auth_shadow.c: Define _XOPEN_SOURCE before
+including unistd.h, so that crypt is correctly defined</para></item>
+          <item><para>auth_getpwent.c: Fixed Solaris
+build</para></item>
+        </unorderedlist></item>
+        <item><para>SASLDB plugin:</para>
+        <unorderedlist>
+          <item><para>Fixed spurious 'user not found' errors caused by
+an attempt to delete a non-existent property</para></item>
+          <item><para>Added direct support for hashed password to
+auxprop API</para></item>
+          <item><para>Sleepycat driver: Return SASL_NOUSER instead of
+SASL_FAIL when the database file doesn't exist</para></item>
+          <item><para>Ignore properties starting with '*' in the
+auxprop store function</para></item>
+        </unorderedlist></item>
+        <item><para>SQL plugin:</para>
+        <unorderedlist>
+          <item><para>Added support for SQLITE3</para></item>
+          <item><para>Uninitialized variables can cause crash when the
+searched user is not found</para></item>
+          <item><para>Added direct support for hashed
+password</para></item>
+          <item><para>Ignore properties starting with '*' in the
+auxprop store function</para></item>
+        </unorderedlist></item>
+        <item><para>LDAPDB plugin:</para>
+        <unorderedlist>
+          <item><para>Added code to extend LDAPDB into a canon_user
+plugin in addition to its existing auxprop plugin
+functionality</para></item>
+        </unorderedlist></item>
+        <item><para>PLAIN plugin:</para>
+        <unorderedlist>
+          <item><para>Advertise SASL_SEC_PASS_CREDENTIALS
+feature</para></item>
+        </unorderedlist></item>
+        <item><para>LOGIN plugin:</para>
+        <unorderedlist>
+          <item><para>Advertise SASL_SEC_PASS_CREDENTIALS
+feature</para></item>
+        </unorderedlist></item>
+        <item><para>DIGEST-MD5 plugin:</para>
+        <unorderedlist>
+          <item><para>Fixed a memory leak in the DIGEST-MD5 security
+layer</para></item>
+          <item><para>Fixed memory leaks in client-side reauth and
+other places</para></item>
+          <item><para>More detailed error reporting.</para></item>
+          <item><para>Fixed parsing of challenges/responses with extra
+commas.</para></item>
+          <item><para>Allow for multiple qop options from the server
+and require a single qop option from the client</para></item>
+        </unorderedlist></item>
+        <item><para>GSSAPI plugin:</para>
+        <unorderedlist>
+          <item><para>Check that params-&gt;serverFQDN is not NULL
+before using strlen on it</para></item>
+        </unorderedlist></item>
+        <item><para>Make auxprop lookup calls optional</para></item>
+        <item><para>EXTERNAL plugin:</para>
+        <unorderedlist>
+          <item><para>Make auxprop lookup calls optional</para></item>
+        </unorderedlist></item>
+        <item><para>NTLM plugin:</para>
+        <unorderedlist>
+          <item><para>allow a comma separated list of servernames in
+'ntlm_server' option</para></item>
+          <item><para>Fixed crash in calculating NTv2
+reponse</para></item>
+        </unorderedlist></item>
+        <item><para>OTP plugin:</para>
+        <unorderedlist>
+          <item><para>Don't use a stack variable for an OTP prompt
+(bug # 2822)</para></item>
+          <item><para>Downgrade the failure to store OTP secret to
+debug level</para></item>
+        </unorderedlist></item>
+        <item><para>KERBEROS_V4 plugin:</para>
+        <unorderedlist>
+          <item><para>Make auxprop lookup calls optional</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="2.1.22" to="2.1.23">
+        <item><para>Fixed CERT VU#238019 (make sure sasl_encode64()
+always NUL terminates output or returns SASL_BUFOVER)</para></item>
+      </change>
+
+      <change from="2.1.21" to="2.1.22">
+        <item><para>Added support for spliting big data blocks (bigger
+than maxbuf) into multiple SASL packets in sasl_encodev</para></item>
+        <item><para>Various sasl_decode64() fixes</para></item>
+        <item><para>Increase canonicalization buffer size to 1024
+bytes</para></item>
+        <item><para>Call do_authorization() after successful APOP
+authentication</para></item>
+        <item><para>Allow for configuration file location to be
+configurable independently of plugin location (bug
+#2795)</para></item>
+        <item><para>Added sasl_set_path function, which provides a
+more convenient way of setting plugin and config paths. Changed the
+default sasl_getpath_t/sasl_getconfpath_t callbacks to calculate the
+value only once and cache it for later use.</para></item>
+        <item><para>Fixed load_config to search for the config file in
+all directories (bug #2796). Changed the default search path to be
+/usr/lib/sasl2:/etc/sasl2.</para></item>
+        <item><para>Don't ignore log_level configuration option in
+default UNIX syslog logging callback</para></item>
+        <item><para>(Windows) Minor IPv6 related changes in Makefiles
+for Visual Studio 6</para></item>
+        <item><para>(Windows) Fixed bug of not setting the CODEGEN
+(code generation option) nmake option if STATIC nmake option is
+set</para></item>
+        <item><para>Several fixed to DIGEST-MD5 plugin:</para>
+        <unorderedlist>
+          <item><para>Enable RC4 cipher in Windows build of
+DIGEST-MD5</para></item>
+          <item><para>Server side: handle missing realm option as if
+realm="" was sent</para></item>
+          <item><para>Fix DIGEST-MD5 to properly advertise maxssf when
+both DES and RC4 are disabled</para></item>
+          <item><para>Check that DIGEST-MD5 SASL packet are no shorter
+than 16 bytes</para></item>
+        </unorderedlist></item>
+        <item><para>Several changes/fixed to SASLDB plugin:</para>
+        <unorderedlist>
+          <item><para>Prevent spurious SASL_NOUSER
+errors</para></item>
+          <item><para>Added ability to keep BerkleyDB handle open
+between operations (for performance reason). New behavior can be
+enabled with --enable-keep-db-open.</para></item>
+        </unorderedlist></item>
+        <item><para>Better error checking in SQL (MySQL) auxprop
+plugin code</para></item>
+        <item><para>Added support for HTTP POST password validation in
+saslauthd</para></item>
+        <item><para>Added new application ("pluginviewer") that helps
+report information about installed plugins</para></item>
+        <item><para>Allow for building with OpenSSL
+0.9.8</para></item>
+        <item><para>Allow for building with OpenLDAP
+2.3+</para></item>
+        <item><para>Several quoting fixes to configure
+script</para></item>
+        <item><para>A large number of other minor bugfixes and
+cleanups</para></item>
+      </change>
+
+      <change from="2.1.20" to="2.1.21">
+        <item><para>Fixes DIGEST-MD5 server side segfault caused by
+the client not sending any realms</para></item>
+        <item><para>Minor Other bugfixes</para></item>
+      </change>
+
+      <change from="2.1.19" to="2.1.20">
+        <item><para>Fixes to cram plugin to avoid attempting to
+canonify uninitialized data</para></item>
+        <item><para>NTLM portability fixes</para></item>
+        <item><para>Avoid potential attack using SASL_PATH when sasl
+is used in a setuid environment</para></item>
+        <item><para>A trivial number of small bugfixes</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The path to the SASL database is
+<command>/var${SB_INSTALL_PREFIX}/db/sasldb</command>. The default path to the plugin modules is
+<command>${SB_INSTALL_PREFIX}/lib/sasl</command>.</para>
+        <para><command>saslauthd</command> is linked against the
+OpenLDAP library for LDAP support. While this package is not dependent
+on OpenLDAP, the OpenLDAP library must be installed for
+<command>saslauthd</command> to work.</para>
+        <para>The libsql plugin requires the installation of the
+MySQL, PostgreSQL, and SQLite packages. They are not required by
+default but are optional for the installation of this package.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

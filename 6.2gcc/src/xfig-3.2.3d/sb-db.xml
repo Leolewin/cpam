@@ -1,0 +1,118 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="xfig" version="3.2.3d" revision="2">
+    <build-name>${SB_PROG_NAME}.${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}32</install-name>
+
+    <sources>
+      <source checksum="c6321efc1e2796e111b250c58de2f2e0"
+        checksum-type="md5" size="2846844"
+        path="src/xfig.3.2.3d.full.tar.gz"/>
+      <patch checksum="fc8dbfbcae8a9245fec7dda545f9c289"
+        checksum-type="md5" size="1755"
+        path="src/xfig.3.2.3d.full.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="gcc" add-path="prepend"
+        systype="*-solaris2.[678]" type="build">v==3.3.2</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_doc="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-solaris2.5.1)
+  OPENWINHOME=/usr/openwin xmkmf ;;
+*)
+  xmkmf ;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+gmake CC="${CC:-gcc}" CDEBUGFLAGS="${CFLAGS:--O2}" \
+XPMLIBDIR=${XPM_LIB} XPMINC=-I${XPM_INC} \
+XPMLIBS="-L${XPM_LIB} ${CC_LD_RT}${XPM_LIB} -lXpm" \
+JPEGINCDIR="${JPEG_INC}" JPEGLIBDIR=${JPEG_LIB} \
+JPEGLIB="-L${JPEG_LIB} ${CC_LD_RT}${JPEG_LIB} -ljpeg" \
+PNGINCDIR="${LIBPNG_INC} -I${ZLIB_INC}" \
+PNGLIBS="-L${LIBPNG_LIB} -L${ZLIB_LIB} \
+${CC_LD_RT}${LIBPNG_LIB}:${ZLIB_LIB} -lpng -lz" \
+EXTRA_LOAD_FLAGS="${LDFLAGS+${LDFLAGS}}" \
+CCOPTIONS= LDPOSTLIB= LDPOSTLIBS= XFIGDOCDIR="${_doc}" \
+XFIGLIBDIR=${SB_INSTALL_PREFIX}/lib
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+ginstall -m 755 -o root -g 0 -d ${_doc}
+
+gmake MAKE=gmake BINDIR=${SB_INSTALL_PREFIX}/bin \
+MANDIR=${SB_INSTALL_PREFIX}/man/man1 \
+XFIGDOCDIR="${_doc}" XFIGLIBDIR=${SB_INSTALL_PREFIX}/lib \
+XAPPLOADDIR=${SB_INSTALL_PREFIX}/lib/app-defaults \
+INSTALL=ginstall MANNEWSUFFIX=man MANSUFFIX=1 \
+install install.all
+]]>
+    </install>
+
+    <changelog>
+      <change date="2003 June 23" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+        <item><para>Remove GCC dependency and use Sun CC for Solaris
+builds</para></item>
+      </change>
+
+      <change date="2003 May 12" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade GCC dependency to 3.2.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

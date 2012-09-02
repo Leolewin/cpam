@@ -1,0 +1,41 @@
+--- fchksum.c.orig	Tue Aug 26 13:44:47 2003
++++ fchksum.c	Tue Aug 26 13:46:30 2003
+@@ -57,9 +57,11 @@
+ 	if (cbinfo->callback) {
+ 		cb_time_t now;
+ 		CB_TIME_GET(now);
+-		if (CB_TIME_CMP(now, cbinfo->next, >=)){ // if now >= next
+-			CB_TIME_ADD(now, cbinfo->delay, cbinfo->next); // next = now + delay
+-			PyObject *result = PyObject_CallFunction(cbinfo->callback, "(O)", PyLong_FromChksumSizeT(size));
++		if (CB_TIME_CMP(now, cbinfo->next, >=)){ /* if now >= next */
++			PyObject *result;
++
++			CB_TIME_ADD(now, cbinfo->delay, cbinfo->next); /* next = now + delay */
++			result = PyObject_CallFunction(cbinfo->callback, "(O)", PyLong_FromChksumSizeT(size));
+ 			if (result==NULL) return -1;
+ 			Py_DECREF(result);
+ 		}
+@@ -86,10 +88,10 @@
+ 		cbinfo->delay.tv_usec = (long)((delay - (long)delay)*1000000);
+ #else
+ 		cbinfo->delay = (time_t)delay;
+-		if (delay && !cbinfo->delay) cbinfo->delay = 1; //avoid excessive calling.
++		if (delay && !cbinfo->delay) cbinfo->delay = 1; /*avoid excessive calling.*/
+ #endif
+ 		CB_TIME_GET(cbinfo->next);
+-		CB_TIME_ADD(cbinfo->next,cbinfo->delay,cbinfo->next); // next = now + delay
++		CB_TIME_ADD(cbinfo->next,cbinfo->delay,cbinfo->next); /* next = now + delay */
+ 	}
+ 
+ 	if (**fname=='\0')
+--- fchksum.h.orig	Tue Aug 26 13:58:30 2003
++++ fchksum.h	Tue Aug 26 13:58:38 2003
+@@ -1,7 +1,7 @@
+ #ifndef _FCHKSUM_H__
+ #define _FCHKSUM_H__
+ 
+-//Python.h includes pyconfig.h, which defines everything we need to check..
++/*Python.h includes pyconfig.h, which defines everything we need to check..*/
+ #include "Python.h"
+ 
+ #if SIZEOF_LONG > 4

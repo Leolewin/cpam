@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="readline" version="4.3" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="f86f7cb717ab321fe15f1bbcb058c11e"
+        checksum-type="md5" size="961662"
+        path="src/readline-4.3.tar.gz"/>
+      <patch checksum="28a028b28d6f6036c78a6b7c45e15aea"
+        checksum-type="md5" size="1253770"
+        path="src/readline-4.3.patch"/>
+      <patch checksum="aacf1c41717f305ab5ce45e9d028821d"
+        checksum-type="md5" size="1126"
+        path="src/readline43-001"/>
+      <patch checksum="8df4bf2c7e77e05c4ecd949b9b5dedf3"
+        checksum-type="md5" size="738"
+        path="src/readline43-002"/>
+      <patch checksum="946ed64a306afadb981b294747578e95"
+        checksum-type="md5" size="2202"
+        path="src/readline43-003"/>
+      <patch checksum="392705156b3054eaae2f2a28238592fb"
+        checksum-type="md5" size="3140"
+        path="src/readline43-004"/>
+      <patch checksum="0e4affc42a7bfc70f0a50529e7901954"
+        checksum-type="md5" size="1056"
+        path="src/readline43-005"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="ncurses" var="NCURSES">v==5.4</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <install-name>${SB_PROG_NAME}43</install-name>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std1 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_NCURSES_INC}/ncurses" \
+LDFLAGS="-L${SB_VAR_NCURSES_LIB} ${CC_LD_RT}${SB_VAR_NCURSES_LIB} \
+${LDFLAGS+${LDFLAGS}}" --enable-static --enable-shared \
+--with-ncurses ${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+
+# install texinfo source files
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/hist.texinfo \
+doc/rlman.texinfo doc/manvers.texinfo doc/hsuser.texinfo \
+doc/hstech.texinfo doc/rluser.texinfo doc/rluserman.texinfo \
+doc/rltech.texinfo ${_docdir}/texinfo
+]]>
+      </install>
+    </module>
+
+    <module name="tww-static">
+      <install-name>${SB_PROG_NAME}43s</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="ncurses" var="NCURSES"
+          module="tww-static">v==5.4</depend>
+        <depend program="texinfo" add-path="prepend"
+          type="build">v==4.6</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_NCURSES_INC}/ncurses" \
+LDFLAGS="-L${SB_VAR_NCURSES_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--disable-shared --with-ncurses --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+    </module>
+
+    <notes>
+      <change from="4.2a" to="4.3">
+        <items name="Changes">
+          <item><para>Fixed output of comment-begin character when
+listing variable values</para></item>
+          <item><para>Added some default key bindings for common
+escape sequences produced by HOME and END keys</para></item>
+          <item><para>Fixed the mark handling code to be more
+emacs-compatible</para></item>
+          <item><para>A bug was fixed in the code that prints possible
+completions to keep it from printing empty strings in certain
+circumstances</para></item>
+          <item><para>Change the key sequence printing code to print
+ESC as M\- if ESC is a meta-prefix character -- it's easier for users
+to understand than \e</para></item>
+          <item><para>Fixed unstifle_history() to return values that
+match the documentation</para></item>
+          <item><para>Fixed the event loop (rl_event_hook) to handle
+the case where the input file descriptor is invalidated</para></item>
+          <item><para>Fixed the prompt display code to work better
+when the application has a custom redisplay function</para></item>
+          <item><para>Changes to make reading and writing the history
+file a little faster, and to cope with huge history files without
+calling abort(3) from xmalloc</para></item>
+          <item><para>The vi-mode `S' and `s' commands are now undone
+correctly</para></item>
+          <item><para>Fixed a problem which caused the display to be
+messed up when the last line of a multi-line prompt (possibly
+containing invisible characters) was longer than the screen
+width</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Support for key `subsequences': allows, e.g.,
+ESC and ESC-a to both be bound to readline functions. Now the arrow
+keys may be used in vi insert mode.</para></item>
+          <item><para>When listing completions, and the number of
+lines displayed is more than the screen length, readline uses an
+internal pager to display the results. This is controlled by the
+`page-completions' variable (default on).</para></item>
+          <item><para>New code to handle editing and displaying
+multibyte characters</para></item>
+          <item><para>The behavior introduced in bash-2.05a of
+deciding whether or not to append a slash to a completed name that is
+a symlink to a directory has been made optional, controlled by the
+`mark-symlinked-directories' variable (default is the 2.05a
+behavior)</para></item>
+          <item><para>The `insert-comment' command now acts as a
+toggle if given a numeric argument: if the first characters on the
+line don't specify a comment, insert one; if they do, delete the
+comment text</para></item>
+          <item><para>New application-settable completion variable:
+rl_completion_mark_symlink_dirs, allows an application's completion
+function to temporarily override the user's preference for appending
+slashes to names which are symlinks to directories</para></item>
+          <item><para>New function available to application completion
+functions: rl_completion_mode, to tell how the completion function was
+invoked and decide which argument to supply to rl_complete_internal
+(to list completions, etc.)</para></item>
+          <item><para>Readline now has an overwrite mode, toggled by
+the `overwrite-mode' bindable command, which could be bound to
+`Insert'</para></item>
+          <item><para>New application-settable completion variable:
+rl_completion_suppress_append, inhibits appending of
+rl_completion_append_character to completed words</para></item>
+          <item><para>New key bindings when reading an incremental
+search string: ^W yanks the currently-matched word out of the current
+line into the search string; ^Y yanks the rest of the current line
+into the search string, DEL or ^H deletes characters from the search
+string</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 1" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+        <item><para>Don't link with -module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

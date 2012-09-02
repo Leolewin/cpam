@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="automake" version="1.4" revision="1">
+    <build-name>${NAME}-${VER}-p5</build-name>
+
+    <install-name>${NAME}</install-name>
+
+    <sources>
+      <source checksum="e10679bba411f8602eed004012d915e3"
+        checksum-type="md5" size="376992"
+        path="src/automake-1.4-p5.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="autoconf" install-name="autoconf"
+        add-path="prepend">v&gt;=2.13</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+PERL=${SB_VAR_PERL}/bin/perl ./configure --datadir="${_datadir}" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+# replace '@sys' with '\@sys'
+
+gmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 automake.texi version.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 January 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

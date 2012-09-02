@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="smake" version="1.2a22" revision="1">
+    <build-name>${SB_PROG_NAME}-1.2</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="4034eb9348c7bccf200140ae05c9d650"
+        checksum-type="md5" size="344163"
+        path="src/smake-1.2a22.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5.2*)
+  CC=cc LDOPTX="-lm" ;;
+*-solaris2.[89])
+  CFLAGS="-mcpu=v8" ;;
+*)
+  CC=cc ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake CCOM="${CC:-gcc}" CFLAGS="${CFLAGS=-O2}" ${LDOPTX+LDOPTX="${LDOPTX}"}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake CCOM="${CC:-gcc}" ${LDOPTX+LDOPTX="${LDOPTX}"} \
+INS_BASE="${SB_INSTALL_PREFIX}" install
+
+${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <notes>
+      <change from="1.2a21" to="1.2a22">
+        <item><para>'make install' now works on operating systems that
+require a '.exe' suffix for executable binaries</para></item>
+        <item><para>Fixed a bug in the parser that caused macro
+expansions not to work in target lists, e.g.:</para>
+        <screen>
+$(TEST:a=b): foo
+        </screen>
+        <para>because the parser did stop reading the name at:
+"$(TEST" believing that the colon is always a target list
+terminator.</para></item>
+        <item><para>Now, ${} &amp; $() macro expansions are handle
+correctly even when nested</para></item>
+      </change>
+
+      <change from="1.2a20" to="1.2a21">
+        <item><para>Support for the special .PHONY:
+target.</para>
+        <para>This helps to deal with files like INSTALL operating
+systems like Win32 and Mac OS that don't honor file name case and
+prevents the file named INSTALL to get into trouble with 'make
+install'</para></item>
+        <item><para>install-sh extended to avoid unremovable files
+/tmp/xx.$$ on SCO UNIX that are a result of the root test. They are
+unremovable because SCO UNIX allows to give away files to root ans
+sets the sticky bit on /tmp.</para></item>
+      </change>
+
+      <change from="1.2a19" to="1.2a20">
+        <item><para>strcatl()/execl() now cast NULL in last Arg to
+(char *)NULL This avoids problems on platforms where sizeof(int) is !=
+sizeof (ptr)</para></item>
+        <item><para>Completely converted to use the rename() emulation
+from libschily in case a OS does not support rename()</para></item>
+        <item><para>Trying to support a compilation on DOS (32 Bit)
+with DJGPP As GNU make does not work correctly on DOS, this allows
+Schily SING programs to be compiled on DOS/DJGPP</para></item>
+        <item><para>use #ifdef SIGBUS in avoffset.c as DOS/DJGPP does
+not have SIGBUS</para></item>
+        <item><para>Indented to be closer to official Cstyle
+indentation</para></item>
+      </change>
+
+      <change from="1.2a18" to="1.2a19">
+        <item><para>Renamed psmake/MAKE to psmake/MAKE-all to avoid
+endless recursion on OS with non-POSIX filesystem semantics
+(case-sensitivity) e.g. OS/2 and MacOS X with non-UNIX
+FS</para></item>
+        <item><para>Renamed psmake/MAKE.sh to psmake/MAKE-sh to avoid
+problems with buggu shells like PDKSH which illegaly call 'MAKE.sh' if
+you type 'MAKE'</para></item>
+        <item><para>Changed a Makefile line from 'cd psmake; sh
+MAKE-all' to 'cd psmake &amp;&amp; sh MAKE-all' to work arouns a bug
+in either the shell or GNU make on OS/2</para></item>
+        <item><para>New platforms: 9000-831-hp-ux sparc64-freebsd
+macppc-netbsd sparc-bsd-os sparc-bsd-os3 i786-cygwin32_nt
+i486-unixware i586-unixware pentium-iii-unixware
+pentium-pro-unixware</para></item>
+        <item><para>New install rules for hardlinks</para></item>
+        <item><para>Use +DAportable for HP-UX cc</para></item>
+        <item><para>BSD-OS-3.x does not need 'shlicc'
+anymore</para></item>
+        <item><para>Add $(RANLIB) -&gt; true for OS/2</para></item>
+        <item><para>Added some prototypes for non ANSI-C OS in
+include/unixstd.h</para></item>
+        <item><para>fixed typo in include/fctldefa.h for
+O_ACCMODE</para></item>
+        <item><para>include/strdefs.h for better AIX
+compatibility</para></item>
+        <item><para>correctly evaluating HAVE_UNION_WAIT in
+include/waitdefs.h for vanilla BSD-4.2 systems like
+Next-Step</para></item>
+        <item><para>nanosecond access macros for
+include/statdefs.h</para></item>
+        <item><para>several new autoconf tests</para></item>
+        <item><para>dependency generation script conf/mkdep-sco.sh for
+SCO unix fixed</para></item>
+        <item><para>Using spawnl(P_NOWAIT, ...) on OS/2 EMX instead of
+fork()/exec()</para></item>
+        <item><para>include ctypes.h -&gt; past schily.h for OpenBSD
+#define EOF BUG</para></item>
+        <item><para>fcons.c changed because FI_APPEND problem in SCO
+UnixWare and fileopen("/dev/null", "wca")</para></item>
+        <item><para>Changed -pg (progiling compile option) to -p on
+SCO UnixWare because there is no -pg on this platform.</para></item>
+        <item><para>Changes related to the now portable software
+signal system handlecond()/raisecond()</para></item>
+        <item><para>Trying to better follow the 'cstyle' indentation
+conventions</para></item>
+        <item><para>Changes conf/cc-config.sh to better find out that
+a user is incorrectly calling 'make' on Solaris with /usr/ucb in PATH
+and with no real C-compiler</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

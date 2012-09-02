@@ -1,0 +1,235 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="tkcvs" version="8.2" revision="2">
+    <build-name>${SB_PROG_NAME}_8_2</build-name>
+
+    <install-name>${SB_PROG_NAME}82</install-name>
+
+    <sources>
+      <source checksum="f263e59233625145a4efc38b14241e0c"
+        checksum-type="md5" size="1168611"
+        path="src/tkcvs_8_2.tar.gz"/>
+      <patch checksum="a7f633835b1f49ad8940c47a31e0edef"
+        checksum-type="md5" size="3108"
+        path="src/tkcvs_8_2.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcl" install-name="tcl85"
+        add-path="prepend">v&gt;=8.5.10</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@prefix@!${SB_INSTALL_PREFIX}!" tkcvs/tkcvs.tcl
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+:
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+./doinstall.tcl -nox ${SB_INSTALL_PREFIX}
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${INSTALL_PREFIX}/lib/site_def
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="8.1" to="8.2">
+        <item><para>Merge arrows are drawn in the Branch Browser for
+merges tracked by Subversion 1.5's mergeinfo property and CVSNT's
+mergepoint feature</para></item>
+        <item><para>The branch diagram can be searched to find a
+version, date, tag, or author</para></item>
+        <item><para>Log browser always produces a verbose log of
+revisions on the selected branch instead of obeying the Directory
+Browser's "Log Detail" setting</para></item>
+        <item><para>If your SVN repository has a structure similar to
+trunk, branches, and tags but with different names, you can tell TkCVS
+about it by setting variables in tkcvs_def.tcl:</para>
+        <screen>
+set cvscfg(svn_trunkdir) "elephants"
+set cvscfg(svn_branchdir) "dogs"
+set cvscfg(svn_tagdir) "ducklings"
+        </screen></item>
+        <item><para>Fix a bash-ism in contrib/cvsdiff</para></item>
+        <item><para>Changed the trace levels so that "F" lets you get
+the CVS/SVN stdout without the whole debug output</para></item>
+      </change>
+
+      <change from="8.0.4" to="8.1">
+        <item><para>Rework the merge functionality. There's only one
+dialog for tagging, which you OK when you're ready to commit the
+merges.</para></item>
+        <item><para>Use panedwindow for the Workdir Browser. It has
+advantages and disadvantages, but it will have more advantages when we
+can migrate to tk8.5. Change the highlighting so it goes across all
+columns, and enable selection from all columns.</para></item>
+        <item><para>Add a menu item to do "svn resolved"</para></item>
+        <item><para>Fix [ 1824733 ] CVS menu in SVN work area for
+changed file</para></item>
+        <item><para>Fix invocation of tkdiff when one SVN revision is
+selected in the branch browser, diffing it against the current file
+like the cvs behavior</para></item>
+        <item><para>Add options to use -l and not use -P in cvs
+update-with-options</para></item>
+        <item><para>Improve visibility of searched item in annotation
+text</para></item>
+        <item><para>Fix for when an e-mail address appears in svn
+status in https protocol</para></item>
+        <item><para>Remove white boxes around Aqua pill-style
+buttons</para></item>
+      </change>
+
+      <change from="8.0.3" to="8.0.4">
+        <item><para>The Branch Browser detects lack of a trunk
+directory, warns that it can't do much without that structure, and
+continues without it</para></item>
+        <item><para>Fix [ 1483057 ] Empty Branch Diagram for deleted
+files (TkSVN). If a file had been removed from the trunk and was
+diagrammed from a branch, some or all of the diagram could be
+missing.</para></item>
+        <item><para>Fix [ 1673519 ] tcl error with SVN-&gt;Browse the Log
+Diagram</para></item>
+        <item><para>Fix [ 1581111 ] svn url trouble with French
+localization</para></item>
+        <item><para>Ask for confirmation before reverting
+files</para></item>
+        <item><para>Display TkCVS version in window title of workdir
+and module browsers</para></item>
+        <item><para>Don't fail if CVS gives a date format that tcl
+can't handle</para></item>
+        <item><para>Added a button for a text history log of the file
+to the branch browser</para></item>
+        <item><para>Added a command line option -annotate or -blame to
+open the annotation browser from the command line</para></item>
+        <item><para>The "New Directory" button is back</para></item>
+        <item><para>cvscfg(svn_branch_filter) and
+cvscfg(svn_branch_max_count) to filter which branches to draw in the
+log browser</para></item>
+        <item><para>Delete the exec namespaces after the execs are
+finished. This should cause better memory usage
+behavior.</para></item>
+        <item><para>Add a contrib directory containing a wrapper for
+gvimdiff to replace tkdiff, and a program to compare the contents of
+directories</para></item>
+      </change>
+
+      <change from="8.0.2" to="8.0.3">
+        <item><para>Automatic tagging of merges works for SVN the same
+as CVS</para></item>
+        <item><para>Working directory browser observes
+svn_ignore</para></item>
+        <item><para>Clean up some filenames-with spaces
+issues</para></item>
+        <item><para>TkDiff 4.1.3</para></item>
+      </change>
+
+      <change from="8.0.1" to="8.0.2">
+        <item><para>Fix error in Branch Diagram when searching for
+merge tags</para></item>
+        <item><para>cvscfg(mergetrunkname) option to replace the
+literal "trunk" in the code with an arbitrary string</para></item>
+        <item><para>Branch Browser in SVN will diff a single selection
+in the tree with the file in the current directory</para></item>
+        <item><para>Fix strange "SVN Path" in top entry of Branch
+Browser (only cosmetic)</para></item>
+        <item><para>Lengthen maximum length of error message to
+trigger an error popup in exec. That lets a cvs log failure due to a
+permission problem tell us what went wrong.</para></item>
+      </change>
+
+      <change from="8.0" to="8.0.1">
+        <item><para>Fix a couple of undefined variables</para></item>
+        <item><para>Add log button to workdir browser and change the
+cvs_log function to eliminate post-processing, using syntax
+highlighting instead</para></item>
+      </change>
+
+      <change from="7.2.4" to="8.0">
+        <item><para>The Annotation browser optionally shows line
+numbers</para></item>
+        <item><para>Multiple branch-browser fixes for
+Subversion:</para>
+        <unorderedlist>
+          <item><para>Treat branchpoints as real revisions, so they
+have both a blue box and a black one in the diagram. It's rather
+inelegant, but it works with the way the branch browser was designed.
+Solves problem of branches not being drawn if they branch straignt
+from another branchpoint.</para></item>
+          <item><para>Send URL paths instead of -r &lt;file&gt;
+arguments to the diff, svn-cat, and annotation commands because
+Subversion doesn't cross branch boundaries with simple revision
+arguments, and doesn't tell you that it's not giving you the revision
+you asked for.</para></item>
+          <item><para>Bugfix: relative URL path in Branch Browser is
+constructed correctly for path depths &gt; 2</para></item>
+        </unorderedlist></item>
+        <item><para>The Branch Browser counts the tags when making a
+Subversion diagram and gives you a chance to skip the tag step if
+there are many, where "many" is defined by cvscfg(toomany_tags).
+Constructing the branch diagram for Subversion is extremely
+inefficient, and drawing the tags can take longer than it's
+worth.</para></item>
+        <item><para>For Subversion directories, the Module Browser
+shows the number of items within the folder instead of the "svn list
+-v" info string. That may help you decide whether to open the folder
+or not.</para></item>
+        <item><para>The Branch Browser positions the diagram so "you
+are here" is in the visible canvas, fixing a long-time nagging
+irritation</para></item>
+        <item><para>TkCVS now supports Subversion. This involved a
+major re-organization of the program, and many things have changed a
+little. The program will detect which revision-control system a
+directory is under and react appropriately. The previously
+undocumented RCS support is explicit now and has been enhanced
+somewhat.</para></item>
+        <item><para>Command line "tkcvs &lt;file&gt;" will open the
+log browser without the -log option</para></item>
+        <item><para>The annotation browser estimates how many days per
+color or revs per color to use, so cvscfg(dayspercolor) and
+cvscfg(revspercolor) are gone. You can still change it per file in
+the annotation browser.</para></item>
+        <item><para>The directory-level CVS Merge Tool has a pull-down
+with a list of the tags, to make it easier to "merge since" a
+tag</para></item>
+        <item><para>TkDiff 4.1.1, which has a security
+patch</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The global configuration file for TkCVS resides in
+<command>${SB_INSTALL_PREFIX}/lib/tkcvs_def.tcl</command>. The
+site-specific configuration file resides in
+<command>${SB_INSTALL_PREFIX}/lib/site_def</command>. User-specific
+customizations are stored in <command>~/.tkcvs</command>.
+Configuration directives are read in the following order:</para>
+        <screen>
+~/.tkcvs
+${SB_INSTALL_PREFIX}/lib/site_def
+${SB_INSTALL_PREFIX}/lib/tkcvs_def.tcl
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 March 1" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update tcl/tk dependency from 8.5.6 to
+8.5.10</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

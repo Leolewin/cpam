@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="emacs" version="21.2" revision="5">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}21</install-name>
+
+    <sources>
+      <source checksum="f4b58e5c2d923fc92495e0c2f167c5db"
+        checksum-type="md5" size="20288222"
+        path="src/emacs-21.2.tar.gz"/>
+      <patch checksum="48f3273c8844e7e67c9ec590a7db49d2"
+        checksum-type="md5" size="216262"
+        path="src/emacs-21.2.patch"/>
+      <source checksum="e6d614671b5d7d7670d18799c6668a46"
+        checksum-type="md5" size="3291283"
+        path="src/leim-21.2.tar.gz"
+        systype="*-aix*|*-hpux*|*-linux*|*-osf*|*-solaris*"/>
+      <patch checksum="e6016ff2118792dd95f1b773f8b3ec5f"
+        checksum-type="md5" size="310"
+        path="src/leim-21.2.patch"
+        systype="*-aix*|*-hpux*|*-linux*|*-osf*|*-solaris*"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend var="EMACSP" install-name="${SB_PROG_NAME}21p"
+        set-var-only="1"/>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="libungif" var="LIBUNGIF"
+        install-name="libungif">v&gt;=4.1.1</depend>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses54">v&gt;=5.4</depend>
+      <depend program="tiff" var="TIFF"
+        install-name="libtiff35">v&gt;=3.5.7</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_doc="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ARGS="--without-gcc"
+  CC=cc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--without-gcc \
+--x-includes=/usr/include/X11R6:/usr/contrib/X11R6/include \
+--x-libraries=/usr/lib/X11R6:/usr/contrib/X11R6/lib \
+--host=hppa1.1-hp-hpux11.00"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--without-gcc \
+--x-includes=/usr/include/X11R6:/usr/contrib/X11R6/include \
+--x-libraries=/usr/lib/X11R6:/usr/contrib/X11R6/lib \
+--host=hppa1.1-hp-hpux10.20"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CFLAGS="-O2" CC_LD_RT="-Wl,-rpath,"
+  ARGS="--with-gcc"
+  # getaddrinfo available only in newer IRIX releases
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_func_gai_strerror=no ;;
+*-linux*)
+  ARGS="--with-gcc"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  ARGS="--without-gcc"
+  CC=cc CFLAGS="-O2 -std1 -readonly_strings" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8 -fno-zero-initialized-in-bss"
+  ARGS="--with-gcc"
+  CC_LD_RT="-R" ;;
+*-solaris2.5.1*)
+  ARGS="--without-gcc"
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  LDFLAGS="-R/usr/openwin/lib" CC_LD_RT="-R" ;;
+*-solaris2*)
+  ARGS="--without-gcc"
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${NCURSES_INC} -I${NCURSES_INC}/include -I${JPEG_INC} \
+-I${LIBPNG_INC} ${LIBUNGIF+-I${LIBUNGIF_INC}} -I${TIFF_INC} \
+-I${XPM_INC} -I${ZLIB_INC}" LDFLAGS="-L${NCURSES_LIB} \
+-L${JPEG_LIB} -L${LIBPNG_LIB} ${LIBUNGIF+-L${LIBUNGIF_LIB}} \
+-L${TIFF_LIB} -L${XPM_LIB} -L${ZLIB_LIB} ${CC_LD_RT}${NCURSES_LIB}:\
+${JPEG_LIB}:${LIBPNG_LIB}:${LIBUNGIF+${LIBUNGIF_LIB}:}${TIFF_LIB}:\
+${XPM_LIB}:${ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" ./configure \
+--with-x --with-x-toolkit=lucid \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+${SB_VAR_EMACSP+--with-extra-lisp-paths="${SB_VAR_EMACSP}/packages"} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+chown -R 0:0 ${_datadir}
+
+ginstall -m 644 -o root -g 0 /dev/null ${_datadir}/lisp/default
+
+case "${SB_SYSTYPE}" in
+*-hpux11*)
+  lib-src/blessmail ${SB_INSTALL_PREFIX}/libexec/hppa1.1-hp-hpux11.00/movemail ;;
+*-hpux10*)
+  lib-src/blessmail ${SB_INSTALL_PREFIX}/libexec/hppa1.1-hp-hpux10.20/movemail ;;
+esac
+
+ginstall -m 755 -o root -g 0 -d ${_doc}
+ginstall -m 644 -o root -g 0 man/*.texi ${_doc}
+rm -f ${_doc}/texinfo.tex
+
+# Directory for 3rd-party packages
+ginstall -m 755 -o root -g 0 -d ${EMACSP}/packages/lisp
+cat >${EMACSP}/packages/site-start.el <<_EOT_
+(defvar tww-pkg-path "${EMACSP}/packages/lisp")
+(let ((default-directory tww-pkg-path))
+  (normal-top-level-add-subdirs-to-load-path))
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${EMACSP}
+]]>
+    </uninstall>
+
+    <notes>
+      <note type="usage">
+        <para>The default path for 3rd-party lisp libraries is:</para>
+        <unorderedlist>
+          <item><para>${SB_INSTALL_BASE}/emacs21p/packages</para></item>
+        </unorderedlist>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 14" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Don't run autoconf if configure.in is out of
+date</para></item>
+      </change>
+
+      <change date="2004 September 8" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 3.0/AMD64</para></item>
+      </change>
+
+      <change date="2004 April 9" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Disable getaddrinfo()/gai_strerror() on IRIX as
+only available in newer releases of 6.5.x</para></item>
+      </change>
+
+      <change date="2004 March 20" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Ncurses dependency to 5.4</para></item>
+        <item><para>Upgrade texinfo dependency to 4.6</para></item>
+      </change>
+
+      <change date="2003 March 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 3rd-party emacs21p/packages directory to lisp
+load-path similar to Xemacs 21.4.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="libexif" version="0.6.20" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}06</install-name>
+
+    <sources>
+      <source checksum="19844ce6b5d075af16f0d45de1e8a6a3"
+        checksum-type="md5" size="1412921"
+        path="src/libexif-0.6.20.tar.bz2"/>
+      <patch checksum="7e205ab8900405df0d3ac5c5c22e8e02"
+        checksum-type="md5" size="2663"
+        path="src/libexif-0.6.20.CVE-2012-2812.patch"/>
+      <patch checksum="04a67080f08172d72f0cb115eb74bd0b"
+        checksum-type="md5" size="1130"
+        path="src/libexif-0.6.20.CVE-2012-2813.patch"/>
+      <patch checksum="0c69283835cced948b56572aec12ff23"
+        checksum-type="md5" size="6107"
+        path="src/libexif-0.6.20.CVE-2012-2814.patch"/>
+      <patch checksum="2022e7469695a6e17fe66bf6102d51d0"
+        checksum-type="md5" size="3677"
+        path="src/libexif-0.6.20.CVE-2012-2836.patch"/>
+      <patch checksum="bd376487b16b32a1232eb4d485a49be7"
+        checksum-type="md5" size="3741"
+        path="src/libexif-0.6.20.CVE-2012-2837.patch"/>
+      <patch checksum="0a0ef2a107b2f74d3a00b52aaa98abf4"
+        checksum-type="md5" size="439"
+        path="src/libexif-0.6.20.CVE-2012-2840.patch"/>
+      <patch checksum="40bfb395548ae8913e7c6315309e18cf"
+        checksum-type="md5" size="1469"
+        path="src/libexif-0.6.20.CVE-2012-2841.patch"/>
+      <patch checksum="8f9a054f7ec393730a878aad512dced3"
+        checksum-type="md5" size="5762"
+        path="src/libexif-0.6.20.tww.patch"/>
+      <patch checksum="ddb1ce4531953fabba057f75bb259072"
+        checksum-type="md5" size="1514514"
+        path="src/libexif-0.6.20.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--docdir=${_docdir} --disable-dependency-tracking \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" libexif.pc
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="0.6.19" to="0.6.20">
+        <item><para>New translations: bs, tr</para></item>
+        <item><para>Updated translations: be, cs, da, de, en_GB,
+en_CA, it, ja, nl, pl, pt_BR, pt, ru, sk, sq, sr, sv, vi,
+zh_CN</para></item>
+        <item><para>Fixed some problems in the write-exif.c example
+program</para></item>
+        <item><para>Stop listing -lm as a required library for dynamic
+linking in libexif.pc</para></item>
+        <item><para>Turned on the --enable-silent-rules configure
+option</para></item>
+        <item><para>Changed a lot of strings to make the case of the
+text more consistent</para></item>
+        <item><para>exif_entry_dump() now displays the correct tag
+name for GPS tags</para></item>
+        <item><para>Fixed some invalid format specifiers that caused
+problems on some platforms</para></item>
+        <item><para>Display rational numbers with the right number of
+significant figures</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 July 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2012-2812 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2812">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2812</ulink>). 
+The <command>exif_entry_get_value</command> function in
+<command>exif-entry.c</command> in the EXIF Tag Parsing Library (aka
+libexif) allows remote attackers to cause a denial of service
+(out-of-bounds read) or possibly obtain sensitive information from
+process memory via crafted EXIF tags in an image.</para></item>
+        <item><para>Apply patch for CVE-2012-2813 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2813">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2813</ulink>). 
+The <command>exif_convert_utf16_to_utf8</command> function in
+<command>exif-entry.c</command> in the EXIF Tag Parsing Library (aka
+libexif) allows remote attackers to cause a denial of service
+(out-of-bounds read) or possibly obtain sensitive information from
+process memory via crafted EXIF tags in an image.</para></item>
+        <item><para>Apply patch for CVE-2012-2814 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2814">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2814</ulink>). 
+Buffer overflow in the <command>exif_entry_format_value</command>
+function in <command>exif-entry.c</command> in the EXIF Tag Parsing
+Library (aka libexif) allows remote attackers to cause a denial of
+service or possibly execute arbitrary code via crafted EXIF tags in an
+image.</para></item>
+        <item><para>Apply patch for CVE-2012-2836 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2836">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2836</ulink>). 
+The <command>exif_data_load_data</command> function in
+<command>exif-data.c</command> in the EXIF Tag Parsing Library (aka
+libexif) allows remote attackers to cause a denial of service
+(out-of-bounds read) or possibly obtain sensitive information from
+process memory via crafted EXIF tags in an image.</para></item>
+        <item><para>Apply patch for CVE-2012-2837 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2837">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2837</ulink>). 
+The <command>mnote_olympus_entry_get_value</command> function in
+<command>olympus/mnote-olympus-entry.c</command> in the EXIF Tag
+Parsing Library (aka libexif) allows remote attackers to cause a
+denial of service (divide-by-zero error) via an image with crafted
+EXIF tags that are not properly handled during the formatting of EXIF
+maker note tags.</para></item>
+        <item><para>Apply patch for CVE-2012-2840 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2840">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2840</ulink>). 
+Off-by-one error in the <command>exif_convert_utf16_to_utf8</command>
+function in <command>exif-entry.c</command> in the EXIF Tag Parsing
+Library (aka libexif) allows remote attackers to cause a denial of
+service or possibly execute arbitrary code via crafted EXIF tags in an
+image.</para></item>
+        <item><para>Apply patch for CVE-2012-2841 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-2841">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-2841</ulink>). 
+Integer underflow in the <command>exif_entry_get_value</command>
+function in <command>exif-entry.c</command> in the EXIF Tag Parsing
+Library (aka libexif) might allow remote attackers to execute
+arbitrary code via vectors involving a crafted buffer-size parameter
+during the formatting of an EXIF tag, leading to a heap-based buffer
+overflow.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

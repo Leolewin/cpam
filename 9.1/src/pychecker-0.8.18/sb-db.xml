@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="pychecker" version="0.8.18" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>pychecker08</install-name>
+
+    <sources>
+      <source checksum="ef156a631df46de150a364912f2e36c8"
+        checksum-type="md5" size="145784"
+        path="src/pychecker-0.8.18.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="python" var="PYTHON" install-name="python26"
+        add-path="prepend">v&gt;=2.6.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+PYTHON=${SB_VAR_PYTHON}/bin/python ${SHELL} ./test_check.sh
+
+# Ignore test failures.
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--install-lib=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 README pycheckrc ${_docdir}
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para skip="0">Copyright (c) 2000-2001, MetaSlash Inc.</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>edistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>edistributions in binary form must reproduce the
+above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>either name of MetaSlash Inc. nor the names of
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <changelog>
+      <change date="2012 January 31" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,215 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="scite" version="1.79" revision="2"
+  systype="!*-osf*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}17</install-name>
+
+    <sources>
+      <source checksum="02a0d68f0c33c01c9a2c9d69c295acea"
+        checksum-type="md5" size="1719588"
+        path="src/scite179.tgz"
+        destdir="scite-1.79"/>
+      <patch checksum="17f44aa4440d0aa3f68a8698f2306755"
+        checksum-type="md5" size="10522"
+        path="src/scite-1.79.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v==2.0.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="LIBINTL"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -ma -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC_r CXXFLAGS="-O2 -ma -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-solaris2.[89])
+  LIBS="${LIBS+${LIBS}} -ldl" ;;
+*-irix*)
+  LIBS="${LIBS+${LIBS}} -lm" ;;
+esac
+
+export PKG_CONFIG_PATH="\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${_libglib_lib:-${SB_VAR_LIBGLIB_LIB}}/pkgconfig:}\
+${SB_VAR_LIBINTL+${SB_VAR_LIBINTL_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+(cd scintilla/gtk
+ gmake CC="${CXX-g++}" CCOMP="${CC-gcc}" AR=ar RANLIB=ranlib \
+ CFLAGS="-I../include -I../src -Dunix ${CPPFLAGS+${CPPFLAGS}} \
+-DGTK -DSCI_LEXER ${CFLAGS--O2}" \
+ CXXBASEFLAGS="-I../include -I../src -Dunix ${CPPFLAGS+${CPPFLAGS}} \
+-DGTK -DSCI_LEXER ${CXXFLAGS--O2}" GTK2=1 datadir=${_datadir} \
+ prefix="${SB_INSTALL_PREFIX}")
+
+(cd scite/gtk
+ gmake CC="${CXX-g++}" CCOMP="${CC-gcc}" AR=ar RANLIB=ranlib \
+ CFLAGS="-I../../scintilla/include -I../lua/include \
+-I../src ${CPPFLAGS+${CPPFLAGS}} -DGTK -DSCI_LEXER ${CFLAGS--O2} \
+-Dunix -DPIXMAP_PATH=\\\"${_datadir}/pixmaps\\\" \
+-DSYSCONF_PATH=\\\"${_datadir}\\\" -DDOCDIR=\\\"${_docdir}\\\"" \
+ CXXBASEFLAGS="-I../../scintilla/include -I../lua/include \
+-I../src ${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${CPPFLAGS+${CPPFLAGS}} -DGTK -DSCI_LEXER ${CXXFLAGS--O2} \
+-Dunix -DPIXMAP_PATH=\\\"${_datadir}/pixmaps\\\" \
+-DSYSCONF_PATH=\\\"${_datadir}\\\" -DDOCDIR=\\\"${_docdir}\\\"" \
+ LDFLAGS="${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB} \
+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" LIBS="-liconv ${LIBS+${LIBS}}" \
+ GTK2=1 datadir=${_datadir} prefix="${SB_INSTALL_PREFIX}")
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake -C scite/gtk install datadir=${_datadir} docdir=${_docdir} \
+SYSCONF_PATH=${_datadir} prefix=${SB_INSTALL_PREFIX} \
+INSTALL="${SB_PATH_INSTALL} -o root -g 0"
+
+mv ${SB_INSTALL_PREFIX}/bin/SciTE ${SB_INSTALL_PREFIX}/bin/scite
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_INSTALL} -m 644 -o root -g 0 scite/doc/scite.1 \
+${SB_INSTALL_PREFIX}/man/man1
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 26" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update atk dependency from 1.22.0 to
+1.32.0</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.4</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

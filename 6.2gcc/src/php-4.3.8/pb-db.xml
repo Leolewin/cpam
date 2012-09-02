@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="php" version="4.3.8" revision="2">
+    <package-manager name="pkgadd">
+      <category>Development/Languages</category>
+      <title>PHP scripting language</title>
+      <vendor>The PHP Group</vendor>
+
+      <description attribution="The OpenPKG Project">
+PHP is an HTML-embedded scripting language. Much of its syntax is
+borrowed from C, Java and Perl with a couple of unique PHP-specific
+features thrown in. The goal of the language is to allow web
+developers to write dynamically generated pages quickly.
+      </description>
+
+      <install-name>php438</install-name>
+
+      <pkgname-base>TWWph438</pkgname-base>
+
+      <version>4.3.8</version>
+      <revision>1</revision>
+
+      <variable>
+        <path name="APACHE"
+          install-name="apache2049"></path>
+      </variable>
+
+      <config upgrade="1">/etc${INSTALL_PREFIX}/php.ini</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWa2049"
+          title="Apache Web Server"
+          subpkg="runtime">v&gt;=2.0.49</depend>
+        <depend pkgname-base="TWWa2049"
+          title="Apache Web Server"
+          subpkg="conf">v&gt;=2.0.49</depend>
+        <depend pkgname-base="TWWexpat"
+          title="XML parser Library"
+          subpkg="runtime">v&gt;=1.95.6</depend>
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWldb42"
+          title="Berkeley DB"
+          subpkg="runtime">v&gt;=4.2.52</depend>
+        <depend pkgname-base="TWWss097"
+          title="OpenSSL SSL/TLS Crypto Toolkit"
+          subpkg="runtime">v&gt;=0.9.7b</depend>
+
+        <postinstall path="pkg/add-to-httpd.conf"
+          checksum="472b5545945f23490e2c5225e6c8dd5f"
+          checksum-type="md5" size="3247"/>
+        <preremove path="pkg/remove-from-httpd.conf"
+          checksum="d78b9b3ed09a0ad4327e868bf636e92c"
+          checksum-type="md5" size="2884"/>
+      </subpkg>
+
+      <replace pkgname-base="TWWph437"
+        install-name="php437"/>
+      <replace pkgname-base="TWWph435"
+        install-name="php435"/>
+      <replace pkgname-base="TWWph434"
+        install-name="php434"/>
+      <replace pkgname-base="TWWph432"
+        install-name="php432"/>
+      <replace pkgname-base="TWWph423"
+        install-name="php423"/>
+    </package-manager>
+
+    <changelog>
+      <change date="2004 August 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item>
+        <para>Upgrade MySQL dependency for
+"" loadable extension from 4.0.15 to
+4.0.20</para></item>
+      </change>
+    </changelog>
+  </package>
+</packages>

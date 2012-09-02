@@ -1,0 +1,210 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="a2ps" version="4.14" revision="3"
+  systype="!hppa*-hpux*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}41</install-name>
+
+    <sources>
+      <source checksum="781ac3d9b213fa3e1ed0d79f986dc8c7"
+        checksum-type="md5" size="2552507"
+        path="src/a2ps-4.14.tar.gz"/>
+      <patch checksum="000101889061a6cbc7d74d6b731fed80"
+        checksum-type="md5" size="62797"
+        path="src/a2ps-4.14.tww.patch"/>
+      <patch checksum="8577af658a47f0ff7a2cee042f79e7c0"
+        checksum-type="md5" size="30816"
+        path="src/a2ps-4.14.tww-gnulib.patch"/>
+      <patch checksum="882abcd3f5099bad5042f4254d298712"
+        checksum-type="md5" size="3017554"
+        path="src/a2ps-4.14.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="emacs" install-name="emacs22"
+        add-path="prepend" type="build">v&gt;=22.3</depend>
+      <depend program="flex" var="FLEX" install-name="flex"
+        add-path="prepend" type="build">v&gt;=2.5.35</depend>
+      <depend program="ghostscript" var="GS"
+        install-name="ghostscript90" add-path="prepend"
+        type="build">v&gt;=9.01</depend>
+      <depend program="help2man" install-name="help2man138"
+        add-path="prepend" type="build">v&gt;=1.38.2</depend>
+      <depend program="tetex" install-name="tetex30"
+        add-path="prepend" type="build">v&gt;=3.0</depend>
+      <depend program="ImageMagick" install-name="imagemagick66"
+        add-path="prepend" type="build">v&gt;=6.6.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="gperf" install-name="gperf30"
+        add-path="prepend" type="build">v&gt;=3.0.4</depend>
+      <depend program="groff" install-name="groff121"
+        add-path="prepend" type="build">v&gt;=1.21</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="psutils" install-name="psutils"
+        add-path="prepend" type="build">v&gt;=p17</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_medium=Letter
+_gs_fonts="${SB_VAR_GS}/share/fonts"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_FLEX+-L${SB_VAR_FLEX_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--with-medium=${_medium} --with-psfonts=${_gs_fonts} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--sysconfdir=${_sysconfdir} --with-encoding=latin1 \
+--enable-shared --enable-static --disable-dependency-tracking \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+# remove info files
+${SB_PATH_FIND} doc -name '*.info*' -exec rm {} \;
+
+# force rebuild of flex files
+${SB_PATH_FIND} src lib -name '*.l' -exec touch {} \;
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+# rebuild scanners that use 'lineno' (incompatible with -CFe flags)
+(cd src
+ ../auxdir/ylwrap sheets-map.l lex.yy.c sheets-map.c -- flex
+ ../auxdir/ylwrap lexssh.l lex.yy.c lexssh.c -- flex)
+(cd lib
+ ../auxdir/ylwrap lexppd.l lex.yy.c lexppd.c -- flex)
+
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check || :
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/a2ps.texi \
+doc/encoding.texi doc/prologue.texi doc/regex.texi \
+doc/sheets.texi doc/translators.texi doc/version.texi \
+${_docdir}/texinfo
+
+# add ghostscript library path
+${SB_PATH_EGREP} '^AppendLibraryPath' ${_sysconfdir}/a2ps.cfg >/dev/null || {
+  ${SB_PATH_SED} -i -e "\
+/^#AppendLibraryPath/ {
+a\\
+AppendLibraryPath: ${_gs_fonts}
+}" ${_sysconfdir}/a2ps.cfg
+}
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>a2ps contains no dependencies but does make use of some
+external programs for formatting text. These programs are optional
+unless you wish to pass non-text files through a2ps. The programs are:
+psutils, teTeX, ImageMagick, bzip2, gzip, and groff.</para>
+        <para>The global configuration file resides in
+<command>${SB_INSTALL_PREFIX}/etc/a2ps.cfg</command> and
+<command>${SB_INSTALL_PREFIX}/etc/a2ps-site.cfg</command>.</para>
+        <para>The default path to the postscript fonts is
+<command>${SB_INSTALL_PREFIX}/share/fonts</command>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2011 May 5" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Update ImageMagick dependency form 6.4.7 to
+6.6.6</para></item>
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update emacs dependency from 22.3 to
+23.1</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update ghostscript dependency from 8.63 to
+9.01</para></item>
+        <item><para>Update groff dependency from 1.19.2 to
+1.21</para></item>
+        <item><para>Update help2man dependency from 1.36.4 to
+1.38.2</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.12.2</para></item>
+        <item><para>Remove support for aix4*</para></item>
+      </change>
+
+      <change date="2010 October 28" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

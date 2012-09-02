@@ -1,0 +1,493 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="rsync" version="2.6.2" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="bcacd9a9108a9e4760832212ec3d658d"
+        checksum-type="md5" size="515402"
+        path="src/rsync-2.6.2.tar.gz"/>
+      <patch checksum="5f869ccddf1bccf091bfdfb5fb6dc8b7"
+        checksum-type="md5" size="41373"
+        path="src/rsync-2.6.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4.3.2*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # getnameinfo and getaddrinfo are broken
+  export ac_cv_func_getnameinfo=no
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_search_getaddrinfo=no
+  export rsync_cv_getaddrinfo=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-freebsd*)
+  ARGS="--disable-ipv6" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  # getnameinfo and getaddrinfo are broken
+  export ac_cv_func_getnameinfo=no
+  export ac_cv_func_getaddrinfo=no
+  export ac_cv_search_getaddrinfo=no
+  export rsync_cv_getaddrinfo=no ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--with-rsync-path="${SB_INSTALL_PREFIX}/bin/rsync" \
+--with-included-popt --with-rsyncd-conf="${_sysconfdir}/rsyncd.conf" \
+--localstatedir=${_localstatedir:-/var} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# quote \@ for perl
+_p_sysconfdir=$(echo ${_sysconfdir} | sed 's/@/\\@/')
+_p_localstatedir=$(echo ${_localstatedir:-/var} | sed 's/@/\\@/')
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!/etc/rsyncd\\\\&.conf!${_p_sysconfdir}/rsyncd\\\\&.conf!g; \
+s!/var/run/rsyncd\\\\&.lock!${_p_localstatedir}/run/rsyncd\\\\&.lock!g; \
+s!/var/run/rsyncd\\\\&.pid!${_p_localstatedir}/run/rsyncd\\\\&.pid!g; \
+s!/etc/rsyncd\\\\&.secrets!${_p_sysconfdir}/rsyncd\\\\&.secrets!g;" \
+rsync.1 rsyncd.conf.5
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/rsyncd.conf
+
+if [ "${_localstatedir+set}" = set ]; then
+  ${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/run
+
+  cat >${_sysconfdir}/rsyncd.conf <<_EOT_
+lock file = ${_localstatedir}/run/rsyncd.lock
+log file = ${_localstatedir}/log
+
+# uncomment to start rsync in daemon mode
+#pid file = ${_localstatedir}/run/rsyncd.pid
+
+uid = nobody
+gid = nobody
+
+use chroot = yes
+
+# list of modules:
+# [module name]
+#   module options
+# ...
+_EOT_
+fi
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="2.6.1" to="2.6.2">
+        <items name="Bug fixes">
+          <item><para>Fixed a major bug in the sorting of the
+filenames when --relative is used for some sources (probably just "/",
+but don't depend on that). This fix ensures that we ask for the right
+file-list item when requesting changes from the sender.</para></item>
+          <item><para>Rsync now checks the return value of the close()
+function to better report disk-full problems on an NFS file
+system</para></item>
+          <item><para>Restored the old daemon-server behavior of
+logging error messages rather than returning them to the user. (A
+better long-term fix will be sought in the future.)</para></item>
+          <item><para>An obscure uninitialized-variable bug was fixed
+in the uid/gid code. (This bug probably had no ill
+effects.)</para></item>
+          <item><para>Got rid of the configure check for sys/sysctl.h
+(it wasn't used and was causing a problem on some systems). Also
+improved the broken-largefile-locking test to try to avoid failure due
+to an NFS build-dir.</para></item>
+          <item><para>Fixed a compile problem on systems that don't
+define AI_NUMERICHOST</para></item>
+          <item><para>Fixed a compile problem in the popt source for
+compilers that don't support __attribute__</para></item>
+        </items>
+      </change>
+
+      <change from="2.6.0" to="2.6.1">
+        <items name="Security fixes">
+          <item><para>Paths sent to an rsync daemon are more
+thoroughly sanitized when chroot is not used. If you're running a
+non-read-only rsync daemon with chroot disabled, *please upgrade*,
+ESPECIALLY if the user privs you run rsync under is anything above
+"nobody".</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>Lower memory use, more optimal transfer of data
+over the socket, and lower CPU usage (see the INTERNAL section for
+details).</para></item>
+          <item><para>The RSYNC_PROXY environment variable can now
+contain a "USER:PASS@" prefix before the "HOST:PORT"
+information</para></item>
+          <item><para>The --progress output now mentions how far along
+in the transfer we are, including both a count of files transferred
+and a percentage of the total file-count that we've processed. It
+also shows better current-rate-of-transfer and remaining-transfer-time
+values.</para></item>
+          <item><para>The configure script now accepts
+--with-rsyncd-conf=PATH to override the default value of the
+/etc/rsyncd.conf file</para></item>
+          <item><para>Added a couple extra diffs in the "patches" dir,
+removed the ones that got applied, and rebuilt the rest</para></item>
+          <item><para>Documentation changes now attempt to describe
+some often mis- understood features more clearly</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>When -x (--one-file-system) is combined with -L
+(--copy-links) or --copy-unsafe-links, no symlinked files are skipped,
+even if the referent file is on a different filesystem</para></item>
+          <item><para>The --link-dest code now works properly for a
+non-root user when (1) the UIDs of the source and destination differ
+and -o was specified, or (2) when the group of the source can't be
+used on the destination and -g was specified</para></item>
+          <item><para>Fixed a bug in the handling of -H (hard-links)
+that might cause the expanded PATH/NAME value of the current item to
+get overwritten (due to an expanded-name caching bug)</para></item>
+          <item><para>We now reset the "new data has been sent" flag
+at the start of each file we send. This makes sure that an
+interrupted transfer with the --partial option set doesn't keep a
+shorter temp file than the current basis file when no new data has
+been transfered over the wire for that file.</para></item>
+          <item><para>Fixed a byte-order problem in --batch-mode on
+big-endian machines</para></item>
+          <item><para>Fixed configure bug when running "./configure
+--disable-ipv6"</para></item>
+          <item><para>Fixed "make test" bug when build dir is not the
+source dir</para></item>
+          <item><para>When using --cvs-exclude, the exclude items we
+get from a per-directory's .cvsignore file once again only affect that
+one directory (not all following directories too). The items are also
+now properly word-split and parsed without any +/- prefix
+parsing.</para></item>
+          <item><para>When specifying the USER@HOST: prefix for a
+file, the USER part can now contain an '@', if needed (i.e. the last
+'@' is used to find the HOST, not the first)</para></item>
+          <item><para>Fixed some bugs in the handling of group IDs for
+non-root users: (1) It properly handles a group that the sender didn't
+have a name for (it would previously skip changing the group on any
+files in that group). (2) If --numeric-ids is used, rsync no longer
+attempts to set groups that the user doesn't have the permission to
+set.</para></item>
+          <item><para>Fixed the "refuse options" setting in the
+rsyncd.conf file</para></item>
+          <item><para>Improved the -x (--one-file-system) flag's
+handling of any mount- point directories we encounter. It is both
+more optimal (in that it no longer does a useless scan of the contents
+of the mount- point dirs) and also fixes a bug where a remapped mount
+of the original filesystem could get discovered in a subdir we should
+be ignoring.</para></item>
+          <item><para>Rsync no longer discards a double-slash at the
+start of a filename when trying to open the file. It also no longer
+constructs names that start with a double slash (unless the user
+supplied them).</para></item>
+          <item><para>Path-specifying options to a daemon should now
+work the same with or without chroot turned on. Previously, such a
+option (such as --link-dest) would get its absolute path munged into a
+relative one if chroot was not on, making that setting fairly useless.
+Rsync now transforms the path into one that is based on the module's
+base dir when chroot is not enabled.</para></item>
+          <item><para>Fixed compilation problem on Tru64 Unix (having
+to do with sockaddr.sa_len and sockaddr.sin_len).</para></item>
+          <item><para>Fixed a compatibility problem interacting with
+older rsync versions that might send us an empty --suffix value
+without telling us that --backup-dir was specified.</para></item>
+          <item><para>The "hosts allow" option for a
+daemon-over-remote-shell process now has improved support for IPv6
+addresses and a fix for systems that have a length field in their
+socket structs.</para></item>
+          <item><para>Fixed the ability to request an empty backup
+--suffix when sending files to an rsync daemon</para></item>
+        </items>
+
+        <items name="Internal">
+          <item><para>Most of the I/O is now buffered, which results
+in a pretty large speedup when running under MS Windows</para></item>
+          <item><para>Optimizations to the name-handling/comparing
+code have made some significant reductions in user-CPU time for large
+file sets</para></item>
+          <item><para>Some cleanup of the variable types make the code
+more consistent</para></item>
+          <item><para>Reduced memory requirements of hard link
+preservation</para></item>
+          <item><para>Implemented a new algorithm for hard-link
+handling that speeds up the code significantly</para></item>
+          <item><para>The --hard-link option now uses the first
+existing file in the group of linked files as the basis for the
+transfer. This prevents the sub-optimal transfer of a file's data
+when a new hardlink is added on the sending side and it sorts
+alphabetically earlier in the list than the files that are already
+present on the receiving side.</para></item>
+          <item><para>Dropped support for protocol versions less than
+20 (2.3.0 released 15 Mar 1999) and activated warnings for protocols
+less than 25 (2.5.0 released 23 Aug 2001)</para></item>
+          <item><para>More optimal data transmission for --hard-links
+(protocol 28)</para></item>
+          <item><para>More optimal data transmission for --checksum
+(protocol 28)</para></item>
+          <item><para>Less memory is used when --checksum is
+specified</para></item>
+          <item><para>Less memory is used in the file list (a per-file
+savings)</para></item>
+          <item><para>The generator is now better about not modifying
+the file list during the transfer in order to avoid a copy-on-write
+memory bifurcation (on systems where fork() uses shared memory).
+Previously, rsync's shared memory would slowly become unshared,
+resulting in real memory usage nearly doubling on the receiving side
+by the end of the transfer. Now, as long as permissions are being
+preserved, the shared memory should remain that way for the entire
+transfer.</para></item>
+          <item><para>Changed hardlink info and file_struct + strings
+to use allocation pools. This reduces memory use for large file-sets
+and permits freeing memory to the OS.</para></item>
+          <item><para>The 2 pipes used between the receiver and
+generator processes (which are forked on the same machine) were
+reduced to 1 pipe and the protocol improved so that (1) it is now
+impossible to have the "redo" pipe fill up and hang rsync, and (2)
+trailing messages from the receiver don't get lost on their way
+through the generator over to the sender (which mainly affected
+hard-link messages and verbose --stats output)</para></item>
+          <item><para>Improved the internal uid/gid code to be more
+portable and a little more optimized</para></item>
+          <item><para>The device numbers sent when using --devices are
+now sent as separate major/minor values with 32-bit accuracy (protocol
+28). Previously, the copied devices were sent as a single 32-bit
+number. This will make inter-operation of 64-bit binaries more
+compatible with their 32-bit brethren (with both ends of the
+connection are using protocol 28). Note that optimizations in the
+binary protocol for sending the device numbers often results in fewer
+bytes being used than before, even though more precision is now
+available.</para></item>
+          <item><para>Some cleanup of the exclude/include structures
+and its code made things clearer (internally), simpler, and more
+efficient</para></item>
+          <item><para>The reading &amp; writing of the file-list in
+batch-mode is now handled by the same code that sends &amp; receives
+the list over the wire. This makes it much easier to maintain. (Note
+that the batch code is still considered to be
+experimental.)</para></item>
+        </items>
+      </change>
+
+      <change from="2.5.6" to="2.6.0">
+        <items name="Enhancements">
+          <item><para>"ssh" is now the default remote shell for rsync.
+If you want to change this, configure like this:  "./configure
+--with-rsh=rsh".</para></item>
+          <item><para>Added --files-from, --no-relative,
+--no-implied-dirs, and --from0. Note that --from0 affects the
+line-ending character for all the files read by the --*-from
+options.</para></item>
+          <item><para>Length of csum2 is now per-file starting with
+protocol version 27</para></item>
+          <item><para>Per-file dynamic block size is now sqrt(file
+length). The per-file checksum size is determined according to an
+algorithm provided by Donovan Baarda which reduces the probability of
+rsync algorithm corrupting data and falling back using the whole md4
+checksums.</para></item>
+          <item><para>The --stats option no longer includes the
+(debug) malloc summary unless the verbose option was specified at
+least twice.</para></item>
+          <item><para>Added a new error/warning code for when files
+vanish from the sending side. Made vanished source files not
+interfere with the file-deletion pass when --delete-after was
+specified.</para></item>
+          <item><para>Various trailing-info sections are now preceded
+by a newline.</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Fixed several exclude/include matching bugs when
+using wild-cards. This has a several user-visible effects, all of
+which make the matching more consistent and intuitive. This should
+hopefully not cause anyone problems since it makes the matching work
+more like what people are expecting.</para>
+          <unorderedlist>
+            <item><para>A pattern with a "**" no longer causes a "*"
+to match slashes. For example, with "/*/foo/**", "foo" must be 2
+levels deep. [If your string has BOTH "*" and "**" wildcards, changing
+the "*" wildcards to "**" will provide the old behavior in all
+versions.]</para></item>
+            <item><para>"**/foo" now matches at the base of the
+transfer (like /foo does). [Use "/**/foo" to get the old behavior in
+all versions.]</para></item>
+            <item><para>A non-anchored wildcard term floats to match
+beyond the base of the transfer. E.g. "CVS/R*" matches at the end of
+the path, just like the non-wildcard term "CVS/Root" does. [Use
+"/CVS/R*" to get the old behavior in all versions.]</para></item>
+            <item><para>Including a "**" in the match term causes it
+to be matched against the entire path, not just the name portion, even
+if there aren't any interior slashes in the term. E.g. "foo**bar"
+would exclude "/path/foo-bar" (just like before) as well as
+"/foo-path/baz-bar" (unlike before). [Use "foo*bar" to get the old
+behavior in all versions.]</para></item>
+          </unorderedlist></item>
+          <item><para>The exclude list specified in the daemon's
+config file is now properly applied to the pulled items no matter how
+deep the user's file-args are in the source tree</para></item>
+          <item><para>For protocol version &gt;= 27, mdfour_tail() is
+called when the block size (including checksum_seed) is a multiple of
+64. Previously it was not called, giving the wrong MD4
+checksum.</para></item>
+          <item><para>For protocol version &gt;= 27, a 64 bit bit counter
+is used in mdfour.c as required by the RFC. Previously only a 32 bit
+bit counter was used, causing incorrect MD4 file checksums for file
+sizes &gt;= 512MB - 4.</para></item>
+          <item><para>Fixed a crash bug when interacting with older
+rsync versions and multiple files of the same name are destined for
+the same dir.</para></item>
+          <item><para>Keep tmp names from overflowing
+MAXPATHLEN</para></item>
+          <item><para>Make --link-dest honor the absence of -p, -o,
+and -g</para></item>
+          <item><para>Made rsync treat a trailing slash in the
+destination in a more consistent manner</para></item>
+          <item><para>Fixed file I/O error detection</para></item>
+          <item><para>Fixed bogus "malformed address {hostname}"
+message in rsyncd log when checking IP address against hostnames from
+"hosts allow" and "hosts deny" parameters in config file</para></item>
+          <item><para>Print heap statistics when verbose &gt;= 2
+instead of when &gt;= 1</para></item>
+          <item><para>Fixed a compression (-z) bug when syncing a
+mostly-matching file that contains already-compressed
+data</para></item>
+          <item><para>Fixed a bug in the --backup code that could
+cause deleted files to not get backed up</para></item>
+          <item><para>When the backup code makes new directories,
+create them with mode 0700 instead of 0755 (since the directory
+permissions in the backup tree are not yet copied from the main
+tree)</para></item>
+          <item><para>Call setgroups() in a more portable
+manner</para></item>
+          <item><para>Improved file-related error messages to better
+indicate exactly what pathname failed</para></item>
+          <item><para>Fixed some bugs in the handling of --delete and
+--exclude when using the --relative (-R) option</para></item>
+          <item><para>Fixed bug that prevented regular files from
+replacing special files and caused a directory in --link-dest or
+--compare-dest to block the creation of a file with the same path. A
+directory still cannot be replaced by a regular file unless --delete
+specified.</para></item>
+          <item><para>Detect and report when open or opendir succeed
+but read and readdir fail caused by network filesystem issues and
+truncated files</para></item>
+          <item><para>Added a fix that should give ssh time to restore
+the tty settings if the user presses Ctrl-C at an ssh password
+prompt</para></item>
+        </items>
+
+        <items name="Internal">
+          <item><para>Eliminated vestigial support for old versions
+that we stopped supporting</para></item>
+          <item><para>Simplified some of the option-parsing
+code</para></item>
+          <item><para>Some cleanup made to the exclude code, as well
+as some new defines added to enhance readability</para></item>
+          <item><para>Changed the protocol-version code so that it can
+interact at a lower protocol level than the maximum supported by both
+sides. Added an undocumented option, --protocol=N, to force the value
+we advertise to the other side (primarily for testing
+purposes).</para></item>
+        </items>
+      </change>
+
+      <note type="configuration">
+        <para>The path to the default <command>rsyncd.conf</command>
+file has changed from <command>/etc/rsyncd.conf</command> to
+<command>/etc${SB_INSTALL_PREFIX}/rsyncd.conf</command>. This can be changed with
+the <command>--config</command> command-line option. The
+<command>rsyncd.conf</command> configuration file is used when rsync
+is run in daemon mode with <command>--daemon</command>.</para>
+
+        <para>The default path to the lock file is
+<command>/var${SB_INSTALL_PREFIX}/run/rsyncd.lock</command>.</para>
+      </note>
+
+      <note type="installation">
+        <para>Startup scripts are available for usage of rsync in
+daemon mode (<command>rsync --daemon</command>). To enable rsync in
+daemon mode on startup, uncomment the entry in the configuration file
+specifying the path to the PID file:</para>
+        <screen>
+# uncomment to start rsync in daemon mode
+#pid file = /var${SB_INSTALL_PREFIX}/run/rsyncd.pid
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The default remote shell is now ssh.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix for a path-sanitizing bug that affects daemon
+mode if chroot is disabled. It does not affect the normal send/receive
+filenames that specify what files should be transferred ((this is
+because these names happen to get sanitized twice, and thus the second
+call removes any lingering leading slash(es) that the first call left
+behind). It does affect certain option paths that cause auxilliary
+files to be read or written.</para></item>
+      </change>
+
+      <change date="2004 July 19" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix for LFS bug</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

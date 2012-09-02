@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="freetype" version="2.1.4" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libttf21</install-name>
+
+    <sources>
+      <source checksum="feb71ed5f5f1c143484056c0659f2a5f"
+        checksum-type="md5" size="806635"
+        path="src/freetype-2.1.4.tar.bz2"/>
+      <patch checksum="112829d0b9cc3f2b959548fd0814ea4b"
+        checksum-type="md5" size="993953"
+        path="src/freetype-2.1.4.patch"/>
+      <source checksum="367064e81998a302f3844f1dcdb8d77f"
+        checksum-type="md5" size="213683"
+        path="src/ftdocs-2.1.4.tar.bz2"
+        noop="1" var="DOCS"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <module name="default">
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +DAportable +Onofltacc +Onoentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_ZLIB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+GNUMAKE=gmake ./configure --datadir="${_datadir}" \
+--enable-shared --enable-static --with-zlib=${SB_VAR_ZLIB} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+# quote \@ for perl
+_p_zlib_lib=$(echo ${SB_VAR_ZLIB_LIB} | sed 's/@/\\@/')
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!-L(\\\${exec_prefix}/lib) !-L\$1 ${CC_LD_RT}\$1:${_p_zlib_lib} !" \
+builds/unix/freetype-config
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!-L(\\\${libdir})!-L\$1 ${CC_LD_RT}\$1:${_p_zlib_lib}!" \
+builds/unix/freetype2.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install documentation
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+(cd ${SB_INSTALL_PREFIX}
+bzip2 -dc ${SRC_DOCS} | gtar xf -
+mv ${SB_PROG_NAME}-${SB_PROG_VER}/docs/* ${_docdir} && rm -rf ${NAME}-${VER}
+chown -hR 0:0 ${_docdir})
+]]>
+      </install>
+    </module>
+
+    <changelog>
+      <change date="2004 August 26" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 February 29" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Recognize .pcf.Z fonts</para></item>
+        <item><para>Add freetype2.pc pkgconfig file</para></item>
+      </change>
+
+      <change date="2003 June 17" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply fix for <ulink url="http://bugs.debian.org/184355">http://bugs.debian.org/184355</ulink></para></item>
+      </change>
+
+      <change date="2003 April 29" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix double-free bug in src/base/ftmac.c</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

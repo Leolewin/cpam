@@ -1,0 +1,166 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="esound" version="0.2.34" revision="11"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}022</install-name>
+
+    <sources>
+      <source checksum="406514a52fe5daea32ec00cc2caedb25"
+        checksum-type="md5" size="318353"
+        path="src/esound-0.2.34.tar.bz2"/>
+      <patch checksum="0400ab0826ff07ed39a606fff1be5465"
+        checksum-type="md5" size="55784"
+        path="src/esound-0.2.34.tww.patch"/>
+      <patch checksum="0136330f4c9f70d3a1f15418ff2be60f"
+        checksum-type="md5" size="1422406"
+        path="src/esound-0.2.34.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcp_wrappers" var="TCPWRAP">v==7.6</depend>
+      <depend program="audiofile" var="LIBAUDIOFILE"
+        install-name="libaudiofile02">v&gt;=0.2.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5.1*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CC_LD_RT="-Wl,-blibpath:" 
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  ARGS="--disable-ipv6" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:" 
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ARGS="--disable-ipv6" ;;
+i?86*-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6" ;;
+i?86*-linux*|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--disable-ipv6" ;;
+i386*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ARGS="--enable-ipv6" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  CC_LD_RT="-R" ARGS="--enable-ipv6" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --with-audiofile \
+--with-audiofile-prefix=${SB_VAR_LIBAUDIOFILE} \
+${SB_VAR_TCPWRAP+--with-libwrap=${SB_VAR_TCPWRAP}} \
+--sysconfdir=${_sysconfdir} --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!=-L\(\${exec_prefix}/lib\)!=\"-L\1 ${CC_LD_RT}\1\"!" esd-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" esound.pc
+]]>
+    </configure>
+
+    <notes>
+      <change from="0.2.32" to="0.2.34">
+        <item><para>file formats</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2010 November 8" revision="11"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 May 20" revision="10"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31/PA-RISC</para></item>
+        <item><para>Add support for HP-UX 11.31/IA-64</para></item>
+      </change>
+
+      <change date="2009 April 27" revision="9"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Build shared libraries on AIX 6</para></item>
+        <item><para>Rebuild on AIX 5.2, 5.3 with
+-qarch=ppc</para></item>
+      </change>
+
+      <change date="2009 January 9" revision="8"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for AIX 6</para></item>
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 September 6" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-20</para></item>
+      </change>
+
+      <change date="2006 July 4" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2005 November 15" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+        <item><para>Don't disable IPv6 on AIX 5.2</para></item>
+      </change>
+
+      <change date="2005 May 18" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+      </change>
+
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

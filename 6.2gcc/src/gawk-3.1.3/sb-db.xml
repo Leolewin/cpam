@@ -1,0 +1,286 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gawk" version="3.1.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}31</install-name>
+
+    <sources>
+      <source checksum="a116eec17e7ba085febb74c7758823bd"
+        checksum-type="md5" size="1634022"
+        path="src/gawk-3.1.3.tar.bz2"/>
+      <patch checksum="4f34528f4ddc943cc61f1a6ea3f4bda5"
+        checksum-type="md5" size="23026"
+        path="src/gawk-3.1.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="groff" install-name="groff11"
+        add-path="prepend">v&gt;=1.17.2</depend>
+      <depend program="tetex" install-name="tetex20"
+        add-path="prepend">v&gt;=2.0.2</depend>
+      <depend program="bison" add-path="prepend"
+        type="build">v&gt;=1.28</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18" add-path="prepend"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="texinfo" add-path="prepend"
+        type="build">v==4.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-solaris2.8)
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LIBICONV+--with-libiconv-prefix=${LIBICONV}} \
+--with-libintl-prefix=${GETTEXT} \
+--datadir="${_datadir}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake && (cd doc && gmake postscript)
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# remove link from awk -> gawk
+rm -f ${SB_INSTALL_PREFIX}/bin/awk
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 doc/gawk.texi doc/gawkinet.texi \
+doc/awkcard.ps doc/gawk.1.ps doc/gawkinet.ps doc/gawk.ps \
+doc/igawk.1.ps ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="3.1.2" to="3.1.3">
+        <item><para>Gawk now follows POSIX in handling of local
+numeric formats for input, output and number/string
+conversions</para></item>
+        <item><para>Multibyte detection improved. See
+README_d/README.multibyte for more info about multibyte
+locales.</para></item>
+        <item><para>Handling of `close' made more POSIX-compliant for
+POSIXLY_CORRECT, see the documentation.</para></item>
+        <item><para>The record reading code was redone, again.  This
+time it's much better. Really!</para></item>
+        <item><para>For RS = "\n" and RS = "", gawk now only sets RT
+when it has changed. This provides considerable performance
+improvement.</para></item>
+        <item><para>`match' now sets all the subscripts in the third
+argument array correctly, even if not all subexpressions
+matched.</para></item>
+        <item><para>Updated to Automake 1.7.5. configure.in renamed
+configure.ac.</para></item>
+        <item><para>C-style switch statements are available, but must
+be enabled at compile time via `configure --enable-switch'. For 3.2
+they'll be enabled by default. Thanks to Michael Benzinger for the
+initial code.</para></item>
+        <item><para>%c now always prints no more than one character,
+whatever precision is provided.</para></item>
+        <item><para>strtonum(&lt;number&gt;) now works
+again</para></item>
+        <item><para>Gawk is now much better about scalar/array typing
+of global uninitiailzed variables passed as parameters. Once the
+parameter is then used one way or the other, the global var's type is
+adjusted accordingly. Thanks to Stepan Kasal for the original
+(considerable) changes.</para></item>
+        <item><para>Dynamic function loading under Windows32 should
+now be possible. See README_d/README.pcdynamic. Thanks to Patrick T.J.
+McPhee for the changes.</para></item>
+        <item><para>Updated to gettext 0.12.1</para></item>
+        <item><para>Gawk now follows historical practice and POSIX for
+the return value of `rand': It's now 0 &lt;= N &lt; 1</para></item>
+      </change>
+
+      <change from="3.1.1" to="3.1.2">
+        <item><para>Loops of the form:</para>
+        <screen>
+for (iggy in foo)
+  next
+        </screen>
+        <para>no longer leak memory</para></item>
+        <item><para>gawk -v FIELDWIDTHS="..." now sets PROCINFO["FS"]
+correctly</para></item>
+        <item><para>All builtin operations and functions should now
+fully evaluate their arguments so that side effects take place
+correctly</para></item>
+        <item><para>Fixed a logic bug in gsub/gensub for matches to
+null strings that occurred later in the string after a nonnull
+match</para></item>
+        <item><para>getgroups code now works on Ultrix
+again</para></item>
+        <item><para>Completely new version of the full GNU regex
+engine now in place</para></item>
+        <item><para>Argument parsing and variable assignment has been
+cleaned up</para></item>
+        <item><para>An I/O bug on HP-UX has been documented and worked
+around. See README_d/README.hpux.</para></item>
+        <item><para>awklib/grcat should now compile
+correctly</para></item>
+        <item><para>Updated to automake 1.7.3, autoconf 2.57 and
+gettext 0.11.5; thanks to Paul Eggert for the initial automake and
+autoconf work</para></item>
+        <item><para>As a result of #6, removed the use of the dfa code
+from GNU grep</para></item>
+        <item><para>It is now possible to use ptys for |&amp; two-way
+pipes instead of pipes. The basic plumbing for this was provided by
+Paolo Bonzini. To make this happen:</para>
+        <screen>
+command = "unix command etc"
+PROCINFO[command, "pty"] = 1
+
+print ... |&amp; command
+command |&amp; getline stuff
+        </screen>
+        <para>In other words, set the element in PROCINFO *before*
+opening the two-way pipe, and then gawk will use ptys instead of
+pipes.</para>
+        <para>On systems without ptys or where all the ptys are in
+use, gawk will fall back to using plain pipes.</para></item>
+        <item><para>Fixed a regex matching across buffer boundaries
+bug, with a heuristic. See io.c:rsre_get_a_record.</para></item>
+        <item><para>Profiling no longer dumps core if there are
+extension functions in place</para></item>
+        <item><para>Grammar and scanner cleaned up, courtesy of Stepen
+Kasal, to hopefully once and for all fix the `/=' operator vs.
+`/=.../' regex ambiguity. Lots of other grammar simplifications
+applied, as well.</para></item>
+        <item><para>BINMODE should work now on more Windows
+ports</para></item>
+        <item><para>Updated to bison 1.875. Includes fix to
+bisonfix.sed script.</para></item>
+        <item><para>The NODE structure is now 20% (8 bytes) smaller
+(on x86, anyway), which should help conserve memory.</para></item>
+        <item><para>Builds not in the source directory should work
+again</para></item>
+        <item><para>Arrays now use 2 NODE's per element instead of
+three. Combined with #18, (on the x86) this reduces the overhead from
+120 bytes per element to just 64 bytes: almost a 50%
+improvement.</para></item>
+        <item><para>Programs that make heavy use of changing
+IGNORECASE should now be much faster, particularly if using a regular
+expression for FS or RS. IGNORECASE now correctly affects RS regex
+record splitting, as well.</para></item>
+        <item><para>IGNORECASE no longer affects single-character
+field splitting (FS = "c"), or single-character record splitting (RS =
+"c").</para>
+        <para>This cleans up some weird behavior, and makes gawk
+better match the documentation, which says it only affects regex-based
+field splitting and record splitting.</para>
+        <para>The documentation on this was improved,
+too.</para></item>
+        <item><para>The framework in test/ has been simplified, making
+it much easier to add new tests while keeping the size of Makefile.am
+reasonable. Thanks for this to Stepan Kasal.</para></item>
+        <item><para>--lint=invalid causes lint warnings only about
+stuff that's actually invalid. This needs additional
+work.</para></item>
+        <item><para>More translations</para></item>
+        <item><para>The `get_a_record' routine has been revamped
+(currently by splitting it into three variants). This should improve
+long-term maintainability.</para></item>
+        <item><para>`match' now adds more entries to 3rd array
+arg:</para>
+        <screen>
+match("the big dog", /([a-z]+) ([a-z]+) ([a-z]+)/, data)
+        </screen>
+        <para>fills in variables:</para>
+        <screen>
+data[1, "start"], data[1, "length"], and so on.
+        </screen></item>
+        <item><para>New `asorti' function with same interface as
+`asort', but sorts indices instead of values</para></item>
+        <item><para>Documentation updated to FDL 1.2</para></item>
+        <item><para>New `configure' option --disable-lint at compile
+time disables lint checking. With GCC dead-code-elimination, cuts
+almost 200K off the executable size on GNU/Linux x86. Presumably
+speeds up runtime.</para>
+        <para>Using this will cause some of the tests in the test
+suite to fail. This option may be removed at a later
+date.</para></item>
+        <item><para>Various minor cleanups, see the ChangeLog for
+details</para></item>
+      </change>
+
+      <change from="3.1.0" to="3.1.1">
+        <item><para>Six new translations</para></item>
+        <item><para>Having more than 4 different value for OFMT and/or
+CONVFMT now works</para></item>
+        <item><para>The handling of dynamic regexes is now more more
+sane, esp. w.r.t. the profiling code. The profiling code has been
+fixed in several places.</para></item>
+        <item><para>The return value of index("", "") is now
+1</para></item>
+        <item><para>Gawk should no longer close fd 0 in child
+processes</para></item>
+        <item><para>Fixed test for strtod semantics and regenerated
+configure</para></item>
+        <item><para>Gawk can now be built with byacc; an accidental
+bison dependency was removed</para></item>
+        <item><para>`yyerror' will no longer dump core on long source
+lines</para></item>
+        <item><para>Gawk now correctly queries getgroups(2) to figure
+out how many groups the process has</para></item>
+        <item><para>New configure option to force use of included
+strftime, e.g. on Solaris systems. See `./configure --help' for the
+details. Replaced the included strftime.c with the one from
+textutils.</para></item>
+        <item><para>Multi-byte character support has been added,
+courtesy of IBM Japan</para></item>
+        <item><para>The `for (iggy in foo) delete foo[iggy]' -&gt;
+`delete foo' optimisation now works</para></item>
+        <item><para>Upgraded to gettext 0.11.2 and automake
+1.5</para></item>
+        <item><para>Full gettext compatibility (new dcngettext
+function)</para></item>
+        <item><para>The O'Reilly copyedits and indexing changes for
+the documentation have been folded into the texinfo version of the
+manuals</para></item>
+        <item><para>A humongously long value for the AWKPATH
+environment variable will no longer dump core</para></item>
+        <item><para>Configuration/Installation issues have been
+straightened out in Makefile.am</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

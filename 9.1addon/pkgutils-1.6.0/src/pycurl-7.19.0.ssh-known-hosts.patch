@@ -1,0 +1,246 @@
+Index: src/pycurl.c
+===================================================================
+--- src/pycurl.c.orig
++++ src/pycurl.c
+@@ -156,6 +156,7 @@ typedef struct {
+     PyObject *debug_cb;
+     PyObject *ioctl_cb;
+     PyObject *opensocket_cb;
++    PyObject *sshkey_cb;
+     /* file objects */
+     PyObject *readdata_fp;
+     PyObject *writedata_fp;
+@@ -734,6 +735,7 @@ util_curl_new(void)
+     self->debug_cb = NULL;
+     self->ioctl_cb = NULL;
+     self->opensocket_cb = NULL;
++    self->sshkey_cb = NULL;
+ 
+     /* Set file object pointers to NULL by default */
+     self->readdata_fp = NULL;
+@@ -845,6 +847,7 @@ util_curl_xdecref(CurlObject *self, int 
+         ZAP(self->pro_cb);
+         ZAP(self->debug_cb);
+         ZAP(self->ioctl_cb);
++        ZAP(self->sshkey_cb);
+     }
+ 
+     if (flags & 8) {
+@@ -994,6 +997,7 @@ do_curl_traverse(CurlObject *self, visit
+     VISIT(self->pro_cb);
+     VISIT(self->debug_cb);
+     VISIT(self->ioctl_cb);
++    VISIT(self->sshkey_cb);
+ 
+     VISIT(self->readdata_fp);
+     VISIT(self->writedata_fp);
+@@ -1317,6 +1321,139 @@ verbose_error:
+     goto silent_error;
+ }
+ 
++static const char table64[]=
++  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++
++static char *
++base64_encode(const char *inputbuff, size_t insize)
++{
++  unsigned char ibuf[3];
++  unsigned char obuf[4];
++  int i;
++  int inputparts;
++  char *output;
++  char *base64data;
++
++  const char *indata = inputbuff;
++
++  if(0 == insize)
++    insize = strlen(indata);
++
++  base64data = output = malloc(insize*4/3+4);
++  if(NULL == output)
++    return NULL;
++
++  while(insize > 0) {
++    for (i = inputparts = 0; i < 3; i++) {
++      if(insize > 0) {
++        inputparts++;
++        ibuf[i] = *indata;
++        indata++;
++        insize--;
++      }
++      else
++        ibuf[i] = 0;
++    }
++
++    obuf[0] = (unsigned char)  ((ibuf[0] & 0xFC) >> 2);
++    obuf[1] = (unsigned char) (((ibuf[0] & 0x03) << 4) | \
++                               ((ibuf[1] & 0xF0) >> 4));
++    obuf[2] = (unsigned char) (((ibuf[1] & 0x0F) << 2) | \
++                               ((ibuf[2] & 0xC0) >> 6));
++    obuf[3] = (unsigned char)   (ibuf[2] & 0x3F);
++
++    switch(inputparts) {
++    case 1: /* only one byte read */
++      snprintf(output, 5, "%c%c==",
++               table64[obuf[0]],
++               table64[obuf[1]]);
++      break;
++    case 2: /* two bytes read */
++      snprintf(output, 5, "%c%c%c=",
++               table64[obuf[0]],
++               table64[obuf[1]],
++               table64[obuf[2]]);
++      break;
++    default:
++      snprintf(output, 5, "%c%c%c%c",
++               table64[obuf[0]],
++               table64[obuf[1]],
++               table64[obuf[2]],
++               table64[obuf[3]] );
++      break;
++    }
++    output += 4;
++  }
++  *output=0;
++
++  return base64data; /* return the length of the new data */
++}
++
++static int
++sshkey_callback (CURL *handle, const struct curl_khkey *knownkey,
++                 const struct curl_khkey *foundkey, enum curl_khmatch match,
++                 void *clientp)
++{
++    PyObject *arglist;
++    CurlObject *self;
++    PyThreadState *tmp_state;
++    PyObject *result = NULL;
++    int ret = CURLKHSTAT_REJECT;       /* assume error */
++    char *knownkey_base64, *foundkey_base64;
++
++    UNUSED(handle);
++
++    /* acquire thread */
++    self = (CurlObject *)clientp;
++    tmp_state = get_thread_state(self);
++    if (tmp_state == NULL)
++        return ret;
++    PyEval_AcquireThread(tmp_state);
++
++    /* check args */
++    if (self->sshkey_cb == NULL)
++        goto silent_error;
++    knownkey_base64 = knownkey->len
++                          ? base64_encode(knownkey->key, knownkey->len)
++                          : strdup(knownkey->key);
++    foundkey_base64 = foundkey->len
++                          ? base64_encode(foundkey->key, foundkey->len)
++                          : strdup(foundkey->key);
++
++    /* run callback */
++    arglist = Py_BuildValue("((si)(si)i)",
++                            knownkey_base64, knownkey->keytype,
++                            foundkey_base64, foundkey->keytype,
++                            match);
++
++    /* Py_BuildValue copies strings, so we can free the originals */
++    free (knownkey_base64);
++    free (foundkey_base64);
++
++    if (arglist == NULL)
++        goto verbose_error;
++    result = PyEval_CallObject(self->sshkey_cb, arglist);
++    Py_DECREF(arglist);
++    if (result == NULL)
++        goto verbose_error;
++
++    /* handle result */
++    if (PyInt_Check(result)) {
++        ret = (int) PyInt_AsLong(result);
++        if (ret >= CURLKHSTAT_LAST || ret < 0) {
++            PyErr_SetString(ErrorObject, "sshkey callback returned invalid value");
++            goto verbose_error;
++        }
++    }
++    
++silent_error:
++    Py_XDECREF(result);
++    PyEval_ReleaseThread(tmp_state);
++    return ret;
++verbose_error:
++    PyErr_Print();
++    goto silent_error;
++}
+ 
+ static int
+ debug_callback(CURL *curlobj, curl_infotype type,
+@@ -1621,6 +1758,7 @@ do_curl_setopt(CurlObject *self, PyObjec
+         case CURLOPT_USERAGENT:
+         case CURLOPT_USERPWD:
+         case CURLOPT_FTP_ALTERNATIVE_TO_USER:
++        case CURLOPT_SSH_KNOWNHOSTS:
+         case CURLOPT_SSH_PUBLIC_KEYFILE:
+         case CURLOPT_SSH_PRIVATE_KEYFILE:
+         case CURLOPT_COPYPOSTFIELDS:
+@@ -2017,7 +2155,8 @@ do_curl_setopt(CurlObject *self, PyObjec
+         const curl_progress_callback pro_cb = progress_callback;
+         const curl_debug_callback debug_cb = debug_callback;
+         const curl_ioctl_callback ioctl_cb = ioctl_callback;
+-	const curl_opensocket_callback opensocket_cb = opensocket_callback;
++        const curl_opensocket_callback opensocket_cb = opensocket_callback;
++        const curl_sshkeycallback sshkey_cb = sshkey_callback;
+ 
+         switch(option) {
+         case CURLOPT_WRITEFUNCTION:
+@@ -2075,7 +2214,13 @@ do_curl_setopt(CurlObject *self, PyObjec
+             curl_easy_setopt(self->handle, CURLOPT_OPENSOCKETFUNCTION, opensocket_cb);
+             curl_easy_setopt(self->handle, CURLOPT_OPENSOCKETDATA, self);
+             break;
+-
++        case CURLOPT_SSH_KEYFUNCTION:
++            Py_INCREF(obj);
++            ZAP(self->sshkey_cb);
++            self->sshkey_cb = obj;
++            curl_easy_setopt(self->handle, CURLOPT_SSH_KEYFUNCTION, sshkey_cb);
++            curl_easy_setopt(self->handle, CURLOPT_SSH_KEYDATA, self);
++            break;
+         default:
+             /* None of the function options were recognized, throw exception */
+             PyErr_SetString(PyExc_TypeError, "functions are not supported for this option");
+@@ -2385,7 +2530,6 @@ silent_error:
+ verbose_error:
+     PyErr_Print();
+     goto silent_error;
+-    return 0;
+ }
+ 
+ 
+@@ -3480,6 +3624,18 @@ initpycurl(void)
+     insint_c(d, "INFOTYPE_SSL_DATA_IN", CURLINFO_SSL_DATA_IN);
+     insint_c(d, "INFOTYPE_SSL_DATA_OUT", CURLINFO_SSL_DATA_OUT);
+ 
++    /* curl_khkey enum type: the type of key passed to SSH_KEYFUNCTION */
++    insint_c(d, "KHTYPE_UNKNOWN", CURLKHTYPE_UNKNOWN);
++    insint_c(d, "KHTYPE_RSA1", CURLKHTYPE_RSA1);
++    insint_c(d, "KHTYPE_RSA", CURLKHTYPE_RSA);
++    insint_c(d, "KHTYPE_DSS", CURLKHTYPE_DSS);
++
++    /* constants for sshkey function callback return values */
++    insint_c(d, "KHSTAT_FINE_ADD_TO_FILE", CURLKHSTAT_FINE_ADD_TO_FILE);
++    insint_c(d, "KHSTAT_FINE", CURLKHSTAT_FINE);
++    insint_c(d, "KHSTAT_REJECT", CURLKHSTAT_REJECT);
++    insint_c(d, "KHSTAT_DEFER", CURLKHSTAT_DEFER);
++
+     /* CURLcode: error codes */
+     insint_c(d, "E_OK", CURLE_OK);
+     insint_c(d, "E_UNSUPPORTED_PROTOCOL", CURLE_UNSUPPORTED_PROTOCOL);
+@@ -3718,6 +3874,9 @@ initpycurl(void)
+     insint_c(d, "MAX_RECV_SPEED_LARGE", CURLOPT_MAX_RECV_SPEED_LARGE);
+     insint_c(d, "SSL_SESSIONID_CACHE", CURLOPT_SSL_SESSIONID_CACHE);
+     insint_c(d, "SSH_AUTH_TYPES", CURLOPT_SSH_AUTH_TYPES);
++    insint_c(d, "SSH_KEYDATA", CURLOPT_SSH_KEYDATA);
++    insint_c(d, "SSH_KEYFUNCTION", CURLOPT_SSH_KEYFUNCTION);
++    insint_c(d, "SSH_KNOWNHOSTS", CURLOPT_SSH_KNOWNHOSTS);
+     insint_c(d, "SSH_PUBLIC_KEYFILE", CURLOPT_SSH_PUBLIC_KEYFILE);
+     insint_c(d, "SSH_PRIVATE_KEYFILE", CURLOPT_SSH_PRIVATE_KEYFILE);
+     insint_c(d, "FTP_SSL_CCC", CURLOPT_FTP_SSL_CCC);

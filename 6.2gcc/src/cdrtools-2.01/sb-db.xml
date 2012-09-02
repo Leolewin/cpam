@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="cdrtools" version="2.01" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}20</install-name>
+
+    <sources>
+      <source checksum="d35cbd5af1b2a375656db66e9bd79739"
+        checksum-type="md5" size="1359744"
+        path="src/cdrtools-2.01a19.tar.bz2"/>
+      <patch checksum="42affbef91efa207b7850b73ff61f611"
+        checksum-type="md5" size="270473"
+        path="src/cdrtools-2.01a19.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="smake" install-name="smake12"
+        add-path="prepend">v&gt;=1.2a22</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=cc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CFLAGS="-g -march=1.1" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SB_PATH_GCHMOD} u+w cdrecord/defaults.c
+sed -e "s!/etc/default/cdrecord!${_sysconfdir}/cdrecord.conf!" \
+cdrecord/defaults.c >/tmp/$$
+cp /tmp/$$ cdrecord/defaults.c && rm /tmp/$$
+
+${SB_PATH_GCHMOD} u+w cdrecord/cdrecord.c
+sed -e "s!@EMAIL@!support@thewrittenword.com!" cdrecord/cdrecord.c >/tmp/$$
+cp /tmp/$$ cdrecord/cdrecord.c && rm /tmp/$$
+
+${SB_PATH_GCHMOD} u+w cdrecord/cdrecord.1
+sed -e "s!/etc/default/cdrecord!${_sysconfdir}/cdrecord.conf!g" \
+-e "/^Default values/ {
+a\\
+The default path to the configuration file was
+a\\
+/etc/default/cdrecord. This was changed to
+a\\
+${_sysconfdir}/cdrecord.conf to conform to the standard path
+a\\
+convention for software in the Open Source Collection. This notice
+a\\
+is a requirement of the instructions in the cdrecord/defaults.c file.
+}" cdrecord/cdrecord.1 >/tmp/$$
+cp /tmp/$$ cdrecord/cdrecord.1 && rm /tmp/$$
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+smake CCOM="${CC:-gcc}" COPTX="${CFLAGS:--O2}" \
+${LDFLAGS+LDOPTX="${LDFLAGS}"}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+smake CCOM="${CC:-gcc}" COPTX="${CFLAGS:--O2}" \
+${LDFLASG+LDOPTX="${LDFLAGS}"} INS_BASE="${SB_INSTALL_PREFIX}" install
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/cdrecord.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 cdrecord/cdrecord.dfl \
+${_sysconfdir}/cdrecord.conf.sample
+
+${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+    </install>
+  </program>
+</programs>

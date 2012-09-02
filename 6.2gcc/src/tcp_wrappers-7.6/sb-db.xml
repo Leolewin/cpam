@@ -1,0 +1,126 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="tcp_wrappers" version="7.6" revision="2">
+    <build-name>${SB_PROG_NAME}_${SB_PROG_VER}</build-name>
+
+    <install-name>tcpwrap</install-name>
+
+    <sources>
+      <source checksum="e6fa25f71226d090f34de3f6b122fb5a"
+        checksum-type="md5" size="99438"
+        path="src/tcp_wrappers_7.6.tar.gz"/>
+      <patch checksum="09ad416fcd69fdda1856296d117b8165"
+        checksum-type="md5" size="7066"
+        path="src/tcp_wrappers_7.6.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH BUGS="" \
+  HOSTS_DENY=/etc${SB_INSTALL_PREFIX}/hosts.deny \
+  HOSTS_ALLOW=/etc${SB_INSTALL_PREFIX}/hosts.allow \
+  CC=xlc OPT="-O2 -qmaxmem=-1 -qarch=com" aix ;;
+*-hpux11*)
+  gmake REAL_DAEMON_DIR=/usr/lbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY=${_sysconfdir}/hosts.deny \
+  HOSTS_ALLOW=${_sysconfdir}/hosts.allow \
+  CC=cc OPT="-Ae +O3 +DAportable +Oentrysched +Odataprefetch +Onolimit" \
+  hpux11 ;;
+*-hpux10*)
+  gmake REAL_DAEMON_DIR=/usr/lbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY=${_sysconfdir}/hosts.deny \
+  HOSTS_ALLOW=${_sysconfdir}/hosts.allow \
+  CC=cc OPT="-Ae +O3 +DAportable +Oentrysched +Odataprefetch +Onolimit" \
+  hpux10 ;;
+*-irix6*)
+  gmake REAL_DAEMON_DIR=/usr/etc \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY=${_sysconfdir}/hosts.deny \
+  HOSTS_ALLOW=${_sysconfdir}/hosts.allow \
+  CC=cc OPT="-O2 -OPT:Olimit=0" irix6 ;;
+*-linux*)
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY=${_sysconfdir}/hosts.deny \
+  HOSTS_ALLOW=${_sysconfdir}/hosts.allow \
+  CC=gcc OPT="-O2" linux ;;
+*-osf*)
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY=/etc${SB_INSTALL_PREFIX}/hosts.deny \
+  HOSTS_ALLOW=/etc${SB_INSTALL_PREFIX}/hosts.allow \
+  CC=cc OPT="-O2 -std1" osf ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v8"
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY=${_sysconfdir}/hosts.deny \
+  HOSTS_ALLOW=${_sysconfdir}/hosts.allow \
+  CC=${CC:-gcc} OPT="$CFLAGS" sunos5 ;;
+esac
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/include \
+${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/man/man3 ${SB_INSTALL_PREFIX}/man/man5 \
+${SB_INSTALL_PREFIX}/man/man8
+
+for bin in tcpd tcpdchk tcpdmatch try-from safe_finger; do
+  ${SB_PATH_GINSTALL} -m 111 -o root -g 0 ${bin} ${SB_INSTALL_PREFIX}/bin
+done
+
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 tcpd.h ${SB_INSTALL_PREFIX}/include
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 libwrap.a ${SB_INSTALL_PREFIX}/lib
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 *.3 ${SB_INSTALL_PREFIX}/man/man3
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 *.5 ${SB_INSTALL_PREFIX}/man/man5
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 *.8 ${SB_INSTALL_PREFIX}/man/man8
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/hosts.allow
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/hosts.deny
+]]>
+    </install>
+
+    <notes>
+      <note type="compilation">
+        <para>The default location for the
+<command>hosts.allow</command> and <command>hosts.deny</command> files
+is <command>/etc${SB_INSTALL_PREFIX}</command>.</para>
+
+        <para>The <command>PROCESS_OPTIONS</command> option was
+enabled during compilation. See
+<command>hosts_options(5)</command>.</para>
+
+        <para>The default logging facility is
+``<command>auth</command>''.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 July 25" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove private setenv function from Redhat Linux
+build</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

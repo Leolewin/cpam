@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="xymon-client" version="4.3.10" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}4310</install-name>
+
+    <sources>
+      <source path="src/xymon-client-4.3.10.tar.gz"/>
+    </sources>
+
+    <dependencies>
+<!-- place holder
+      <depend program="ncurses" var="NCURSES">v==5.6</depend>
+-->
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-solaris*)
+  CC=/usr/bin/gcc CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," 
+  ./configure CC="${CC:-gcc}" \
+  --mandir=${SB_INSTALL_PREFIX}/man \
+  --prefix=${SB_INSTALL_PREFIX}
+;;
+x86_64-unknown-linux-gnu)
+#sudo apt-get install fping librrd-dev -y
+# svn co https://xymon.svn.sourceforge.net/svnroot/xymon/branches/4.3.10 xymon
+# cd xymon
+#./configure.server < __EOT__
+#Y
+#y
+#y
+#xymons
+#/home/xymons
+#/xymon
+#/home/xymons/cgi-bin
+#/xymon-cgi
+#/home/xymons/cgi-secure
+#/xymon-seccgi
+#www-data
+#/var/log/xymon
+#tjyang-virtual-machine
+#127.0.0.1
+#/usr/local/man
+#>__EOT__
+#
+
+
+# check if prerequisteves is installed on ubuntu 12.04
+# Following is for server not client, need to be corrected. 
+cat > Makefile <<__EOT__
+# Toplevel Makefile for Xymon
+BUILDTOPDIR=`pwd`
+
+# configure settings for Xymon
+#
+# Toplevel dir
+XYMONTOPDIR = ${SB_INSTALL_PREFIX}
+# Server home dir for etc/, bin/
+XYMONHOME = ${SB_INSTALL_PREFIX}/server
+# Server data dir for hist/ etc.
+XYMONVAR = ${SB_INSTALL_PREFIX}/data
+# CGI scripts go in CGIDIR
+CGIDIR = ${SB_INSTALL_PREFIX}/cgi-bin
+# Admin CGI scripts go in SECURECGIDIR
+SECURECGIDIR = ${SB_INSTALL_PREFIX}/cgi-secure
+# Where to put logfiles
+XYMONLOGDIR = /var${SB_INSTALL_PREFIX}
+# Where to install manpages
+MANROOT = ${SB_INSTALL_PREFIX}/man
+# How to run fping or xymonping
+FPING = /usr/bin/fping
+
+# Username running Xymon
+XYMONUSER = xymons
+# Xymon server hostname
+XYMONHOSTNAME = tjyang-virtual-machine
+# Xymon server IP-address
+XYMONHOSTIP = 127.0.0.1
+# Xymon server OS
+XYMONHOSTOS = linux
+
+# URL for Xymon webpages
+XYMONHOSTURL = /xymon
+# URL for Xymon CGIs
+XYMONCGIURL = /xymon-cgi
+# URL for Xymon Admin CGIs
+SECUREXYMONCGIURL = /xymon-seccgi
+# Webserver group-ID
+HTTPDGID=www-data
+
+# PCRE settings
+PCRELIBS = -lpcre
+
+# RRDtool settings
+RRDDEF = -DRRDTOOL12
+RRDLIBS = -lrrd 
+DORRD = yes
+#
+# OpenSSL settings
+SSLFLAGS = -DHAVE_OPENSSL
+SSLLIBS = -lssl -lcrypto
+DOSSL = yes
+#
+# OpenLDAP settings
+LDAPFLAGS = -DHAVE_LDAP
+LDAPLIBS = -lldap -llber
+DOLDAP = yes
+#
+# clock_gettime() settings
+LIBRTDEF = -lrt
+
+# Net-SNMP settings
+DOSNMP = no
+
+# Large File Support settings
+LFSDEF = -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
+
+include build/Makefile.Linux
+
+
+# Add local CFLAGS etc. settings here
+
+include build/Makefile.rules
+__EOT__
+
+;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install 
+]]>
+    </install>
+  </program>
+</programs>

@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libIDL" version="0.8.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libidl08</install-name>
+
+    <sources>
+      <source checksum="39640ea026d81e721b0c78a8aaeb7d59"
+        checksum-type="md5" size="311000"
+        path="src/libIDL-0.8.3.tar.bz2"/>
+      <patch checksum="f555d57dec3b5eddebb1d32b6d61cf07"
+        checksum-type="md5" size="708608"
+        path="src/libIDL-0.8.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="pkgconfig" install-name="pkgconfig"
+        add-path="prepend" type="build">v&gt;=0.15.0</depend>
+      <depend program="flex" install-name="flex" add-path="prepend"
+        type="build">v&gt;=2.5.4a</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext014">v&gt;=0.14.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib24">v&gt;=2.4.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CPP=/usr/ccs/lib/cpp
+  export ac_cv_cpp_nostdinc=-qnostdinc
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPP="/usr/ccs/lbin/cpp -P"
+  export ac_cv_cpp_nostdinc=""
+  export ac_cv_cpp_pipe_stdin=no
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" CPP="cc -E"
+  export ac_cv_cpp_nostdinc=-nostdinc
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CPP=/usr/bin/cpp
+  export ac_cv_cpp_nostdinc=-nostdinc
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" CPP=/usr/lib/cpp
+  export ac_cv_cpp_nostdinc=-I
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CPP=/usr/ccs/lib/cpp
+  export ac_cv_cpp_nostdinc="-YI,/"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CPP=/usr/ccs/lib/cpp
+  export ac_cv_cpp_nostdinc="-YI,/"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" ${CPP+CPP="${CPP}"} \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${exec_prefix}/lib\)!-L\1 ${CC_LD_RT}\1 !g" libIDL-config-2
+
+for _pc in libIDL-2.0.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+]]>
+    </install>
+
+    <notes>
+      <change from="1.8.2" to="1.8.3">
+        <item><para>Clobber LC_ALL before invoking
+pre-compiler</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

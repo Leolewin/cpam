@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="transfig" version="3.2.3d" revision="2">
+    <build-name>${SB_PROG_NAME}.${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}32</install-name>
+
+    <sources>
+      <source checksum="4fbf4184fe2df4fe9bb5130b6e19907c"
+        checksum-type="md5" size="256075"
+        path="src/transfig.3.2.3d.tar.gz"/>
+      <patch checksum="85b5d63bd28b5b56d1c695d74c392de0"
+        checksum-type="md5" size="1746"
+        path="src/transfig.3.2.3d.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="xfig" var="XFIG"
+        install-name="xfig32">v&gt;=3.2.3d</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit" CC_LD_RT="-Wl,+s,+b" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+xmkmf
+gmake Makefiles
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake MAKE=gmake CC="${CC:-gcc}" CDEBUGFLAGS="${CFLAGS:--O2}" \
+CCOPTIONS="" XFIGLIBDIR=${XFIG_LIB} \
+XPMLIBDIR="${XPM_LIB}" XPMINC="-I${XPM_INC}" \
+XPMLIBS="-L${XPM_LIB} ${CC_LD_RT}${XPM_LIB} -lXpm" \
+JPEGLIBDIR="${JPEG_LIB}" JPEGINCDIR="${JPEG_INC}" \
+JPEGLIB="-L${JPEG_LIB} ${CC_LD_RT}${JPEG_LIB} -ljpeg" \
+PNGLIBDIR="${LIBPNG_LIB}" PNGINC="-I${LIBPNG_INC} -I${ZLIB_INC}" \
+PNGLIBS="-L${LIBPNG_LIB} -L${ZLIB_LIB} ${CC_LD_RT}${LIBPNG_LIB}:\
+${ZLIB_LIB} -lpng -lz" EXTRA_LOAD_FLAGS="-lX11 ${LDFLAGS+${LDFLAGS}}" \
+FIG2DEV_LIBDIR="${SB_INSTALL_PREFIX}/lib/fig2dev"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake MAKE=gmake BINDIR=${SB_INSTALL_PREFIX}/bin \
+MANDIR=${SB_INSTALL_PREFIX}/man/man1 \
+XFIGLIBDIR=${XFIG_LIB} \
+XAPPLOADDIR=${SB_INSTALL_PREFIX}/lib/app-defaults \
+XPMLIBDIR=${XPM_LIB} XPMINC=-I${XPM_INC} \
+XPMLIBS="-L${XPM_LIB} ${CC_LD_RT}${XPM_LIB} -lXpm" \
+JPEGLIBDIR=${JPEG_LIB} JPEGINCDIR="${JPEG_INC}" \
+JPEGLIB="-L${JPEG_LIB} ${CC_LD_RT}${JPEG_LIB} -ljpeg" \
+PNGLIBDIR="${LIBPNG_LIB}" PNGINC="-I${LIBPNG_INC} -I${ZLIB_INC}" \
+PNGLIBS="-L${LIBPNG_LIB} -L${ZLIB_LIB} ${CC_LD_RT}${LIBPNG_LIB}:\
+${ZLIB_LIB} -lpng -lz" FIG2DEV_LIBDIR="${SB_INSTALL_PREFIX}/lib/fig2dev" \
+INSTALL=ginstall MANSUFFIX=1 install install.man
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 July 1" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove unused varargs.h include from genepic.c to
+stop gcc-3.3.2 from choking</para></item>
+      </change>
+
+      <change date="2003 June 23" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

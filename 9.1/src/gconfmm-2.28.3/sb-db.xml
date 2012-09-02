@@ -1,0 +1,329 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="gconfmm" version="2.28.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}228</install-name>
+
+    <sources>
+      <source checksum="97526e9c192358a88458b3818410e9b8"
+        checksum-type="md5" size="376840"
+        path="src/gconfmm-2.28.3.tar.xz"/>
+      <patch checksum="ada9af3878f22db469e26ddac4a1bf61"
+        checksum-type="md5" size="3050"
+        path="src/gconfmm-2.28.3.tww.patch"/>
+      <patch checksum="7633bcebab9289f947166653a4dc673f"
+        checksum-type="md5" size="1724519"
+        path="src/gconfmm-2.28.3.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gnome" var="GNOME" install-name="gnome232"
+        module="GConf">v==2.32</depend>
+      <depend program="m4" install-name="m414" add-path="prepend"
+        type="build">v&gt;=1.4.15</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.12.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44"
+          systype="hppa*-hpux*|*-solaris*">v&gt;=2.26.1</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          systype="*-aix*|*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=1.10.0</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="gcc44"
+          systype="*-hpux11.[123]*|*-solaris*">v&gt;=1.10.0</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224">v&gt;=2.24.2</depend>
+        <depend program="gtkmm" var="LIBGTKMM"
+          install-name="libgtkmm222">v&gt;=2.22.0</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          systype="*-aix*|*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.2.10</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="gcc44"
+          systype="*-hpux11.[123]*|*-solaris*">v&gt;=2.2.10</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="hppa*-hpux*|*-solaris*">v==4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="hppa*-hpux*|*-solaris*"/>
+      </dependencies>
+
+      <validate>
+        <depend program="gconfmm" module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v==2.28.3</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-version V7.1-006 -readonly_strings -timplicit_local \
+-D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+set -x
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+MAKE=gmake PKG_CONFIG_PATH="\
+${_libcairomm_lib:-${SB_VAR_LIBCAIROMM_LIB}\
+${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig}:\
+${_libglibmm_lib:-${SB_VAR_LIBGLIBMM_LIB}\
+${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig}:\
+${_libgtkmm_lib:-${SB_VAR_LIBGTKMM_LIB}\
+${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig}:\
+${_libsigc_lib:-${SB_VAR_LIBSIGC_LIB}\
+${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig}\
+${SB_VAR_FCPACKAGE+:${SB_VAR_FCPACKAGE_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_GNOME+:${SB_VAR_GNOME_LIB}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_LIBGLIB+:${_libglib_lib:-${SB_VAR_LIBGLIB_LIB}\
+${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig}}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBTTF+:${SB_VAR_LIBTTF_LIB}/pkgconfig}" \
+--disable-dependency-tracking --enable-warnings=no \
+${ARGS+${ARGS}} --disable-documentation \
+--libdir=${_libdir:-${SB_INSTALL_PREFIX_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--docdir=${_docdir} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" gconf/gconfmm-2.6.pc
+]]>
+      </configure>
+    </module>
+
+    <module name="gcc44"
+    systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">
+      <dependencies replace="0">
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          module="gcc44">v&gt;=1.10.0</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="gcc44">v&gt;=2.24.2</depend>
+        <depend program="gtkmm" var="LIBGTKMM"
+          install-name="libgtkmm222"
+          module="gcc44">v&gt;=2.22.0</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44">v&gt;=2.2.10</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc" CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5" CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} ${CC_LD_RT}${SB_VAR_GCC_RT_LIB} \
+${LDFLAGS+${LDFLAGS}}" MAKE=gmake \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_GNOME_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIROMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGLIBMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGTKMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig" \
+--disable-dependency-tracking --enable-warnings=no \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+${ARGS+${ARGS}} --disable-documentation \
+--libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" gconf/gconfmm-2.6.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install-nodist_pkgconfigDATA \
+install-nodist_gconfmm_libincludeHEADERS
+gmake -C gconf/gconfmm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.20.0" to="2.22.0">
+        <item><para>Fixed Windows build.</para></item>
+      </change>
+
+      <change from="2.18.1" to="2.20.0">
+        <item><para>Increased version to match the GNOME
+version.</para></item>
+      </change>
+
+      <change from="2.18.0" to="2.18.1">
+        <item><para>SetInterface.h: Use #pragma GCC system_header to
+supress warnings about the lack of a virtual destructor.</para></item>
+        <item><para>Build: Check for both m4 and M4 in the GNU m4
+output, to fix the build on some platforms.</para></item>
+      </change>
+
+      <note type="usage">
+        <para>Versions of the library for the vendor C++ compiler and
+GCC 4.2.4 are available in the following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib            # Vendor C++ compiler
+${SB_INSTALL_PREFIX}/lib/gcc42      # GCC 4.2.4
+        </screen>
+      </note>
+
+      <platform name="AIX 5.x">
+        <para>If compiling against the libraries in
+${SB_INSTALL_PREFIX}/lib for the vendor C++ library, the
+<command>-qrtti</command> option must be used because of libsigc++'s
+use of <command>dynamic_cast</command>.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>

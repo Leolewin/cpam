@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="ntp" version="4.1.2" revision="1">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>${NAME}412</install-name>
+
+    <sources>
+      <source checksum="98e16c7aa4ecd4c004b51bff18962e95"
+        checksum-type="md5" size="2168384"
+        path="src/ntp-4.1.2.tar.gz"/>
+      <patch checksum="b1ad95db49cf492b7a483c92ff22f862"
+        checksum-type="md5" size="30215"
+        path="src/ntp-4.1.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${INSTALL_PREFIX}"
+_localstatedir="/var${INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  export ac_cv_func_hstrerror=no ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z -Ae +ESlit +Onofltacc \
++DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CPP="cc -Ae -E" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure ${CPP+CPP="${CPP}"} CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2} -DCONFIG_FILE='\"${_sysconfdir}/ntp.conf\"' \
+-DKEYFILE='\"${_sysconfdir}/ntp.keys\"'" PATH_PERL=${PERL}/bin/perl \
+--disable-dependency-tracking --sysconfdir=${_sysconfdir} \
+--prefix=${INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${INSTALL_PREFIX}/doc
+cp -r html/* ${INSTALL_PREFIX}/doc
+chown -R 0:0 ${INSTALL_PREFIX}/doc
+
+ginstall -m 755 -o root -g 0 -d ${_sysconfdir} \
+${_localstatedir+${_localstatedir}}
+ginstall -m 644 -o root -g 0 /dev/null ${_sysconfdir}/ntp.conf
+ginstall -m 644 -o root -g 0 /dev/null ${_sysconfdir}/ntp.keys
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="4.1.1" to="4.1.2">
+        <item><para>Jupiter refclock fixes</para></item>
+        <item><para>Neoclock4X refclock fixes</para></item>
+        <item><para>AIX 5 port</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The global configuration file resides in
+<command>/etc${SB_INSTALL_PREFIX}/ntp.conf</command> and
+<command>/etc${SB_INSTALL_PREFIX}/ntp.keys</command>. While the
+"<command>ntp.keys</command>" file exists, NTP has not been built with
+crypto support.</para>
+
+        <para>The default path to the PID file for the
+"<command>xntpd</command>" executable is
+<command>/var${SB_INSTALL_PREFIX}/ntpd.pid</command>. This can be changed by
+modifing the PID_FILE variable in the startup script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 January 11" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,229 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="fftw" version="2.1.5" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}21</install-name>
+
+    <sources>
+      <source checksum="8d16a84f3ca02a785ef9eb36249ba433"
+        checksum-type="md5" size="1256888"
+        path="src/fftw-2.1.5.tar.gz"/>
+      <patch checksum="1753c9e22c00cea5bd6a264f4fc3991d"
+        checksum-type="md5" size="4911"
+        path="src/fftw-2.1.5.tww.patch"/>
+      <patch checksum="c1d253d7c66f6bba1b56dc4fb70506ef"
+        checksum-type="md5" size="358275"
+        path="src/fftw-2.1.5.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <validate>
+        <depend program="fftw" module="64bit"
+          systype="*-hpux*|*-irix*|*-solaris*">v==2.1.5</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=ppc -qansialias -w"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-linux*)
+  CFLAGS="-fomit-frame-pointer -Wcast-qual -Wpointer-arith \
+-Wcast-align -pedantic" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ansi_alias -ansi_args -fp_reorder \
+-msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -dalign -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -dalign -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -dalign -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-fortran \
+--enable-shared --enable-static --disable-dependency-tracking \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+# rebuild info files
+(rm doc/fftw.info*) 2>/dev/null || :
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/*.texi \
+${_docdir}/texinfo
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-hpux*|*-irix*|*-solaris*">
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qmaxmem=-1 -qarch=ppc -qansialias -w"
+  LDFLAGS="-Wl,-brtl" ;;
+ia64*-hpux*)
+  CC="cc +DD64" CFLAGS="+O2 +ESlit +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC="cc +DD64" CFLAGS="+O2 +ESlit +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--host=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--host=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--host=hppa64-hp-hpux11.11" ;;
+  *-hpux11*)
+    ARGS="--host=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -64 -mips4 -O2 -OPT:Olimit=0" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -dalign -xstrconst -xO2 -xtarget=opteron \
+-m64 -xarch=sse2" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -dalign -xstrconst -xO2 -xtarget=generic \
+-xarch=v9" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -dalign -xstrconst -xO2 -xtarget=generic \
+-m64 -xarch=sparc" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--disable-fortran --enable-shared --enable-static \
+--disable-dependency-tracking \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C fftw install-libLTLIBRARIES
+gmake -C rfftw install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <changelog>
+      <change date="2012 January 26" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for AIX 4.3.</para></item>
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL 3 and SLED.</para></item>
+        <item><para>Remove support for Solaris 2.6 and 7.</para></item>
+        <item><para>Update CFLAGS on HPUX from using +Onofltacc to
++Ofltacc.</para></item>
+        <item><para>Upgrade perl dependency from 5.8.8 to
+5.12.2.</para></item>
+      </change>
+
+      <change date="2010 November 5" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

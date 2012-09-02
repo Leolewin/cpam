@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="Numeric" version="23.0" revision="3">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <sources>
+      <source checksum="2f8c3c5d0703ce12f55f04f43d1a9ab3"
+        checksum-type="md5" size="723250"
+        path="src/Numeric-23.0.tar.gz"/>
+      <patch checksum="76774d156e49c41ac9514d74be453645"
+        checksum-type="md5" size="645"
+        path="src/Numeric-23.0.patch"/>
+    </sources>
+
+    <build>
+<![CDATA[
+${PYTHON}/bin/python setup.py build
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${PYTHON}/bin/python setup.py install --prefix=${INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_include_prefix}/Numeric ${_install_prefix}/Numeric \
+${_install_prefix}/Numeric.pth
+]]>
+    </uninstall>
+
+    <module name="2.1.2">
+      <install-name>python212p</install-name>
+
+      <dependencies>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.1.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_include_prefix="${INSTALL_PREFIX}/include/python2.1"
+_install_prefix="${INSTALL_PREFIX}/lib/python2.1/site-packages"
+]]>
+      </script-header>
+    </module>
+
+    <module name="2.3.2">
+      <install-name>python232p</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_include_prefix="${INSTALL_PREFIX}/include/python2.3"
+_install_prefix="${INSTALL_PREFIX}/lib/python2.3/site-packages"
+]]>
+      </script-header>
+    </module>
+
+    <module name="2.2.3">
+      <install-name>python223p</install-name>
+
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="python" var="PYTHON"
+          add-path="prepend">v==2.2.3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_include_prefix="${INSTALL_PREFIX}/include/python2.2"
+_install_prefix="${INSTALL_PREFIX}/lib/python2.2/site-packages"
+]]>
+      </script-header>
+    </module>
+
+    <changelog>
+      <change date="2004 August 19" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add missing gcc dependency for 2.2.3</para></item>
+      </change>
+
+      <change date="2003 November 21" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add back support for 2.1.2</para></item>
+      </change>
+
+      <change date="2003 November 4" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove support for Python 2.1.2</para></item>
+        <item><para>Add support for Python 2.3.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

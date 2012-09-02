@@ -1,0 +1,98 @@
+			     BASH PATCH REPORT
+			     =================
+
+Bash-Release: 3.2
+Patch-ID: bash32-015
+
+Bug-Reported-by:
+Bug-Reference-ID:
+Bug-Reference-URL:
+
+Bug-Description:
+
+Under certain circumstances, when using FIFOs for process substitution,
+bash fails to unlink the FIFOs.  This leaves open file descriptors that
+can cause the shell to hang and litters the file system.
+
+Patch:
+
+Index: execute_cmd.c
+===================================================================
+--- execute_cmd.c.orig
++++ execute_cmd.c
+@@ -3050,6 +3050,11 @@ execute_simple_command (simple_command, 
+   if (command_line == 0)
+     command_line = savestring (the_printed_command_except_trap);
+ 
++#if defined (PROCESS_SUBSTITUTION)
++  if ((subshell_environment & SUBSHELL_COMSUB) && (simple_command->flags & CMD_NO_FORK) && fifos_pending() > 0)
++    simple_command->flags &= ~CMD_NO_FORK;
++#endif
++
+   execute_disk_command (words, simple_command->redirects, command_line,
+ 			pipe_in, pipe_out, async, fds_to_close,
+ 			simple_command->flags);
+Index: subst.c
+===================================================================
+--- subst.c.orig
++++ subst.c
+@@ -4143,6 +4143,12 @@ unlink_fifo_list ()
+     nfifo = 0;
+ }
+ 
++int
++fifos_pending ()
++{
++  return nfifo;
++}
++
+ static char *
+ make_named_pipe ()
+ {
+@@ -4192,6 +4198,12 @@ add_fifo_list (fd)
+   nfds++;
+ }
+ 
++int
++fifos_pending ()
++{
++  return 0;	/* used for cleanup; not needed with /dev/fd */
++}
++
+ void
+ unlink_fifo_list ()
+ {
+@@ -4693,6 +4705,9 @@ command_substitute (string, quoted)
+ 
+       last_command_exit_value = rc;
+       rc = run_exit_trap ();
++#if defined (PROCESS_SUBSTITUTION)
++      unlink_fifo_list ();
++#endif
+       exit (rc);
+     }
+   else
+Index: subst.h
+===================================================================
+--- subst.h.orig
++++ subst.h
+@@ -222,6 +222,7 @@ extern WORD_LIST *expand_words_shellexp 
+ extern char *command_substitute __P((char *, int));
+ extern char *pat_subst __P((char *, char *, char *, int));
+ 
++extern int fifos_pending __P((void));
+ extern void unlink_fifo_list __P((void));
+ 
+ extern WORD_LIST *list_string_with_quotes __P((char *));
+Index: patchlevel.h
+===================================================================
+--- patchlevel.h.orig
++++ patchlevel.h
+@@ -25,6 +25,6 @@
+    regexp `^#define[ 	]*PATCHLEVEL', since that's what support/mkversion.sh
+    looks for to find the patch level (for the sccs version string). */
+ 
+-#define PATCHLEVEL 14
++#define PATCHLEVEL 15
+ 
+ #endif /* _PATCHLEVEL_H_ */

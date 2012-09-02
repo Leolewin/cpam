@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="openjade" version="1.3.2" revision="5"
+  systype="*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="7df692e3186109cc00db6825b777201e"
+        checksum-type="md5" size="894834"
+        path="src/openjade-1.3.2.tar.gz"/>
+      <patch checksum="0da0d70f2b74a1b85e61d8125b23e431"
+        checksum-type="md5" size="1316441"
+        path="src/openjade-1.3.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="OpenSP" var="OPENSP"
+        install-name="opensp15">v&gt;=1.5.1 r&gt;=2</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml26"
+        type="build">v&gt;=2.6.11</depend>
+      <depend var="GCC_RT" install-name="gcc332r"
+        systype="*-hpux11*|*-irix*|*-osf*|*-solaris*"/>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+      <depend program="gcc" add-path="prepend"
+        systype="*-hpux11*|*-irix*|*-osf*|*-solaris*"
+        type="build">v==3.3.2</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_dsssl_datadir="${SB_VAR_XMLCATALOG}/share"
+
+_docbook_sgml_catalog="${_dsssl_datadir}/docbook/catalog.sgml"
+_sgml_catalog="${SB_VAR_XMLCATALOG}/catalog.sgml"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=common" CXXFLAGS="-O2 -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl --enable-http \
+--disable-mif --enable-static -enable-shared \
+--enable-spincludedir=${SB_VAR_OPENSP_INC} \
+--enable-splibdir=${SB_VAR_OPENSP_LIB} --datadir="${_datadir}" \
+--enable-default-catalog=${SB_VAR_XMLCATALOG}/catalog.sgml \
+--enable-default-search-path=${SB_VAR_XMLCATALOG} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install DSSSL catalog
+_dsssl_datadir="${_dsssl_datadir}/docbook/dsssl-openjade"
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dsssl_datadir}
+
+for _file in builtins.dsl catalog dsssl.dtd fot.dtd style-sheet.dtd; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 dsssl/${_file} ${_dsssl_datadir}
+done
+
+# install SGML Docbook catalog entry
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+# install DSSSL catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--add ${_docbook_sgml_catalog} ${_dsssl_datadir}/catalog
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_dsssl_datadir="${_dsssl_datadir}/docbook/dsssl-openjade"
+
+rm -rf ${_dsssl_datadir}
+
+rmdir ${_dsssl_datadir}/docbook 2>/dev/null
+
+# remove DSSSL catalog entries
+${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+--del ${_docbook_sgml_catalog} ${_dsssl_datadir}/catalog
+
+# remove SGML Docbook catalog entry
+${SB_PATH_SB} -q module-names -i xmlcatalog-1.1 2>/dev/null |\
+${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+}
+
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <changelog>
+      <change date="2004 August 26" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 July 5" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update xmlcatalog dependency from 1.0 to
+1.1</para></item>
+      </change>
+
+      <change date="2004 January 3" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade OpenSP dependency to 1.5.1</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Update path to SGML catalog file</para></item>
+      </change>
+
+      <change date="2003 October 25" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade GCC dependency to 3.3.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

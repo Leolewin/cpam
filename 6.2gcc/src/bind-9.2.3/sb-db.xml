@@ -1,0 +1,549 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="bind" version="9.2.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}923</install-name>
+
+    <sources>
+      <source checksum="94ae7b0f20dc406fdbbf6fac5d57b32f"
+        checksum-type="md5" size="4553260"
+        path="src/bind-9.2.3.tar.gz"/>
+      <patch checksum="a55b5992173fa125e0905c4b0164e11f"
+        checksum-type="md5" size="705385"
+        path="src/bind-9.2.3.patch"/>
+    </sources>
+
+    <dependencies>
+    <depend user="named"/>
+
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097"/>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir=/etc${SB_INSTALL_PREFIX}
+_localstatedir=/var${SB_INSTALL_PREFIX}
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--enable-threads"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for strndup(), strsep()
+  export ac_cv_func_strndup=no
+  export ac_cv_func_strsep=no ;;
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ARGS="--enable-threads" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-threads" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-threads" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ARGS="--enable-threads" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ARGS="--enable-threads" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--localstatedir=${_localstatedir} --sysconfdir=${_sysconfdir} \
+--enable-libbind --with-libtool --enable-shared \
+--enable-static --with-openssl=${SB_VAR_LIBOPENSSL} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+sed -e 's!-L\(${exec_prefix}/lib\)!"-L\1 '"${CC_LD_RT}"'\1"!g' \
+-e "s!-L\(${SB_VAR_LIBOPENSSL_LIB}\)!-L\\1 ${CC_LD_RT}\\1!g" \
+isc-config.sh >/tmp/$$
+cp /tmp/$$ isc-config.sh && rm -f /tmp/$$
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# Modify paths in man pages
+(cd ${SB_INSTALL_PREFIX}/man
+ find . -type f | while read _man; do
+   sed -e "s!/etc/named.conf!${_sysconfdir}/named.conf!" \
+   -e "s!/etc/rndc.conf!${_sysconfdir}/rndc.conf!" \
+   -e "s!/etc/rndc.key!${_sysconfdir}/rndc.key!" \
+   -e "s!/var/run/lwresd.pid!${_localstatedir}/run/lwresd.pid!" \
+   -e "s!/var/run/named.pid!${_localstatedir}/run/named.pid!" \
+   ${_man} >${_man}.$$
+   cp ${_man}.$$ ${_man} && rm -f ${_man}.$$
+ done
+
+ sed -e "s!/etc!${_sysconfdir}!" man8/rndc-confgen.8 >/tmp/$$
+ cp /tmp/$$ man8/rndc-confgen.8 && rm -f /tmp/$$)
+
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc \
+${SB_INSTALL_PREFIX}/doc/draft ${SB_INSTALL_PREFIX}/doc/html \
+${SB_INSTALL_PREFIX}/doc/misc ${SB_INSTALL_PREFIX}/doc/rfc
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/draft/* ${SB_INSTALL_PREFIX}/doc/draft
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/arm/*.html ${SB_INSTALL_PREFIX}/doc/html
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/misc/* ${SB_INSTALL_PREFIX}/doc/misc
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/rfc/* ${SB_INSTALL_PREFIX}/doc/rfc
+
+${SB_PATH_GINSTALL} -m 755 -o named -g 0 -d ${_sysconfdir} \
+${_localstatedir}/log ${_localstatedir}/run \
+${_localstatedir}/run/ndc.d
+${SB_PATH_GINSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/lwresd.conf
+${SB_PATH_GINSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/named.conf
+${SB_PATH_GINSTALL} -m 640 -o named -g 0 /dev/null ${_sysconfdir}/rndc.conf
+${SB_PATH_GINSTALL} -m 640 -o named -g 0 /dev/null ${_sysconfdir}/rndc.key
+${SB_PATH_GINSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/db.127.0.0
+${SB_PATH_GINSTALL} -m 644 -o named -g 0 /dev/null ${_sysconfdir}/db.cache
+
+cat >${_sysconfdir}/named.conf <<_EOT_
+#
+# Minimal default BIND configuration. Please tune for your
+# environment.
+#
+
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-aix5.2*|*-linux*|*-solaris2.9)
+  cat >${_sysconfdir}/rndc.conf <<_EOT_
+options {
+  default-server localhost;
+  default-key "rndc-key";
+};
+
+server localhost {
+  key "rndc-key";
+};
+
+include "${_sysconfdir}/rndc.key";
+_EOT_
+
+  cat >>${_sysconfdir}/named.conf <<_EOT_
+controls {
+  inet 127.0.0.1 allow {
+    127.0.0.1;
+  } keys { "rndc-key"; };
+};
+_EOT_
+  ;;
+*)
+  cat >>${_sysconfdir}/named.conf <<_EOT_
+controls { };
+_EOT_
+  ;;
+esac
+
+cat >>${_sysconfdir}/named.conf <<_EOT_
+
+logging {
+  channel log {
+    file "${_localstatedir}/log/named";
+    print-category yes;
+    print-severity no;
+    print-time yes;
+  };
+
+  category lame-servers { null; };
+  category default { log; };
+  category security { default_syslog; log; };
+};
+
+options {
+  directory "${_sysconfdir}";
+  pid-file "${_localstatedir}/run/named.pid";
+  notify-source * port 53;
+  transfer-source * port 53;
+  cleaning-interval 60;
+};
+
+zone "." IN {
+  type hint;
+  file "db.cache";
+};
+
+zone "0.0.127.in-addr.arpa" IN {
+  type master;
+  file "db.127.0.0";
+  notify no;
+  allow-update { none; };
+  allow-transfer { any; };
+};
+_EOT_
+
+cat >${_sysconfdir}/db.cache <<'_EOT_'
+;       This file holds the information on root name servers needed to
+;       initialize cache of Internet domain name servers
+;       (e.g. reference this file in the "cache  .  <file>"
+;       configuration file of BIND domain name servers).
+;
+;       This file is made available by InterNIC
+;       under anonymous FTP as
+;           file                /domain/named.root
+;           on server           FTP.INTERNIC.NET
+;
+;       last update:    Nov 5, 2002
+;       related version of root zone:   2002110501
+;
+;
+; formerly NS.INTERNIC.NET
+;
+.                        3600000  IN  NS    A.ROOT-SERVERS.NET.
+A.ROOT-SERVERS.NET.      3600000      A     198.41.0.4
+;
+; formerly NS1.ISI.EDU
+;
+.                        3600000      NS    B.ROOT-SERVERS.NET.
+B.ROOT-SERVERS.NET.      3600000      A     128.9.0.107
+;
+; formerly C.PSI.NET
+;
+.                        3600000      NS    C.ROOT-SERVERS.NET.
+C.ROOT-SERVERS.NET.      3600000      A     192.33.4.12
+;
+; formerly TERP.UMD.EDU
+;
+.                        3600000      NS    D.ROOT-SERVERS.NET.
+D.ROOT-SERVERS.NET.      3600000      A     128.8.10.90
+;
+; formerly NS.NASA.GOV
+;
+.                        3600000      NS    E.ROOT-SERVERS.NET.
+E.ROOT-SERVERS.NET.      3600000      A     192.203.230.10
+;
+; formerly NS.ISC.ORG
+;
+.                        3600000      NS    F.ROOT-SERVERS.NET.
+F.ROOT-SERVERS.NET.      3600000      A     192.5.5.241
+;
+; formerly NS.NIC.DDN.MIL
+;
+.                        3600000      NS    G.ROOT-SERVERS.NET.
+G.ROOT-SERVERS.NET.      3600000      A     192.112.36.4
+;
+; formerly AOS.ARL.ARMY.MIL
+;
+.                        3600000      NS    H.ROOT-SERVERS.NET.
+H.ROOT-SERVERS.NET.      3600000      A     128.63.2.53
+;
+; formerly NIC.NORDU.NET
+;
+.                        3600000      NS    I.ROOT-SERVERS.NET.
+I.ROOT-SERVERS.NET.      3600000      A     192.36.148.17
+;
+; operated by VeriSign, Inc.
+;
+.                        3600000      NS    J.ROOT-SERVERS.NET.
+J.ROOT-SERVERS.NET.      3600000      A     192.58.128.30
+;
+; housed in LINX, operated by RIPE NCC
+;
+.                        3600000      NS    K.ROOT-SERVERS.NET.
+K.ROOT-SERVERS.NET.      3600000      A     193.0.14.129 
+;
+; operated by IANA
+;
+.                        3600000      NS    L.ROOT-SERVERS.NET.
+L.ROOT-SERVERS.NET.      3600000      A     198.32.64.12
+;
+; housed in Japan, operated by WIDE
+;
+.                        3600000      NS    M.ROOT-SERVERS.NET.
+M.ROOT-SERVERS.NET.      3600000      A     202.12.27.33
+; End of File
+_EOT_
+
+cat >${_sysconfdir}/db.127.0.0 <<'_EOT_'
+;
+; 0.0.127.in-addr.arpa
+;
+
+$ORIGIN 0.0.127.in-addr.arpa.
+$TTL 1D ;
+
+@	IN	SOA	localhost. root.localhost. (
+		10	; Serial
+		1H	; Refresh
+		30M	; Retry
+		31D	; Expire
+		1D	; Min TTL
+)
+
+@	IN	NS	localhost.
+1	IN	PTR	localhost.
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="9.2.2" to="9.2.3">
+        <item><para>dns_cache_create() could trigger a REQUIRE failure
+in isc_mem_put() during error cleanup</para></item>
+        <item><para>AIX needs to be able to resolve all symbols when
+creating shared libraries (--with-libtool)</para></item>
+        <item><para>Fix race condition in rbtdb [RT#
+9189]</para></item>
+        <item><para>dns_db_findnode() relax the requirements on 'name'
+[RT# 9286]</para></item>
+        <item><para>dns_nxt_buildrdata(), and hence dns_nxt_build(),
+contained a off-by-one error when working out the number of octets in
+the bitmap</para></item>
+        <item><para>named: isc_hash_destroy() was being called too
+early [RT #9160]</para></item>
+        <item><para>Add "US" to root-delegation-only exclude
+list</para></item>
+        <item><para>Extend the delegation-only logging to return query
+type, class and responding nameserver</para></item>
+        <item><para>delegation-only was generating false positives on
+negative answers from subzones</para></item>
+        <item><para>New view option "root-delegation-only". Apply
+delegation-only check to all TLDs and root. Note there are some TLDs
+that are NOT delegation only (e.g. DE, LV, US and MUSEUM) these can be
+excluded from the checks by using exclude.</para>
+        <screen>
+root-delegation-only exclude {
+  "DE"; "LV"; "US"; "MUSEUM";
+};
+        </screen></item>
+        <item><para>Hint zones should accept delegation-only. Forward
+zone should not accept delegation-only.</para></item>
+        <item><para>Don't apply delegation-only checks to answers from
+forwarders</para></item>
+        <item><para>Handle BIND 8 style returns to NS queries to
+parents when making delegation-only checks</para></item>
+        <item><para>Wrong return type for
+dns_view_isdelegationonly()</para></item>
+        <item><para>Uninitialised rdataset in sdb [RT
+#8750]</para></item>
+        <item><para>New zone type "delegation-only"</para></item>
+        <item><para>win32: install libeay32.dll outside of
+system32</para></item>
+        <item><para>isc_random need to be seeded better if
+arc4random() is not used</para></item>
+        <item><para>bsdos: 5.x support</para></item>
+        <item><para>dig, nslookup and host now perform nibble lookups
+under IP6.ARPA, use -i for IP6.INT (dig and host). lwres now uses
+IP6.ARPA.</para></item>
+        <item><para>test for pthread_attr_setstacksize()</para></item>
+        <item><para>Replace hash functions with universal
+hash</para></item>
+        <item><para>Turn on RSA BLINDING as a precaution</para></item>
+        <item><para>A6 and "bitstring" labels are now
+experimental</para></item>
+        <item><para>Preserve rwlock quota context when upgrading /
+downgrading [RT #5599]</para></item>
+        <item><para>dns_master_dump*() would produce extraneous
+$ORIGIN lines [RT #6206]</para></item>
+        <item><para>Accept reading state as well as working state in
+ns_client_next() [RT #6813]</para></item>
+        <item><para>Treat 'allow-update' on slave zones as a warning
+[RT #3469]</para></item>
+        <item><para>Don't override trust levels for glue addresses [RT
+#5764]</para></item>
+        <item><para>A REQUIRE() failure could be triggered if a zone
+was queued for transfer and the zone was then removed [RT
+#6189]</para></item>
+        <item><para>isc_print_snprintf() '%%' consumed one too many
+format characters [RT# 8230]</para></item>
+        <item><para>gen failed to handle high type values [RT
+#6225]</para></item>
+        <item><para>The number of records reported after a AXFR was
+wrong [RT #6229]</para></item>
+        <item><para>dig axfr failed if the message id in the answer
+failed to match that in the request.  Only the id in the first message
+is required to match. [RT #8138]</para></item>
+        <item><para>named could fail to start if the kernel supports
+IPv6 but no interfaces are configured. Similarly for IPv4. [RT
+#6229]</para></item>
+        <item><para>Refresh and stub queries failed to use masters
+keys if specified [RT #7391]</para></item>
+        <item><para>Provide replay protection for rndc commands. Full
+replay protection requires both rndc and named to be updated.  Partial
+replay protection (limited exposure after restart) is provided if just
+named is updated.</para></item>
+        <item><para>cfg_create_tuple() failed to handle out of memory
+cleanup.  parse_list() would leak memory on syntax
+errors.</para></item>
+        <item><para>ifconfig.sh didn't account for other virtual
+interfaces.  It now takes a optional arguement to specify the first
+interface number. [RT #3907]</para></item>
+        <item><para>memory leak using stub zones and
+TSIG</para></item>
+        <item><para>win32: port unreachables were blocking further i/o
+on sockets (Windows 2000 SP2 and later)</para></item>
+        <item><para>create_map() and create_string() failed to handle
+out of memory cleanup [RT #6813]</para></item>
+        <item><para>idnkit-1.0 from JPNIC, replaces
+mdnkit</para></item>
+        <item><para>libbind: updated to BIND 8.4.0</para></item>
+        <item><para>Incorrect length passed to snprintf [RT
+#5966]</para></item>
+        <item><para>lwresd configuration errors resulted in memory and
+lock leaks [RT #5228]</para></item>
+        <item><para>isc_base64_decodestring() and
+isc_base64_tobuffer() failed to check that trailing bits were zero
+allowing some invalid base64 strings to be accepted [RT
+#5397]</para></item>
+        <item><para>Preserve "out of zone" data for outgoing zone
+transfers [RT #5192]</para></item>
+        <item><para>dns_rdata_from{wire,struct}() failed to catch bad
+NXT bit maps [RT #5577]</para></item>
+        <item><para>parse_sizeval() failed to check the token type [RT
+#5586]</para></item>
+        <item><para>Remove deadlock from rbtdb code [RT
+#5599]</para></item>
+        <item><para>inet_pton() failed to reject certain malformed
+IPv6 literals</para></item>
+        <item><para>win32: we were leaking a bits in the exception
+fd_set resulting in "Socket operation on non-socket" errors from
+select() [RT #2966]</para></item>
+        <item><para>gen-data-queryperf.py from Stephane
+Bortzmeyer</para></item>
+        <item><para>ARM: $GENERATE example wasn't accurate [RT
+#5298]</para></item>
+        <item><para>Bad #ifdef, ISC_RFC2335 -&gt;
+ISC_RFC2535</para></item>
+        <item><para>rndc-confgen didn't exit with a error code for all
+failures [RT #5209]</para></item>
+        <item><para>Fetching expired glue failed under certain
+circumstances [RT #5124]</para></item>
+        <item><para>query_addbestns() didn't handle running out of
+memory gracefully</para></item>
+        <item><para>Handle empty wildcards labels</para></item>
+        <item><para>We were casting (unsigned int) to and from (void
+*). rdataset-&gt;private4 is now rdataset-&gt;privateuint4 to reflect
+a type change.</para></item>
+        <item><para>DNS_ADBFIND_STARTATROOT broke stub zones. This has
+been replaced with DNS_ADBFIND_STARTATZONE which causes the search to
+start using the closest zone.</para></item>
+        <item><para>Named could return NOERROR with certain NOTIFY
+failures. Return NOTAUTH if the NOTIFY zone is not being
+served.</para></item>
+        <item><para>zmgr_resume_xfrs() was being called read locked
+rather than write locked. zmgr_resume_xfrs() was not being called if
+the zone was being shutdown.</para></item>
+        <item><para>Leave space for stdio to work in [RT
+#5033]</para></item>
+        <item><para>"rndc reconfig" failed to initiate the initial
+zone transfer of new slave zones</para></item>
+        <item><para>isc_print_snprintf() "%s" with precision could
+walk off end of argument [RT #5191]</para></item>
+        <item><para>Prevent the cache getting locked to old
+servers</para></item>
+        <item><para>EDNS version not being correctly
+printed</para></item>
+        <item><para>queryperf: added A6 and SRV</para></item>
+        <item><para>solaris: work around gcc optimiser
+bug</para></item>
+        <item><para>openbsd: use /dev/arandom [RT #4950]</para></item>
+        <item><para>'rndc reconfig' did not cause new slaves to
+load</para></item>
+        <item><para>Empty node should return NOERROR NODATA, not
+NXDOMAIN [RT #4715]</para></item>
+        <item><para>empty nodes should stop wildcard matches [RT
+#4802]</para></item>
+        <item><para>distclean was not complete [RT
+#4700]</para></item>
+        <item><para>lfsr incorrectly implements the shift register [RT
+#4617]</para></item>
+        <item><para>dispatch initialises one of the LFSR's with a
+incorrect polynomial [RT #4617]</para></item>
+        <item><para>Use arc4random() if available</para></item>
+        <item><para>adb wasn't clearing state when the timer expired
+</para></item>
+        <item><para>Use serial number arithmetic when testing SIG
+timestamps [RT #4268]</para></item>
+        <item><para>J.ROOT-SERVERS.NET is now
+192.58.128.30</para></item>
+        <item><para>named could fail to rotate long log files [RT
+#3666]</para></item>
+        <item><para>irix: check for sys/sysctl.h and NET_RT_IFLIST
+before defining HAVE_IFLIST_SYSCTL [RT #3770]</para></item>
+        <item><para>named could crash due to an access to invalid
+memory space (which caused an assertion failure) in incremental
+cleaning [RT #3588]</para></item>
+        <item><para>Setting serial-query-rate to 10 would trigger a
+REQUIRE failure</para></item>
+        <item><para>host was incompatible with BIND 8 in its exit code
+and in the output with the -l option [RT #3536]</para></item>
+        <item><para>Recovery from expired glue failed under certain
+circumstances</para></item>
+        <item><para>named crashes with an assertion failure on exit
+when sharing the same port for listening and querying, and changing
+listening addresses several times [RT# 3509]</para></item>
+        <item><para>dig '+[no]recurse' was incorrectly
+documented</para></item>
+        <item><para>Adding an NS record as the lexicographically last
+record in a secure zone didn't work</para></item>
+        <item><para>queryperf usage was incomplete. Add '-h' for
+help.</para></item>
+        <item><para>win32: Rewrote code to use I/O Completion Ports in
+socket.c and eliminating a host of socket errors. Performance is
+enhanced.</para></item>
+        <item><para>queryperf now reports a summary of returned rcodes
+(-c), rcodes are printed in mnemonic form (-v)</para></item>
+        <item><para>Set AI_ADDRCONFIG when looking up addresses via
+getaddrinfo() (affects dig, host, nslookup, rndc and
+nsupdate)</para></item>
+        <item><para>ARM reference to RFC 2157 should have been RFC
+1918 [RT #2436]</para></item>
+        <item><para>Resolution timeout reduced from 90 to 30 seconds
+[RT #2046]</para></item>
+        <item><para>dig: ~/.digrc is now documented</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The BIND named daemon runs as user
+"<command>named</command>". This can be changed by setting the
+"<command>RUN_AS_USER</command>" variable in the startup script. Prior
+to installing BIND, please make sure the "<command>named</command>"
+user has been created. Previous releases of BIND also required a
+"<command>named</command>" group but this is no longer necessary as it
+was never used.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 April 14" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>AIX 5.2 has /dev/random</para></item>
+        <item><para>Add support for AIX 4.3.3. While strndup() and
+strsep() are in libc, the prototype is not available unless you
+-D_LINUX_SOURCE_COMPAT. Because it was introduced in ML7, we refrain
+for backwards compatibility.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

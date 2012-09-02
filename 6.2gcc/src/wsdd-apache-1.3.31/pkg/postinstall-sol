@@ -1,0 +1,97 @@
+#! /sbin/sh
+#
+# -----------------------------------------------------------------------------
+#                     S C R I P T   S P E C I F I C A T I O N
+#                          COPYRIGHT 2002 MOTOROLA INC.
+#                           MOTOROLA INTERNAL USE ONLY
+# -----------------------------------------------------------------------------
+# NAME
+#       postinstall - apache-1.3.31 WSDD customization 
+#
+#
+# REVISION HISTORY
+#     2004/10/04   by  TJ Yang original
+#
+#
+# USAGE
+#       postinstall
+#
+# DESCRIPTION
+#
+#
+# ********************************* MAIN SCRIPT *******************************
+#
+# ------------------------------- TRAP DECLARATION ----------------------------
+#
+# **************************** FUNCTION DEFINITION ****************************
+#
+# ---------------------------- CONSTANT DECLARATION ---------------------------
+# WHAT: Define exit status flags.
+# WHY:  Easier to program with a mnemonic than with the numbers.
+# NOTE: DO NOT CHANGE UNLESS YOU KNOW WHAT YOU ARE DOING!!!
+#
+#set -x
+SUCCESS=0
+ERROR=1
+WARNING=2
+export SUCCESS ERROR WARNING
+#
+# ---------------------------- VARIABLE DECLARATION ---------------------------
+#
+exit_code=${SUCCESS}
+##
+## ---------------------------------- SCRIPT -----------------------------------
+
+
+##
+## WHAT: Verify logged in as root
+## WHY:  Must be logged in as root user (in case of manual operation).
+if [ ${exit_code} -eq ${SUCCESS} ]; then
+    x=`id | sed -e 's/uid=\([0-9][0-9]*\)\(.*\)$/\1/'`
+    if [ ${x} -ne 0 ]; then
+        echo "ERROR:   Must be superuser (root) to execute this script." 1>&2
+        exit_code=${ERROR}
+    fi
+fi
+# WHAT: Define base directory.
+# WHY:  Used throughout this script.  Easier to edit if only in
+#       one location.
+#
+if [ ${exit_code} -eq ${SUCCESS} ]; then
+   WEB_USER=webadm
+   WEB_GRP=il02w-web
+   APACHE_HOME=/opt/TWWfsw/apache1331
+   export APACHE_HOME
+fi
+#
+# WHAT: 
+# WHY:  
+#
+if [ ${exit_code} -eq ${SUCCESS} ]; then
+perl -pi -e 's!^User nobody!User webadm!' /etc${APACHE_HOME}/httpd.conf
+ERROR=$?
+fi
+
+if [ ${exit_code} -eq ${SUCCESS} ]; then
+perl -pi -e 's!^Group nobody!Group il02w-web!' /etc${APACHE_HOME}/httpd.conf
+ERROR=$?
+fi
+
+if [ ${exit_code} -eq ${SUCCESS} ]; then
+chown -R ${WEB_USER}:${WEB_GRP} /var${APACHE_HOME}
+ERROR=$?
+fi
+
+
+
+# WHY:  so we can append domain name to get a big brother host entry
+#
+if [ ${exit_code} -eq ${SUCCESS} ]; then
+	    echo "apache-1.3.31 customization package installed sucessfully."
+	    exit_code=${ERROR}
+fi
+
+##
+## Return exit_code
+##
+exit ${exit_code}

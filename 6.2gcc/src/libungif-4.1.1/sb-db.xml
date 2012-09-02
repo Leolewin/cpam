@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libungif" version="4.1.1" revision="3">
+    <build-name>${SB_PROG_NAME}-4.1.0b1</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="932cfedac39150427a7d8e3c1699b790"
+        checksum-type="md5" size="354613"
+        path="src/libungif-4.1.0b1.tar.gz"/>
+      <patch checksum="d3af114b01222f2b33454771d24d71dc"
+        checksum-type="md5" size="897720"
+        path="src/libungif-4.1.0b1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ./configure --enable-shared \
+--enable-static --with-x --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0  doc/*.html doc/*.png doc/*.txt ${_docdir}
+
+sed "1 s!/usr/bin/perl!${PERL}/bin/perl!" \
+${SB_INSTALL_PREFIX}/bin/gifburst >/tmp/$$
+cp /tmp/$$ ${SB_INSTALL_PREFIX}/bin/gifburst; rm -f /tmp/$$
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 September 7" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.4.2-5</para></item>
+      </change>
+
+      <change date="2004 January 14" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 June 1" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

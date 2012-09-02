@@ -1,0 +1,235 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="gtk+" version="1.2.10" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="4d5cb2fc7fb7830e4af9747a36bfce20"
+        checksum-type="md5" size="2868322"
+        path="src/gtk+-1.2.10.tar.gz"/>
+      <patch checksum="8d3133ccdc0c076ce63babdddc9e483a"
+        checksum-type="md5" size="794817"
+        path="src/gtk+-1.2.10.patch"/>
+      <patch checksum="9adb8ba9dc467cc5636b869c8650af0d"
+        checksum-type="md5" size="17771"
+        path="src/gtk+-1.2.6-ahiguti.patch"
+        arg="-p1"/>
+      <patch checksum="4ef04696b23584845bebb6a75c728bee"
+        checksum-type="md5" size="536"
+        path="src/gtk+-1.2.8-wrap-alnum.patch"
+        arg="-p1"/>
+      <patch checksum="27f362945f4cd13f1e55cbb259bbc994"
+        checksum-type="md5" size="654"
+        path="src/gtk+-1.2.10-alignment.patch"
+        arg="-p1"/>
+      <patch checksum="ac9407603fe00d5ca4739e94866503bd"
+        checksum-type="md5" size="1157"
+        path="src/gtk+-1.2.10-expose.patch"
+        arg="-p1"/>
+      <patch checksum="eba7c3b69cf39e705914f65e5d1537e7"
+        checksum-type="md5" size="844"
+        path="src/gtk+-1.2.10-focus.patch"
+        arg="-p1"/>
+      <patch checksum="cab7912be361947690e49650bc32f79f"
+        checksum-type="md5" size="10627"
+        path="src/gtk+-1.2.10-encoding.patch"
+        arg="-p1"/>
+      <patch checksum="89e16d755bbbf07d1706b7e10bb87dee"
+        checksum-type="md5" size="3652"
+        path="src/gtk+-1.2.10-ctext.patch"
+        arg="-p1"/>
+      <patch checksum="09f2ab85b297e11b6f1e318b066a43a6"
+        checksum-type="md5" size="1205"
+        path="src/gtk+-1.2.10-utf8fontset.patch"
+        arg="-p1"/>
+      <patch checksum="d5314a2bf22ecd12f77b3ca1b0698ca7"
+        checksum-type="md5" size="1743"
+        path="src/gtk+-1.2.10-kpenter.patch"
+        arg="-p1"/>
+      <patch checksum="092fa7cdcb629c43b1bdb4acfe5c43eb"
+        checksum-type="md5" size="2350"
+        path="src/gtk+-1.2.10-themeswitch.patch"
+        arg="-p1"/>
+      <patch checksum="b8c2ef13fef40a33b336af4683804710"
+        checksum-type="md5" size="540"
+        path="src/gtk+-1.2.10-pixmapref.patch"
+        arg="-p1"/>
+      <patch checksum="c68a96644cf35c9762671fe9275842cb"
+        checksum-type="md5" size="976"
+        path="src/gtk+-1.2.10-missingchar.patch"
+        arg="-p1"/>
+      <patch checksum="956c38fea8d8ee8f3e95944c79b9c04a"
+        checksum-type="md5" size="1236"
+        path="src/gtk+-1.2.10-ukfont.patch"
+        arg="-p1"/>
+      <patch checksum="b0d155a94f53b7e0039e02bf6bfa1d14"
+        checksum-type="md5" size="5054"
+        path="src/gtk+-1.2.10-deletedir.patch"
+        arg="-p1"/>
+      <patch checksum="a5711882c8994867f3eaf46bd40e6f2a"
+        checksum-type="md5" size="857"
+        path="src/gtk+-1.2.10-fontwarning.patch"
+        arg="-p1"/>
+      <patch checksum="c01d4d725e7e5aeb6037927db4f42791"
+        checksum-type="md5" size="798"
+        path="src/gtk+-1.2.10-troughpaint.patch"/>
+      <patch checksum="13938e558249f3c033775c56e922650a"
+        checksum-type="md5" size="674"
+        path="src/gtk+-1.2.10-localecrash.patch"
+        arg="-p1"/>
+      <patch checksum="7497cf7021574525501ebf64900b336c"
+        checksum-type="md5" size="1013"
+        path="src/gtk+-1.2.10-dndorder.patch"/>
+      <patch checksum="7735d37650ea87a90d839dd7ec6b4348"
+        checksum-type="md5" size="1143"
+        path="src/gtk+-1.2.10-clistfocusrow.patch"/>
+      <patch checksum="1686b01b484166a4e3f1fb57d99856ca"
+        checksum-type="md5" size="222"
+        path="src/gtk+-1.2.10-bellvolume.patch"
+        arg="-p1"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="automake" install-name="automake"
+        add-path="prepend" type="build">v&gt;=1.4</depend>
+      <depend program="gettext" var="GETTEXT" install-name="gettext"
+        add-path="prepend">v&gt;=0.10.40</depend>
+      <depend program="glib" var="GLIB"
+        install-name="glib12">v&gt;=1.2.10</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  X_CFLAGS="-I/usr/contrib/X11R6/include -I/usr/include/X11R6"
+  X_LDFLAGS="-L/usr/contrib/X11R6/lib" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+x86_64-*-linux*)
+  ARGS="--x-libraries=/usr/X11R6/lib64" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+X_CFLAGS="${X_CFLAGS+${X_CFLAGS}}" \
+X_LDFLAGS="${X_LDFLAGS+${X_LDFLAGS}}" \
+PERL=${PERL}/bin/perl LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+./configure --enable-shm --enable-xim --with-glib-prefix=${GLIB} \
+--disable-glibtest --enable-shared --enable-static \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# Default Redhat Linux 9.0 gtkrc file
+cat >${_sysconfdir}/gtkrc <<'_EOT_'
+style "gtk-tooltips-style" {
+  bg[NORMAL] = "#ffffc0"
+  fg[NORMAL] = "#000000"
+}
+
+widget "gtk-tooltips" style "gtk-tooltips-style"
+
+style "gtk-progressbar-style" {
+  bg[NORMAL] = "#ffffff"
+  bg[PRELIGHT] = "#a0a0a0"
+}
+
+class "GtkProgressBar" style "gtk-progressbar-style"
+_EOT_
+
+# install texinfo source files
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 docs/gdk.texi docs/gtk.texi \
+docs/macros.texi ${_docdir}
+
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LD_RT="-Wl,-blibpath:" ;;
+*-osf*|*-irix6*|*-linux*)
+  LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  LD_RT="-Wl,+s,+b," ;;
+*-solaris2*)   
+  LD_RT="-R" ;;
+esac
+
+sed 's!=-L\([^ ][^ ]*\)!="-L\1 '"${LD_RT}"'\1"!' \
+${SB_INSTALL_PREFIX}/bin/gtk-config > /tmp/$$
+cp /tmp/$$ ${SB_INSTALL_PREFIX}/bin/gtk-config
+rm -f /tmp/$$
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 August 26" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.4.2 
+release</para></item>
+        <item><para>Search for X11 libraries on RHEL 3.0/AMD64 in
+/usr/X11R6/lib64</para></item>
+      </change>
+
+      <change date="2004 February 24" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update config.guess and config.sub to properly
+detect AIX 5</para></item>
+        <item><para>Build SysV-style shared libraries on
+AIX 5</para></item>
+      </change>
+
+      <change date="2004 January 23" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 May 29" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add patches from Redhat Linux 9.0</para></item>
+        <item><para>Create default gtkrc file</para></item>
+      </change>
+
+      <change date="2003 April 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+
+      <change date="2003 January 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.6.1</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

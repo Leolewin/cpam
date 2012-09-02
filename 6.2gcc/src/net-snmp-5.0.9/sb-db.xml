@@ -1,0 +1,163 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="net-snmp" version="5.0.9" revision="4">
+    <build-name>${NAME}-${VER}</build-name>
+
+    <install-name>netsnmp50</install-name>
+
+    <sources>
+      <source checksum="cecd5ec74f5c546c1ea7ed7987b5932b"
+        checksum-type="md5" size="2345822"
+        path="src/net-snmp-5.0.9.tar.gz"/>
+      <patch checksum="e21ddc6e77af21cc44ab281e871a40ff"
+        checksum-type="md5" size="285388"
+        path="src/net-snmp-5.0.9.patch"/>
+      <patch checksum="d01e17bc0adc87d5ae533b2f75a83001"
+        checksum-type="md5" size="544"
+        path="src/net-snmp-5.0.9.patch.irix"
+        systype="*-irix*"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="perl" add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+_sysconfdir="${INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" LOGDIR="/etc" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," MIB_MODULES="host"
+  LOGDIR="/var/run" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," LOGDIR="/var/adm" ;;
+*-linux9*|*-linuxe3*)
+  CC_LD_RT="-Wl,-rpath,"
+  MIB_MODULES="host,misc/ipfwacc" LOGDIR="/var/run"
+
+  # libtool brings in -lelf for RPM
+  LDFLAGS="-L/usr/lib" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  MIB_MODULES="host,misc/ipfwacc" LOGDIR="/var/run" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," LOGDIR="/var/run" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" MIB_MODULES="host,ucd-snmp/diskio"
+  LOGDIR="/var/run" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v7"
+  CC_LD_RT="-R" MIB_MODULES="host,ucd-snmp/diskio"
+  LOGDIR="/var/adm" ;;
+esac
+
+ac_cv_have_warned=yes ./configure --with-cc="${CC:-gcc}" \
+--with-cflags="${CFLAGS:--O2}" \
+${LDFLAGS+--with-ldflags="${LDFLAGS}"} \
+--enable-internal-md5 \
+--with-sys-contact="" --with-sys-location="" \
+--enable-shared --enable-static \
+--with-logfile="${LOGDIR}/snmpd.log" \
+--with-persistent-directory=${LOGDIR} \
+--with-mibdirs="\$HOME/.snmp/mibs:${_datadir}/mibs" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--with-mib-modules="${MIB_MODULES+${MIB_MODULES},}mibII/mta_sendmail" \
+${ARGS+${ARGS}} --with-default-snmp-version="3" \
+--prefix=${INSTALL_PREFIX}
+
+# add runtime path to library list
+sed -e "s!-L\(\${exec_prefix}/lib\)!-L\1 ${CC_LD_RT}\1!" \
+net-snmp-config >/tmp/$$
+cp /tmp/$$ net-snmp-config && rm /tmp/$$
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+
+# empty configuration files
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/snmp.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/snmp.local.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/snmpapp.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/snmpapp.local.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/snmpd.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/snmpd.local.conf
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_localstatedir+${_localstatedir}} \
+${_sysconfdir+${_sysconfdir}} ${INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="5.0.8" to="5.0.9">
+        <item><para>Perl build environment should better under
+Windows</para></item>
+        <item><para>Misc kerberos support fixes</para></item>
+        <item><para>Improvements on various manual
+pages</para></item>
+        <item><para>A annoying bug with SETs being passed to pass
+scripts was fixed</para></item>
+        <item><para>The often talked about VACM optimization
+improvement was fixed again</para></item>
+        <item><para>mib2c handles augmentation tables better
+now</para></item>
+        <item><para>Various 64 bit issues have been
+addressed</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 March 31" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Regenerate configure with updated autoconf-2.13
+to handle --cache-file=/dev/null for Redhat Linux 2.1</para></item>
+      </change>
+
+      <change date="2004 February 24" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Build SysV-style shared libraries on
+AIX 5</para></item>
+      </change>
+
+      <change date="2004 January 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+
+      <change date="2003 December 7" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Don't define <command>_SOCKADDR_LEN</command> on
+Tru64 UNIX so we get the prototypes of recv()/send()</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

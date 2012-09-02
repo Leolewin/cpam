@@ -1,0 +1,751 @@
+Index: Configure
+===================================================================
+--- Configure.orig	2010-03-04 21:37:55.190705645 +0000
++++ Configure	2010-03-04 21:38:03.220556669 +0000
+@@ -199,12 +199,14 @@
+ "solaris64-x86_64-gcc","gcc:-m64 -O3 -Wall -DL_ENDIAN -DMD32_REG_T=int::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${x86_64_asm}:dlfcn:solaris-shared:-fPIC:-m64 -shared -static-libgcc:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+  
+ #### Solaris x86 with Sun C setups
+-"solaris-x86-cc","cc:-fast -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"solaris64-x86_64-cc","cc:-fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${x86_64_asm}:dlfcn:solaris-shared:-KPIC:-xarch=amd64 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris-x86-cc","cc:-xtarget=pentium4 -xO2 -xstrconst -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris64-x86_64-cc","cc:-m64 -xarch=sse2 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${x86_64_asm}:dlfcn:solaris-shared:-KPIC:-xarch=amd64 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ 
+ #### SPARC Solaris with GNU C setups
+ "solaris-sparcv7-gcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "solaris-sparcv8-gcc","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris-sparcultra2-gcc","gcc:-mcpu=ultrasparc -mvis -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris-sparc-gcc","gcc:-mv8 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ # -m32 should be safe to add as long as driver recognizes -mcpu=ultrasparc
+ "solaris-sparcv9-gcc","gcc:-m32 -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::sparcv8plus.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "solaris64-sparcv9-gcc","gcc:-m64 -mcpu=ultrasparc -O3 -Wall -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-fPIC:-m64 -shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+@@ -216,10 +218,12 @@
+ # SC4.0 doesn't pass 'make test', upgrade to SC5.0 or SC4.2.
+ # SC4.2 is ok, better than gcc even on bn as long as you tell it -xarch=v8
+ # SC5.0 note: Compiler common patch 107357-01 or later is required!
+-"solaris-sparcv7-cc","cc:-xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"solaris-sparcv8-cc","cc:-xarch=v8 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"solaris-sparcv9-cc","cc:-xtarget=ultra -xarch=v8plus -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8plus.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"solaris64-sparcv9-cc","cc:-xtarget=ultra -xarch=v9 -xO5 -xstrconst -xdepend -Xa -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-xarch=v9 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):/usr/ccs/bin/ar rs",
++"solaris-sparcv7-cc","cc:-xtarget=generic -xO3 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR:${no_asm}:dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris-sparcv8-cc","cc:-xtarget=generic -xarch=v8 -xO3 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris-sparcultra2-cc","cc:-xtarget=generic -xtarget=ultra2 -xarch=sparcvis -m32 -xO3 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris-sparcv9-cc","cc:-xarch=sparcvis -m32 -xO3 -xstrconst -xdepend -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8plus.o:des_enc-sparc.o fcrypt_b.o:::md5-sparcv8plus.o::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"solaris64-sparcv9-cc","cc:-m64 -xO3 -xstrconst -xdepend -Xa -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-m64 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):/usr/ccs/bin/ar rs",
++"solaris64-sparcv9-cc-old","cc:-xtarget=ultra -xarch=v9 -xO3 -xstrconst -xdepend -Xa -DB_ENDIAN::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL BF_PTR:::des_enc-sparc.o fcrypt_b.o:::::::::dlfcn:solaris-shared:-KPIC:-xarch=v9 -G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):/usr/ccs/bin/ar rs",
+ ####
+ "debug-solaris-sparcv8-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG_ALL -xarch=v8 -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8.o::::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "debug-solaris-sparcv9-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG_ALL -xtarget=ultra -xarch=v8plus -g -O -xstrconst -Xa -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT:ULTRASPARC:-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_PTR::sparcv8plus.o::::::::::dlfcn:solaris-shared:-KPIC:-G -dy -z text:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)", 
+@@ -279,16 +283,16 @@
+ #
+ # Chris Ruemmler <ruemmler@cup.hp.com>
+ # Kevin Steves <ks@hp.se>
+-"hpux-parisc-cc","cc:+O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:${no_asm}:dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"hpux-parisc-cc","cc:+O2 +Optrs_strongly_typed -Ae +ESlit +DAportable -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::-D_REENTRANT::-ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:${no_asm}:dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "hpux-parisc1_0-cc","cc:+DAportable +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-Wl,+s -ldld:MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:${no_asm}:dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"hpux-parisc2-cc","cc:+DA2.0 +DS2.0 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY -D_REENTRANT::::-Wl,+s -ldld:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2.o::::::::::dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+-"hpux64-parisc2-cc","cc:+DD64 +O3 +Optrs_strongly_typed -Ae +ESlit -DB_ENDIAN -DMD32_XARRAY -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2W.o::::::::::dlfcn:hpux-shared:+Z:+DD64 -b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"hpux-parisc2-cc","cc:+O2 +Optrs_strongly_typed +Olit=all -DB_ENDIAN -DMD32_XARRAY -D_REENTRANT::::-ldld:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2.o::::::::::dl:hpux-shared:+Z:-b +nodefaultrpath:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"hpux64-parisc2-cc","cc:+DD64 +O2 +Optrs_strongly_typed +Olit=all -DB_ENDIAN -DMD32_XARRAY -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2W.o::::::::::dlfcn:hpux64-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ 
+ # HP/UX IA-64 targets
+-"hpux-ia64-cc","cc:-Ae +DD32 +O2 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:+Z:+DD32 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"hpux-ia64-cc","cc:+O2 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:+Z:-b +nodefaultrpath:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ # Frank Geurts <frank.geurts@nl.abnamro.com> has patiently assisted with
+ # with debugging of the following config.
+-"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:+Z:+DD64 -b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"hpux64-ia64-cc","cc:+DD64 +O2 +Olit=all -z -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux64-shared:+Z:-b:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ # GCC builds...
+ "hpux-ia64-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:-fpic:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "hpux64-ia64-gcc","gcc:-mlp64 -O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:${ia64_asm}:dlfcn:hpux-shared:-fpic:-mlp64 -shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)", 
+@@ -311,7 +315,8 @@
+ #
+ "osf1-alpha-gcc", "gcc:-O3::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_RISC1:${no_asm}:dlfcn:alpha-osf1-shared:::.so",
+ "osf1-alpha-cc",  "cc:-std1 -tune host -O4 -readonly_strings::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${no_asm}:dlfcn:alpha-osf1-shared:::.so",
+-"tru64-alpha-cc", "cc:-std1 -tune host -fast -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${no_asm}:dlfcn:alpha-osf1-shared::-msym:.so",
++"tru64-alpha-cc", "cc:-std1 -O2 -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${no_asm}:dlfcn:alpha-osf1-shared::-msym -set_version \${SHLIB_VERSION_HISTORY}\${SHLIB_VERSION_NUMBER}:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"tru64-alphaev5-cc", "cc:-std1 -O2 -arch ev5 -readonly_strings::-pthread:::SIXTY_FOUR_BIT_LONG RC4_CHUNK:${no_asm}:dlfcn:alpha-osf1-shared::-msym -set_version \${SHLIB_VERSION_HISTORY}\${SHLIB_VERSION_NUMBER}:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ 
+ ####
+ #### Variety of LINUX:-)
+@@ -323,6 +328,8 @@
+ #### IA-32 targets...
+ "linux-ia32-icc",	"icc:-DL_ENDIAN -DTERMIO -O2 -no_cpprt::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "linux-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"rhel3-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -mcpu=pentiumpro -march=pentiumpro -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
++"rhel4-elf",	"gcc:-DL_ENDIAN -DTERMIO -O3 -mtune=pentiumpro -march=pentiumpro -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+ "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
+ ####
+ "linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+@@ -411,8 +418,9 @@
+ "aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-maix64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
+ # Below targets assume AIX 5. Idea is to effectively disregard $OBJECT_MODE
+ # at build time. $OBJECT_MODE is respected at ./config stage!
+-"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+-"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
++"aix-cc",   "xlc:-q32 -O -DB_ENDIAN -qmaxmem=-1 -qarch=com::-qthreaded:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
++"aixppc-cc",   "xlc:-q32 -O -DB_ENDIAN -qmaxmem=-1 -qarch=ppc::-qthreaded:AIX::BN_LLONG RC4_CHAR::aix_ppc32.o::::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
++"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=-1 -qarch=com::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR::aix_ppc64.o::::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+ 
+ #
+ # Cray T90 and similar (SDSC)
+Index: Makefile.org
+===================================================================
+--- Makefile.org.orig	2008-04-03 23:03:39.000000000 +0000
++++ Makefile.org	2010-03-04 21:38:03.228040458 +0000
+@@ -14,6 +14,7 @@
+ OPTIONS=
+ CONFIGURE_ARGS=
+ SHLIB_TARGET=
++RPATH=
+ 
+ # HERE indicates where this Makefile lives.  This can be used to indicate
+ # where sub-Makefiles are expected to be.  Currently has very limited usage,
+@@ -28,6 +29,7 @@
+ 
+ # Do not edit this manually. Use Configure --openssldir=DIR do change this!
+ OPENSSLDIR=/usr/local/ssl
++LIBDIR=$(OPENSSLDIR)/lib
+ 
+ # NO_IDEA - Define to build without the IDEA algorithm
+ # NO_RC4  - Define to build without the RC4 algorithm
+@@ -172,7 +174,7 @@
+ 		CC='${CC}' CFLAG='${CFLAG}' 			\
+ 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
+ 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
+-		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
++		SDIRS='${SDIRS}' LIBRPATH='${LIBDIR}'		\
+ 		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
+ 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
+ 		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD ${MAKEDEPPROG}' \
+@@ -301,41 +303,38 @@
+ libcrypto.pc: Makefile
+ 	@ ( echo 'prefix=$(INSTALLTOP)'; \
+ 	    echo 'exec_prefix=$${prefix}'; \
+-	    echo 'libdir=$${exec_prefix}/lib'; \
++	    echo 'libdir=$(LIBDIR)'; \
+ 	    echo 'includedir=$${prefix}/include'; \
+ 	    echo ''; \
+ 	    echo 'Name: OpenSSL-libcrypto'; \
+ 	    echo 'Description: OpenSSL cryptography library'; \
+ 	    echo 'Version: '$(VERSION); \
+-	    echo 'Requires: '; \
+-	    echo 'Libs: -L$${libdir} -lcrypto $(EX_LIBS)'; \
+-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libcrypto.pc
++	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)'; \
++	    echo 'Libs: -L$${libdir} -lcrypto' ) > libcrypto.pc
+ 
+ libssl.pc: Makefile
+ 	@ ( echo 'prefix=$(INSTALLTOP)'; \
+ 	    echo 'exec_prefix=$${prefix}'; \
+-	    echo 'libdir=$${exec_prefix}/lib'; \
++	    echo 'libdir=$(LIBDIR)'; \
+ 	    echo 'includedir=$${prefix}/include'; \
+ 	    echo ''; \
+ 	    echo 'Name: OpenSSL'; \
+ 	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
+ 	    echo 'Version: '$(VERSION); \
+-	    echo 'Requires: '; \
+-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
++	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)'; \
++	    echo 'Libs: -L$${libdir} -lssl -lcrypto' ) > libssl.pc
+ 
+ openssl.pc: Makefile
+ 	@ ( echo 'prefix=$(INSTALLTOP)'; \
+ 	    echo 'exec_prefix=$${prefix}'; \
+-	    echo 'libdir=$${exec_prefix}/lib'; \
++	    echo 'libdir=$(LIBDIR)'; \
+ 	    echo 'includedir=$${prefix}/include'; \
+ 	    echo ''; \
+ 	    echo 'Name: OpenSSL'; \
+ 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
+ 	    echo 'Version: '$(VERSION); \
+-	    echo 'Requires: '; \
+-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+-	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
++	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)'; \
++	    echo 'Libs: -L$${libdir} -lssl -lcrypto' ) > openssl.pc
+ 
+ Makefile: Makefile.org Configure config
+ 	@echo "Makefile is older than Makefile.org, Configure or config."
+@@ -473,31 +472,20 @@
+ dist_pem_h:
+ 	(cd crypto/pem; $(MAKE) -e $(BUILDENV) pem.h; $(MAKE) clean)
+ 
+-install: all install_docs install_sw
++install: all install_docs install_lib install_sw
+ 
+-install_sw:
+-	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
+-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
+-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines \
+-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig \
+-		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
+-		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
+-		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
+-		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
+-	@set -e; headerlist="$(EXHEADER)"; for i in $$headerlist;\
+-	do \
+-	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
+-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
+-	done;
+-	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
++install_lib:
++	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(LIBDIR) \
++		$(INSTALL_PREFIX)$(LIBDIR)/engines \
++		$(INSTALL_PREFIX)$(LIBDIR)/pkgconfig
+ 	@set -e; for i in $(LIBS) ;\
+ 	do \
+ 		if [ -f "$$i" ]; then \
+ 		(       echo installing $$i; \
+-			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
++			cp $$i $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++			$(RANLIB) $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++			chmod 644 $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++			mv -f $(INSTALL_PREFIX)$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(LIBDIR)/$$i ); \
+ 		fi; \
+ 	done;
+ 	@set -e; if [ -n "$(SHARED_LIBS)" ]; then \
+@@ -505,24 +493,24 @@
+ 		for i in $${tmp:-x}; \
+ 		do \
+ 			if [ -f "$$i" -o -f "$$i.a" ]; then \
+-			(       echo installing $$i; \
++			(	echo installing $$i; \
+ 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
+-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
++					cp $$i $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++					chmod 555 $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++					mv -f $(INSTALL_PREFIX)$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(LIBDIR)/$$i; \
+ 				else \
+ 					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
+ 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
+ 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
+ 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
+-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
+-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
++					cp $$i $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++					chmod 644 $(INSTALL_PREFIX)$(LIBDIR)/$$i.new; \
++					mv -f $(INSTALL_PREFIX)$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(LIBDIR)/$$i; \
+ 				fi ); \
+ 			fi; \
+ 		done; \
+ 		(	here="`pwd`"; \
+-			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
++			cd $(INSTALL_PREFIX)$(LIBDIR); \
+ 			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
+ 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
+ 			echo 'OpenSSL shared libraries have been installed in:'; \
+@@ -531,12 +519,24 @@
+ 			sed -e '1,/^$$/d' doc/openssl-shared.txt; \
+ 		fi; \
+ 	fi
+-	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
+-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libcrypto.pc
+-	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
+-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libssl.pc
+-	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
+-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/openssl.pc
++	cp libcrypto.pc $(INSTALL_PREFIX)$(LIBDIR)/pkgconfig
++	chmod 644 $(INSTALL_PREFIX)$(LIBDIR)/pkgconfig/libcrypto.pc
++	cp libssl.pc $(INSTALL_PREFIX)$(LIBDIR)/pkgconfig
++	chmod 644 $(INSTALL_PREFIX)$(LIBDIR)/pkgconfig/libssl.pc
++	cp openssl.pc $(INSTALL_PREFIX)$(LIBDIR)/pkgconfig
++	chmod 644 $(INSTALL_PREFIX)$(LIBDIR)/pkgconfig/openssl.pc
++
++install_sw:
++	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
++		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
++		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
++		$(INSTALL_PREFIX)$(OPENSSLDIR)/private
++	@set -e; headerlist="$(EXHEADER)"; for i in $$headerlist;\
++	do \
++	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
++	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
++	done;
++	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
+ 
+ install_docs:
+ 	@$(PERL) $(TOP)/util/mkdir-p.pl \
+@@ -585,4 +585,9 @@
+ 			 done); \
+ 	done
+ 
++install_apps:
++	@dir=apps; target=install; $(BUILD_CMD)
++install_engines:
++	@dir=engines; target=install; $(BUILD_CMD)
++
+ # DO NOT DELETE THIS LINE -- make depend depends on it.
+Index: engines/Makefile
+===================================================================
+--- engines/Makefile.orig	2006-02-04 01:49:34.000000000 +0000
++++ engines/Makefile	2010-03-04 21:38:03.243685452 +0000
+@@ -21,6 +21,9 @@
+ 
+ LIB=$(TOP)/libcrypto.a
+ LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec
++LIBDEPS='-L.. -lcrypto'
++
++LIBDIR=$(OPENSSLDIR)/lib
+ 
+ LIBSRC=	e_4758cca.c \
+ 	e_aep.c \
+@@ -67,7 +70,7 @@
+ 		for l in $(LIBNAMES); do \
+ 			$(MAKE) -f ../Makefile.shared -e \
+ 				LIBNAME=$$l LIBEXTRAS=e_$$l.o \
+-				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
++				LIBDEPS=$(LIBDEPS) \
+ 				link_o.$(SHLIB_TARGET); \
+ 		done; \
+ 	else \
+@@ -97,13 +100,13 @@
+ 				*DSO_DL*)	sfx="sl";;	\
+ 				*)		sfx="bad";;	\
+ 				esac; \
+-				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
++				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(LIBDIR)/engines/lib$$l.$$sfx.new; \
+ 			  else \
+ 			  	sfx="so"; \
+-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
++				cp cyg$$l.dll $(INSTALL_PREFIX)$(LIBDIR)/engines/lib$$l.$$sfx.new; \
+ 			  fi; \
+-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx ); \
++			  chmod 555 $(INSTALL_PREFIX)$(LIBDIR)/engines/lib$$l.$$sfx.new; \
++			  mv -f $(INSTALL_PREFIX)$(LIBDIR)/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(LIBDIR)/engines/lib$$l.$$sfx ); \
+ 		done; \
+ 	fi
+ 
+@@ -134,6 +137,8 @@
+ 
+ clean:
+ 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
++clean_libobj:
++	rm $(LIBOBJ)
+ 
+ # DO NOT DELETE THIS LINE -- make depend depends on it.
+ 
+Index: Makefile.shared
+===================================================================
+--- Makefile.shared.orig	2007-09-16 14:11:51.000000000 +0000
++++ Makefile.shared	2010-03-04 21:38:03.249633178 +0000
+@@ -67,8 +67,8 @@
+ #------------------------------------------------------------------------------
+ # The rest is private to this makefile.
+ 
+-SET_X=:
+-#SET_X=set -x
++#SET_X=:
++SET_X=set -x
+ 
+ top:
+ 	echo "Trying to use this makefile interactively?  Don't."
+@@ -91,9 +91,6 @@
+   ( $(SET_X);   \
+     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
+     LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS)}"; \
+-    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
+-    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+-    LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
+     $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS} )
+ 
+ LINK_SO=	\
+@@ -101,13 +98,12 @@
+     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
+     SHAREDCMD="$${SHAREDCMD:-$(CC)}"; \
+     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
+-    nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
+-    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
+-    LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
+-    LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
++    if [ "`uname -s`" = "AIX" ]; then \
++      nm -Bpg $$SHOBJECTS | awk '{ if ((($$2 == "T") || ($$2 == "D") || ($$2 == "B")) && (substr($$3,1,1) != ".")) { print $$3 } }' | sort -u > lib$(LIBNAME).exp; \
++    fi; \
+     $${SHAREDCMD} $${SHAREDFLAGS} \
+ 	-o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
+-	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS \
++	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS -lc \
+   ) && $(SYMLINK_SO); \
+   ( $(SET_X); rm -f lib$(LIBNAME).exp )
+ 
+@@ -135,7 +131,7 @@
+   ALL=$$ALLSYMSFLAGS; ALLSYMSFLAGS=; NOALLSYMSFLAGS=; \
+   ( $(SET_X); \
+     ld $(LDFLAGS) -r -o lib$(LIBNAME).o $$ALL lib$(LIBNAME).a $(LIBEXTRAS) ); \
+-  $(LINK_SO) && rm -f $(LIBNAME).o
++  $(LINK_SO) && rm -f lib$(LIBNAME).o
+ 
+ LINK_SO_A_UNPACKED=	\
+   UNPACKDIR=link_tmp.$$$$; rm -rf $$UNPACKDIR; mkdir $$UNPACKDIR; \
+@@ -151,7 +147,7 @@
+ 	SHLIB_SUFFIX=; \
+ 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
+ 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
+-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
++	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-rpath,$(LIBRPATH) -Wl,-Bsymbolic -Wl,-soname=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"
+ 
+ DO_GNU_APP=LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"
+ 
+@@ -273,6 +269,7 @@
+ 	@ if ${DETECT_GNU_LD}; then \
+ 		$(DO_GNU_SO); \
+ 	else \
++		$(CALC_VERSIONS); \
+ 		SHLIB=lib$(LIBNAME).so; \
+ 		SHLIB_SUFFIX=; \
+ 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+@@ -281,10 +278,9 @@
+ 		else \
+ 			SHLIB_HIST="$(LIBVERSION)"; \
+ 		fi; \
+-		SHLIB_SOVER=; \
+ 		ALLSYMSFLAGS='-all'; \
+ 		NOALLSYMSFLAGS='-none'; \
+-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
++		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-rpath,$(LIBRPATH) -Wl,-B,symbolic"; \
+ 		if [ -n "$$SHLIB_HIST" ]; then \
+ 			SHAREDFLAGS="$$SHAREDFLAGS -set_version $$SHLIB_HIST"; \
+ 		fi; \
+@@ -294,6 +290,7 @@
+ 	@ if ${DETECT_GNU_LD}; then \
+ 		$(DO_GNU_SO); \
+ 	else \
++		$(CALC_VERSIONS); \
+ 		SHLIB=lib$(LIBNAME).so; \
+ 		SHLIB_SUFFIX=; \
+ 		SHLIB_HIST=`echo "$(LIBCOMPATVERSIONS)" | cut -d';' -f2 | sed -e 's/ */:/'`; \
+@@ -302,10 +299,9 @@
+ 		else \
+ 			SHLIB_HIST="$(LIBVERSION)"; \
+ 		fi; \
+-		SHLIB_SOVER=; \
+ 		ALLSYMSFLAGS='-all'; \
+ 		NOALLSYMSFLAGS='-none'; \
+-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-B,symbolic"; \
++		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-rpath,$(LIBRPATH) -Wl,-B,symbolic"; \
+ 		if [ -n "$$SHLIB_HIST" ]; then \
+ 			SHAREDFLAGS="$$SHAREDFLAGS -set_version $$SHLIB_HIST"; \
+ 		fi; \
+@@ -330,7 +326,7 @@
+ 		SHLIB_SUFFIX=; \
+ 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+ 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
+-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
++		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -R $(LIBRPATH) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
+ 	fi; \
+ 	$(LINK_SO_O)
+ link_a.solaris:
+@@ -344,7 +340,7 @@
+ 		SHLIB_SUFFIX=;\
+ 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
+ 		NOALLSYMSFLAGS="$${MINUSZ}defaultextract"; \
+-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
++		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -R $(LIBRPATH) -h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-Bsymbolic"; \
+ 	fi; \
+ 	$(LINK_SO_A)
+ link_app.solaris:
+@@ -428,7 +424,7 @@
+ 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
+ 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
+ 		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
+-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,-B,symbolic"; \
++		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-rpath,$(LIBRPATH) -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-B,symbolic"; \
+ 	fi; \
+ 	$(LINK_SO_O)
+ link_a.irix:
+@@ -442,31 +438,24 @@
+ 		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSWL="-Wl,"; \
+ 		ALLSYMSFLAGS="$${MINUSWL}-all"; \
+ 		NOALLSYMSFLAGS="$${MINUSWL}-none"; \
+-		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,-B,symbolic"; \
++		SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-rpath,$(LIBRPATH) -Wl,-soname,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX -Wl,-B,symbolic"; \
+ 	fi; \
+ 	$(LINK_SO_A)
+ link_app.irix:
+ 	@LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBRPATH)"; \
+ 	$(LINK_APP)
+ 
+-# 32-bit PA-RISC HP-UX embeds the -L pathname of libs we link with, so
+-# we compensate for it with +cdp ../: and +cdp ./:. Yes, these rewrite
+-# rules imply that we can only link one level down in catalog structure,
+-# but that's what takes place for the moment of this writing. +cdp option
+-# was introduced in HP-UX 11.x and applies in 32-bit PA-RISC link
+-# editor context only [it's simply ignored in other cases, which are all
+-# ELFs by the way].
+-#
+ link_o.hpux:
+ 	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+ 	$(CALC_VERSIONS); \
+ 	SHLIB=lib$(LIBNAME).sl; \
+ 	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+ 	SHLIB_SUFFIX=; \
+-	ALLSYMSFLAGS='-Wl,-Fl'; \
++	ALLSYMSFLAGS='-Fl'; \
+ 	NOALLSYMSFLAGS=''; \
+-	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
+-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
++	SHAREDCMD="/usr/ccs/bin/ld"; \
++	expr $(PLATFORM) : '*ia64' > /dev/null && SHAREDFLAGS="$$SHAREDFLAGS -Wl,+nodefaultrpath"; \
++	SHAREDFLAGS="$$SHAREDFLAGS -b -Bsymbolic +vnocompatwarnings -z +s +b $(LIBRPATH) -L$(LIBRPATH) +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+ 	fi; \
+ 	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
+ 	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
+@@ -476,19 +465,52 @@
+ 	SHLIB=lib$(LIBNAME).sl; \
+ 	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+ 	SHLIB_SUFFIX=; \
+-	ALLSYMSFLAGS='-Wl,-Fl'; \
++	ALLSYMSFLAGS='-Fl'; \
+ 	NOALLSYMSFLAGS=''; \
+-	expr $(PLATFORM) : 'hpux64' > /dev/null && ALLSYMSFLAGS='-Wl,+forceload'; \
+-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+h,$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX,+cdp,../:,+cdp,./:"; \
++	SHAREDCMD="/usr/ccs/bin/ld"; \
++	SHAREDFLAGS="$(SHARED_LDFLAGS)"; \
++	expr $(PLATFORM) : '*ia64' > /dev/null && SHAREDFLAGS="$$SHAREDFLAGS +nodefaultrpath"; \
++	SHAREDFLAGS="$$SHAREDFLAGS -b -Bsymbolic +vnocompatwarnings -z +s +b $(LIBRPATH) -L$(LIBRPATH) +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
+ 	fi; \
+ 	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
+ 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
+ link_app.hpux:
+ 	@if ${DETECT_GNU_LD}; then $(DO_GNU_APP); else \
+-	LDFLAGS="$(CFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
++	LDFLAGS="$(CFLAGS) -Wl,+s,+b,$(LIBRPATH) -L$(LIBRPATH)"; \
+ 	fi; \
+ 	$(LINK_APP)
+ 
++link_o.hpux64:
++	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
++	$(CALC_VERSIONS); \
++	SHLIB=lib$(LIBNAME).sl; \
++	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
++	SHLIB_SUFFIX=; \
++	ALLSYMSFLAGS='+forceload'; \
++	NOALLSYMSFLAGS=''; \
++	SHAREDCMD="/usr/ccs/bin/ld"; \
++	SHAREDFLAGS="$(SHARED_LDFLAGS)"; \
++	expr $(PLATFORM) : '.*ia64' > /dev/null && SHAREDFLAGS="$$SHAREDFLAGS +nodefaultrpath"; \
++	SHAREDFLAGS="$$SHAREDFLAGS -B symbolic +vnocompatwarnings -z +s +b $(LIBRPATH) +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
++	fi; \
++	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
++	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
++link_a.hpux64:
++	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
++	$(CALC_VERSIONS); \
++	SHLIB=lib$(LIBNAME).sl; \
++	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
++	SHLIB_SUFFIX=; \
++	ALLSYMSFLAGS='+forceload'; \
++	NOALLSYMSFLAGS=''; \
++	SHAREDCMD="/usr/ccs/bin/ld"; \
++	SHAREDFLAGS="$(SHARED_LDFLAGS)"; \
++	expr $(PLATFORM) : '.*ia64' > /dev/null && SHAREDFLAGS="$$SHAREDFLAGS +nodefaultrpath"; \
++	SHAREDFLAGS="$$SHAREDFLAGS -Bsymbolic +vnocompatwarnings -z +s +b $(LIBRPATH) +h $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX"; \
++	fi; \
++	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
++	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
++
+ link_o.aix:
+ 	@ $(CALC_VERSIONS); \
+ 	OBJECT_MODE=`expr x$(SHARED_LDFLAGS) : 'x\-[a-z]*\(64\)'` || :; \
+@@ -497,7 +519,7 @@
+ 	SHLIB_SUFFIX=; \
+ 	ALLSYMSFLAGS=''; \
+ 	NOALLSYMSFLAGS=''; \
+-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-G,-bexpall,-bnolibpath,-bM:SRE'; \
++	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-blibpath:$(LIBRPATH):/usr/lib -Wl,-bnoentry -Wl,-bE:lib$(LIBNAME).exp -Wl,-G'; \
+ 	$(LINK_SO_O);
+ link_a.aix:
+ 	@ $(CALC_VERSIONS); \
+@@ -507,10 +529,10 @@
+ 	SHLIB_SUFFIX=; \
+ 	ALLSYMSFLAGS='-bnogc'; \
+ 	NOALLSYMSFLAGS=''; \
+-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-G,-bexpall,-bnolibpath,-bM:SRE'; \
++	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-blibpath:$(LIBRPATH):/usr/lib -Wl,-bnoentry -Wl,-bE:lib$(LIBNAME).exp -Wl,-G'; \
+ 	$(LINK_SO_A_VIA_O)
+ link_app.aix:
+-	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
++	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):/usr/lib"; \
+ 	$(LINK_APP)
+ 
+ link_o.reliantunix:
+@@ -533,8 +555,8 @@
+ 	$(LINK_APP)
+ 
+ # Targets to build symbolic links when needed
+-symlink.gnu symlink.solaris symlink.svr3 symlink.svr5 symlink.irix \
+-symlink.aix symlink.reliantunix:
++symlink.alpha-osf1 symlink.gnu symlink.solaris symlink.svr3 \
++symlink.svr5 symlink.irix symlink.aix symlink.reliantunix:
+ 	@ $(CALC_VERSIONS); \
+ 	SHLIB=lib$(LIBNAME).so; \
+ 	$(SYMLINK_SO)
+@@ -549,7 +571,7 @@
+ 	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+ 	$(SYMLINK_SO)
+ # The following lines means those specific architectures do no symlinks
+-symlink.cygwin symlink.alpha-osf1 symlink.tru64 symlink.tru64-rpath:
++symlink.cygwin symlink.tru64 symlink.tru64-rpath:
+ 
+ # Compatibility targets
+ link_o.bsd-gcc-shared link_o.linux-shared link_o.gnu-shared: link_o.gnu
+@@ -595,10 +617,18 @@
+ link_a.irix-shared: link_a.irix
+ link_app.irix-shared: link_app.irix
+ symlink.irix-shared: symlink.irix
++link_o.hpux10-shared: link_o.hpux10
++link_a.hpux10-shared: link_a.hpux10
++link_app.hpux10-shared: link_app.hpux10
++symlink.hpux10-shared: symlink.hpux10
+ link_o.hpux-shared: link_o.hpux
+ link_a.hpux-shared: link_a.hpux
+ link_app.hpux-shared: link_app.hpux
+ symlink.hpux-shared: symlink.hpux
++link_o.hpux64-shared: link_o.hpux64
++link_a.hpux64-shared: link_a.hpux64
++link_app.hpux64-shared: link_app.hpux
++symlink.hpux64-shared: symlink.hpux
+ link_o.aix-shared: link_o.aix
+ link_a.aix-shared: link_a.aix
+ link_app.aix-shared: link_app.aix
+Index: apps/Makefile
+===================================================================
+--- apps/Makefile.orig	2008-04-03 23:18:23.000000000 +0000
++++ apps/Makefile	2010-03-04 21:38:03.273288787 +0000
+@@ -142,6 +142,9 @@
+ 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff $(EXE)
+ 	rm -f req
+ 
++clean_libobj:
++	rm $(PROGRAM).o
++
+ $(DLIBSSL):
+ 	(cd ..; $(MAKE) DIRS=ssl all)
+ 
+Index: apps/openssl.cnf
+===================================================================
+--- apps/openssl.cnf.orig	2005-09-16 12:20:24.000000000 +0000
++++ apps/openssl.cnf	2010-03-04 21:38:03.280205132 +0000
+@@ -99,6 +99,7 @@
+ ####################################################################
+ [ req ]
+ default_bits		= 1024
++default_bits		= sha1
+ default_keyfile 	= privkey.pem
+ distinguished_name	= req_distinguished_name
+ attributes		= req_attributes
+@@ -116,13 +117,15 @@
+ # MASK:XXXX a literal mask value.
+ # WARNING: current versions of Netscape crash on BMPStrings or UTF8Strings
+ # so use this option with caution!
+-string_mask = nombstr
++# we use PrintableString+UTF8String mask so if pure ASCII texts are used
++# the resulting certificates are compatible with Netscape
++string_mask = MASK:0x2002
+ 
+ # req_extensions = v3_req # The extensions to add to a certificate request
+ 
+ [ req_distinguished_name ]
+ countryName			= Country Name (2 letter code)
+-countryName_default		= AU
++countryName_default		= US
+ countryName_min			= 2
+ countryName_max			= 2
+ 
+@@ -132,7 +135,7 @@
+ localityName			= Locality Name (eg, city)
+ 
+ 0.organizationName		= Organization Name (eg, company)
+-0.organizationName_default	= Internet Widgits Pty Ltd
++0.organizationName_default	= My Company Ltd
+ 
+ # we can do this but it is not needed normally :-)
+ #1.organizationName		= Second Organization Name (eg, company)
+@@ -141,7 +144,7 @@
+ organizationalUnitName		= Organizational Unit Name (eg, section)
+ #organizationalUnitName_default	=
+ 
+-commonName			= Common Name (eg, YOUR name)
++commonName			= Common Name (eg, your name or your server\'s hostname)
+ commonName_max			= 64
+ 
+ emailAddress			= Email Address
+Index: crypto/asn1/a_bytes.c
+===================================================================
+--- crypto/asn1/a_bytes.c.orig	2004-03-15 23:15:15.000000000 +0000
++++ crypto/asn1/a_bytes.c	2010-03-04 21:38:03.298120500 +0000
+@@ -79,7 +79,7 @@
+ 
+ 	if (tag >= 32)
+ 		{
+-		i=ASN1_R_TAG_VALUE_TOO_HIGH;;
++		i=ASN1_R_TAG_VALUE_TOO_HIGH;
+ 		goto err;
+ 		}
+ 	if (!(ASN1_tag2bit(tag) & type))
+Index: crypto/asn1/t_x509.c
+===================================================================
+--- crypto/asn1/t_x509.c.orig	2008-02-11 13:18:40.000000000 +0000
++++ crypto/asn1/t_x509.c	2010-03-04 21:38:03.303863713 +0000
+@@ -332,7 +332,7 @@
+ int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
+ 	{
+ 	int i,n;
+-	char buf[80],*p;;
++	char buf[80],*p;
+ 
+ 	if (v == NULL) return(0);
+ 	n=0;
+Index: crypto/bn/bntest.c
+===================================================================
+--- crypto/bn/bntest.c.orig	2007-07-04 12:56:31.000000000 +0000
++++ crypto/bn/bntest.c	2010-03-04 21:38:03.320802971 +0000
+@@ -926,7 +926,7 @@
+ 		BN_bntest_rand(b,2+i,0,0); /**/
+ 
+ 		if (!BN_mod_exp(d,a,b,c,ctx))
+-			return(00);
++			return(0);
+ 
+ 		if (bp != NULL)
+ 			{
+@@ -977,7 +977,7 @@
+ 		BN_bntest_rand(b,2+i,0,0); /**/
+ 
+ 		if (!BN_mod_exp_mont_consttime(d,a,b,c,ctx,NULL))
+-			return(00);
++			return(0);
+ 
+ 		if (bp != NULL)
+ 			{
+@@ -1028,7 +1028,7 @@
+ 		BN_bntest_rand(b,2+i,0,0); /**/
+ 
+ 		if (!BN_exp(d,a,b,ctx))
+-			return(00);
++			return(0);
+ 
+ 		if (bp != NULL)
+ 			{
+Index: crypto/x509v3/v3_utl.c
+===================================================================
+--- crypto/x509v3/v3_utl.c.orig	2007-10-12 00:00:24.000000000 +0000
++++ crypto/x509v3/v3_utl.c	2010-03-04 21:38:03.334712132 +0000
+@@ -84,7 +84,7 @@
+ 	CONF_VALUE *vtmp = NULL;
+ 	char *tname = NULL, *tvalue = NULL;
+ 	if(name && !(tname = BUF_strdup(name))) goto err;
+-	if(value && !(tvalue = BUF_strdup(value))) goto err;;
++	if(value && !(tvalue = BUF_strdup(value))) goto err;
+ 	if(!(vtmp = (CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE)))) goto err;
+ 	if(!*extlist && !(*extlist = sk_CONF_VALUE_new_null())) goto err;
+ 	vtmp->section = NULL;

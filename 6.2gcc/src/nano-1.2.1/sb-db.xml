@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="nano" version="1.2.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="188d24b9cc4c1041ac58d6b6f7941eb4"
+        checksum-type="md5" size="911163"
+        path="src/nano-1.2.1.tar.gz"/>
+      <patch checksum="a49ac02405d4a21a5b868f6d6c773ea1"
+        checksum-type="md5" size="2902"
+        path="src/nano-1.2.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" add-path="prepend"
+        type="build">v&gt;=1.35</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext011"
+        add-path="prepend">v&gt;=0.11.4</depend>
+      <depend program="glib" var="GLIB"
+        install-name="glib12">v&gt;=1.2.10</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv18"
+        systype="*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=1.8</depend>
+      <depend program="ncurses" var="NCURSES">v==5.4</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_NCURSES_INC} -I${SB_VAR_NCURSES_INC}/ncurses" \
+LDFLAGS="-L${SB_VAR_NCURSES_LIB} ${CC_LD_RT}${SB_VAR_NCURSES_LIB} \
+${LDFLAGS+${LDFLAGS}}" --with-glib-prefix=${SB_VAR_GLIB} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--datadir="${_datadir}" --with-libintl-prefix=${GETTEXT} \
+--enable-multibuffer --enable-nanorc --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 nano.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <change from="1.2.0" to="1.2.1">
+        <item><para>This release features a new check for broken
+regexec() implementations and some variable, function and macro
+cleanups. Fixes are included for search history, cutting marked text,
+alt keyboard mode, and the usual translation and documentation
+updates.</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 April 16" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade ncurses dependency from 5.2 to
+5.4</para></item>
+        <item><para>Upgrade texinfo dependency from 4.3 to
+4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

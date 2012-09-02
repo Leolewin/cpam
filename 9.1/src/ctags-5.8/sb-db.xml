@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="ctags" version="5.8" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}58</install-name>
+
+    <sources>
+      <source checksum="c00f82ecdcc357434731913e5b48630d"
+        checksum-type="md5" size="479927"
+        path="src/ctags-5.8.tar.gz"/>
+      <patch checksum="720cb54d8d724728df47d1965059acf9"
+        checksum-type="md5" size="107005"
+        path="src/ctags-5.8.tww.patch"/>
+      <patch checksum="76999d62b8daea42b0683f9815f11f6b"
+        checksum-type="md5" size="378349"
+        path="src/ctags-5.8.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-etags \
+--enable-custom-config="${_sysconfdir}/ctags.conf" \
+--disable-extended-format --mandir=${SB_INSTALL_PREFIX}/man \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ctags.conf
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="5.7" to="5.8">
+        <item><para>Removed ".ml" as a Lisp extension (now OCaml)
+[Lisp].</para></item>
+        <item><para>Added support for Ant language</para></item>
+        <item><para>Added support for DOS Batch language</para></item>
+        <item><para>Added support for Flex (Adobe)
+language</para></item>
+        <item><para>Added support for MATLAB language</para></item>
+        <item><para>Added support for Objective Camel (OCaml) [Patch
+#2738723].</para></item>
+        <item><para>Added support for TeX language.</para></item>
+        <item><para>Added support for VHDL language [Bug
+#1943306].</para></item>
+        <item><para>Added support for Pyrex/Cython declarations
+[Python].</para></item>
+        <item><para>Added support for "v" kind, for variables
+[Python].</para></item>
+        <item><para>Added support for class and member variables [PHP,
+Bug #1037086].</para></item>
+        <item><para>Added support for recent enhancements to Eiffel
+language [Eiffel].</para></item>
+        <item><para>Added support for ASP classes, changes meaning of
+'c' kind flag [ASP].</para></item>
+        <item><para>Added regex support when compiling with MinGW. Gnu
+regex module now included in all distributions.</para></item>
+        <item><para>Fixed detection of triple strings inside other
+strings [Python, Bug #1988130].</para></item>
+        <item><para>Fixed an endless loop with comments in triple
+strings [Python, Bug #1988027].</para></item>
+        <item><para>Fixed bug where functions were sometimes seen as
+methods [Python, Bug #1988026].</para></item>
+        <item><para>Fixed parsing of method parameter annotations, fix
+[Java, Bug #2049723, #2117073].</para></item>
+        <item><para>Fixed parsing of global scope qualifiers in base
+class lists [C++, Bug #1799343].</para></item>
+        <item><para>Fixed bug where namespace members were given kinds
+corresponding to globals [C++, Bug #1924919, #1575055].</para></item>
+        <item><para>Fixed parsing of "else" [C#, Bug
+#1830344].</para></item>
+        <item><para>Fixed parsing of derived enums [C#, Bug
+#1515910].</para></item>
+        <item><para>Fixed parsing of "foreach" [C#, Bug
+#1830343].</para></item>
+        <item><para>Fixed parsing of simple generic classes [C#, Bug
+#1515910].</para></item>
+        <item><para>Fixed bug with detecting identifiers inside
+variables [Python, Bug #1809024].</para></item>
+        <item><para>Fixed bug with detecting identifiers at the start
+of variables [Python, Bug #1856363].</para></item>
+        <item><para>Fixed parsing of triple single-quoted multi-line
+strings [Python, Bug #1906062].</para></item>
+        <item><para>Changed to newer version of autoconf, changing
+configure.in to configure.ac.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

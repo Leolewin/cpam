@@ -1,0 +1,257 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="PyXML" version="0.8.4" revision="10">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="1f7655050cebbb664db976405fdba209"
+        checksum-type="md5" size="734954"
+        path="src/PyXML-0.8.4.tar.gz"/>
+      <patch checksum="54e20148d728d04c511cca1f7df00651"
+        checksum-type="md5" size="1910"
+        path="src/PyXML-0.8.4.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v&gt;=2.0.1</depend>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:"
+  CC_LD_RT_POST=":/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-Wl,-R" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build \
+--without-xpath --without-xslt \
+${SB_VAR_LIBEXPAT+--with-libexpat-inc=${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_LIBEXPAT+--with-libexpat-lib=${SB_VAR_LIBEXPAT_LIB}} \
+${CC_LD_RT+--ldflags="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}"}
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+(cd test
+ PYTHONPATH=.. ${SB_VAR_PYTHON}/bin/python testxml.py)
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--without-xpath --without-xslt \
+${SB_VAR_LIBEXPAT+--with-libexpat=${SB_VAR_LIBEXPAT} \
+${CC_LD_RT+--ldflags="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}"}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/_xmlplus
+]]>
+    </uninstall>
+
+    <module name="2.7.2">
+      <install-name>python27p</install-name>
+
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+rm -f test/unittest.py
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/python2.7/site-packages"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build \
+--without-xpath --without-xslt \
+${SB_VAR_LIBEXPAT+--with-libexpat-inc=${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_LIBEXPAT+--with-libexpat-lib=${SB_VAR_LIBEXPAT_LIB}} \
+${CC_LD_RT+--ldflags="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}"}
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+(cd test
+ PYTHONPATH=.. ${SB_VAR_PYTHON}/bin/python testxml.py)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--without-xpath --without-xslt \
+${SB_VAR_LIBEXPAT+--with-libexpat=${SB_VAR_LIBEXPAT} \
+${CC_LD_RT+--ldflags="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}"}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/PyXML-0.8.4-py2.7.egg-info
+rm -rf ${_install_prefix}/_xmlplus
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <install-name>python26p</install-name>
+
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/python2.6/site-packages"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build \
+--without-xpath --without-xslt \
+${SB_VAR_LIBEXPAT+--with-libexpat-inc=${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_LIBEXPAT+--with-libexpat-lib=${SB_VAR_LIBEXPAT_LIB}} \
+${CC_LD_RT+--ldflags="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}"}
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+(cd test
+ PYTHONPATH=.. ${SB_VAR_PYTHON}/bin/python testxml.py)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--without-xpath --without-xslt \
+${SB_VAR_LIBEXPAT+--with-libexpat=${SB_VAR_LIBEXPAT} \
+${CC_LD_RT+--ldflags="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}"}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/PyXML-0.8.4-py2.6.egg-info
+rm -rf ${_install_prefix}/_xmlplus
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="0.8.3" to="0.8.4">
+        <item><para>bump version number to 0.8.4, as Python 2.4
+requires that as the minimum PyXML version</para></item>
+        <item><para>Expat 1.95.8 is provided; pyexpat is extended to
+expose more expat features:</para></item>
+        <unorderedlist>
+          <item><para>CurrentLineNumber, CurrentColumnNumber,
+CurrentByteIndex</para></item>
+          <item><para>symbolic error numbers added in Expat 1.95.7 and
+1.95.8</para></item>
+        </unorderedlist>
+        <item><para>Added Dublin Core Metadata Initiative (DCMI)
+namespaces to the xml.ns module</para></item>
+        <item><para>fix memory leaks in pyexpat</para></item>
+        <item><para>fix line number reporting in SAX</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2011 September 18" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace 2.7.1 module with a 2.7.2
+module</para></item>
+        <item><para>Replace 2.6.6 module with a 2.6.7
+module</para></item>
+        <item><para>Remove 2.4.3, 2.5.2, and 2.6.4
+modules</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+      </change>
+
+      <change date="2010 December 27" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace 2.7 module with a 2.7.1
+module</para></item>
+        <item><para>Replace 2.6.5 module with a 2.6.6
+module</para></item>
+      </change>
+
+      <change date="2010 July 19" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 2.7 module</para></item>
+      </change>
+
+      <change date="2010 May 20" revision="7"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 2.6.5 module</para></item>
+      </change>
+
+      <change date="2009 November 10" revision="6"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add 2.6.4 module</para></item>
+      </change>
+
+      <change date="2008 June 21" revision="5"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add 2.5.2 module</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to 
+4.2.4</para></item>
+      </change>
+
+      <change date="2007 October 19" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update expat dependency from 1.95.8 to
+2.0.1</para></item>
+      </change>
+
+      <change date="2005 December 20" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add module for Python 2.4.2</para></item>
+      </change>
+
+      <change date="2005 November 14" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

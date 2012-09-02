@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="samba" version="2.2.10">
+    <package-manager name="pkgadd">
+      <category>System Environment/Daemons</category>
+      <title>Samba SMB Server</title>
+      <vendor>Samba Team</vendor>
+
+      <description attribution="FreeBSD Ports Collection">
+The Samba suite is a set of programs which run under the FreeBSD
+operating system. These programs deliver most of the important
+functionality of a Microsoft Lan Manager server. That is, they support
+remote access to the UNIX filespace and UNIX printers from Lan Manager
+compatible clients.
+
+Some of the most popular Lan Manager compatible clients include Lan
+Manager itself, Windows for Workgroups, OS/2 and Windows NT.
+      </description>
+
+      <install-name>samba2210</install-name>
+
+      <pkgname-base>TWWsm22a</pkgname-base>
+
+      <version>2.2.10</version>
+      <revision>1</revision>
+
+      <init name="/etc/init.d/TWWsamba2210"
+        path="pkg/init-sol"
+        checksum="9620b23dc79e794bd657089d66d6e7d7"
+        checksum-type="md5" size="1661"/>
+      <init link-src="/etc/rc2.d/S79TWWsamba2210"
+        link-dest="/etc/init.d/TWWsamba2210"/>
+      <init link-src="/etc/rc1.d/K19TWWsamba2210"
+        link-dest="/etc/init.d/TWWsamba2210"/>
+      <init link-src="/etc/rc0.d/K19TWWsamba2210"
+        link-dest="/etc/init.d/TWWsamba2210"/>
+
+      <config>/etc/init.d/TWWsamba2210</config>
+      <config upgrade="1">etc/lmhosts</config>
+      <config upgrade="1">etc/printers.def</config>
+      <config upgrade="1">etc/smb.conf</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+        <depend pkgname-base="TWWld21c"
+          title="OpenLDAP LDAP Server"
+          subpkg="runtime">v&gt;=2.1.27</depend>
+      </subpkg>
+
+      <replace pkgname-base="TWWsm228"
+        install-name="samba228"/>
+      <replace pkgname-base="TWWsm227"
+        install-name="samba227"/>
+      <replace pkgname-base="TWWsm226"
+        install-name="samba226"/>
+    </package-manager>
+  </package>
+</packages>

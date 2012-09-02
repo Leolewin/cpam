@@ -1,0 +1,47 @@
+#!/sbin/sh
+#
+# Startup script for Apache 1.3.31.
+#
+# Default path for configuration files is:
+#   /etc${LOCAL_BASE}/${INSTALL_PATH}
+# Default path for log files is:
+#   /var${LOCAL_BASE}/${INSTALL_PATH}
+
+APP_BIN=httpd
+APP_HOME=${LOCAL_BASE}/${INSTALL_PATH}
+
+CONFIG=/etc${LOCAL_BASE}/${INSTALL_PATH}/httpd.conf
+
+# Path to PID file of running httpd process. If different path set in
+# httpd.conf file with PidFile directive, substitute correct path below.
+PID_FILE=/var${LOCAL_BASE}/${INSTALL_PATH}/run/httpd.pid
+
+state=$1
+
+case "$state" in
+'start')
+  if [ -f ${CONFIG} ]; then
+    ${APP_HOME}/bin/${APP_BIN}
+    echo "Apache web server service starting."
+  fi
+  ;;
+
+'stop')
+  if [ -f "${PID_FILE}" ]; then
+    PID=`cat "${PID_FILE}"`
+    if [ "${PID}" -gt 1 ]; then
+      kill -TERM ${PID}
+      echo "Stopping the Apache web server service."
+    else
+      echo Bad PID for httpd -- \"${PID}\"
+    fi
+  else
+    echo No PID file recorded for httpd
+  fi
+  ;;
+
+*)
+  echo "$0 {start|stop}"
+  exit 1
+  ;;
+esac

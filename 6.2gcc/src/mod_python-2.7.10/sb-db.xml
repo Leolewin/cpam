@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mod_python" version="2.7.10" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>modpython27</install-name>
+
+    <sources>
+      <source checksum="12c98bdefa06735679efc878b81e9bb2"
+        checksum-type="md5" size="175631"
+        path="src/mod_python-2.7.10.tgz"/>
+      <patch checksum="49eb8b5b49940cb211eb25c728e611d3"
+        checksum-type="md5" size="161504"
+        path="src/mod_python-2.7.10.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="apache" var="APACHE">v==1.3.31</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="python" var="PYTHON"
+        add-path="prepend">v==2.3.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+./configure --with-apxs="${SB_VAR_APACHE}/bin/apxs" \
+--prefix=${SB_INSTALL_PREFIX}
+
+# remove non-gcc compiler options
+${SB_PATH_SHTOOL} subst -q -e "\
+s!-mr !!g; \
+s!-Qn !!g; \
+s!-xO2 !!g; \
+s!-xarch=[^ ]* !!g; \
+s!-xtarget=[^ ]* !!g; \
+s!-std1 !!g; \
+s!-n32 !!g; \
+s!-OPT[^ ]* !!g; \
+s!-woff [0-9]* !!g; \
+s!-Wl,-woff,[^ ]* !!g; \
+s!-Ae !!g; \
+s!-z !!g; \
+s!+DA[^ ]* !!g;" src/Makefile
+
+# use shared python library rather than static on systems
+# that cannot link a static library into a shared one; build
+# object files with PIC.
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!AP_CFLAGS=\(.*\)!AP_CFLAGS=-fPIC \1!;
+s!libpython2.3.a!libpython2.3.sl!" src/Makefile ;;
+x86_64*-linux*)
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!AP_CFLAGS=\(.*\)!AP_CFLAGS=-fPIC \1!;
+s!libpython2.3.a!libpython2.3.so!" src/Makefile ;;
+esac
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/modules
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 src/mod_python.so \
+${SB_INSTALL_PREFIX}/modules
+
+gmake install_py_lib
+]]>
+    </install>
+
+    <notes>
+      <note type="installation">
+        <para>The Apache modue, <command>mod_perl.so</command>, is
+installed in <command>${SB_INSTALL_PREFIX}/modules</command>. When
+installed, the package postinstall script will automatically update
+<command>/etc${SB_INSTALL_BASE}/apache1331/httpd.conf</command> with the
+following:</para>
+        <screen>
+LoadModule python_module ${SB_INSTALL_PREFIX}/modules/mod_python.so
+        </screen>
+      </note>
+    </notes>
+  </program>
+</programs>

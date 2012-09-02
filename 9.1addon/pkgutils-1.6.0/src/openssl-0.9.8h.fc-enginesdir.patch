@@ -1,0 +1,50 @@
+Index: Configure
+===================================================================
+--- Configure.orig	2008-05-01 23:11:30.000000000 +0000
++++ Configure	2010-03-04 21:37:55.190705645 +0000
+@@ -10,7 +10,7 @@
+ 
+ # see INSTALL for instructions.
+ 
+-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [enable-montasm] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
++my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [enable-montasm] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--enginesdir=ENGINESDIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+ 
+ # Options:
+ #
+@@ -574,6 +574,7 @@
+ 
+ my $prefix="";
+ my $openssldir="";
++my $enginesdir="";
+ my $exe_ext="";
+ my $install_prefix="";
+ my $no_threads=0;
+@@ -761,6 +762,10 @@
+ 				{
+ 				$openssldir=$1;
+ 				}
++			elsif (/^--enginesdir=(.*)$/)
++				{
++				$enginesdir=$1;
++				}
+ 			elsif (/^--install.prefix=(.*)$/)
+ 				{
+ 				$install_prefix=$1;
+@@ -962,7 +967,7 @@
+ 
+ $openssldir=$prefix . "/ssl" if $openssldir eq "";
+ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
+-
++$enginesdir="$prefix/lib/engines" if $enginesdir eq "";
+ 
+ print "IsMK1MF=$IsMK1MF\n";
+ 
+@@ -1517,7 +1522,7 @@
+ 	if	(/^#define\s+OPENSSLDIR/)
+ 		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
+ 	elsif	(/^#define\s+ENGINESDIR/)
+-		{ print OUT "#define ENGINESDIR \"$prefix/lib/engines\"\n"; }
++		{ print OUT "#define ENGINESDIR \"$enginesdir\"\n"; }
+ 	elsif	(/^#((define)|(undef))\s+OPENSSL_EXPORT_VAR_AS_FUNCTION/)
+ 		{ printf OUT "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION\n"
+ 			if $export_var_as_fn;

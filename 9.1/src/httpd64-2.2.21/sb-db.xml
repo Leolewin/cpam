@@ -1,0 +1,2538 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="httpd64" version="2.2.21" revision="1"
+  systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+    <build-name>httpd-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}2221</install-name>
+
+    <sources>
+      <source checksum="1696ae62cd879ab1d4dd9ff021a470f2"
+        checksum-type="md5" size="5324905"
+        path="src/httpd-2.2.21.tar.bz2"/>
+      <patch checksum="9407e72dc0e57c204ddf0834a7d177af"
+        checksum-type="md5" size="1472"
+        path="src/httpd-2.2.21.CVE-2011-3192-regression.patch"/>
+      <patch checksum="742480ca8d0df2ce5e2fa0ae26072a1d"
+        checksum-type="md5" size="1074"
+        path="src/httpd-2.2.21.CVE-2011-3368.patch"/>
+      <patch checksum="b43ac1dbf099704d7485be684105f74f"
+        checksum-type="md5" size="941"
+        path="src/httpd-2.2.21.CVE-2011-3607.patch"/>
+      <patch checksum="c1c7a781199676805e9bd500938673b4"
+        checksum-type="md5" size="1763"
+        path="src/httpd-2.2.21.CVE-2011-4317.patch"/>
+      <patch checksum="77b6039786267bd691e8a674b10d1d1d"
+        checksum-type="md5" size="998"
+        path="src/httpd-2.2.21.CVE-2012-0031.patch"/>
+      <patch checksum="a7f7ce40a1b4503b78e42574a4b335a0"
+        checksum-type="md5" size="4447"
+        path="src/httpd-2.2.21.CVE-2012-0053.patch"/>
+      <patch checksum="75fcba3968b6a006ddc0232d82c1c522"
+        checksum-type="md5" size="11049"
+        path="src/httpd-2.2.21.tww.patch"/>
+      <patch checksum="ffa5b8ff061a13fd5013d3889898d155"
+        checksum-type="md5" size="70157"
+        path="src/httpd-2.2.21.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend user="www"/>
+
+      <depend group="www"/>
+
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10"
+        module="64bit">v&gt;=1.0.0e</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="apr" var="LIBAPR" install-name="libapr14"
+        module="64bit">v&gt;=1.4.5</depend>
+      <depend program="apr-util" var="LIBAPRUTIL"
+        install-name="libaprutil13"
+        module="64bit">v&gt;=1.3.12</depend>
+      <depend program="openldap" var="OPENLDAP"
+        install-name="openldap24"
+        module="64bit">v&gt;=2.4.26</depend>
+      <depend program="pcre" install-name="libpcre811" module="64bit"
+        append="bin/64" add-path="prepend">v&gt;=8.11</depend>
+      <depend program="prngd" var="PRNGD" install-name="prngd"
+        systype="*-hpux11.[01]*|*-irix*">v&gt;=0.9.25</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+      <depend program="zlib" var="LIBZ" install-name="libz12"
+        module="64bit">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lunwind"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ipv6"
+
+  # getaddrinfo and getnameinfo broken
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Onofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo and getnameinfo only available in newer 6.5.x releases
+  export ac_cv_func_gai_strerror=no
+  export ac_cv_search_gai_strerror=no
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <module name="default">
+      <validate>
+        <depend program="httpd64" module="worker">v==2.2.21</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lunwind"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ipv6"
+
+  # getaddrinfo and getnameinfo broken
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Onofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo and getnameinfo only available in newer 6.5.x releases
+  export ac_cv_func_gai_strerror=no
+  export ac_cv_search_gai_strerror=no
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+# Fix path to httpd binary in apachectl program
+${SB_PATH_SED} -i -e "s!@progname@!@progname@.prefork!" \
+${SB_BUILD_PREFIX}/support/apachectl.in
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBZ_LIB}/64\
+${SB_VAR_OPENLDAP+:${SB_VAR_OPENLDAP_LIB}/64}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}/64} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBOPENSSL+--enable-ssl} \
+${SB_VAR_LIBOPENSSL+--with-ssl} \
+${SB_VAR_LIBOPENSSL+--with-ssl-include=${SB_VAR_LIBOPENSSL_INC}} \
+${SB_VAR_LIBOPENSSL+--with-ssl-lib="${SB_VAR_LIBOPENSSL_LIB}/64"} \
+PKG_CONFIG_PATH="${SB_VAR_LIBOPENSSL_LIB}/64/pkgconfig" \
+--with-z --with-z-include=${SB_VAR_LIBZ_INC} \
+--with-z-lib="${SB_VAR_LIBZ_LIB}/64" \
+--with-mpm=prefork --enable-layout=TWW --enable-so \
+--enable-mods-shared=all --enable-deflate --enable-cgid \
+--enable-proxy --enable-proxy-connect --enable-proxy-http \
+--enable-proxy-ftp --enable-info --enable-dav-fs --enable-dav-lock \
+--enable-vhost-alias --enable-authn-anon --enable-authn-alias \
+${SB_VAR_OPENLDAP+--enable-authnz-ldap} \
+${SB_VAR_OPENLDAP+--enable-ldap} \
+--with-apr=${SB_VAR_LIBAPR}/bin/64/apr-1-config \
+--with-apr-util=${SB_VAR_LIBAPRUTIL}/bin/64/apu-1-config \
+--with-pcre --enable-cache --enable-disk-cache --enable-file-cache \
+${SB_VAR_PRNGD+--with-egd=${_prngd_socket}} \
+--sysconfdir=${_sysconfdir} --localstatedir=${_localstatedir} \
+--enable-suexec --with-suexec-bin="${SB_INSTALL_PREFIX}/bin/suexec" \
+--with-suexec-caller=www ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# Allow loading libraries with TLS (thread local storage) on HP-UX 11.x
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  ${SB_PATH_SED} -i -e "\
+s/-lpthread/-lpthread -lunwind/" build/config_vars.mk ;;
+*-hpux11*)
+  ${SB_PATH_SED} -i -e "\
+s/-lpthread/-lpthread -lcl/" build/config_vars.mk ;;
+esac
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# fix permissions
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+
+${SB_PATH_INSTALL} -m 755 -o www -g www -d ${_sysconfdir} \
+${_localstatedir} ${_localstatedir}/log ${_localstatedir}/proxy \
+${_localstatedir}/run
+
+# empty SSL server.crt and server.key
+${SB_PATH_INSTALL} -m 640 -o www -g www /dev/null \
+${_sysconfdir}/server.crt
+${SB_PATH_INSTALL} -m 640 -o www -g www /dev/null \
+${_sysconfdir}/server.key
+
+# rename program name to include MPM
+mv ${SB_INSTALL_PREFIX}/bin/httpd \
+${SB_INSTALL_PREFIX}/bin/httpd.prefork
+${SB_PATH_SED} -i -e "\
+s!progname = httpd!progname = httpd.prefork!" \
+${_datadir}/build/config_vars.mk
+
+# force config file to httpd.conf
+${SB_PATH_SED} -i -e "\
+s!^my \\\$CFG_TARGET     = .*!my \\\$CFG_TARGET     = \"httpd\";!" \
+${SB_INSTALL_PREFIX}/bin/apxs
+
+# slimmed down httpd.conf
+cat >${_sysconfdir}/httpd.conf <<_EOT_
+# global directives
+ServerRoot "${SB_INSTALL_PREFIX}"
+ServerAdmin webmaster@[hostname].[domainname]
+ServerName [hostname].[domainname]
+
+Listen 80
+
+LoadModule authn_file_module modules/mod_authn_file.so
+LoadModule authn_dbm_module modules/mod_authn_dbm.so
+LoadModule authn_anon_module modules/mod_authn_anon.so
+LoadModule authn_default_module modules/mod_authn_default.so
+LoadModule authn_alias_module modules/mod_authn_alias.so
+LoadModule authz_host_module modules/mod_authz_host.so
+LoadModule authz_groupfile_module modules/mod_authz_groupfile.so
+LoadModule authz_user_module modules/mod_authz_user.so
+LoadModule authz_dbm_module modules/mod_authz_dbm.so
+LoadModule authz_owner_module modules/mod_authz_owner.so
+LoadModule authz_default_module modules/mod_authz_default.so
+LoadModule auth_basic_module modules/mod_auth_basic.so
+LoadModule auth_digest_module modules/mod_auth_digest.so
+LoadModule file_cache_module modules/mod_file_cache.so
+LoadModule cache_module modules/mod_cache.so
+LoadModule disk_cache_module modules/mod_disk_cache.so
+LoadModule dumpio_module modules/mod_dumpio.so
+LoadModule ext_filter_module modules/mod_ext_filter.so
+LoadModule include_module modules/mod_include.so
+LoadModule filter_module modules/mod_filter.so
+LoadModule deflate_module modules/mod_deflate.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule log_forensic_module modules/mod_log_forensic.so
+LoadModule logio_module modules/mod_logio.so
+LoadModule env_module modules/mod_env.so
+LoadModule mime_magic_module modules/mod_mime_magic.so
+LoadModule cern_meta_module modules/mod_cern_meta.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule ident_module modules/mod_ident.so
+LoadModule usertrack_module modules/mod_usertrack.so
+LoadModule unique_id_module modules/mod_unique_id.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule version_module modules/mod_version.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_connect_module modules/mod_proxy_connect.so
+LoadModule proxy_ftp_module modules/mod_proxy_ftp.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule proxy_ajp_module modules/mod_proxy_ajp.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule mime_module modules/mod_mime.so
+LoadModule status_module modules/mod_status.so
+LoadModule autoindex_module modules/mod_autoindex.so
+LoadModule asis_module modules/mod_asis.so
+LoadModule info_module modules/mod_info.so
+LoadModule cgi_module modules/mod_cgi.so
+LoadModule cgid_module modules/mod_cgid.so
+LoadModule vhost_alias_module modules/mod_vhost_alias.so
+LoadModule negotiation_module modules/mod_negotiation.so
+LoadModule dir_module modules/mod_dir.so
+LoadModule imagemap_module modules/mod_imagemap.so
+LoadModule actions_module modules/mod_actions.so
+LoadModule speling_module modules/mod_speling.so
+LoadModule userdir_module modules/mod_userdir.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule rewrite_module modules/mod_rewrite.so
+
+#LoadModule authn_dbd_module modules/mod_authn_dbd.so
+#LoadModule dbd_module modules/mod_dbd.so
+
+#LoadModule dav_module modules/mod_dav.so
+#LoadModule dav_fs_module modules/mod_dav_fs.so
+#LoadModule dav_lock_module modules/mod_dav_lock.so
+_EOT_
+
+if [ "${SB_VAR_OPENLDAP+set}" = set ]; then
+  cat >>${_sysconfdir}/httpd.conf <<_EOT_
+
+#LoadModule authnz_ldap_module modules/mod_authnz_ldap.so
+#LoadModule ldap_module modules/mod_ldap.so
+_EOT_
+fi
+
+cat >>${_sysconfdir}/httpd.conf <<_EOT_
+
+#LoadModule ssl_module modules/mod_ssl.so
+
+#LoadModule suexec_module modules/mod_suexec.so
+
+# =====================================================
+#                      DO NOT DELETE                   
+#    Additional modules added by postinstall scripts   
+# =====================================================
+# =====================================================
+
+User www
+Group www
+
+DocumentRoot "${_datadir}/htdocs"
+
+<Directory />
+  Options FollowSymLinks
+  AllowOverride None
+  Order deny,allow
+  Deny from all
+</Directory>
+
+<Directory "${_datadir}/htdocs">
+  Options Indexes FollowSymLinks
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+<IfModule dir_module>
+  DirectoryIndex index.html
+</IfModule>
+
+<FilesMatch "^\.ht">
+  Order allow,deny
+  Deny from all
+  Satisfy All
+</FilesMatch>
+
+<IfModule mod_mime_magic.c>
+  MIMEMagicFile "/etc${SB_INSTALL_PREFIX}/magic"
+</IfModule>
+
+ErrorLog "${_localstatedir}/log/error_log"
+
+<IfModule log_config_module>
+  TransferLog "${_localstatedir}/log/access_log"
+
+  LogLevel warn
+  LogFormat \\
+    "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+  LogFormat "%h %l %u %t \"%r\" %>s %b" common
+  LogFormat "%{Referer}i -> %U" referer
+  LogFormat "%{User-agent}i" agent
+  <IfModule logio_module>
+    # Enable mod_logio.c to use %I and %O
+    LogFormat \\
+      "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\" %I %O" \\
+      combinedio
+  </IfModule>
+
+  CustomLog ${_localstatedir}/log/access_log common
+</IfModule>
+
+<IfModule alias_module>
+  ScriptAlias /cgi-bin/ "${SB_INSTALL_PREFIX}/cgi-bin/"
+</IfModule>
+
+<IfModule cgid_module>
+  #Scriptsock "${_localstatedir}/run/cgisock"
+</IfModule>
+
+<Directory "${SB_INSTALL_PREFIX}/cgi-bin">
+  AllowOverride None
+  Options None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+DefaultType text/plain
+
+<IfModule mime_module>
+  TypesConfig "/etc${SB_INSTALL_PREFIX}/mime.types"
+
+  AddType application/x-compress .Z
+  AddType application/x-gzip .gz .tgz
+</IfModule>
+
+# Server-pool management (MPM specific)
+Include ${_sysconfdir}/extra/httpd-mpm.conf
+
+# Multi-language error messages
+Include ${_sysconfdir}/extra/httpd-multilang-errordoc.conf
+
+# Fancy directory listings
+Include ${_sysconfdir}/extra/httpd-autoindex.conf
+
+# Language settings
+Include ${_sysconfdir}/extra/httpd-languages.conf
+
+# User home directories
+<IfModule userdir_module>
+  Include ${_sysconfdir}/extra/httpd-userdir.conf
+</IfModule>
+
+# Real-time info on requests and configuration
+<IfModule info_module>
+  Include ${_sysconfdir}/extra/httpd-info.conf
+</IfModule>
+
+# Virtual hosts
+Include ${_sysconfdir}/extra/httpd-vhosts.conf
+
+# Local access to the Apache HTTP Server Manual
+Include ${_sysconfdir}/extra/httpd-manual.conf
+
+# Distributed authoring and versioning (WebDAV)
+<IfModule dav_module>
+  Include ${_sysconfdir}/extra/httpd-dav.conf
+</IfModule>
+
+# Various default settings
+Include ${_sysconfdir}/extra/httpd-default.conf
+
+# Secure (SSL/TLS) connections
+<IfModule ssl_module>
+  Include ${_sysconfdir}/extra/httpd-ssl.conf
+</IfModule>
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-autoindex.conf <<_EOT_
+IndexOptions FancyIndexing HTMLTable VersionSort
+
+Alias /icons/ "${_datadir}/icons/"
+
+<Directory "${_datadir}/icons">
+  Options Indexes MultiViews
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+AddIconByEncoding (CMP,/icons/compressed.gif) x-compress x-gzip
+
+AddIconByType (TXT,/icons/text.gif) text/*
+AddIconByType (IMG,/icons/image2.gif) image/*
+AddIconByType (SND,/icons/sound2.gif) audio/*
+AddIconByType (VID,/icons/movie.gif) video/*
+
+AddIcon /icons/binary.gif .bin .exe
+AddIcon /icons/binhex.gif .hqx
+AddIcon /icons/tar.gif .tar
+AddIcon /icons/world2.gif .wrl .wrl.gz .vrml .vrm .iv
+AddIcon /icons/compressed.gif .Z .z .tgz .gz .zip
+AddIcon /icons/a.gif .ps .ai .eps
+AddIcon /icons/layout.gif .html .shtml .htm .pdf
+AddIcon /icons/text.gif .txt
+AddIcon /icons/c.gif .c
+AddIcon /icons/p.gif .pl .py
+AddIcon /icons/f.gif .for
+AddIcon /icons/dvi.gif .dvi
+AddIcon /icons/uuencoded.gif .uu
+AddIcon /icons/script.gif .conf .sh .shar .csh .ksh .tcl
+AddIcon /icons/tex.gif .tex
+AddIcon /icons/bomb.gif core
+
+AddIcon /icons/back.gif ..
+AddIcon /icons/hand.right.gif README
+AddIcon /icons/folder.gif ^^DIRECTORY^^
+AddIcon /icons/blank.gif ^^BLANKICON^^
+
+DefaultIcon /icons/unknown.gif
+
+ReadmeName README.html
+HeaderName HEADER.html
+
+IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-dav.conf <<_EOT_
+<IfModule dav_fs_module>
+  DavLockDB "${_localstatedir}/run/DavLock"
+</IfModule>
+
+Alias /uploads "${SB_INSTALL_PREFIX}/uploads"
+
+<Directory "${SB_INSTALL_PREFIX}/uploads">
+  <IfModule dav_fs_module>
+    Dav filesystem
+  </IfModule>
+
+  Order Allow,Deny
+  Allow from all
+
+  AuthType Digest
+  AuthName DAV-upload
+  # You can use the htdigest program to create the password database:
+  #   htdigest -c "${_sysconfdir}/user.passwd" DAV-upload admin
+  AuthUserFile "${_sysconfdir}/user.passwd"
+
+  # Allow universal read-access, but writes are restricted
+  # to the admin user.
+  <LimitExcept GET OPTIONS>
+    require user admin
+  </LimitExcept>
+</Directory>
+
+BrowserMatch "Microsoft Data Access Internet Publishing Provider" \\
+  redirect-carefully
+BrowserMatch "MS FrontPage" redirect-carefully
+BrowserMatch "^WebDrive" redirect-carefully
+BrowserMatch "^WebDAVFS/1.[0123]" redirect-carefully
+BrowserMatch "^gnome-vfs/1.0" redirect-carefully
+BrowserMatch "^XML Spy" redirect-carefully
+BrowserMatch "^Dreamweaver-WebDAV-SCM1" redirect-carefully
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-default.conf <<_EOT_
+Timeout 300
+KeepAlive on
+MaxKeepAliveRequests 100
+KeepAliveTimeout 15
+
+UseCanonicalName off
+HostnameLookups off
+ServerSignature On
+
+AccessFileName .htaccess
+ServerTokens Full
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-info.conf <<_EOT_
+<Location /server-status>
+  SetHandler server-status
+  Order deny,allow
+  Deny from all
+  Allow from .[domain]
+</Location>
+
+<Location /server-info>
+  SetHandler server-info
+  Order deny,allow
+  Deny from all
+  Allow from .[domain]
+</Location>
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-languages.conf <<_EOT_
+AddLanguage ca .ca
+AddLanguage cs .cz .cs
+AddLanguage da .dk
+AddLanguage de .de
+AddLanguage el .el
+AddLanguage en .en
+AddLanguage eo .eo
+AddLanguage es .es
+AddLanguage et .et
+AddLanguage fr .fr
+AddLanguage he .he
+AddLanguage hr .hr
+AddLanguage it .it
+AddLanguage ja .ja
+AddLanguage ko .ko
+AddLanguage ltz .ltz
+AddLanguage nl .nl
+AddLanguage nn .nn
+AddLanguage no .no
+AddLanguage pl .po
+AddLanguage pt .pt
+AddLanguage pt-BR .pt-br
+AddLanguage ru .ru
+AddLanguage sv .sv
+AddLanguage zh-CN .zh-cn
+AddLanguage zh-TW .zh-tw
+
+LanguagePriority en ca cs da de el eo es et fr he hr \\
+  it ja ko ltz nl nn no pl pt pt-BR ru sv zh-CN zh-TW
+
+ForceLanguagePriority Prefer Fallback
+
+AddCharset us-ascii.ascii .us-ascii
+AddCharset ISO-8859-1  .iso8859-1  .latin1
+AddCharset ISO-8859-2  .iso8859-2  .latin2 .cen
+AddCharset ISO-8859-3  .iso8859-3  .latin3
+AddCharset ISO-8859-4  .iso8859-4  .latin4
+AddCharset ISO-8859-5  .iso8859-5  .cyr .iso-ru
+AddCharset ISO-8859-6  .iso8859-6  .arb .arabic
+AddCharset ISO-8859-7  .iso8859-7  .grk .greek
+AddCharset ISO-8859-8  .iso8859-8  .heb .hebrew
+AddCharset ISO-8859-9  .iso8859-9  .latin5 .trk
+AddCharset ISO-8859-10  .iso8859-10  .latin6
+AddCharset ISO-8859-13  .iso8859-13
+AddCharset ISO-8859-14  .iso8859-14  .latin8
+AddCharset ISO-8859-15  .iso8859-15  .latin9
+AddCharset ISO-8859-16  .iso8859-16  .latin10
+AddCharset ISO-2022-JP .iso2022-jp .jis
+AddCharset ISO-2022-KR .iso2022-kr .kis
+AddCharset ISO-2022-CN .iso2022-cn .cis
+AddCharset Big5.Big5   .big5 .b5
+AddCharset cn-Big5 .cn-big5
+AddCharset WINDOWS-1251 .cp-1251   .win-1251
+AddCharset CP866   .cp866
+AddCharset KOI8  .koi8
+AddCharset KOI8-E  .koi8-e
+AddCharset KOI8-r  .koi8-r .koi8-ru
+AddCharset KOI8-U  .koi8-u
+AddCharset KOI8-ru .koi8-uk .ua
+AddCharset ISO-10646-UCS-2 .ucs2
+AddCharset ISO-10646-UCS-4 .ucs4
+AddCharset UTF-7   .utf7
+AddCharset UTF-8   .utf8
+AddCharset UTF-16  .utf16
+AddCharset UTF-16BE .utf16be
+AddCharset UTF-16LE .utf16le
+AddCharset UTF-32  .utf32
+AddCharset UTF-32BE .utf32be
+AddCharset UTF-32LE .utf32le
+AddCharset euc-cn  .euc-cn
+AddCharset euc-gb  .euc-gb
+AddCharset euc-jp  .euc-jp
+AddCharset euc-kr  .euc-kr
+AddCharset EUC-TW  .euc-tw
+AddCharset gb2312  .gb2312 .gb
+AddCharset iso-10646-ucs-2 .ucs-2 .iso-10646-ucs-2
+AddCharset iso-10646-ucs-4 .ucs-4 .iso-10646-ucs-4
+AddCharset shift_jis   .shift_jis .sjis
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-manual.conf <<_EOT_
+AliasMatch ^/manual(?:/(?:de|en|es|fr|ja|ko|pt-br|ru))?(/.*)?\$ \\
+  "${_datadir}/manual\$1"
+
+<Directory "${_datadir}/manual">
+  Options Indexes
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+
+  <Files *.html>
+    SetHandler type-map
+  </Files>
+
+  SetEnvIf Request_URI ^/manual/(de|en|es|fr|ja|ko|pt-br|ru)/ \\
+    prefer-language=\$1
+  RedirectMatch 301 ^/manual(?:/(de|en|es|fr|ja|ko|pt-br|ru)){2,}(/.*)?\$ \\
+    /manual/\$1\$2
+
+  LanguagePriority en de es fr ja ko pt-br ru 
+  ForceLanguagePriority Prefer Fallback
+</Directory>
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-mpm.conf <<_EOT_
+PidFile "${_localstatedir}/run/httpd.pid"
+
+LockFile "${_localstatedir}/run/accept.lock"
+
+<IfModule mpm_prefork_module>
+  StartServers 5
+  MinSpareServers 5
+  MaxSpareServers 10
+  MaxClients 150
+  MaxRequestsPerChild 0
+</IfModule>
+
+<IfModule mpm_worker_module>
+  StartServers 2
+  MaxClients 150
+  MinSpareThreads 25
+  MaxSpareThreads 75
+  ThreadsPerChild 25
+  MaxRequestsPerChild 0
+</IfModule>
+
+<IfModule mpm_worker_module>
+  LoadModule mem_cache_module modules/mod_mem_cache.so
+</IfModule>
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-multilang-errordoc.conf <<_EOT_
+Alias /error/ "${_datadir}/error/"
+
+<Directory "${_datadir}/error">
+  AllowOverride None
+  Options IncludesNoExec
+  AddOutputFilter Includes html
+  AddHandler type-map var
+  Order allow,deny
+  Allow from all
+  LanguagePriority en cs de es fr it ja ko nl pl pt-br ro sv tr
+  ForceLanguagePriority Prefer Fallback
+</Directory>
+
+ErrorDocument 400 /error/HTTP_BAD_REQUEST.html.var
+ErrorDocument 401 /error/HTTP_UNAUTHORIZED.html.var
+ErrorDocument 403 /error/HTTP_FORBIDDEN.html.var
+ErrorDocument 404 /error/HTTP_NOT_FOUND.html.var
+ErrorDocument 405 /error/HTTP_METHOD_NOT_ALLOWED.html.var
+ErrorDocument 408 /error/HTTP_REQUEST_TIME_OUT.html.var
+ErrorDocument 410 /error/HTTP_GONE.html.var
+ErrorDocument 411 /error/HTTP_LENGTH_REQUIRED.html.var
+ErrorDocument 412 /error/HTTP_PRECONDITION_FAILED.html.var
+ErrorDocument 413 /error/HTTP_REQUEST_ENTITY_TOO_LARGE.html.var
+ErrorDocument 414 /error/HTTP_REQUEST_URI_TOO_LARGE.html.var
+ErrorDocument 415 /error/HTTP_UNSUPPORTED_MEDIA_TYPE.html.var
+ErrorDocument 500 /error/HTTP_INTERNAL_SERVER_ERROR.html.var
+ErrorDocument 501 /error/HTTP_NOT_IMPLEMENTED.html.var
+ErrorDocument 502 /error/HTTP_BAD_GATEWAY.html.var
+ErrorDocument 503 /error/HTTP_SERVICE_UNAVAILABLE.html.var
+ErrorDocument 506 /error/HTTP_VARIANT_ALSO_VARIES.html.var
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+Listen 443
+
+AddType application/x-x509-ca-cert .crt
+AddType application/x-pkcs7-crl .crl
+
+SSLPassPhraseDialog builtin
+
+SSLMutex sem
+SSLSessionCache shmcb:${_localstatedir}/run/ssl.cache(512000)
+SSLSessionCacheTimeout 300
+
+SSLRandomSeed startup builtin
+_EOT_
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+SSLRandomSeed startup egd:/var${SB_VAR_PRNGD}/pool
+_EOT_
+else
+  case "${SB_SYSTYPE}" in
+  *-aix5.[23]*|*-freebsd*|*-hpux11.[23]*|*-linux*)
+    cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+SSLRandomSeed startup file:/dev/urandom 512
+_EOT_
+    ;;
+  *-solaris*)
+   cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+SSLRandomSeed startup file:/dev/random 512
+SSLRandomSeed startup file:/dev/urandom 512
+_EOT_
+   ;;
+  esac
+fi
+
+cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+
+SSLRandomSeed connect builtin
+_EOT_
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+SSLRandomSeed connect egd:/var${SB_VAR_PRNGD}/pool
+_EOT_
+else
+  case "${SB_SYSTYPE}" in
+  *-aix5.[23]*|*-freebsd*|*-hpux11.[23]*|*-linux*)
+    cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+    ;;
+  *-solaris*)
+    cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/random 512
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+    ;;
+  esac
+fi
+
+cat >>${_sysconfdir}/extra/httpd-ssl.conf <<_EOT_
+
+<VirtualHost _default_:443>
+  DocumentRoot "${_datadir}/htdocs"
+  ServerName [hostname].[domainname]:443
+  ServerAdmin webmaster@[hostname].[domainname]
+  SSLEngine on
+  SSLCipherSuite \\
+    ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
+  SSLCertificateFile "${_sysconfdir}/server.crt"
+  SSLCertificateKeyFile "${_sysconfdir}/server.key"
+
+  <Files ~ "\.(cgi|shtml|phtml|php?)$">
+    SSLOptions +StdEnvVars
+  </Files>
+  <Directory "${SB_INSTALL_PREFIX}/cgi-bin">
+    SSLOptions +StdEnvVars
+  </Directory>
+
+BrowserMatch ".*MSIE.*" \\
+  nokeepalive ssl-unclean-shutdown \\
+  downgrade-1.0 force-response-1.0
+CustomLog ${_localstatedir}/log/ssl_request_log \\
+  "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+</VirtualHost>
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-userdir.conf <<_EOT_
+UserDir public_html
+
+<Directory /home/*/public_html>
+  AllowOverride FileInfo AuthConfig Limit Indexes
+  Options MultiViews Indexes SymLinksIfOwnerMatch IncludesNoExec
+
+  <Limit GET POST OPTIONS>
+    Order allow,deny
+    Allow from all
+  </Limit>
+
+  <LimitExcept GET POST OPTIONS>
+    Order deny,allow
+    Deny from all
+  </LimitExcept>
+</Directory>
+_EOT_
+
+cat >${_sysconfdir}/extra/httpd-vhosts.conf <<_EOT_
+# virtual hosts
+#<VirtualHost [ip]>
+# ...
+#</VirtualHost>
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="worker">
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_prngd_socket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lunwind"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ipv6"
+
+  # getaddrinfo and getnameinfo broken
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Onofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LIBS="-lcl"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo and getnameinfo only available in newer 6.5.x releases
+  export ac_cv_func_gai_strerror=no
+  export ac_cv_search_gai_strerror=no
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBZ_LIB}/64\
+${SB_VAR_OPENLDAP+:${SB_VAR_OPENLDAP_LIB}/64}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}/64} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBOPENSSL+--enable-ssl} \
+${SB_VAR_LIBOPENSSL+--with-ssl} \
+${SB_VAR_LIBOPENSSL+--with-ssl-include=${SB_VAR_LIBOPENSSL_INC}} \
+${SB_VAR_LIBOPENSSL+--with-ssl-lib="${SB_VAR_LIBOPENSSL_LIB}/64"} \
+PKG_CONFIG_PATH="${SB_VAR_LIBOPENSSL_LIB}/64/pkgconfig" \
+--with-z --with-z-include=${SB_VAR_LIBZ_INC} \
+--with-z-lib="${SB_VAR_LIBZ_LIB}/64" \
+--with-mpm=worker --enable-layout=TWW --enable-so \
+--enable-mods-shared=all --enable-deflate --enable-cgid \
+--enable-proxy --enable-proxy-connect --enable-proxy-http \
+--enable-proxy-ftp --enable-info --enable-dav-fs --enable-dav-lock \
+--enable-vhost-alias --enable-authn-anon --enable-authn-alias \
+${SB_VAR_OPENLDAP+--enable-authnz-ldap} \
+${SB_VAR_OPENLDAP+--enable-ldap} \
+--with-apr=${SB_VAR_LIBAPR}/bin/64/apr-1-config \
+--with-apr-util=${SB_VAR_LIBAPRUTIL}/bin/64/apu-1-config \
+--with-pcre --enable-cache --enable-disk-cache --enable-file-cache \
+--enable-mem-cache ${SB_VAR_PRNGD+--with-egd=${_prngd_socket}} \
+--sysconfdir=${_sysconfdir} --localstatedir=${_localstatedir} \
+--enable-suexec --with-suexec-bin="${SB_INSTALL_PREFIX}/bin/suexec" \
+--with-suexec-caller=www ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_VAR_LIBAPR}/lib/build/libtool --mode=install \
+${SB_BUILD_PREFIX}/build/install.sh -c -m 755 httpd \
+${SB_INSTALL_PREFIX}/bin/httpd.worker
+
+# new apxs and config_vars for worker
+${SB_PATH_INSTALL} -m 755 -o root -g 0 ${SB_INSTALL_PREFIX}/bin/apxs \
+${SB_INSTALL_PREFIX}/bin/apxs.worker
+${SB_PATH_SED} -i -e "\
+s|config_vars.mk|config_vars.mk.worker|" \
+${SB_INSTALL_PREFIX}/bin/apxs.worker
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 \
+${SB_INSTALL_PREFIX}/share/build/config_vars.mk \
+${SB_INSTALL_PREFIX}/share/build/config_vars.mk.worker
+${SB_PATH_SED} -i -e "\
+s|prefork|worker|g;" \
+${SB_INSTALL_PREFIX}/share/build/config_vars.mk.worker
+
+gmake -C modules/cache shared='mod_mem_cache.la' install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/bin/apxs.worker \
+${SB_INSTALL_PREFIX}/bin/httpd.worker \
+${SB_INSTALL_PREFIX}/share/build/config_vars.mk.worker
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="apache-2.0.license"/>
+
+      <license module="modules/metadata/mod_mime_magic.c">
+        <para>mod_mime_magic: MIME type lookup via file magic numbers
+Copyright (c) 1996-1997 Cisco Systems, Inc.</para>
+        <para>This software was submitted by Cisco Systems to the
+Apache Group in July 1997. Future revisions and derivatives of this
+source code must acknowledge Cisco Systems as the original contributor
+of this module. All other licensing and usage conditions are those of
+the Apache Group.</para>
+        <para>Some of this code is derived from the free version of
+the file command originally posted to comp.sources.unix. Copyright
+info for that program is included below as required.</para>
+        <indent>
+          <para>Copyright (c) Ian F. Darwin, 1987. Written by Ian F.
+Darwin.</para>
+          <para>This software is not subject to any license of the
+American Telephone and Telegraph Company or of the Regents of the
+University of California.</para>
+          <para>Permission is granted to anyone to use this software
+for any purpose on any computer system, and to alter it and
+redistribute it freely, subject to the following restrictions:</para>
+          <orderedlist>
+            <item><para>The author is not responsible for the
+consequences of use of this software, no matter how awful, even if
+they arise from flaws in it.</para></item>
+            <item><para>The origin of this software must not be
+misrepresented, either by explicit claim or by omission. Since few
+users ever read sources, credits must appear in the
+documentation.</para></item>
+            <item><para>Altered versions must be plainly marked as
+such, and must not be misrepresented as being the original software.
+Since few users ever read sources, credits must appear in the
+documentation.</para></item>
+            <item><para>This notice may not be removed or
+altered.</para></item>
+          </orderedlist>
+        </indent>
+      </license>
+
+      <license module="server/util_md5.c">
+        <para skip="0">NCSA HTTPd Server</para>
+        <para skip="0">Software Development Group</para>
+        <para skip="0">National Center for Supercomputing
+Applications</para>
+        <para skip="0">University of Illinois at
+Urbana-Champaign</para>
+        <para skip="0">605 E. Springfield, Champaign, IL
+61820</para>
+        <para>httpd@ncsa.uiuc.edu</para>
+        <para>Copyright (C) 1995, Board of Trustees of the University
+of Illinois</para>
+        <para>md5.c: NCSA HTTPd code which uses the md5c.c RSA
+Code</para>
+        <para skip="0">Original Code Copyright (C) 1994, Jeff
+Hostetler, Spyglass, Inc.</para>
+        <para skip="0">Portions of Content-MD5 code Copyright (C)
+1993, 1994 by Carnegie Mellon University (see Copyright below).</para>
+        <para skip="0">Portions of Content-MD5 code Copyright (C)
+1991 Bell Communications Research, Inc. (Bellcore) (see Copyright
+below).</para>
+        <para skip="0">Portions extracted from mpack, John G. Myers
+- jgm+@cmu.edu</para>
+        <para>Content-MD5 Code contributed by Martin Hamilton
+(martin@net.lut.ac.uk)</para>
+        <para skip="0">these portions extracted from mpack, John G.
+Myers - jgm+@cmu.edu</para>
+        <para skip="0">(C) Copyright 1993,1994 by Carnegie Mellon
+University</para>
+        <para>All Rights Reserved.</para>
+        <para>Permission to use, copy, modify, distribute, and sell
+this software and its documentation for any purpose is hereby granted
+without fee, provided that the above copyright notice appear in all
+copies and that both that copyright notice and this permission notice
+appear in supporting documentation, and that the name of Carnegie
+Mellon University not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission. Carnegie Mellon University makes no representations about
+the suitability of this software for any purpose. It is provided "as
+is" without express or implied warranty.</para>
+        <para>CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON
+UNIVERSITY BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.</para>
+        <para>Copyright (c) 1991 Bell Communications Research, Inc.
+(Bellcore)</para>
+        <para>Permission to use, copy, modify, and distribute this
+material for any purpose and without fee is hereby granted, provided
+that the above copyright notice and this permission notice appear in
+all copies, and that the name of Bellcore not be used in advertising
+or publicity pertaining to this material without the specific, prior
+written permission of an authorized representative of Bellcore.
+BELLCORE MAKES NO REPRESENTATIONS ABOUT THE ACCURACY OR SUITABILITY OF
+THIS MATERIAL FOR ANY PURPOSE. IT IS PROVIDED "AS IS", WITHOUT ANY
+EXPRESS OR IMPLIED WARRANTIES.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="2.2.20" to="2.2.21">
+        <item><para>SECURITY: CVE-2011-3348. mod_proxy_ajp: Respond
+with HTTP_NOT_IMPLEMENTED when the method is not
+recognized.</para></item>
+        <item><para>Fix a regression introduced by the CVE-2011-3192
+byterange fix in 2.2.20. PR 51748.</para></item>
+        <item><para>mod_filter: Instead of dropping the Accept-Ranges
+header when a filter registered with AP_FILTER_PROTO_NO_BYTERANGE is
+present, set the header value to "none".</para></item>
+        <item><para>mod_proxy_ajp: Ignore flushing if headers have not
+been sent. PR 51608.</para></item>
+        <item><para>mod_dav_fs: Fix segfault if apr DBM driver cannot
+be loaded. PR 51751.</para></item>
+        <item><para>mod_alias: Adjust log severity of "incomplete
+redirection target" message. PR 44020.</para></item>
+        <item><para>mod_rewrite: Check validity of each internal
+(int:) RewriteMap even if the RewriteEngine is disabled in server
+context, avoiding a crash while referencing the invalid int: map at
+runtime. PR 50994.</para></item>
+        <item><para>core: Allow MaxRanges none|unlimited|default and
+set 'Accept-Ranges: none' in the case Ranges are being ignored with
+MaxRanges none.</para></item>
+        <item><para>mod_proxy_ajp: Respect "reuse" flag in END_REPONSE
+packets.</para></item>
+      </change>
+
+      <change from="2.2.19" to="2.2.20">
+        <item><para>SECURITY: CVE-2011-3192. core: Fix handling of
+byte-range requests to use less memory, to avoid denial of service. If
+the sum of all ranges in a request is larger than the original file,
+ignore the ranges and send the complete file. PR 51714.</para></item>
+        <item><para>mod_authnz_ldap: If the LDAP server returns
+constraint violation, don't treat this as an error but as "auth
+denied".</para></item>
+        <item><para>mod_filter: Fix FilterProvider conditions of type
+"resp=" (response headers) for CGI.</para></item>
+        <item><para>mod_reqtimeout: Fix a timed out connection going
+into the keep-alive state after a timeout when discarding a request
+body. PR 51103.</para></item>
+        <item><para>core: Do the hook sorting earlier so that the
+hooks are properly sorted for the pre_config hook and during parsing
+the config.</para></item>
+      </change>
+
+      <change from="2.2.18" to="2.2.19">
+        <item><para>Revert ABI breakage in 2.2.18 caused by the
+function signature change of ap_unescape_url_keep2f().  This release
+restores the signature from 2.2.17 and prior, and introduces
+ap_unescape_url_keep2f_ex().</para></item>
+      </change>
+
+      <change from="2.2.17" to="2.2.18">
+        <item><para>Log an error for failures to read a chunk-size,
+and return 408 instead 413 when this is due to a read timeout.  This
+change also fixes some cases of two error documents being sent in the
+response for the same scenario. PR49167.</para></item>
+        <item><para>core: Only log a 408 if it is no keepalive
+timeout. PR 39785</para></item>
+        <item><para>core: Treat timeout reading request as 408 error,
+not 400. Log 408 errors in access log as was done in Apache 1.3.x. PR
+39785.</para></item>
+        <item><para>Core HTTP: disable keepalive when the Client has
+sent</para>
+        <screen>
+Expect: 100-continue
+        </screen>
+        <para>but we respond directly with a non-100 response.
+Keepalive here led to data from clients continuing being treated as a
+new request. PR 47087.</para></item>
+        <item><para>htpasswd: Change the default algorithm for
+htpasswd to MD5 on all platforms. Crypt with its 8 character limit is
+not useful anymore; improve out of disk space handling (PR 30877);
+print a warning if a password is truncated by crypt.</para></item>
+        <item><para>mod_win32: Added shebang check for '! so that .vbs
+scripts work as CGI. Win32's cscript interpreter can only use a single
+quote as comment char.</para></item>
+        <item><para>configure: Fix htpasswd/htdbm libcrypt link errors
+with some newer linkers.</para></item>
+        <item><para>MinGW build improvements.  PR 49535.</para></item>
+        <item><para>mod_ssl, ab: Support OpenSSL compiled without
+SSLv2 support.</para></item>
+        <item><para>core: AllowEncodedSlashes new option NoDecode to
+allow encoded slashes in request URL path info but not decode them. PR
+35256, PR 46830.</para></item>
+        <item><para>mod_rewrite: Allow to unset environment variables.
+PR 50746.</para></item>
+        <item><para>suEXEC: Add Suexec directive to disable suEXEC
+without renaming the binary (Suexec Off), or force startup failure if
+suEXEC is required but not supported (Suexec On).</para></item>
+        <item><para>mod_proxy: Put the worker in error state if the
+SSL handshake with the backend fails. PR 50332.</para></item>
+        <item><para>prefork: Update MPM state in children during a
+graceful restart. Allow the HTTP connection handling loop to terminate
+early during a graceful restart.  PR 41743.</para></item>
+        <item><para>mod_ssl: Correctly read full lines in input filter
+when the line is incomplete during first read. PR 50481.</para></item>
+        <item><para>mod_autoindex: Merge IndexOptions from server to
+directory context when the directory has no mod_autoindex directives.
+PR 47766.</para></item>
+        <item><para>mod_cache: Make sure that we never allow a 304 Not
+Modified response that we asked for to leak to the client should the
+304 response be uncacheable. PR45341.</para></item>
+        <item><para>mod_dav: Send 400 error if malformed Content-Range
+header is received for a put request (RFC 2616 14.16). PR
+49825.</para></item>
+        <item><para>mod_userdir: Add merging of enable, disable, and
+filename arguments to UserDir directive, leaving enable/disable of
+userlists unmerged. PR 44076.</para></item>
+        <item><para>core: Honor 'AcceptPathInfo OFF' during internal
+redirects, such as per-directory mod_rewrite substitutions. PR
+50349.</para></item>
+        <item><para>mod_cache: Check the request to determine whether
+we are allowed to return cached content at all, and respect a
+"Cache-Control: no-cache" header from a client. Previously, "no-cache"
+would behave like "max-age=0".</para></item>
+        <item><para>mod_mem_cache: Add a debug msg when a streaming
+response exceeds MCacheMaxStreamingBuffer, since mod_cache will follow
+up with a scary 'memory allocation failed' debug message. PR
+49604.</para></item>
+        <item><para>proxy_connect: Don't give up in the middle of a
+CONNECT tunnel when the child process is starting to exit.
+PR50220.</para></item>
+      </change>
+
+      <change from="2.2.16" to="2.2.17">
+        <item><para>prefork MPM: Run cleanups for final request when
+process exits gracefully to work around a flaw in apr-util.  PR
+43857.</para></item>
+        <item><para>mod_reqtimeout: Do not wrongly enforce timeouts
+for mod_proxy's backend connections and other protocol handlers (like
+mod_ftp). Enforce the timeout for AP_MODE_GETLINE. If there is a
+timeout, shorten the lingering close time from 30 to 2
+seconds.</para></item>
+        <item><para>Proxy balancer: support setting error status
+according to HTTP response code from a backend.  PR
+48939.</para></item>
+        <item><para>mod_authnz_ldap: If AuthLDAPCharsetConfig is set,
+also convert the password to UTF-8. PR 45318.</para></item>
+        <item><para>core: check symlink ownership if both
+FollowSymlinks and SymlinksIfOwnerMatch are set</para></item>
+        <item><para>core: fix origin checking in SymlinksIfOwnerMatch
+PR 36783</para></item>
+        <item><para>mod_headers: Enable multi-match-and-replace edit
+option PR 46594</para></item>
+        <item><para>mod_log_config: Make ${cookie}C correctly match
+whole cookie names instead of substrings. PR 28037.</para></item>
+        <item><para>mod_dir, mod_negotiation: Pass the output filter
+information to newly created sub requests; as these are later on used
+as true requests with an internal redirect. This allows for mod_cache
+et.al. to trap the results of the redirect. PR 17629,
+43939.</para></item>
+        <item><para>rotatelogs: Fix possible buffer overflow if admin
+configures a mongo log file path.</para></item>
+        <item><para>mod_ssl: Do not do overlapping memcpy. PR
+45444.</para></item>
+        <item><para>vhost: A purely-numeric Host: header should not be
+treated as a port. PR 44979.</para></item>
+        <item><para>core: (re)-introduce -T commandline option to
+suppress documentroot check at startup. PR 41887.</para></item>
+      </change>
+
+      <change from="2.2.15" to="2.2.16">
+        <item><para>SECURITY: CVE-2010-1452. mod_dav, mod_cache: Fix
+Handling of requests without a path segment. PR: 49246.</para></item>
+        <item><para>SECURITY: CVE-2010-2068. mod_proxy_ajp,
+mod_proxy_http, mod_reqtimeout: Fix timeout detection for platforms
+Windows, Netware and OS2. PR: 49417.</para></item>
+        <item><para>core: Filter init functions are now run strictly
+once per request before handler invocation.  The init functions are no
+longer run for connection filters.  PR 49328.</para></item>
+        <item><para>mod_filter: enable it to act on non-200 responses.
+PR 48377.</para></item>
+        <item><para>mod_ldap: LDAP caching was suppressed (and
+ldap-status handler returns title page only) when any mod_ldap
+directives were used in VirtualHost context.</para></item>
+        <item><para>mod_ssl: Fix segfault at startup if proxy client
+certs are shared across multiple vhosts.  PR 39915.</para></item>
+        <item><para>mod_proxy_http: Log the port of the remote server
+in various messages. PR 48812.</para></item>
+        <item><para>apxs: Fix -A and -a options to ignore whitespace
+in httpd.conf</para></item>
+        <item><para>mod_dir: add FallbackResource directive, to enable
+admin to specify an action to happen when a URL maps to no file,
+without resorting to ErrorDocument or mod_rewrite.  PR
+47184.</para></item>
+        <item><para>mod_rewrite: Allow to set environment variables
+without explicitly giving a value.</para></item>
+      </change>
+
+      <change from="2.2.14" to="2.2.15">
+        <item><para>SECURITY: CVE-2009-3555. mod_ssl: Comprehensive
+fix of the TLS renegotiation prefix injection attack when compiled
+against OpenSSL version 0.9.8m or later. Introduces the
+'SSLInsecureRenegotiation' directive to reopen this vulnerability and
+offer unsafe legacy renegotiation with clients which do not yet
+support the new secure renegotiation protocol, RFC 5746.</para></item>
+        <item><para>SECURITY: CVE-2009-3555. mod_ssl: A partial fix
+for the TLS renegotiation prefix injection attack for OpenSSL versions
+prior to 0.9.8l; reject any client-initiated renegotiations. Forcibly
+disable keepalive for the connection if there is any buffered data
+readable. Any configuration which requires renegotiation for
+per-directory/location access control is still vulnerable, unless
+using openssl 0.9.8l or later.</para></item>
+        <item><para>SECURITY: CVE-2010-0408. mod_proxy_ajp: Respond
+with HTTP_BAD_REQUEST when the body is not sent when request headers
+indicate a request body is incoming; not a case of
+HTTP_INTERNAL_SERVER_ERROR.</para></item>
+        <item><para>SECURITY: CVE-2010-0425. mod_isapi: Do not unload
+an isapi .dll module until the request processing is completed,
+avoiding orphaned callback pointers.</para></item>
+        <item><para>SECURITY: CVE-2010-0434. Ensure each subrequest
+has a shallow copy of headers_in so that the parent request headers
+are not corrupted. Eliminates a problematic optimization in the case
+of no request body. PR 48359.</para></item>
+        <item><para>mod_reqtimeout: New module to set timeouts and
+minimum data rates for receiving requests from the
+client.</para></item>
+        <item><para>mod_proxy_ajp: Really regard the operation a
+success, when the client aborted the connection. In addition adjust
+the log message if the client aborted the connection.</para></item>
+        <item><para>mod_negotiation: Preserve query string over
+multiviews negotiation. This buglet was fixed for type maps in 2.2.6,
+but the same issue affected multiviews and was overlooked. PR
+33112.</para></item>
+        <item><para>mod_cache: Introduce the thundering herd lock, a
+mechanism to keep the flood of requests at bay that strike a backend
+webserver as a cached entity goes stale.</para></item>
+        <item><para>mod_proxy_http: Make sure that when an
+ErrorDocument is served from a reverse proxied URL, that the
+subrequest respects the status of the original request. This brings
+the behaviour of proxy_handler in line with default_handler. PR
+47106.</para></item>
+        <item><para>mod_log_config: Add the R option to log the
+handler used within the request.</para></item>
+        <item><para>mod_include: Allow fine control over the removal
+of Last-Modified and ETag headers within the INCLUDES filter, making
+it possible to cache responses if desired. Fix the default value of
+the SSIAccessEnable directive.</para></item>
+        <item><para>mod_ssl: Fix a potential I/O hang if a long list
+of trusted CAs is configured for client cert auth. PR
+46952.</para></item>
+        <item><para>core: Fix potential memory leaks by making sure to
+not destroy bucket brigades that have been created by earlier
+filters.</para></item>
+        <item><para>mod_authnz_ldap: Add AuthLDAPBindAuthoritative to
+allow Authentication to try other providers in the case of an LDAP
+bind failure. PR 46608.</para></item>
+        <item><para>mod_proxy, mod_proxy_http: Support remote https
+proxies by using HTTP CONNECT. PR 19188.</para></item>
+        <item><para>worker: Don't report server has reached MaxClients
+until it has. Add message when server gets within MinSpareThreads of
+MaxClients. PR 46996.</para></item>
+        <item><para>mod_ssl: When extracting certificate
+subject/issuer names to the SSL_*_DN_* variables, handle RDNs with
+duplicate tags by exporting multiple varialables with an "_n" integer
+suffix. PR 45875.</para></item>
+        <item><para>mod_authnz_ldap: Failures to map a username to a
+DN, or to check a user password now result in an informational level
+log entry instead of warning level.</para></item>
+        <item><para>core: Preserve Port information over internal
+redirects PR 35999.</para></item>
+        <item><para>mod_filter: fix FilterProvider matching where
+"dispatch" string doesn't exist. PR 48054.</para></item>
+        <item><para>Build: fix --with-module to work as documented PR
+43881</para></item>
+        <item><para>mod_mime: Make RemoveType override the info from
+TypesConfig. PR 38330.</para></item>
+        <item><para>mod_proxy: unable to connect to a backend is
+SERVICE_UNAVAILABLE, rather than BAD_GATEWAY or (especially)
+NOT_FOUND. PR 46971.</para></item>
+        <item><para>mod_charset_lite: Honor 'CharsetOptions
+NoImplicitAdd'</para></item>
+        <item><para>mod_ldap: If LDAPSharedCacheSize is too small, try
+harder to purge some cache entries and log a warning. Also increase
+the default LDAPSharedCacheSize to 500000. This is a more realistic
+size suitable for the default values of 1024 for
+LdapCacheEntries/LdapOpCacheEntries. PR 46749.</para></item>
+        <item><para>mod_disk_cache, mod_mem_cache: don't cache
+incomplete responses, per RFC 2616, 13.8.  PR15866.</para></item>
+        <item><para>mod_rewrite: Make sure that a hostname:port isn't
+fully qualified if the request is a CONNECT request.  PR
+47928.</para></item>
+        <item><para>mod_cache: correctly consider s-maxage in
+cacheability decisions.</para></item>
+        <item><para>core: Return APR_EOF if request body is shorter
+than the length announced by the client. PR 33098.</para></item>
+        <item><para>mod_rewrite: Add scgi scheme
+detection</para></item>
+        <item><para>mod_mime: Detect invalid use of MultiviewsMatch
+inside Location and LocationMatch sections.  PR 47754.</para></item>
+        <item><para>ab, mod_ssl: Restore compatibility with OpenSSL
+&lt; 0.9.7g.</para></item>
+      </change>
+
+      <change from="2.2.13" to="2.2.14">
+        <item><para>SECURITY: CVE-2009-2699 Fixed in APR 1.3.9. Faulty
+error handling in the Solaris pollset support (Event Port backend)
+which could trigger hangs in the prefork and event MPMs on that
+platform. PR 47645.</para></item>
+        <item><para>SECURITY: CVE-2009-3095 mod_proxy_ftp: sanity
+check authn credentials</para></item>
+        <item><para>SECURITY: CVE-2009-3094 mod_proxy_ftp: NULL
+pointer dereference on error paths.</para></item>
+        <item><para>mod_proxy_scgi: Backport from trunk</para></item>
+        <item><para>mod_ldap: Don't try to resolve file-based user ids
+to a DN when AuthLDAPURL has been defined at a very high level. PR
+45946.</para></item>
+        <item><para>htcacheclean: 19 ways to fail, 1 error message.
+Fixed.</para></item>
+        <item><para>mod_ldap: Bring the LDAPCacheEntries and
+LDAPOpCacheEntries usage() in synch with the manual and the
+implementation (0 and -1 both disable the cache).</para></item>
+        <item><para>mod_ssl: The error message when SSLCertificateFile
+is missing should at least give the name or position of the
+problematic virtual host definition.</para></item>
+        <item><para>htdbm: Fix possible buffer overflow if dbm
+database has very long values. PR 30586.</para></item>
+        <item><para>Add support for HTTP PUT to ab</para></item>
+        <item><para>mod_ssl: Fix SSL_*_DN_UID variables to use the
+'userID' attribute type. PR 45107.</para></item>
+        <item><para>mod_cache: Add CacheIgnoreURLSessionIdentifiers
+directive to ignore defined session identifiers encoded in the URL
+when caching.</para></item>
+        <item><para>mod_mem_cache: fix seg fault under load due to
+pool concurrency problem PR: 47672.</para></item>
+        <item><para>mod_autoindex: Correctly create an empty cell if
+the description for a file is missing. PR 47682.</para></item>
+      </change>
+
+      <change from="2.2.12" to="2.2.13">
+        <item><para>SECURITY: CVE-2009-2412 Distributed with APR 1.3.8
+and APR-util 1.3.9 to fix potential overflow in pools and rmm, where
+size alignment was taking place</para></item>
+        <item><para>mod_ssl, ab: improve compatibility with OpenSSL
+1.0.0 betas. Report warnings compiling mod_ssl against OpenSSL to the
+httpd developers.</para></item>
+        <item><para>mod_cgid: Do not add an empty argument when
+calling the CGI script. PR 46380.</para></item>
+        <item><para>Fix potential segfaults with use of the legacy
+ap_rputs() etc interfaces, in cases where an output filter fails. PR
+36780.</para></item>
+      </change>
+
+      <change from="2.2.11" to="2.2.12">
+        <item><para>SECURITY: CVE-2009-1891 Fix a potential
+Denial-of-Service attack against mod_deflate or other modules, by
+forcing the server to consume CPU time in compressing a large file
+after a client disconnects. PR 39605.</para></item>
+        <item><para>SECURITY: CVE-2009-1195 (cve.mitre.org) Prevent
+the "Includes" Option from being enabled in an .htaccess file if the
+AllowOverride restrictions do not permit it</para></item>
+        <item><para>SECURITY: CVE-2009-1890 Fix a potential
+Denial-of-Service attack against mod_proxy in a reverse proxy
+configuration, where a remote attacker can force a proxy process to
+consume CPU time indefinitely</para></item>
+        <item><para>SECURITY: CVE-2009-1191 mod_proxy_ajp: Avoid
+delivering content from a previous request which failed to send a
+request body. PR 46949.</para></item>
+        <item><para>SECURITY: CVE-2009-0023, CVE-2009-1955,
+CVE-2009-1956 The bundled copy of the APR-util library has been
+updated, fixing three different security issues which may affect
+particular configurations and third-party modules</para></item>
+        <item><para>mod_include: fix potential segfault when handling
+back references on an empty SSI variable</para></item>
+        <item><para>mod_alias: check sanity in Redirect arguments. PR
+44729.</para></item>
+        <item><para>mod_proxy_http: fix Host: header for literal IPv6
+addresses. PR 47177.</para></item>
+        <item><para>mod_rewrite: Remove locking for writing to the
+rewritelog. PR 46942.</para></item>
+        <item><para>mod_alias: Ensure Redirect emits HTTP-compliant
+URLs. PR 44020.</para></item>
+        <item><para>mod_proxy_http: fix case sensitivity checking
+transfer encoding PR 47383.</para></item>
+        <item><para>mod_rewrite: Fix the error string returned by
+RewriteRule. RewriteRule returned "RewriteCond: bad flag delimiters"
+when the 3rd argument of RewriteRule was not started with "[" or not
+ended with "]". PR 45082.</para></item>
+        <item><para>mod_proxy: Complete ProxyPassReverse to handle
+balancer URL's. Given:</para>
+        <screen>
+BalancerMember balancer://alias http://example.com/foo
+ProxyPassReverse /bash balancer://alias/bar
+        </screen>
+        <para>backend url
+<command>http://example.com/foo/bar/that</command> is now translated
+<command>/bash/that</command></para></item>
+        <item><para>New piped log syntax: Use "||process args" to
+launch the given process without invoking the shell/command
+interpreter. Use "|$command line" (the default behavior of "|command
+line" in 2.2) to invoke using shell, consuming an additional shell
+process for the lifetime of the logging pipe program but granting
+additional process invocation flexibility.</para></item>
+        <item><para>mod_ssl: Add server name indication support (RFC
+4366) and better support for name based virtual hosts with SSL. PR
+34607.</para></item>
+        <item><para>mod_negotiation: Escape pathes of filenames in 406
+responses to avoid HTML injections and HTTP response splitting. PR
+46837.</para></item>
+        <item><para>mod_include: Prevent a case of SSI
+timefmt-smashing with filter chains including multiple INCLUDES
+filters. PR 39369.</para></item>
+        <item><para>mod_rewrite: When evaluating a proxy rule in
+directory context, do escape the filename by default. PR
+46428.</para></item>
+        <item><para>mod_proxy_ajp: Check more strictly that the
+backend follows the AJP protocol</para></item>
+        <item><para>mod_ssl: Add SSLProxyCheckPeerExpire and
+SSLProxyCheckPeerCN directives to enable stricter checking of remote
+server certificates.</para></item>
+        <item><para>mod_substitute: Fix a memory leak. PR
+44948.</para></item>
+        <item><para>mod_proxy_ajp: Forward remote port information by
+default</para></item>
+        <item><para>mod_disk_cache/mod_mem_cache: Fix handling of
+CacheIgnoreHeaders directive to correctly remove headers before
+storing them.</para></item>
+        <item><para>mod_deflate: revert changes in 2.2.8 that caused
+an invalid etag to be emitted for on-the-fly gzip content-encoding. PR
+39727 will require larger fixes and this fix was far more harmful than
+the original code. PR 45023.</para></item>
+        <item><para>mod_disk_cache: The module now turns off sendfile
+support if 'EnableSendfile off' is defined globally. PR
+41218.</para></item>
+        <item><para>prefork: Fix child process hang during graceful
+restart/stop in configurations with multiple listening sockets. PR
+42829.</para></item>
+        <item><para>mod_ssl: Add SSLRenegBufferSize directive to allow
+changing the size of the buffer used for the request-body where
+necessary during a per-dir renegotiation. PR 39243.</para></item>
+        <item><para>mod_rewrite: Introduce DiscardPathInfo|DPI flag to
+stop the troublesome way that per-directory rewrites append the
+previous notion of PATH_INFO to each substitution before evaluating
+subsequent rules. PR 38642.</para></item>
+        <item><para>mod_authnz_ldap: Reduce number of initialization
+debug messages and make information more clear. PR
+46342.</para></item>
+        <item><para>mod_cache: Introduce 'no-cache' per-request
+environment variable to prevent the saving of an otherwise cacheable
+response.</para></item>
+        <item><para>core: Translate the status line to ASCII on EBCDIC
+platforms in ap_send_interim_response() and for locally generated "100
+Continue" responses.</para></item>
+        <item><para>CGI: return 504 (Gateway timeout) rather than 500
+when a script times out before returning status line/headers. PR
+42190.</para></item>
+        <item><para>prefork: Log an error instead of segfaulting when
+child startup fails due to pollset creation failures. PR
+46467.</para></item>
+        <item><para>mod_ext_filter: fix error handling when the filter
+prog fails to start, and introduce an onfail configuration option to
+abort the request or to remove the broken filter and continue. PR
+41120.</para></item>
+        <item><para>mod_include: support generating non-ASCII
+characters as entities in SSI. PR 25202.</para></item>
+        <item><para>core/utils: Enhance ap_escape_html API to support
+escaping non-ASCII chars</para></item>
+        <item><para>mod_rewrite: fix "B" flag breakage by reverting
+r589343. PR 45529.</para></item>
+        <item><para>mod_cgid: fix segfault problem on solaris. PR
+39332.</para></item>
+        <item><para>mod_ldap: Avoid a segfault when result-&gt;rc is
+checked in uldap_connection_init when result is NULL. This could
+happen if LDAP initialization failed. PR 45994.</para></item>
+        <item><para>Set Listen protocol to "https" if port is set to
+443 and no proto is specified (as documented but not implemented). PR
+46066.</para></item>
+        <item><para>mod_cache: Correctly save Content-Encoding of
+cachable entity. PR 46401.</para></item>
+        <item><para>Output -M and -S dumps (modules and vhosts) to
+stdout instead of stderr. PR 42571 and PR 44266 (dup).</para></item>
+        <item><para>mod_cache: When an explicit Expires or
+Cache-Control header is set, cache normally non-cacheable response
+statuses. PR 46346.</para></item>
+      </change>
+
+      <change from="2.2.10" to="2.2.11">
+        <item><para>core: When the ap_http_header_filter processes an
+error bucket, cleanup the passed brigade before returning
+AP_FILTER_ERROR down the filter chain. This unambiguously ensures the
+same error bucket isn't revisited.</para></item>
+        <item><para>core: Error responses set by filters were being
+coerced into 500 errors, sometimes appended to the original error
+response. Log entry of: 'Handler for (null) returned invalid result
+code -3'</para></item>
+        <item><para>configure: Don't reject libtool 2.x</para></item>
+        <item><para>mod_autoindex: add configuration option to insert
+string in HTML HEAD (IndexHeadInsert)</para></item>
+        <item><para>Add new LogFormat parameter, %k, which logs the
+number of keepalive requests on this connection for this request. PR
+45762</para></item>
+        <item><para>Export and install the mod_rewrite.h header to
+ensure the optional rewrite_mapfunc_t and ap_register_rewrite_mapfunc
+functions are available to third party modules.</para></item>
+        <item><para>mod_cache: Convert age of cached object to seconds
+before comparing it to age supplied by the request when checking
+whether to send a Warning header for a stale response. PR
+39713.</para></item>
+        <item><para>Build: Correctly set SSL_LIBS during openssl
+detection if pkgconfig is not available. PR 46018.</para></item>
+        <item><para>mod_proxy_ajp: Do not fail if response data is
+sent before all request data is read. PR 45911.</para></item>
+        <item><para>mod_proxy_balancer: Add in forced recovery for
+balancer members if all are in error state.</para></item>
+        <item><para>mod_proxy: Prevent segmentation faults by
+correctly adjusting the lifetime of the buckets read from the proxy
+backend. PR 45792.</para></item>
+        <item><para>mod_expires: Do not sets negative max-age /
+Expires header in the past. PR 39774.</para></item>
+        <item><para>mod_info: Was displaying the wrong value for the
+KeepAliveTimeout value</para></item>
+        <item><para>mod_proxy_ajp: Fix wrongly formatted requests
+where client sets Content-Length header, but doesn't provide a body.
+Servlet container always expects that next packet is body whenever C-L
+is present in the headers. This can lead to wrong interpretation of
+the packets. In this case send the empty body packet, so container can
+deal with that.</para></item>
+        <item><para>core: Add ap_timeout_parameter_parse to public
+API.</para></item>
+        <item><para>mod_proxy: Add the possibility to set the worker
+parameters connectiontimeout and ping in milliseconds.</para></item>
+        <item><para>Worker MPM: Crosscheck that idle workers are still
+available before using them and thus preventing an overflow of the
+worker queue which causes a SegFault. PR 45605.</para></item>
+        <item><para>Windows: Always build the odbc dbd driver on
+windows, to be consistent with the apr-util default</para></item>
+      </change>
+
+      <change from="2.2.1" to="2.2.2">
+        <item><para>mod_deflate: work correctly in an internal
+redirect</para></item>
+        <item><para>mod_proxy_balancer: Initialize members of a
+balancer correctly. PR 38227.</para></item>
+        <item><para>mod_proxy: Do not release connections from
+connection pool twice. PR 38793.</para></item>
+        <item><para>core: Prevent reading uninitialized memory while
+reading a line of protocol input. PR 39282.</para></item>
+        <item><para>mod_dbd: Update defaults, improve error
+reporting</para></item>
+        <item><para>mod_dbd: Create own pool and mutex to avoid
+problem use of process pool in request processing</para></item>
+        <item><para>HTML-escape the Expect error message. Not classed
+as security as an attacker has no way to influence the Expect header a
+victim will send to a target site.</para></item>
+        <item><para>htdbm: Fix crash processing -d option in 64-bit
+mode on HP-UX</para></item>
+        <item><para>htdbm: Warn the user when adding a plaintext
+password on a platform where it wouldn't work with the server (i.e.,
+anywhere that has crypt()).</para></item>
+        <item><para>mod_proxy: don't reuse a connection that may be to
+the wrong backend PR 39253</para></item>
+        <item><para>Default handler: Don't return output filter
+apr_status_t values. PR 31759.</para></item>
+      </change>
+
+      <change from="2.2.0" to="2.2.1">
+        <item><para>SECURITY: CVE-2005-3357 mod_ssl: Fix a possible
+crash during access control checks if a non-SSL request is processed
+for an SSL vhost (such as the "HTTP request received on SSL port"
+error message when an 400 ErrorDocument is configured, or if using
+"SSLEngine optional"). PR 37791.</para></item>
+        <item><para>SECURITY: CVE-2005-3352 mod_imagemap: Escape
+untrusted referer header before outputting in HTML to avoid potential
+cross-site scripting. Change also made to ap_escape_html so we escape
+quotes.</para></item>
+        <item><para>mod_proxy_ajp: Flushing of the output after each
+AJP chunk is now configurable at runtime via the 'flushpackets' and
+'flushwait' worker params. Minor MMN bump.</para></item>
+        <item><para>mod_proxy: Fix incorrect usage of local and shared
+worker init. PR 38403.</para></item>
+        <item><para>mod_isapi: Fix compiler errors on Unix
+platforms</para></item>
+        <item><para>mod_proxy_http: Do send keep-alive header if the
+client sent connection: keep-alive and do not close backend connection
+if the client sent connection: close. PR 38524.</para></item>
+        <item><para>mod_disk_cache: Return the correct error codes
+from bucket read failures, instead of APR_EGENERAL</para></item>
+        <item><para>Add APR/APR-Util Compiled and Runtime Version
+numbers to the output of 'httpd -V'.</para></item>
+        <item><para>http: If a connection is aborted while waiting for
+a chunked line, flag the connection as errored out</para></item>
+        <item><para>core: Reject invalid Expect header immediately. PR
+38123.</para></item>
+        <item><para>Fix mis-shifted 32 bit scope, masked to 64 bits as
+a method</para></item>
+        <item><para>mod_proxy: Fix KeepAlives not being allowed and
+set to backend servers. PR 38602.</para></item>
+        <item><para>Fix instdso.sh "sed syntax error" installation
+issue on some platforms. PR 38108.</para></item>
+        <item><para>mod_ssl: Fix possible crashes in shmcb with gcc 4
+on platforms requiring word-aligned pointers. PR 38838.</para></item>
+        <item><para>mod_proxy: If we get an error reading the upstream
+response, close the connection.</para></item>
+        <item><para>mod_proxy_ajp: Support common headers of the AJP
+protocol in responses. PR 38340.</para></item>
+        <item><para>mod_proxy_balancer: Do not overwrite the status of
+initialized workers and respect the configured status of uninitilized
+workers when creating a new child process.</para></item>
+        <item><para>mod_proxy_ajp: Crosscheck the length of the body
+chunk with the length of the ajp message to prevent mod_proxy_ajp from
+reading beyond the buffer boundaries and thus revealing possibly
+sensitive memory contents to the client.</para></item>
+        <item><para>Ensure that the proper status line is written to
+the client, fixing incorrect status lines caused by filters which
+modify r-&gt;status without resetting r-&gt;status_line, such as the
+built-in byterange filter.</para></item>
+        <item><para>mod_speling: Stop crashing with certain non-file
+requests.</para></item>
+        <item><para>mod_cache: Make caching of reverse proxies
+possible again. PR 38017.</para></item>
+        <item><para>Modify apr[util] .h detection to avoid breakage on
+VPATH builds using Solaris make (amoung others) and avoid breakage in
+./buildconf when srclib/apr[-util] are symlinks rather than
+directories proper.</para></item>
+        <item><para>Avoid Server-driven negotiation when a script has
+emitted an explicit Status: header. PR 38070.</para></item>
+        <item><para>Fix to avoid feeding C99 to C++
+compilers.</para></item>
+        <item><para>Chunk filter: Fix chunk filter to create correct
+chunks in the case that a flush bucket is surrounded by data
+buckets.</para></item>
+        <item><para>Fix syntax error in httpd.h with strict compilers.
+PR 37840.</para></item>
+        <item><para>Fix recursive ErrorDocument handling. PR
+36090.</para></item>
+        <item><para>Don't hang on error return from post_read_request.
+PR 37790.</para></item>
+        <item><para>Fix off-by-one error in proxy_balancer. PR
+37753.</para></item>
+      </change>
+
+      <change from="2.1.9" to="2.2.0">
+        <item><para>mod_negotiation: Minor performance tweak by
+reusing already calculated strlen.</para></item>
+        <item><para>Remove support for 'On' and 'Off' for
+AuthBasicProvider and AuthDigestProvider.</para></item>
+        <item><para>Add in new UseCanonicalPhysicalPort directive,
+which controls whether or not Apache will ever use the actual physical
+port when constructing the canonical port number.</para></item>
+        <item><para>mod_dav: Fix a null pointer dereference in an
+error code path during the handling of MKCOL.</para></item>
+        <item><para>mod_proxy_balancer: When finding best worker, use
+case insensitive match for scheme and host, but case sensitive for the
+rest of the path.</para></item>
+        <item><para>Require use of APR &gt;= 1.2.0 and APR-util &gt;=
+1.2.0 when configured to use external copies of the
+libraries.</para></item>
+        <item><para>Fix DESTDIR=... installation when using bundled
+copy of APR.</para></item>
+        <item><para>mod_dav: Fix handling of unknown state tokens in
+If: headers. PR: 37288.</para></item>
+        <item><para>Strip out Experimental MPMs that have gone nowhere
+since 2.0 (perchild, threadpool, leader).</para></item>
+      </change>
+
+      <change from="2.1.8" to="2.1.9">
+        <item><para>Add mod_authn_dbd (SQL-based
+authentication)</para></item>
+        <item><para>mod_proxy_ajp: Do not spool the entire response
+from AJP backend before sending it up the filter chain. PR
+37100.</para></item>
+        <item><para>mod_cache: Create new filters CACHE_OUT_SUBREQ /
+CACHE_SAVE_SUBREQ which only differ by the type from CACHE_OUT /
+CACHE_SAVE to ensure that subrequests to non-local resources work
+again.</para></item>
+        <item><para>mod_proxy: Do not lowercase the entire worker name
+of a BalancerMember since this breaks case sensitive URI's. PR
+36906.</para></item>
+        <item><para>core: AddOutputFilterByType is ignored for proxied
+requests. PR 31226.</para></item>
+        <item><para>mod_proxy_http: Prevent data corruption of POST
+request bodies when client accesses proxied resources with SSL. PR
+37145.</para></item>
+        <item><para>mod_ssl: Fix issue which could cause spurious
+warnings about use of name-based vhosts. PR 37051.</para></item>
+        <item><para>ab: Fix to ensure that only the expected number of
+requests are run. PR 36966.</para></item>
+        <item><para>mod_proxy_balancer: BalancerManager and proxies
+correctly handle member workers with paths. PR 36816.</para></item>
+        <item><para>mod_log_config: %{hextid}P will log the thread id
+in hex with APR versions 1.2.0 or higher.</para></item>
+        <item><para>httpd.exe/apachectl -V: display the
+DYNAMIC_MODULE_LIMIT setting, as in 1.3</para></item>
+        <item><para>Support dbd connection tied to conn_rec in
+mod_dbd</para></item>
+        <item><para>Fix use of pools in mod_dbd</para></item>
+        <item><para>Promote modules from "experimental": mod_dbd,
+mod_filter, mod_charset_lite.</para></item>
+        <item><para>mod_proxy_ajp: mod_proxy_ajp sends empty SSL
+attributes for non SSL connections. PR 36883.</para></item>
+        <item><para>Eliminated the NET_TIME filter, restructuring the
+timeout logic. This provides a working mod_echo on all platforms, and
+ensures any custom protocol module is at least given an initial
+timeout value based on the &lt;VirtualHost&gt; context's Timeout
+directive.</para></item>
+        <item><para>mod_proxy: Run the request_status hook also if
+there are no free workers or all workers are in error
+state</para></item>
+        <item><para>mod_proxy_connect: Fix high CPU loop on systems
+like UnixWare which trigger POLL_ERR or POLL_HUP on a terminated
+connection. PR 36951</para></item>
+        <item><para>mod_proxy_balancer: Fix handling of sticky
+sessions with Tomcat. PR 36507.</para></item>
+        <item><para>SECURITY: CVE-2005-2970 worker MPM: Fix a memory
+leak which can occur after an aborted connection in some limited
+circumstances</para></item>
+        <item><para>Doxygen fixups</para></item>
+        <item><para>mod_cache/mod_dir: Correct a subrequest lookup bug
+which was preventing mod_dir from serving indexes correctly with
+mod_cache enabled</para></item>
+      </change>
+
+      <change from="2.1.7" to="2.1.8">
+        <item><para>Fix lingering close implementation to match 1.3.x
+behaviour. PR 35292.</para></item>
+        <item><para>mod_ssl: Support limited buffering of request
+bodies to allow per-location renegotiation to proceed. PR
+12355.</para></item>
+        <item><para>Fix regression since 2.0.x in AllowOverride
+Options handling. PR 35330.</para></item>
+        <item><para>mod_ssl: Fix memory leak in ssl_util_algotypeof().
+PR 25659.</para></item>
+        <item><para>prefork, worker and event MPMs: Support a
+graceful-stop procedure: Server will wait until existing requests are
+finished or until  "GracefulShutdownTimeout" number of seconds before
+exiting.</para></item>
+        <item><para>prefork, worker and event MPMs: Prevent children
+from holding open listening ports upon graceful restart or stop. PR
+28167.</para></item>
+        <item><para>SECURITY: CVE-2005-2700 mod_ssl: Fix a security
+issue where "SSLVerifyClient" was not enforced in per-location context
+if "SSLVerifyClient optional" was configured in the vhost
+configuration.</para></item>
+        <item><para>mod_ssl: Catch parse errors from misconfigured or
+malformed CRLs. PR 36438.</para></item>
+        <item><para>mod_proxy/mod_proxy_balancer: lbmethods now
+implemented as providers. Prevent problems when no Vhost containers
+were configured with proxy balancers.</para></item>
+        <item><para>New provider function to list all available
+provider names in a specific group and version
+(ap_list_provider_names).</para></item>
+        <item><para>mod_cache: Enhance CacheEnable/CacheDisable to
+control caching on a per-protocol, per-host and per-path basis.
+Intended for proxy configurations.</para></item>
+        <item><para>mod_disk_cache: Canonicalise the storage key, for
+improved hit/miss ratio.</para></item>
+        <item><para>mod_cgid: Append .PID to the script socket
+filename and remove the script socket on exit.</para></item>
+        <item><para>mod_cgid: run the get_suexec_identity hook within
+the request-handler instead of within cgid. PR 36410.</para></item>
+        <item><para>Linux 2.0: remove support for threaded MPM's due
+to linuxthreads use of SIGUSR1 clashing with graceful restart
+signal.</para></item>
+      </change>
+
+      <change from="2.1.6" to="2.1.7">
+        <item><para>SECURITY: CVE-2005-2491 Fix integer overflows in
+PCRE in quantifier parsing which could be triggered by a local user
+through use of a carefully-crafted regex in an .htaccess
+file.</para></item>
+        <item><para>mod_proxy/mod_proxy_balancer: Provide a simple,
+functional interface to add additional balancer lb selection methods
+without requiring code changes to mod_proxy/mod_proxy_balancer; these
+can be implemented via sub-modules now.</para></item>
+        <item><para>mod_cache: Fix incorrectly served 304 responses
+when expired cache entity is valid, but cache is unwritable and
+headers cannot be updated.</para></item>
+        <item><para>mod_cache: Remove entities from the cache when
+re-validation receives a 404 or other content-no-longer-present
+error</para></item>
+        <item><para>mod_disk_cache: Properly remove files from cache
+when needed</para></item>
+        <item><para>mod_disk_cache: Support htcacheclean removing
+directories</para></item>
+        <item><para>htcacheclean: Add -t option to remove empty
+directories</para></item>
+        <item><para>Remove the base href tag from mod_proxy_ftp, as it
+breaks relative links for clients not using an Authorization
+header</para></item>
+        <item><para>mod_cache: Restore the HTTP status of cached
+responses</para></item>
+        <item><para>mod_cache: Store varied contents all in the same
+prefix for a varied URI</para></item>
+        <item><para>mod_cache: Run the CACHE_SAVE and CACHE_OUT
+Filters after other content filters</para></item>
+        <item><para>mod_negotiation: Correctly report 404 instead of
+403 for missing files</para></item>
+        <item><para>new hook (request_status) that gets ran in
+proxy_handler just before the final return. This gives modules an
+opportunity to do something based on the proxy status. (minor MMN
+bump)</para></item>
+        <item><para>Add additional SSLSessionCache option,
+'nonenotnull', which is similar to 'none' (disabling any external
+shared cache) but forces OpenSSL to provide a non-null session
+ID</para></item>
+        <item><para>Add httxt2dbm to support/ for creating RewriteMap
+DBM Files</para></item>
+        <item><para>Add SSL_COMPRESS_METHOD variable (included in
++StdEnvVars) to note the negotiated compression</para></item>
+        <item><para>Fixed complaints about unpackaged files within the
+RPM build after changes to the config files</para></item>
+        <item><para>Fix shutdown for the Worker MPM when an Accept
+Filter is used. Instead of just closing the socket, a HTTP request is
+made, to make sure the child is always awakened</para></item>
+      </change>
+
+      <change from="2.1.5" to="2.1.6">
+        <item><para>Fix htdbm password validation for records which
+included comments</para></item>
+        <item><para>mod_cgid: Fix buffer overflow processing
+ScriptSock directive</para></item>
+      </change>
+
+      <change from="2.1.4" to="2.1.5">
+        <item><para>mod_ssl: Setting the Protocol to 'https' can
+replace the use of the 'SSLEngine on' command</para></item>
+        <item><para>core: Refactor the mapping of Accept Filters to
+Sockets. Add the AcceptFilter and Protocol directives to aid in
+mapping filter types. Extend the Listen directive to optionally take a
+protocol name.</para></item>
+        <item><para>mod_disk_cache: Support storing multiple
+variations of one URL. PR 35211.</para></item>
+        <item><para>mod_disk_cache: Atomically create the header data
+file</para></item>
+        <item><para>mod_cache: Fix 'Vary: *' behavior to be RFC
+compliant</para></item>
+        <item><para>mod_cache: Rename 'generate_name' to
+'ap_cache_generate_name'</para></item>
+        <item><para>mod_mime_magic: Handle CRLF-format magic files so
+that it works with the default installation on Windows</para></item>
+        <item><para>core: Allow multiple modules to register interest
+in a single configuration command</para></item>
+        <item><para>authn_provider_alias: Adds the configuration block
+tag &lt;AuthnProviderAlias baseProvider Alias&gt; Authentication
+directives contained within this block can be referenced as a new
+authProvider using the AuthBasicProvider or AuthDigestProvider
+directive. These directives will be merged in to the per_dir
+configuration just before the base provider is called.</para></item>
+        <item><para>ap_getword_conf: Fix backslashes at the end of
+configuration directives.</para></item>
+        <item><para>mod_dbd: New additions: mod_dbd.c, mod_dbd.h,
+mod_dbd.xml Provide module hooks for apr_dbd; optimise for httpd
+threaded and non-threaded arch</para></item>
+        <item><para>ab: SSL support rewritten, improved, and enabled
+if SSL is enabled during the build; -f and -Z arguments added to
+specify SSL protocol options</para></item>
+        <item><para>mod_info: Show the Quick Handler</para></item>
+        <item><para>mod_ldap: Add the directive LDAPVerifyServerCert
+to specify whether to force verification of the server certificate
+when establishing an SSL connection to the LDAP server.</para></item>
+        <item><para>mod_proxy: Run mod_rewrite before mod_proxy in the
+translate_name hook.</para></item>
+        <item><para>Add AP_INIT_TAKE_ARGV for configuration commands.
+(minor MMN bump)</para></item>
+        <item><para>ap_get_local_host() rewritten for
+APR</para></item>
+        <item><para>Add the ap_vhost_iterate_given_conn function to
+expose the information used in Name Based Virtual Hosting. (minor MMN
+bump)</para></item>
+        <item><para>Remove the never working ap_method_list_do and
+ap_method_list_vdo</para></item>
+        <item><para>Added makefile and doc for building mod_ssl on the
+NetWare platform</para></item>
+        <item><para>mod_deflate: Merge the Vary header, isntead of
+Setting it. Fixes applications that send the Vary Header themselves,
+and also apply mod_deflate as an output filter</para></item>
+        <item><para>Change the default (when not present in the config
+file) setting for UseCanonicalName to Off</para></item>
+        <item><para>mod_userdir: The module no longer does any
+remapping unless the UserDir directive is present in the config
+file</para></item>
+        <item><para>Massively simplify the distributed httpd.conf by
+removing many features and many directives that are at their default
+setting. Add a selection of example config excerpts for adding extra
+features in the conf/extra/ directory. Install the distributed config
+and the extra config examples in the conf/original/ directory during
+make install.</para></item>
+        <item><para>NetWare: Reposition mod_asis, mod_actions,
+mod_cgi, mod_imagemap, mod_userdir and mod_autoindex as shared modules
+rather than built-in modules within the NetWare build</para></item>
+        <item><para>Rename mod_imap to mod_imagemap</para></item>
+        <item><para>util_ldap: Eliminate the load ordering of mod_ldap
+and mod_authnz_ldap by changing the mod_ldap exported functions to
+optional functions</para></item>
+      </change>
+
+      <change from="2.1.3" to="2.1.4">
+        <item><para>Don't let a subrequest inherit headers describing
+the original request's body</para></item>
+        <item><para>Fix Windows CompContext buff size
+miscalculation</para></item>
+        <item><para>Add ReceiveBufferSize directive to control the TCP
+receive buffer</para></item>
+        <item><para>mod_proxy: Add proxy-sendextracrlf option to send
+an extra CRLF at the end of the request body to work with really old
+HTTP servers</para></item>
+        <item><para>util_ldap: Keep track of the number of attributes
+retrieved from LDAP so that all the values can be properly cached even
+if the value is NULL. PR 33901.</para></item>
+        <item><para>mod_cache: Fix error where incoming Cache-Control
+would be ignored</para></item>
+        <item><para>mod_cache: Correctly handle originally conditional
+requests</para></item>
+        <item><para>mod_disk_cache: Correctly update cached headers on
+revalidated responses</para></item>
+        <item><para>worker MPM/mod_status: Support per-worker tracking
+of pid and generation in the scoreboard so that mod_status can
+accurately represent workers in processes which are gracefully
+terminating. (major MMN bump)</para></item>
+        <item><para>Correctly export all mod_dav public
+functions</para></item>
+      </change>
+
+      <change from="2.1.2" to="2.1.3">
+        <item><para>mod_ssl: Add ssl_ext_lookup optional function for
+accessing certificate extensions</para></item>
+        <item><para>Add support for use of an external PCRE library;
+pass the --with-pcre flag to configure. PR 27550.</para></item>
+        <item><para>Renamed regex interfaces to be namespace-safe, and
+moved from pcreposix.h header to ap_regex.h: regex_t-&gt;ap_regex_t,
+regmatch_t-&gt;ap_regmatch_t; REG_*-&gt;AP_REG_*; functions
+reg*-&gt;ap_reg*. PR 27550.</para></item>
+        <item><para>Only recompile buildmark.c when we have to relink
+httpd</para></item>
+        <item><para>mod_cache: Fix up handling of revalidated
+responses</para></item>
+        <item><para>mod_disk_cache: Properly load cached ETag from
+on-disk structures</para></item>
+        <item><para>mod_authnz_ldap: Added an optional second
+parameter to AuthLDAPURL to allow it to override the connection type
+set in mod_ldap. This parameter can be set to NONE, SSL or TLS |
+STARTTLS</para></item>
+        <item><para>Fix --with-apr=/usr and/or --with-apr-util=/usr.
+PR 29740.</para></item>
+        <item><para>mod_proxy: Fix ProxyRemoteMatch directive. PR
+33170.</para></item>
+        <item><para>mod_proxy: Fix ap_proxy_canonenc API. PR
+32459.</para></item>
+        <item><para>mod_cache: Add CacheStorePrivate and
+CacheStoreNoStore directive</para></item>
+        <item><para>Add --enable-pie flag to configure, to build httpd
+as a Position Independent Executable where supported
+(GCC/binutils)</para></item>
+        <item><para>proxy_balancer: Add in load-balancing via weighted
+traffic byte count.</para></item>
+        <item><para>mod_disk_cache: Cache r-&gt;err_headers_out
+headers. This allows CGI scripts to be properly cached.</para></item>
+        <item><para>mod_ldap: Updated to use the new apr-util v1.1
+apr_ldap_*_option() API for the setting of server and client SSL
+certificates. Replaced LDAPTrustedCA directive with
+LDAPTrustedGlobalCert and LDAPTrustedClientCert directives to
+correctly support global certs (CA certs / Netware client certs) and
+per connection client certs as supported by Netware, OpenLDAP and
+Netscape/Mozilla.</para></item>
+        <item><para>mod_cache: Remove unimplemented
+CacheForceCompletion directive</para></item>
+        <item><para>support/check_forensic: Fix temp file
+usage</para></item>
+        <item><para>mod_ssl: Add SSLCADNRequestFile and
+SSLCADNRequestPath directives which can be used to configure a
+specific list of CA names to send in a client certificate request. PR
+32848.</para></item>
+        <item><para>--with-module can now take more than one module to
+be statically linked:
+--with-module=&lt;modtype&gt;:&lt;modfile&gt;,&lt;modtype&gt;:&lt;modfile&gt;,...
+If the &lt;modtype&gt;-subdirectory doesn't exist it will be created
+and populated with a standard Makefile.in.</para></item>
+        <item><para>Remove some compiler warnings within the LDAP
+modules</para></item>
+        <item><para>Add a build script to create a solaris
+package</para></item>
+        <item><para>ap_http_scheme() replaced with ap_http_method() -
+this function returns the scheme (http v.s. https)</para></item>
+        <item><para>mod_proxy: Fix a request corruption problem and a
+buffering problem which sometimes prevented proxy-sendchunks from
+working</para></item>
+        <item><para>Fix the RPM spec file so that an RPM build now
+works. An RPM build now requires system installations of APR and
+APR-util</para></item>
+        <item><para>Significantly simplify the load balancer
+scheduling algorithm for the proxy BalancerMember weighting.
+loadfactors (lbfactors) are now normalized with respect to each
+other.</para></item>
+        <item><para>mod_dumpio: Added to the available module suite;
+it is an I/O logging/dumping module. Placed in the (new) debug module
+subdirectory. mod_bucketeer moved to that directory as
+well.</para></item>
+        <item><para>core: Add support for APR_TCP_DEFER_ACCEPT to
+defer accepting of a connection until data is available.</para></item>
+      </change>
+
+      <change from="2.1.1" to="2.1.2">
+        <item><para>mod_proxy: Respect errors reported by
+pre_connection hooks</para></item>
+        <item><para>core: Error out on sections that are missing an
+argument instead of silently consuming the section. PR
+25460.</para></item>
+        <item><para>mod_cache/mod_mem_cache/mod_disk_cache: Move out
+of experimental.</para></item>
+        <item><para>Upgraded PCRE to version 5.0</para></item>
+        <item><para>mod_cgid: Catch configuration problem where two
+web server instances share same ServerRoot but admin forgot to use
+ScriptSock.</para></item>
+        <item><para>mod_cgi: Ensure that all stderr is logged for a
+script which returns a Location header to generate a non-local
+redirect. PR 20111.</para></item>
+        <item><para>Added the Event MPM to more efficiently handle
+clients during a Keep Alive request</para></item>
+      </change>
+
+      <change from="2.1.0" to="2.1.1">
+        <item><para>mod_proxy_http: Stream content better - always
+flush buffered data to the client before blocking waiting for new
+data. PR 19954.</para></item>
+        <item><para>mod_ssl: Add support for command-line option "-t
+-DDUMP_CERTS" which will dump the filenames of all configured SSL
+certificates to stdout</para></item>
+        <item><para>mod_disk_cache: Remove a bunch of non-implemented
+garbage collection and cache size directives that are now available
+through htcacheclean</para></item>
+        <item><para>Add htcacheclean to support/ for assistance with
+mod_disk_cache</para></item>
+        <item><para>mod_authnz_ldap: Added the directive "Requires
+ldap-filter" that allows the module to authorize a user based on a
+complex LDAP search filter</para></item>
+        <item><para>mod_usertrack: Run the fixups hook before other
+modules. PR 29755.</para></item>
+        <item><para>Allow mod_authnz_ldap authorization functionality
+to be used without requiring the user to also be authenticated through
+mod_authnz_ldap. This allows other authentication modules to take
+advantage of LDAP authorization only [PR 28253]</para></item>
+        <item><para>Log the client IP address when an error occurs
+disabling nagle on a connection, but log at a severity of debug since
+this error generally means that the connection was dropped before data
+was sent. Log the client IP address when reporting errors in the core
+output filter.</para></item>
+        <item><para>core: Add a warning message if the request line
+read fails</para></item>
+        <item><para>mod_rewrite: Removed the MaxRedirects option in
+favor of the core LimitInternalRecursion directive</para></item>
+        <item><para>mod_info: Added listing of the Request Hooks and
+added more build information like 'httpd -V' contains. Changed output
+to XHTML.</para></item>
+        <item><para>mod_info: Rewrote config tree walk using a
+recursive function. Added ?config option. Added printout of config
+filename and line numbers.</para></item>
+        <item><para>mod_proxy: Fix type error that prevents
+proxy-sendchunks from working</para></item>
+        <item><para>mod_proxy: Fix data corruption by properly setting
+aside buckets</para></item>
+        <item><para>mod_proxy: If a request has a blank body and has a
+0 Content-Length headers, pass that to the proxy</para></item>
+        <item><para>Recognize QSA flag in mod_rewrite
+again</para></item>
+        <item><para>Restructured mod_auth_ldap to fit the new
+authentication model. The module is now called authnz_ldap and has
+been moved out of the modules/experimental area and into modules/aaa
+with the other auth modules. Both the authn_ldap provider and the
+authz_ldap handler are contained within the authnz_ldap module. The
+authz_ldap handler introduces 3 new "requires" values for handling
+authorization. These handlers are ldap-user, ldap-group and
+ldap-dn.</para></item>
+        <item><para>Fix some compiler warnings in proxy</para></item>
+        <item><para>mod_ssl: Add SSL_CLIENT_V_REMAIN variable,
+representing the number of days until the client cert
+expires</para></item>
+        <item><para>Add test_config hook, run only if httpd is invoked
+using -t</para></item>
+        <item><para>Improve error handling for corrupted pid
+files</para></item>
+        <item><para>mod_proxy.c and proxy_util.c: Enable compiling on
+2.0-HEAD (for backwards compatibility): Avoids mod_ssl.h (not included
+in 2.0-HEAD) and use apr_socket_create_ex for 0.9.x</para></item>
+        <item><para>Added proxy_ajp.c module for proxy support to
+ajp:// backends.</para></item>
+        <item><para>Fixes the build of proxy on Windows. Since the
+proxy_module is declared as extern using AP_MODULE_DECLARE_DATA that
+expands to dllexport, there is a LNK2001 error when building
+proxy_http.</para></item>
+        <item><para>Remove LDAP toolkit specific code from util_ldap
+and mod_auth_ldap</para></item>
+        <item><para>Remove deprecated/removed
+APR_STATUS_IS_SUCCESS().</para></item>
+        <item><para>perchild MPM: Fix thread safety problem in the use
+of longjmp()</para></item>
+        <item><para>Add load balancer support to the scoreboard in
+preparation for load balancing support in mod_proxy</para></item>
+        <item><para>mod_nw_ssl: Added the directive NWSSLUpgradeable
+to mod_nw_ssl to allow a non-secure connection to be upgraded to
+secure connections</para></item>
+        <item><para>core: Add Options= syntax to AllowOverride to
+specify which options may be overridden in .htaccess files. PR
+29310.</para></item>
+        <item><para>ab: Handle long URLs with an error instead of an
+buffer overflow. PR 28204.</para></item>
+        <item><para>mod_so, core: Add new command line options to
+print all loaded modules. '-t -D DUMP_MODULES' and '-M' will show all
+static and shared modules as loaded from the configuration
+file</para></item>
+        <item><para>mod_autoindex: Add ShowForbidden to IndexOptions
+to list files that are not shown because the subrequest returned 401
+or 403. PR 10575.</para></item>
+        <item><para>mod_headers: implement "Early" processing option
+in post_read_request to enable Header and RequestHeader directives to
+be used to set up testcases for pre-fixups request
+phases</para></item>
+        <item><para>mod_proxy: multiple bugfixes, principally support
+cookies in ProxyPassReverse, and don't canonicalise URL passed to
+backend. Documentation correspondingly updated.</para></item>
+        <item><para>mod_deflate: support gzip flags in
+inflate_out_filter</para></item>
+        <item><para>Drop the ErrorHeader directive which turned out to
+be a misnomer. Instead there's a new optional flag for the Header
+directive ('always'), which keeps the former ErrorHeader
+functionality.</para></item>
+        <item><para>mod_deflate: Don't deflate responses with zero
+length e.g. proxied 304's</para></item>
+        <item><para>&lt;IfModule&gt; now recognizes the module
+identifier in addition to the file name. PR 29003.</para></item>
+        <item><para>mod_ssl: Add "SSLHonorCipherOrder" directive to
+enable the OpenSSL 0.9.7 flag which uses the server's cipher order
+rather than the client's. PR 28665.</para></item>
+        <item><para>mod_ssl: Drop support for the CompatEnvVars
+argument to SSLOptions, which was never actually implemented in
+2.0.</para></item>
+        <item><para>Fix bug in mod_deflate that unconditionally sent
+deflate'd output even when Accept-Encoding is not
+present.</para></item>
+        <item><para>Pass environment variables through to piped
+loggers and start them via the shell, resolving regressions since 1.3.
+PR 28815.</para></item>
+        <item><para>External rewrite map responses are no longer
+limited to 2048 bytes.</para></item>
+        <item><para>Proxy server was deleting cookies that Apache had
+already assigned if the origin server had set any cookies. PR
+27023.</para></item>
+        <item><para>Removed old and unmaintained ap_add_named_module
+API and changed the following APIs to return an error instead of hard
+exiting: ap_add_module, ap_add_loaded_module,
+ap_setup_prelinked_modules, and
+ap_process_resource_config.</para></item>
+        <item><para>mod_headers: Allow %% in header values to
+represent a literal %</para></item>
+        <item><para>mod_headers: Allow env clauses also for 'echo' and
+'unset' actions</para></item>
+        <item><para>mod_headers: Allow 'echo' also for
+ErrorHeaders</para></item>
+        <item><para>mod_deflate: New option for DEFLATE output file
+(force-gzip), new output filter 'INFLATE' for uncompressing
+responses</para></item>
+        <item><para>Added new module mod_version, which provides
+version dependent configuration containers</para></item>
+        <item><para>mod_log_config now logs all Set-Cookie headers if
+the %{Set-Cookie}o format is used. PR 27787.</para></item>
+        <item><para>Allow Digest providers to return AUTH_DENIED to
+propagate a 401 status and terminate the provider chain prior to
+checking the password</para></item>
+        <item><para>mod_cgid: Don't allow Scriptsock to be specified
+inside VirtualHost; Don't place script socket inside default server
+root instead of actual server root. PR 27886.</para></item>
+        <item><para>mod_proxy: Fix handling of non-200 success status
+codes when "ProxyErrorOverride On" is configured. PR
+20183.</para></item>
+        <item><para>Threaded MPMs for Unix and Win32: Add support for
+ThreadStackSize directive (previously NetWare-only) to override
+default thread stack size for threads which handle client connections.
+Required for some third-party modules on platforms with small default
+thread stack size.</para></item>
+        <item><para>minor mod_auth_basic and mod_auth_digest sync.
+mod_auth_basic now populates r-&gt;user with the (possibly
+unauthenticated) user, and mod_auth_digest returns 500 when a provider
+returns AUTH_GENERAL_ERROR.</para></item>
+        <item><para>The whole codebase was relicensed and is now
+available under the Apache License, Version 2.0
+(http://www.apache.org/licenses)</para></item>
+        <item><para>Delete some make-generated files in the server
+directory during "make clean" processing. PR 26552.</para></item>
+        <item><para>Add core version query function
+(ap_get_server_revision) and accompanying ap_version_t structure
+(minor MMN bump)</para></item>
+        <item><para>mod_rewrite: EOLs sent by external rewritemaps are
+now consumed as whole. That way, on systems with more than one EOL
+character rewritemap programs no longer need to switch stdout to
+binary mode. PR 25635.</para></item>
+        <item><para>mod_rewrite: Introduce the ability to force a
+content handler via the [handler=...] flag</para></item>
+        <item><para>mod_rewrite: Introduce the RewriteCond -x check,
+which returns true if the pattern is a file with execution
+permissions</para></item>
+        <item><para>mod_rewrite: Allow proxying and RewriteRules in
+directory context for subrequests. PR 14648, 15114.</para></item>
+        <item><para>mod_rewrite: Allow setting of any valid HTTP
+response code. PR 25917.</para></item>
+        <item><para>mod_rewrite: Cookie creation now works locale
+independent</para></item>
+        <item><para>mod_ssl: Add support for distributed session cache
+using 'distcache'</para></item>
+        <item><para>mod_dav: Disallow requests with an unescaped hash
+character in the Request-URI. PR 21779.</para></item>
+        <item><para>mod_proxy with ProxyErrorOverride On in a
+reverse-proxy configuration attaches a body to the 302 response and a
+wrong Content-Length header. PR: 22951.</para></item>
+        <item><para>Bring ErrorHeader concept forward from 1.3, so
+that response header fields can be set for return even on errors or
+external redirects.</para></item>
+        <item><para>Fix &lt;Limit&gt; and &lt;LimitExcept&gt; parsing
+to require a closing '&gt;' in the initial container. PR
+25414.</para></item>
+        <item><para>Clean up httpd -V output: Instead of displaying
+the MPM source directory, display the MPM name and some MPM
+properties</para></item>
+        <item><para>mod_ssl/mod_status: Re-enable support for output
+of SSL session cache information in server-status page.</para></item>
+        <item><para>mod_ssl: Remove the shmht session cache, shmcb
+should be used instead.</para></item>
+        <item><para>mod_logio: Account for some bytes handed to the
+network layer prior to dropped connections.</para></item>
+        <item><para>mod_autoindex: new directive
+IndexStyleSheet</para></item>
+        <item><para>Fix uninitialized gprof directory name in prefork
+MPM. PR 24450.</para></item>
+        <item><para>Log an error when requests for URIs which fail to
+map to a valid filesystem name are rejected with 403.</para></item>
+        <item><para>Switch to APR 1.0 API</para></item>
+        <item><para>Major overhaul of mod_include's filter parser. The
+new parser code is expected to be more robust and should catch all of
+the edge cases that were not handled by the previous one. This
+includes a binary incompatible change of mod_include's external
+API.</para></item>
+        <item><para>mod_rewrite: Allow forced mimetypes [T=...] to get
+expanded. PR 14223.</para></item>
+        <item><para>mod_rewrite: Fix LA-U and LA-F lookups in
+directory context. Previously the current rewrite state was just used
+as lookup path, which lead to strange and often useless results.
+Related to PR 8493.</para></item>
+        <item><para>Change Listen directive to bind to all addresses
+when a hostname is not specified</para></item>
+        <item><para>Correct failure with Listen directives on machines
+with IPv6 enabled</para></item>
+        <item><para>Fix a link failure in mod_ssl when the OpenSSL
+libraries contain the ENGINE functions but the engine header files are
+missing</para></item>
+        <item><para>mod_rewrite: RewriteRules in server context using
+the force type feature [T=...] no longer disable
+MultiViews</para></item>
+        <item><para>mod_rewrite: Allow piped rewrite logs to be
+relative to ServerRoot</para></item>
+        <item><para>mod_authz_groupfile: Strip trailing spaces of
+group names. This hopefully saves some hours of searching for typos.
+PR 12863.</para></item>
+        <item><para>mod_actions: Propagate the handler name to the
+action script via the REDIRECT_HANDLER environment
+variable</para></item>
+        <item><para>mod_actions: Introduce the "virtual" modifier to
+the Action directive, which allows the use of handlers for virtual
+locations. PR 8431.</para></item>
+        <item><para>mod_speling: Recognize AcceptPathInfo setting for
+the particular location. Default is to reject path information. PR
+21059.</para></item>
+        <item><para>mod_ext_filter: Add the ability to filter request
+bodies</para></item>
+        <item><para>Fix some broken log messages in WinNT
+MPM</para></item>
+        <item><para>prefork MPM: Use the right permissions for the
+directory created for gprof support</para></item>
+        <item><para>Fix a compile failure with recent OpenSSL and
+picky compilers (e.g., OpenSSL 0.9.7a and xlc_r on AIX)</para></item>
+        <item><para>OpenSSL headers should be included as
+"openssl/ssl.h", and not rely on the INCLUDE path to be defined
+properly. PR 11310.</para></item>
+        <item><para>Modify APACHE_CHECK_SSL_TOOLKIT to detect
+SSL-C</para></item>
+        <item><para>Replace the APACHE_CHECK_SSL_TOOLKIT method with a
+cleaner one, using autoconf tools (AC_CHECK_HEADER, AC_CHECK_LIB
+etc).</para></item>
+        <item><para>change directive name from 'compressionlevel' to
+'deflatecompressionlevel'</para></item>
+        <item><para>mod_negotiation: quality values are now parsed
+independent from the current locale. level values are now really
+parsed as integers. PR 17564.</para></item>
+        <item><para>Extend mod_negotiation to evaluate the environment
+variables no-gzip and gzip-only-text/html the same way as mod_deflate
+does.</para></item>
+        <item><para>mod_rewrite: Fix some problems reporting errors
+with mapping programs (RewriteMap prg:/something)</para></item>
+        <item><para>Return 413 if chunk-ext-header is too long rather
+than reading from the truncated line. PR 15857.</para></item>
+        <item><para>Allow restart of httpd to occur even with syntax
+errors in the config file. PR 16813.</para></item>
+        <item><para>Use APR_LAYOUT instead of APACHE_LAYOUT in
+configure. PR 15679.</para></item>
+        <item><para>Remove files on 'make distclean' that should be.
+PR 15592.</para></item>
+        <item><para>Allow apachectl to perform status with links and
+elinks as well.</para></item>
+        <item><para>mod_log_config change optional hook to return
+previous handler</para></item>
+        <item><para>Forward port of mod_actions' ability to handle
+arbitrary methods with the Script directive</para></item>
+        <item><para>Let suexec send a message to stderr, if it failed
+or its policy was violated. This message appears in the error log and
+allows for easier debugging. PR 5381, 7638, 8255, 10773</para></item>
+        <item><para>Modify buildconf to copy all required files into
+httpd's tree</para></item>
+        <item><para>Allow mod_dav to do weak entity comparison
+functions.</para></item>
+        <item><para>Move RFC 1413 ident requests from core to new
+module mod_ident</para></item>
+        <item><para>Add mod_authz_owner - a forward port of "Require
+file-owner" and "Require file-group", which was already present in
+version 1.3.21</para></item>
+        <item><para>Add mod_dav_lock - a generic subset of the DAV
+locking implementation</para></item>
+        <item><para>Replace some of the mutex locking in the worker
+MPM with atomic operations for higher concurrency</para></item>
+        <item><para>Allow 'make depend' to work with non-GCC
+compilers</para></item>
+        <item><para>If an httpd.conf has commented out AddModule
+directives, apxs -i -a will add an un-commented AddModule directive
+for the new module, which breaks the config. PR: 11212.</para></item>
+        <item><para>Fix mod_proxy handling of filtered input
+bodies</para></item>
+        <item><para>Move the check of the Expect request header field
+after the hook for ap_post_read_request, since that is the only
+opportunity for modules to handle Expect extensions</para></item>
+        <item><para>Rewrite of aaa modules to an authn/authz
+model</para></item>
+      </change>
+
+      <change from="2.0.55" to="2.0.56">
+        <item><para>Preserve the Content-Length header for a proxied
+HEAD response. PR 18757.</para></item>
+        <item><para>mod_cgi(d): Remove block on OPTIONS method so that
+scripts can respond to OPTIONS directly rather than via server
+default. PR 15242.</para></item>
+      </change>
+
+      <note type="installation">
+        <para>Httpd requires a special user and group,
+"<command>www</command>". This can be changed by modifying the
+<command>User</command> and <command>Group</command> directives in the
+<command>/etc${SB_INSTALL_PREFIX}/httpd.conf</command> configuration file.</para>
+        <para>On all platforms, the default MPM (Multi-Processing
+Module) is "prefork" (non-threaded, pre-forking). The "worker" MPM is
+available (hybrid multi-threaded multi-process) for all platforms
+except HP-UX 10.20. The "<command>MPM</command>" variable in the
+startup script is used to set which MPM to use. Further information on
+httpd MPMs is available at <ulink url="http://httpd.apache.org/docs/2.2/mpm.html">http://httpd.apache.org/docs/2.2/mpm.html</ulink></para>
+        <para>Log files are saved to
+<command>/var${SB_INSTALL_PREFIX}/log</command> by default. The
+"<command>ErrorLog</command>" and "<command>TransferLog</command>"
+directives can be used to change the path to the log files.</para>
+        <para>Beginning with the 2.2 series, configuration files have
+been split out into multiple files, rather than one monolothic
+<command>httpd.conf</command> file. While a main
+<command>httpd.conf</command> file remains, it includes the split-out
+configuration files in the <command>/etc${SB_INSTALL_PREFIX}/extra</command>
+directory.</para>
+      </note>
+
+      <note type="usage">
+        <para>The following modules are not enabled by default:
+<command>authn_dbd_module</command>, <command>dbd_module</command>,
+<command>dav_module</command>, <command>dav_fs_module</command>,
+<command>dav_lock_module</command>,
+<command>authnz_ldap_module</command>, <command>ldap_module</command>,
+<command>ssl_module</command>, and <command>suexec_module</command>.
+To include them, simply uncomment the "<command>LoadModule</command>"
+line in the configuration file.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

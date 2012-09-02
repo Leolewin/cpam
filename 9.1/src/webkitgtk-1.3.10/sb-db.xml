@@ -1,0 +1,251 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="webkitgtk" version="1.3.10" revision="1"
+  systype="*-linux*|*-solaris*">
+    <build-name>webkit-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="ed33a02a225320aeace628a4f6b1a17b"
+        checksum-type="md5" size="8471415"
+        path="src/webkit-1.3.10.tar.gz"/>
+      <patch checksum="62be096490e3d72781dd21a9f764eba7"
+        checksum-type="md5" size="37262"
+        path="src/webkit-1.3.10.tww.patch"/>
+      <patch checksum="2ef354adba1601a87ca4aab056ce2734"
+        checksum-type="md5" size="9374"
+        path="src/webkit-1.3.10.rename_m_unit.patch"/>
+      <patch checksum="39ef12b7d496c76fca1426b62de8f826"
+        checksum-type="md5" size="1705"
+        path="src/webkit-1.3.10.explicit_yield.patch"/>
+      <patch checksum="fd3789b39c33d2ff166e691bbdb98fec"
+        checksum-type="md5" size="5210"
+        path="src/webkit-1.3.10.rename_TSNONE.patch"/>
+      <patch checksum="bedccf81dc0ac460275ec1e549748be8"
+        checksum-type="md5" size="17950498"
+        path="src/webkit-1.3.10.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" var="GCC" install-name="gcc44"
+        add-path="prepend" systype="!*-linux*">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="!*-linux*"/>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="gperf" install-name="gperf30"
+        add-path="prepend" type="build">v==3.0.4</depend>
+      <depend program="python" install-name="python26"
+        add-path="prepend" type="build">v&gt;=2.6.7</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="enchant" var="LIBENCHANT"
+        install-name="libenchant16"
+        systype="!*-irix*">v&gt;=1.6.0</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf24"
+        add-path="prepend">v&gt;=2.4.6</depend>
+      <depend program="gawk" install-name="gawk31" add-path="prepend"
+        type="build">v&gt;=3.1.8</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend" systype="*-linux*">v&gt;=2.26.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        module="gcc44" add-path="prepend"
+        systype="!*-linux*">v&gt;=2.26.1</depend>
+      <depend program="gnutls" var="LIBGNUTLS"
+        install-name="libgnutls210">v&gt;=2.10.5</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libsoup" var="LIBSOUP"
+        install-name="libsoup232">v&gt;=2.32.2</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        add-path="prepend" type="build">v&gt;=2.7.8</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11" add-path="prepend"
+        type="build">v&gt;=1.1.26</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="sqlite" var="LIBSQLITE"
+        install-name="libsqlite37">v&gt;=3.7.7.1</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff39">v&gt;=3.9.5</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_gccsubdir="gcc44"
+
+_includedir="${SB_INSTALL_PREFIX}/include"
+_libdir="${SB_INSTALL_PREFIX}/lib"
+
+case "${SB_SYSTYPE}" in
+*-linux*)
+  _libenchant_lib="${SB_VAR_LIBENCHANT_LIB}"
+  _libglib_lib="${SB_VAR_LIBGLIB_LIB}" ;;
+*)
+  ARGS="${ARGS+${ARGS}} --disable-jit" ;;
+esac
+
+export PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${_libenchant_lib:-${SB_VAR_LIBENCHANT_LIB}/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBSQLITE_LIB}/pkgconfig:\
+${SB_VAR_LIBSOUP_LIB}/pkgconfig:\
+${SB_VAR_LIBGNUTLS_LIB}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:\
+${_libglib_lib:-${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBXSLT+:${SB_VAR_LIBXSLT_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-bbigtoc -Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CFLAGS="-O2 -D_HPUX_SOURCE"
+  CXXFLAGS="-O2 -D_HPUX_SOURCE"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-solaris2.[89])
+  ${SB_PATH_SED} -i -e 's|OLD_SOLARIS_SYSTEM_WITH_GCC|1|g' \
+Source/JavaScriptCore/wtf/Platform.h ;;
+esac
+
+if [ "${SB_VAR_ICU+set}" = "set" ]; then
+  _unicode_backend=icu
+else
+  _unicode_backend=glib
+fi
+
+${SHELL} ./configure CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" \
+CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB} -L${SB_VAR_LIBPANGO_LIB} \
+-L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${CC_LD_RT}${SB_VAR_GETTEXT_LIB}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}}\
+${SB_VAR_LIBTIFF+:${SB_VAR_LIBTIFF_LIB}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_ICU+:${SB_VAR_ICU_LIB}}  ${LDFLAGS+${LDFLAGS}}" \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--with-html-dir=${_docdir} --disable-gtk-doc \
+--enable-static --enable-shared --disable-dependency-tracking \
+--disable-video --with-unicode-backend=${_unicode_backend} \
+${ARGS+${ARGS}} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" WebKit/gtk/webkit-1.0.pc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+mkdir -p DerivedSources
+
+gmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+case "${SB_SYSTYPE}" in
+*-solaris2.[89])
+  ${SB_PATH_SED} -i -e "\
+s|stdint.h|inttypes.h|" \
+${SB_INSTALL_PREFIX}/include/webkit/webkitwebpolicydecision.h ;;
+esac
+]]>
+    </install>
+  </program>
+</programs>

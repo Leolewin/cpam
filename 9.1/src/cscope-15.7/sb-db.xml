@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="cscope" version="15.7" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}15</install-name>
+
+    <sources>
+      <source checksum="08e1134914907031d916b1c9b428cbf7"
+        checksum-type="md5" size="243576"
+        path="src/cscope-15.7.tar.bz2"/>
+      <patch checksum="2e24544338d88c2b8618c351c65a3221"
+        checksum-type="md5" size="16949"
+        path="src/cscope-15.7.tww.patch"/>
+      <patch checksum="0a4a8f10c5921db071922983362eee3f"
+        checksum-type="md5" size="426564"
+        path="src/cscope-15.7.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="flex" var="FLEX" install-name="flex25"
+        add-path="prepend">v&gt;=2.5.35</depend>
+      <depend program="ncurses" var="NCURSES">v&gt;=5.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses}" \
+LDFLAGS="${SB_VAR_FLEX+-L${SB_VAR_FLEX_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_FLEX+${CC_LD_RT}${SB_VAR_FLEX_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --datadir=${_datadir} \
+--datarootdir=${_datadir} --mandir="${SB_INSTALL_PREFIX}/man" \
+${SB_VAR_NCURSES+--with-ncurses=${SB_VAR_NCURSES}} \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# for use with xcscope.el
+${SB_PATH_INSTALL} -m 755 -o root -g 0 contrib/xcscope/cscope-indexer \
+${SB_INSTALL_PREFIX}/bin
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_datadir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 contrib/xcscope/xcscope.el \
+${_datadir}
+]]>
+    </install>
+
+    <notes>
+      <note type="usage">
+        <para>The cscope lisp file for interaction with (X)Emacs is
+available as <command>${SB_INSTALL_PREFIX}/share/xcscope.el</command>. To use the
+lisp interface, add the ``<command>${SB_INSTALL_PREFIX}/share</command>'' to
+<command>load-path</command> in <command>~/.emacs</command> or
+<command>~/.xemacs</command> and then add:</para>
+        <screen>
+(require 'xscope)
+        </screen>
+
+        <para>The <command>${SB_INSTALL_PREFIX}/share/xcscope.el</command> file
+contains additional instructions about useful keybindings.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 13" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+        <item><para>Remove support for AIX 4.3, Solaris 6 and 7, SLES,
+RHEL 3</para></item>
+      </change>
+
+      <change date="2010 November 2" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

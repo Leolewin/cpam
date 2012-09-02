@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="python-dateutil" version="1.5" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="35f3732db3f2cc4afdc68a8533b60a52"
+        checksum-type="md5" size="232384"
+        path="src/python-dateutil-1.5.tar.gz"/>
+    </sources>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/dateutil
+]]>
+    </uninstall>
+
+    <module name="2.7.2">
+      <install-name>python27p</install-name>
+
+      <dependencies>
+        <depend program="distribute" var="SETUPTOOLS"
+          install-name="distribute06" module="2.7.2"
+          type="build">v&gt;=0.6.21</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/python2.7/site-packages"
+
+export PYTHONPATH="${SB_VAR_SETUPTOOLS_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/python_dateutil-${SB_PROG_VER}-py2.7.egg-info
+rm -rf ${_install_prefix}/dateutil
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <install-name>python26p</install-name>
+
+      <dependencies>
+        <depend program="distribute" var="SETUPTOOLS"
+          install-name="distribute06" module="2.6.7"
+          type="build">v&gt;=0.6.21</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/python2.6/site-packages"
+
+export PYTHONPATH="${SB_VAR_SETUPTOOLS_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/python_dateutil-${SB_PROG_VER}-py2.6.egg-info
+rm -rf ${_install_prefix}/dateutil
+]]>
+      </uninstall>
+    </module>
+
+    <changelog>
+      <change date="2011 September 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace 2.6.6 module with a 2.6.7
+module</para></item>
+        <item><para>Replace 2.7.1 module with a 2.7.2
+module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

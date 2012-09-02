@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="automake" version="1.6.3" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="2e8053609e9d318f80db0fce29dca7e9"
+        checksum-type="md5" size="476275"
+        path="src/automake-1.6.3.tar.bz2"/>
+      <patch checksum="001b5691c7f44c2d196da8b808f4c3dc"
+        checksum-type="md5" size="1486"
+        path="src/automake-1.6.3.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="autoconf" install-name="autoconf25"
+        add-path="prepend">v&gt;=2.59</depend>
+      <depend program="gzip" install-name="gzip13"
+        add-path="append">v&gt;=1.3.5</depend>
+      <depend program="libtool" install-name="libtool14"
+        add-path="prepend">v&gt;=1.4.2</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+./configure --datadir="${_datadir}" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake m4datadir="${_datadir}" pkgdatadir="${_datadir}" \
+pkgvdatadir="${_datadir}"
+
+# replace '@sys' with '\@sys'
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+PERL=${PERL}/bin/perl MAKE=gmake gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install m4datadir="${_datadir}" pkgdatadir="${_datadir}" \
+pkgvdatadir="${_datadir}"
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 version.texi automake.texi ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2004 January 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade autoconf dependency to 2.59</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Upgrade texinfo dependency to 4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

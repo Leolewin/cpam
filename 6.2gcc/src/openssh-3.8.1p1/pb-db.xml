@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="openssh" version="3.8.1p1">
+    <package-manager name="pkgadd">
+      <category>Applications/Cryptography</category>
+      <title>OpenSSH Secure Shell</title>
+      <vendor>OpenSSH Developers</vendor>
+
+      <description attribution="The OpenPKG Project">
+Secure Shell (SSH) is a facility for logging into a remote machine and
+for remotely executing commands on a remote machine. It is intended to
+replace rlogin(1) and rsh(1), and provide secure encrypted
+communications between two untrusted hosts over an insecure network.
+X11 connections and arbitrary TCP/IP ports can also be forwarded over
+the secure channel. OpenSSH is OpenBSD's rework of the last free
+version of SSH, bringing it up to date in terms of security and
+features, as well as removing all patented algorithms to separate
+libraries (OpenSSL).
+      </description>
+
+      <install-name>openssh38</install-name>
+
+      <pkgname-base>TWWssh38</pkgname-base>
+
+      <version>3.8.1p1</version>
+      <revision>2</revision>
+
+      <init name="/etc/init.d/TWWopenssh38"
+        path="pkg/init-sol"
+        checksum="2d376dcde964af489173fae7e16b8aeb"
+        checksum-type="md5" size="1822"/>
+      <init link-src="/etc/rc2.d/S80TWWopenssh38"
+        link-dest="/etc/init.d/TWWopenssh38"/>
+      <init link-src="/etc/rc1.d/K18TWWopenssh38"
+        link-dest="/etc/init.d/TWWopenssh38"/>
+      <init link-src="/etc/rc0.d/K18TWWopenssh38"
+        link-dest="/etc/init.d/TWWopenssh38"/>
+
+      <config>/etc/init.d/TWWopenssh38</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/shosts.equiv</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_config</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_host_dsa_key</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_host_dsa_key.pub</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_host_key</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_host_key.pub</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_host_rsa_key</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_host_rsa_key.pub</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/ssh_known_hosts</config>
+      <config upgrade="1">/etc${INSTALL_PREFIX}/sshd_config</config>
+
+      <subpkg type="runtime">
+        <depend pkgname-base="TWWgc332"
+          title="GNU Compiler Collection"
+          subpkg="libruntime">v&gt;=3.3.2</depend>
+      </subpkg>
+
+      <changelog>
+        <change date="2004 September 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Remove dependency on PRNGd</para></item>
+        </change>
+      </changelog>
+    </package-manager>
+  </package>
+</packages>

@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="esound" version="0.2.34" revision="2"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf5*|*-solaris2.[6789]">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}022</install-name>
+
+    <sources>
+      <source checksum="406514a52fe5daea32ec00cc2caedb25"
+        checksum-type="md5" size="318353"
+        path="src/esound-0.2.34.tar.bz2"/>
+      <patch checksum="48ea51f84e6113cd91c6733c08567181"
+        checksum-type="md5" size="1276813"
+        path="src/esound-0.2.34.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="audiofile" var="LIBAUDIOFILE"
+        install-name="libaudiofile02">v&gt;=0.2.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ARGS="--disable-ipv6" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ARGS="--disable-ipv6" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ARGS="--disable-ipv6" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-ipv6" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ARGS="--disable-ipv6" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ARGS="--enable-ipv6" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --with-audiofile \
+--with-audiofile-prefix=${LIBAUDIOFILE} --sysconfdir=${_sysconfdir} \
+${TCPWRAP+--with-libwrap=${TCPWRAP}} --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!=-L\(\${exec_prefix}/lib\)!=\"-L\1 ${CC_LD_RT}\1\"!" esd-config
+
+for _pc in esound.pc; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!" ${_pc}
+done
+]]>
+    </configure>
+
+    <notes>
+      <change from="0.2.33" to="0.2.34">
+        <item><para>file formats</para></item>
+      </change>
+
+      <change from="0.2.32" to="0.2.33">
+        <item><para>file formats</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

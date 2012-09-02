@@ -1,0 +1,342 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="zlib" version="1.2.5" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libz12</install-name>
+
+    <sources>
+      <source checksum="be1e89810e66150f5b0327984d8625a0"
+        checksum-type="md5" size="486374"
+        path="src/zlib-1.2.5.tar.bz2"/>
+      <patch checksum="d45a64c91919884fbbec48dd18519625"
+        checksum-type="md5" size="8383"
+        path="src/zlib-1.2.5.tww.patch"/>
+      <patch checksum="135f643bc860fecd4ada878025afb5c5"
+        checksum-type="md5" size="1004922"
+        path="src/zlib-1.2.5.auto.patch"/>
+    </sources>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <validate>
+        <depend program="zlib" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.2.5</depend>
+        <depend program="zlib"
+          module="Compress-Raw-Zlib-5.12.2">v==1.2.5</depend>
+      </validate>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-shared \
+--enable-static --libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x install-sh
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" zlib.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-shared \
+--enable-static --libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x install-sh
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" zlib.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-libLTLIBRARIES install-pkgconfigDATA
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Compress-Raw-Zlib-5.12.2">
+      <build-name>Compress-Raw-Zlib-2.043</build-name>
+
+      <sources>
+        <source checksum="fd5feb084e40497dd0da98534ce87f92"
+          checksum-type="md5" size="221593"
+          path="src/Compress-Raw-Zlib-2.043.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+        <depend program="zlib" var="LIBZ">v==1.2.5</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >config.in <<_EOT_
+BUILD_ZLIB   = False
+INCLUDE      = ${SB_VAR_LIBZ_INC}
+LIB          = ${SB_VAR_LIBZ_LIB}
+OLD_ZLIB     = False
+GZIP_OS_CODE = AUTO_DETECT
+_EOT_
+
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_install_prefix}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rm ${SB_INSTALL_PREFIX}/man/man3/Compress::Raw::Zlib.3
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>Copyright (C) 1998-2001 by Bjorn Reese and Daniel
+Stenberg.</para>
+        <para>Permission to use, copy, modify, and distribute this
+software for any purpose with or without fee is hereby granted,
+provided that the above copyright notice and this permission notice
+appear in all copies.</para>
+        <para><command>THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE
+IMPLIED WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. THE AUTHORS AND CONTRIBUTORS ACCEPT NO RESPONSIBILITY IN ANY
+CONCEIVABLE MANNER.</command></para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="1.2.4" to="1.2.5">
+        <item><para>fixes bugs in gzseek() and gzeof() that were
+present in version 1.2.4</para></item>
+      </change>
+
+      <change from="1.2.3" to="1.2.4">
+        <item><para>Fixed bugs in adler32_combine(), compressBound(),
+and deflateBound()</para></item>
+        <item><para>Wholesale replacement of gz* functions with faster
+versions</para></item>
+        <item><para>As part of that, added gzbuffer(), gzoffset(),
+gzclose_r(), and gzclose_w() functions</para></item>
+        <item><para>Faster Z_HUFFMAN_ONLY and Z_RLE compression for
+images and other specialized compression</para></item>
+        <item><para>Added flush options Z_BLOCK to deflate() and
+Z_TREES to inflate() for finer control</para></item>
+        <item><para>Added inflateReset2() and inflateMark() functions,
+the latter to aid in random access applications</para></item>
+        <item><para>Added LFS (Large File Summit) support for 64-bit
+file offsets and many other portability improvements</para></item>
+        <item><para>Updated examples in examples/ and updated
+third-party contributions in contrib</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The Compress::Raw::Zlib Perl module is available in the
+following directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2011 December 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update Compress-Raw-Zlib from 2.037 to
+2.043</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,1159 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="qt" version="3.3.2" revision="3"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-x11-free-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}33</install-name>
+
+    <sources>
+      <source checksum="903cad618274ad84d7d13fd0027a6c3c"
+        checksum-type="md5" size="14434821"
+        path="src/qt-x11-free-3.3.2.tar.bz2"/>
+      <patch checksum="5905dc0a2c6204a3d220a1b6a9d8cb0d"
+        checksum-type="md5" size="31277"
+        path="src/qt-x11-free-3.3.2.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="fcpackage" var="FCPACKAGE">v&gt;=2.2</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libmng" var="LIBMNG"
+        install-name="libmng10">v&gt;=1.0.5</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix4*|*-hpux10*|*-solaris2.5.1)
+  _includedir=${SB_INSTALL_PREFIX}/include/gcc32
+  _libdir=${SB_INSTALL_PREFIX}/lib/gcc32 ;;
+*)
+  _includedir=${SB_INSTALL_PREFIX}/include
+  _libdir=${SB_INSTALL_PREFIX}/lib ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  PLATFORM="aix-xlc" ARGS="-sm -thread -no-largefile" ;;
+*-aix*)
+  PLATFORM="aix-g++" ARGS="-sm -thread -no-ipv6 -no-exceptions \
+-no-largefile" ;;
+*-hpux11*)
+  PLATFORM="hpux-acc" ARGS="-sm -thread -no-ipv6 " ;;
+*-hpux*)
+  PLATFORM="hpux-g++" ARGS="-sm -no-exceptions" ;;
+*-irix6*)
+  PLATFORM="irix-cc" ARGS="-sm -thread" ;;
+x86_64*-linux*)
+  PLATFORM="linux-g++-64" ARGS="-sm -no-exceptions -thread -xinerama \
+-xcursor -xrandr" ;;
+*-linux9*|*-linuxe3*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -thread -xinerama \
+-xcursor -xrandr" ;;
+*-linux*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -thread -xinerama" ;;
+*-osf*)
+  PLATFORM="tru64-cxx" ARGS="-sm -thread" ;;
+*-solaris2.5.1)
+  PLATFORM="solaris-g++" ARGS="-no-sm -thread" ;;
+*-solaris2*)
+  PLATFORM="solaris-g++"
+  QMAKE_CFLAGS="-O2 -mcpu=v8"
+  ARGS="-sm -thread" ;;
+esac
+
+# allow tests to find GCC runtime path
+case "${SB_SYSTYPE}" in
+*-aix4*|*-hpux10*|*-solaris2.5.1)
+  for _pro in endian/endiantest.pro ipv6/ipv6test.pro \
+  largefile/largefiletest.pro ptrsize/ptrsizetest.pro \
+  stl/stltest.pro; do
+    cat >>config.tests/unix/${_pro} <<_EOT_
+QMAKE_LFLAGS += \$\$QMAKE_RPATH${SB_VAR_GCC_RT_LIB}
+_EOT_
+  done
+  ;;
+esac
+
+# don't waste time creating Makefiles in examples/tutorial directories
+${SB_PATH_FIND} ${SB_BUILD_PREFIX}/examples \
+${SB_BUILD_PREFIX}/tools/designer/examples \
+${SB_BUILD_PREFIX}/tutorial -name \*.pro -exec rm {} \;
+
+QTDIR=$(pwd) EXTRA_LFLAGS="${QMAKE_LFLAGS+${QMAKE_LFLAGS}}" \
+EXTRA_CFLAGS="${QMAKE_CFLAGS+${QMAKE_CFLAGS}}" \
+./configure -verbose -release -shared -qt-gif -system-zlib \
+-system-libmng -system-libpng -system-libjpeg -stl \
+${ARGS+${ARGS}} -platform ${PLATFORM} -I${JPEG_INC} \
+-I${LIBMNG_INC} -I${LIBPNG_INC} -I${ZLIB_INC} \
+-I${FCPACKAGE_INC} -I${LIBTTF_INC} -L${JPEG_LIB} \
+-L${LIBMNG_LIB} -L${LIBPNG_LIB} -L${ZLIB_LIB} -L${LIBTTF_LIB} \
+-L${FCPACKAGE_LIB} -lfontconfig -L${LIBEXPAT_LIB} -lexpat \
+-R${JPEG_LIB}:${LIBMNG_LIB}:${LIBPNG_LIB}:${ZLIB_LIB}:${LIBEXPAT_LIB}:\
+${LIBTTF_LIB}:${FCPACKAGE_LIB}${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} \
+-qt-imgfmt-png -qt-imgfmt-jpeg -qt-imgfmt-mng -xft -xrender \
+-docdir ${_docdir} -datadir ${_datadir} \
+-headerdir ${_includedir} -libdir ${_libdir} -prefix ${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_BUILD_PREFIX}/lib" \
+LIBPATH="${SB_BUILD_PREFIX}/lib" SHLIB_PATH="${SB_BUILD_PREFIX}/lib" \
+QTDIR=$(pwd) gmake
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC_LD_RT="-blibpath:" ;;
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-osf*)
+  CC_LD_RT="-rpath " ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.5.1)
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+QTDIR=$(pwd) gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/man/man1 ${SB_INSTALL_PREFIX}/man/man3
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/man/man1/* \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_FIND} doc/man/man3 -type f -print | while read _man; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 ${_man} \
+  ${SB_INSTALL_PREFIX}/man/man3
+done
+
+# IRIX inst package manager doesn't like '(' and ')' in filenames
+mv ${_datadir}/templates/Dialog_with_Buttons_\(Bottom\).ui \
+${_datadir}/templates/Dialog_with_Buttons_Buttom.ui
+mv ${_datadir}/templates/Dialog_with_Buttons_\(Right\).ui \
+${_datadir}/templates/Dialog_with_Buttons_Right.ui
+
+# rebuild libraries so RPATH is correct
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^QMAKE_LIBDIR_QT=.*!QMAKE_LIBDIR_QT=${_libdir}!" \
+${SB_BUILD_PREFIX}/.qmake.cache
+
+(cd ${SB_BUILD_PREFIX}/src
+rm -f ${_libdir}/libqt*
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake qt.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install)
+(cd ${SB_BUILD_PREFIX}/tools/designer/uilib
+rm -f ${_libdir}/libqui*
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^DESTDIR.*!DESTDIR = ${_libdir}/!" uilib.pro
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake uilib.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install)
+(cd ${SB_BUILD_PREFIX}/tools/designer/editor
+rm -f ${_libdir}/libeditor*
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^DESTDIR.*!DESTDIR = ${_libdir}/!" editor.pro
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake editor.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install)
+
+# rebuild binaries so RPATH is correct
+(rm bin/assistant
+cd ${SB_BUILD_PREFIX}/tools/assistant
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake assistant.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install)
+(rm bin/designer bin/uic plugins/designer/lib*.s[lo]
+cd ${SB_BUILD_PREFIX}/tools/designer/app
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake app.pro
+${SB_PATH_SHTOOL} subst -q -e "\
+s! ${CC_LD_RT}${SB_BUILD_BASE}[^ ][^ ]*!!g" Makefile
+QTDIR=${SB_BUILD_PREFIX} gmake install
+cd ${SB_BUILD_PREFIX}/tools/designer/uic
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake uic.pro
+${SB_PATH_SHTOOL} subst -q -e "\
+s! ${CC_LD_RT}${SB_BUILD_BASE}[^ ][^ ]*!!g" Makefile
+QTDIR=${SB_BUILD_PREFIX} gmake install
+
+# move uic binary to bin/gcc32
+case "${SB_SYSTYPE}" in
+*-aix4*|*-hpux10*|*-solaris2.5.1)
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_PATH_INSTALL}/bin/gcc32
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 bin/uic \
+${SB_PATH_INSTALL}/bin/gcc32/uic ;;
+esac
+
+for _plugin in cppeditor dlg kdevdlg rc wizards; do
+  cd ${SB_BUILD_PREFIX}/tools/designer/plugins/${_plugin}
+  QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake ${_plugin}.pro
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s! ${CC_LD_RT}[^ ][^ ]*plugins/designer!!" Makefile
+  QTDIR=${SB_BUILD_PREFIX} gmake
+done)
+
+(rm bin/linguist bin/lrelease bin/lupdate bin/qm2ts
+cd ${SB_BUILD_PREFIX}/tools/linguist/linguist
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake linguist.pro
+${SB_PATH_SHTOOL} subst -q -e "\
+s! ${CC_LD_RT}${SB_BUILD_BASE}[^ ][^ ]*!!g" Makefile
+QTDIR=${SB_BUILD_PREFIX} gmake install
+cd ${SB_BUILD_PREFIX}/tools/linguist/lrelease
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake lrelease.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install
+cd ${SB_BUILD_PREFIX}/tools/linguist/lupdate
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake lupdate.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install
+cd ${SB_BUILD_PREFIX}/tools/linguist/qm2ts
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake qm2ts.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install)
+(rm bin/qtconfig
+cd ${SB_BUILD_PREFIX}/tools/qtconfig
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake qtconfig.pro
+QTDIR=${SB_BUILD_PREFIX} gmake install)
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 bin/assistant bin/designer \
+bin/uic bin/linguist bin/lrelease bin/lupdate bin/qm2ts \
+bin/qtconfig ${SB_INSTALL_PREFIX}/bin
+${SB_PATH_INSTALL} -m 755 -o root -g 0 plugins/designer/lib*.s[lo] \
+${SB_INSTALL_PREFIX}/plugins/designer
+
+# fix qt-mt.pc file
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^prefix=.*!prefix=${SB_INSTALL_PREFIX}!; \
+s!^libdir=.*!libdir=${_libdir}!; \
+s!^includedir=.*!includedir=${_includedir}!; \
+s!-L${SB_INSTALL_PREFIX}/lib!-L\${libdir}!; \
+s!-I${SB_INSTALL_PREFIX}/include!-I\${includedir}!; \
+s!Libs: -L\([^ ][^ ]*\)!Libs: -L\1 ${CC_LD_RT}\1!; \
+s!-l/qt-mt.pc!-lqt-mt!;" ${_libdir}/pkgconfig/qt-mt.pc
+rm ${_libdir}/qt-mt.pc
+
+# fix solaris-c/qmake.conf and solaris-g++/qmake.conf for Solaris
+# 2.5.1 and 2.6 where -lrt doesn't exist
+case "${SB_SYSTYPE}" in
+*-solaris2.[56]*)
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-lpthread -lrt!-lpthread!" \
+  ${_datadir}/mkspecs/solaris-cc/qmake.conf \
+  ${_datadir}/mkspecs/solaris-g++/qmake.conf
+  ;;
+esac
+
+# remove build prefix from .prl files
+${SB_PATH_FIND} ${_libdir} -name \*.prl | while read _prl; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L${SB_BUILD_PREFIX}/lib !!g" ${_prl}
+done
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <module name="static-nothread">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  PLATFORM="aix-xlc" ARGS="-sm -no-largefile"
+  QMAKE_LFLAGS="-brtl" ;;
+*-aix*)
+  PLATFORM="aix-g++" ARGS="-sm -no-exceptions -no-ipv6 -no-largefile" ;;
+*-hpux11*)
+  PLATFORM="hpux-acc" ARGS="-sm -no-ipv6" ;;
+*-hpux*)
+  PLATFORM="hpux-g++" ARGS="-sm -no-exceptions" ;;
+*-irix6*)
+  PLATFORM="irix-cc" ARGS="-sm" ;;
+x86_64*-linux*)
+  PLATFORM="linux-g++-64" ARGS="-sm -no-exceptions -xinerama \
+-xcursor -xrandr" ;;
+*-linux9*|*-linuxe3*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -xinerama \
+-xcursor -xrandr" ;;
+*-linux*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -xinerama" ;;
+*-osf*)
+  PLATFORM="tru64-cxx" ARGS="-sm" ;;
+*-solaris2.5.1)
+  PLATFORM="solaris-g++" ARGS="-no-sm" ;;
+*-solaris2*)
+  PLATFORM="solaris-g++"
+  QMAKE_CFLAGS="-O2 -mcpu=v8"
+  ARGS="-sm" ;;
+esac
+
+# allow tests to find GCC runtime path
+case "${SB_SYSTYPE}" in
+*-aix4*|*-hpux10*|*-solaris2.5.1)
+  for _pro in endian/endiantest.pro ipv6/ipv6test.pro \
+  largefile/largefiletest.pro ptrsize/ptrsizetest.pro \
+  stl/stltest.pro; do
+    cat >>config.tests/unix/${_pro} <<_EOT_
+QMAKE_LFLAGS += \$\$QMAKE_RPATH${SB_VAR_GCC_RT_LIB}
+_EOT_
+  done
+  ;;
+esac
+
+# don't waste time creating Makefiles in examples/tutorial directories
+${SB_PATH_FIND} ${SB_BUILD_PREFIX}/examples \
+${SB_BUILD_PREFIX}/tools/designer/examples \
+${SB_BUILD_PREFIX}/tutorial -name \*.pro -exec rm {} \;
+
+QTDIR=$(pwd) EXTRA_LFLAGS="${QMAKE_LFLAGS+${QMAKE_LFLAGS}}" \
+EXTRA_CFLAGS="${QMAKE_CFLAGS+${QMAKE_CFLAGS}}" \
+./configure -verbose -release -static -qt-gif -system-zlib \
+-system-libmng -system-libpng -system-libjpeg -stl \
+${ARGS+${ARGS}} -platform ${PLATFORM} -I${JPEG_INC} \
+-I${LIBMNG_INC} -I${LIBPNG_INC} -I${ZLIB_INC} \
+-I${FCPACKAGE_INC} -I${LIBTTF_INC} -L${JPEG_LIB} \
+-L${LIBMNG_LIB} -L${LIBPNG_LIB} -L${ZLIB_LIB} -L${LIBTTF_LIB} \
+-L${FCPACKAGE_LIB} -lfontconfig -L${LIBEXPAT_LIB} -lexpat \
+-R${JPEG_LIB}:${LIBMNG_LIB}:${LIBPNG_LIB}:${ZLIB_LIB}:${LIBEXPAT_LIB}:\
+${LIBTTF_LIB}:${FCPACKAGE_LIB}${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} \
+-qt-imgfmt-png -qt-imgfmt-jpeg -qt-imgfmt-mng -xft -xrender \
+-docdir ${_docdir} -datadir ${_datadir} \
+-libdir ${_libdir} -prefix ${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_BUILD_PREFIX}/lib" \
+LIBPATH="${SB_BUILD_PREFIX}/lib" SHLIB_PATH="${SB_BUILD_PREFIX}/lib" \
+QTDIR=$(pwd) gmake src-qmake src-moc sub-src
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/libqt.a ${_libdir}
+]]>
+      </install>
+    </module>
+
+    <module name="static-thread">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  PLATFORM="aix-xlc" ARGS="-sm -thread -no-largefile"
+  QMAKE_LFLAGS="-brtl" ;;
+*-aix*)
+  PLATFORM="aix-g++" ARGS="-sm -thread -no-ipv6 -no-exceptions \
+-no-largefile" ;;
+*-hpux11*)
+  PLATFORM="hpux-acc" ARGS="-sm -thread -no-ipv6" ;;
+*-irix6*)
+  PLATFORM="irix-cc" ARGS="-sm -thread" ;;
+x86_64*-linux*)
+  PLATFORM="linux-g++-64" ARGS="-sm -no-exceptions -thread -xinerama \
+-xcursor -xrandr" ;;
+*-linux9*|*-linuxe3*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -thread -xinerama \
+-xcursor -xrandr" ;;
+*-linux*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -thread -xinerama" ;;
+*-osf*)
+  PLATFORM="tru64-cxx" ARGS="-sm -thread" ;;
+*-solaris2.5.1)
+  PLATFORM="solaris-g++" ARGS="-no-sm -thread" ;;
+*-solaris2*)
+  PLATFORM="solaris-g++"
+  QMAKE_CFLAGS="-O2 -mcpu=v8"
+  ARGS="-sm -thread" ;;
+esac
+
+# allow tests to find GCC runtime path
+case "${SB_SYSTYPE}" in
+*-aix4*|*-hpux10*|*-solaris2.5.1)
+  for _pro in endian/endiantest.pro ipv6/ipv6test.pro \
+  largefile/largefiletest.pro ptrsize/ptrsizetest.pro \
+  stl/stltest.pro; do
+    cat >>config.tests/unix/${_pro} <<_EOT_
+QMAKE_LFLAGS += \$\$QMAKE_RPATH${SB_VAR_GCC_RT_LIB}
+_EOT_
+  done
+  ;;
+esac
+
+# don't waste time creating Makefiles in examples/tutorial directories
+${SB_PATH_FIND} ${SB_BUILD_PREFIX}/examples \
+${SB_BUILD_PREFIX}/tools/designer/examples \
+${SB_BUILD_PREFIX}/tutorial -name \*.pro -exec rm {} \;
+
+QTDIR=$(pwd) EXTRA_LFLAGS="${QMAKE_LFLAGS+${QMAKE_LFLAGS}}" \
+EXTRA_CFLAGS="${QMAKE_CFLAGS+${QMAKE_CFLAGS}}" \
+./configure -verbose -release -static -qt-gif -system-zlib \
+-system-libmng -system-libpng -system-libjpeg -stl \
+${ARGS+${ARGS}} -platform ${PLATFORM} -I${JPEG_INC} \
+-I${LIBMNG_INC} -I${LIBPNG_INC} -I${ZLIB_INC} \
+-I${FCPACKAGE_INC} -I${LIBTTF_INC} -L${JPEG_LIB} \
+-L${LIBMNG_LIB} -L${LIBPNG_LIB} -L${ZLIB_LIB} -L${LIBTTF_LIB} \
+-L${FCPACKAGE_LIB} -lfontconfig -L${LIBEXPAT_LIB} -lexpat \
+-R${JPEG_LIB}:${LIBMNG_LIB}:${LIBPNG_LIB}:${ZLIB_LIB}:${LIBEXPAT_LIB}:\
+${LIBTTF_LIB}:${FCPACKAGE_LIB}${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} \
+-qt-imgfmt-png -qt-imgfmt-jpeg -qt-imgfmt-mng -xft -xrender \
+-docdir ${_docdir} -datadir ${_datadir} \
+-libdir ${_libdir} -prefix ${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_BUILD_PREFIX}/lib" \
+LIBPATH="${SB_BUILD_PREFIX}/lib" SHLIB_PATH="${SB_BUILD_PREFIX}/lib" \
+QTDIR=$(pwd) gmake src-qmake src-moc sub-src
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 644 -o root -g 0 lib/libqt-mt.a ${_libdir}
+]]>
+      </install>
+    </module>
+
+    <module name="nothread">
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  PLATFORM="aix-xlc" ARGS="-sm -no-largefile"
+  QMAKE_LFLAGS="-brtl" ;;
+*-aix*)
+  PLATFORM="aix-g++" ARGS="-sm -no-ipv6 -no-exceptions -no-largefile" ;;
+*-hpux11*)
+  PLATFORM="hpux-acc" ARGS="-sm -no-ipv6" ;;
+*-irix6*)
+  PLATFORM="irix-cc" ARGS="-sm" ;;
+x86_64*-linux*)
+  PLATFORM="linux-g++-64" ARGS="-sm -no-exceptions -xinerama \
+-xcursor -xrandr" ;;
+*-linux9*|*-linuxe3*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -xinerama \
+-xcursor -xrandr" ;;
+*-linux*)
+  PLATFORM="linux-g++" ARGS="-sm -no-exceptions -xinerama" ;;
+*-osf*)
+  PLATFORM="tru64-cxx" ARGS="-sm" ;;
+*-solaris2.5.1)
+  PLATFORM="solaris-g++" ARGS="-no-sm" ;;
+*-solaris2*)
+  PLATFORM="solaris-g++"
+  QMAKE_CFLAGS="-O2 -mcpu=v8"
+  ARGS="-sm" ;;
+esac
+
+# allow tests to find GCC runtime path
+case "${SB_SYSTYPE}" in
+*-aix4*|*-hpux10*|*-solaris2.5.1)
+  for _pro in endian/endiantest.pro ipv6/ipv6test.pro \
+  largefile/largefiletest.pro ptrsize/ptrsizetest.pro \
+  stl/stltest.pro; do
+    cat >>config.tests/unix/${_pro} <<_EOT_
+QMAKE_LFLAGS += \$\$QMAKE_RPATH${SB_VAR_GCC_RT_LIB}
+_EOT_
+  done
+  ;;
+esac
+
+# don't waste time creating Makefiles in examples/tutorial directories
+${SB_PATH_FIND} ${SB_BUILD_PREFIX}/examples \
+${SB_BUILD_PREFIX}/tools/designer/examples \
+${SB_BUILD_PREFIX}/tutorial -name \*.pro -exec rm {} \;
+
+QTDIR=$(pwd) EXTRA_LFLAGS="${QMAKE_LFLAGS+${QMAKE_LFLAGS}}" \
+EXTRA_CFLAGS="${QMAKE_CFLAGS+${QMAKE_CFLAGS}}" \
+./configure -verbose -release -shared -qt-gif -system-zlib \
+-system-libmng -system-libpng -system-libjpeg -stl \
+${ARGS+${ARGS}} -platform ${PLATFORM} -I${JPEG_INC} \
+-I${LIBMNG_INC} -I${LIBPNG_INC} -I${ZLIB_INC} \
+-I${FCPACKAGE_INC} -I${LIBTTF_INC} -L${JPEG_LIB} \
+-L${LIBMNG_LIB} -L${LIBPNG_LIB} -L${ZLIB_LIB} -L${LIBTTF_LIB} \
+-L${FCPACKAGE_LIB} -lfontconfig -L${LIBEXPAT_LIB} -lexpat \
+-R${JPEG_LIB}:${LIBMNG_LIB}:${LIBPNG_LIB}:${ZLIB_LIB}:${LIBEXPAT_LIB}:\
+${LIBTTF_LIB}:${FCPACKAGE_LIB}${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} \
+-qt-imgfmt-png -qt-imgfmt-jpeg -qt-imgfmt-mng -xft -xrender \
+-docdir ${_docdir} -datadir ${_datadir} \
+-libdir ${_libdir} -prefix ${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_BUILD_PREFIX}/lib" \
+LIBPATH="${SB_BUILD_PREFIX}/lib" SHLIB_PATH="${SB_BUILD_PREFIX}/lib" \
+QTDIR=$(pwd) gmake src-qmake src-moc sub-src
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC_LD_RT="-blibpath:" ;;
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-osf*)
+  CC_LD_RT="-rpath " ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.5.1)
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+(cd ${SB_BUILD_PREFIX}/src
+
+# rebuild libraries so RPATH is correct
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^QMAKE_LIBDIR_QT=.*!QMAKE_LIBDIR_QT=${_libdir}!" \
+${SB_BUILD_PREFIX}/.qmake.cache
+
+QTDIR=${SB_BUILD_PREFIX} ${SB_BUILD_PREFIX}/bin/qmake qt.pro
+QTDIR=${SB_BUILD_PREFIX} gmake)
+
+# fix qt.pc file
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^prefix=.*!prefix=${SB_INSTALL_PREFIX}!; \
+s!^libdir=.*!libdir=${_libdir}!; \
+s!^includedir=.*!includedir=${_includedir}!; \
+s!-L${SB_INSTALL_PREFIX}/lib!-L\${libdir}!; \
+s!-I${SB_INSTALL_PREFIX}/include!-I\${includedir}!; \
+s!Libs: -L\([^ ][^ ]*\)!Libs: -L\1 ${CC_LD_RT}\1!; \
+s!-l/qt.pc!-lqt!;" ${_libdir}/qt.pc
+mv ${_libdir}/qt.pc ${_libdir}/pkgconfig/qt.pc
+
+# remove build prefix from .prl files
+${SB_PATH_FIND} ${_libdir} -name \*.prl | while read _prl; do
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!-L${SB_BUILD_PREFIX}/lib !!g" ${_prl}
+done
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="3.3.1" to="3.3.2">
+        <items name="General (Compilers)">
+          <item><para>MinGW: It is now possible to build the WinXP
+style on MinGW</para></item>
+          <item><para>FreeBSD: Enable DragonFly to build Qt with its
+native compiler</para></item>
+          <item><para>Mac: Assistant builds with Professional edition
+when Fink is installed</para></item>
+          <item><para>AIX: Fixed compile problem with
+OpenType</para></item>
+          <item><para>Tru64: Correctly detects the Compaq C++
+compiler</para></item>
+          <item><para>HP-UX 64: Fixed link failure for
+Designer</para></item>
+          <item><para>Intel: Fixed compile failure on icc version 8.0
+p42+</para></item>
+          <item><para>Qt/Embedded: Compiles with gcc 3.4.0
+(prerelease)</para></item>
+          <item><para>Added macro QT_QLOCALE_USES_FCVT for systems
+with non-IEEE-compliant floating point implementations (notably some
+versions of ARM Linux). These systems are not autodetected; use
+"-DQT_QLOCALE_USES_FCVT" as a parameter to ./configure.</para></item>
+        </items>
+
+        <items name="General (Qt Designer)">
+          <item><para>Allows saving of the column and label
+information for QDataTable, even when Qt is compiled without the SQL
+module</para></item>
+          <item><para>Fixed data corruption in .pro files with
+whitespace</para></item>
+          <item><para>Fixed crash on closing a new, modified, unsaved
+C++ file</para></item>
+          <item><para>Fixed crash with QicsTable</para></item>
+          <item><para>Fixed corrupted .ui files caused by '&lt;' or
+'&gt;' in the object name</para></item>
+          <item><para>Fixed freeze when opening a modal Wizard Dialog
+from file</para></item>
+          <item><para>Fixed crash when adding a new separator using
+drag and drop</para></item>
+        </items>
+
+        <items name="General (Qt Assistant)">
+          <item><para>Fixed the Settings font combobox to not re-add
+font entries</para></item>
+        </items>
+
+        <items name="Library (General Fixes)">
+          <item><para>QAction:</para>
+          <unorderedlist>
+            <item><para>Fixed bug when adding invisible/disabled
+actions to visible/enabled action groups</para></item>
+          </unorderedlist></item>
+          <item><para>QCanvas:</para>
+          <unorderedlist>
+            <item><para>Cleans up old animations in
+setCanvas()</para></item>
+          </unorderedlist></item>
+          <item><para>QClipboard:</para>
+          <unorderedlist>
+            <item><para>Fixed potential double deletion in clean
+up</para></item>
+          </unorderedlist></item>
+          <item><para>QColorDialog:</para>
+          <unorderedlist>
+            <item><para>Fixed crash when running on very small
+screens (less than 480x350)</para></item>
+          </unorderedlist></item>
+          <item><para>QDateEdit:</para>
+          <unorderedlist>
+            <item><para>Fixed bug that would accept invalid dates
+when losing focus</para></item>
+          </unorderedlist></item>
+          <item><para>QDialog:</para>
+          <unorderedlist>
+            <item><para>Made showMaximized() and showFullScreen()
+work for dialogs again</para></item>
+          </unorderedlist></item>
+          <item><para>QDns:</para>
+          <unorderedlist>
+            <item><para>Improved handling of literal IP addresses
+for both IPv4 and IPv6</para></item>
+            <item><para>Improved handling of
+disappearing/reappearing name servers</para></item>
+          </unorderedlist></item>
+          <item><para>QFont:</para>
+          <unorderedlist>
+            <item><para>Fixed handling of Oblique
+fonts</para></item>
+          </unorderedlist></item>
+          <item><para>QImage:</para>
+          <unorderedlist>
+            <item><para>Fixed crash when loading MNG
+animations</para></item>
+          </unorderedlist></item>
+          <item><para>QLabel:</para>
+          <unorderedlist>
+            <item><para>Fixed bug with labels without buddies that
+have '&amp;' in the text</para></item>
+          </unorderedlist></item>
+          <item><para>QLineEdit:</para>
+          <unorderedlist>
+            <item><para>Handles input method events according to the
+specification, fixing severe problems with Korean input on Windows.
+This change could show up problems with buggy input methods. Fixed
+disappearing cursor for right-aligned text and Xft1.</para></item>
+          </unorderedlist></item>
+          <item><para>QListBox:</para>
+          <unorderedlist>
+            <item><para>Fixed bug in itemAt() when listbox has wide
+line/framestyle</para></item>
+          </unorderedlist></item>
+          <item><para>QListView:</para>
+          <unorderedlist>
+            <item><para>Fixed problem with editor sometimes having
+zero width</para></item>
+          </unorderedlist></item>
+          <item><para>QLocale:</para>
+          <unorderedlist>
+            <item><para>Fixed crash on FreeBSD/Alpha</para></item>
+          </unorderedlist></item>
+          <item><para>QPainter:</para>
+          <unorderedlist>
+            <item><para>Fixed QPicture transformation
+bug</para></item>
+          </unorderedlist></item>
+          <item><para>QPopupMenu:</para>
+          <unorderedlist>
+            <item><para>Fixed crash-on-exit bug when using floating
+menus</para></item>
+          </unorderedlist></item>
+          <item><para>QRegExp:</para>
+          <unorderedlist>
+            <item><para>Fixed bug with patterns of the form
+"^A|B"</para></item>
+          </unorderedlist></item>
+          <item><para>QSocket:</para>
+          <unorderedlist>
+            <item><para>Fixed bug where connecting two QSockets
+simultaneously would cause both to connect to the same address. Fixed
+bug where ErrConnectionRefused would not be emitted in rare
+cases.</para></item>
+          </unorderedlist></item>
+          <item><para>QSql:</para>
+          <unorderedlist>
+            <item><para>Fixed data corruption in OCI
+driver</para></item>
+            <item><para>Fixed data corruption with SQLite driver
+when using non-UTF-8 databases with special characters</para></item>
+            <item><para>Updated to work with SQLite version
+2.8.13</para></item>
+          </unorderedlist></item>
+          <item><para>QString:</para>
+          <unorderedlist>
+            <item><para>Made string-to-number conversions interpret
+strings according to the current locale</para></item>
+            <item><para>Fixed the format of the %p sprintf
+flag</para></item>
+            <item><para>Perform sanity check on the length parameter
+to fromUtf8()</para></item>
+            <item><para>Fixed toDouble() to again return a value
+even when failing on trailing whitespace</para></item>
+            <item><para>Performance optimization for
+startsWith()/endsWith()</para></item>
+          </unorderedlist></item>
+          <item><para>QTable:</para>
+          <unorderedlist>
+            <item><para>Fixed crash caused by calling addLabel() on
+a horizontal header when there are no columns in the
+table</para></item>
+            <item><para>Fixed crash that occurs when deleting a
+QTable while editing a cell</para></item>
+            <item><para>Made it possible to override the grid line
+color</para></item>
+            <item><para>Fixed selectionChanged() to be emitted
+correctly when dealing with selections of multiple items</para></item>
+          </unorderedlist></item>
+          <item><para>QTabWidget:</para>
+          <unorderedlist>
+            <item><para>Fixed setAutoMask()</para></item>
+          </unorderedlist></item>
+          <item><para>QToolButton:</para>
+          <unorderedlist>
+            <item><para>Icon and label now move the same distance
+when pressed</para></item>
+          </unorderedlist></item>
+          <item><para>QTextEdit:</para>
+          <unorderedlist>
+            <item><para>Does not override Ctrl+Alt+key
+accelerators</para></item>
+            <item><para>Performance optimization: do not call
+ensureCursorVisible() when isUpdatesEnabled() is not
+true</para></item>
+            <item><para>Fixed crash when using removeParagraph() to
+remove QTextTable items</para></item>
+            <item><para>Fixed data corruption when saving documents
+with overline or strikeout</para></item>
+          </unorderedlist></item>
+          <item><para>QTextBrowser:</para>
+          <unorderedlist>
+            <item><para>Fixed Purify warning about array-bound
+reads</para></item>
+          </unorderedlist></item>
+          <item><para>QVariant:</para>
+          <unorderedlist>
+            <item><para>Fixed bug in detaching LongLong and
+ULongLong values</para></item>
+          </unorderedlist></item>
+          <item><para>QWidget:</para>
+          <unorderedlist>
+            <item><para>Made
+showMaximized()/showFullScreen()/showMinimized() work correctly
+again</para></item>
+            <item><para>Posts events from the windowing system as
+before</para></item>
+          </unorderedlist></item>
+          <item><para>QWizard:</para>
+          <unorderedlist>
+            <item><para>Does not show enabled Next button on the
+last page if the Finish button was enabled on an earlier
+page</para></item>
+          </unorderedlist></item>
+          <item><para>QWorkspace:</para>
+          <unorderedlist>
+            <item><para>Scales down maximize icon
+correctly</para></item>
+            <item><para>Fixed active window/focus bug</para></item>
+            <item><para>Ensured that children added to invisible
+workspaces are painted correctly</para></item>
+            <item><para>Fixed flicker with tooltips for maximize,
+minimize and close buttons</para></item>
+          </unorderedlist></item>
+          <item><para>QXml:</para>
+          <unorderedlist>
+            <item><para>Fixed bug causing data corruption when reading
+invalid XML files</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Platform-Specific Issues (Windows)">
+          <item><para>QApplication:</para>
+          <unorderedlist>
+            <item><para>Does not handle GUI messages for non-GUI
+appliations</para></item>
+            <item><para>Disabled MenuItem highlight color for XP in
+non-themed Classical Style</para></item>
+          </unorderedlist></item>
+          <item><para>QContextMenuEvent:</para>
+          <unorderedlist>
+            <item><para>Made right mouse button send menu event also
+for popup widgets such as the QListBox in QComboBox</para></item>
+          </unorderedlist></item>
+          <item><para>QDesktopWidget:</para>
+          <unorderedlist>
+            <item><para>Made qApp-&gt;desktop()-&gt;size() give the
+correct size after a display resolution change</para></item>
+          </unorderedlist></item>
+          <item><para>QFont:</para>
+          <unorderedlist>
+            <item><para>Loading a Japanese font using the English
+name now works when running in a Japanese locale</para></item>
+          </unorderedlist></item>
+          <item><para>QLineEdit:</para>
+          <unorderedlist>
+            <item><para>Fixed drawing problems that affected very
+long strings and the handling of trailing spaces when using
+Uniscribe</para></item>
+          </unorderedlist></item>
+          <item><para>QPainter:</para>
+          <unorderedlist>
+            <item><para>Fixed possible crash in
+setBrush()</para></item>
+            <item><para>Draw bitmaps using painter's foreground
+color when painter is using a complex transformation</para></item>
+            <item><para>Fixed inter-letter spacings for scaled
+fonts</para></item>
+          </unorderedlist></item>
+          <item><para>QPrinter:</para>
+          <unorderedlist>
+            <item><para>Fixed crash when using buggy printer
+drivers</para></item>
+          </unorderedlist></item>
+          <item><para>QSound:</para>
+          <unorderedlist>
+            <item><para>Made setLoops(-1) work again (plays the
+sound in a loop)</para></item>
+            <item><para>Made setLoops(0) play no sound</para></item>
+            <item><para>Made setLoops(1) set isFinished()
+correctly</para></item>
+            <item><para>Fixed memory leak</para></item>
+            <item><para>If a new sound is started then stop the
+existing one, and play the new one</para></item>
+          </unorderedlist></item>
+          <item><para>QTextEngine:</para>
+          <unorderedlist>
+            <item><para>Performs auto-detection of Asian scripts
+even if Uniscribe is not installed</para></item>
+          </unorderedlist></item>
+          <item><para>QWidget:</para>
+          <unorderedlist>
+            <item><para>Returns correct isMinimized/isMaximized
+state if an application is started through a shortcut using
+"Minimized" or "Maximized"</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Platform-Specific Issues (Mac)">
+          <item><para>QAccel:</para>
+          <unorderedlist>
+            <item><para>Solved the problem where we received two
+accel override events for each keypress</para></item>
+          </unorderedlist></item>
+          <item><para>QApplication:</para>
+          <unorderedlist>
+            <item><para>Uses better technique for obtaining
+applicationFilePath()</para></item>
+            <item><para>Allows non-GUI applications to run without
+the GUI</para></item>
+            <item><para>Stopped using EnableSecureEventInput()
+because of Jaguar/Panther compatibility problems</para></item>
+            <item><para>Updates the text highlight color when the
+system changes it</para></item>
+          </unorderedlist></item>
+          <item><para>QClipboard:</para>
+          <unorderedlist>
+            <item><para>Fixed posting to the clipboard and access
+rights</para></item>
+          </unorderedlist></item>
+          <item><para>QComboBox:</para>
+          <unorderedlist>
+            <item><para>Ensures that the item list stays within the
+screen size</para></item>
+          </unorderedlist></item>
+          <item><para>QCursor:</para>
+          <unorderedlist>
+            <item><para>Uses native splitter cursors when
+available</para></item>
+          </unorderedlist></item>
+          <item><para>QFontMetrics:</para>
+          <unorderedlist>
+            <item><para>Fixed fontmetrics for Asian
+fonts</para></item>
+          </unorderedlist></item>
+          <item><para>QLineEdit:</para>
+          <unorderedlist>
+            <item><para>Uses secure keyboard input in Password mode,
+so that keyboard events cannot be intercepted</para></item>
+          </unorderedlist></item>
+          <item><para>QMacStyle:</para>
+          <unorderedlist>
+            <item><para>Fixed painting of radio buttons to be
+perfectly circular</para></item>
+          </unorderedlist></item>
+          <item><para>QMenuBar:</para>
+          <unorderedlist>
+            <item><para>Fixed bug when using pixmaps without an
+alpha channel</para></item>
+          </unorderedlist></item>
+          <item><para>QPainter:</para>
+          <unorderedlist>
+            <item><para>Improved raster operations</para></item>
+            <item><para>Made custom bitmap brushes
+work</para></item>
+            <item><para>Draws text using painter's foreground
+color</para></item>
+          </unorderedlist></item>
+          <item><para>QPrinter:</para>
+          <unorderedlist>
+            <item><para>Ensures that the printer name and page range
+are correct after setup</para></item>
+            <item><para>Always uses the native print
+dialog</para></item>
+            <item><para>Implemented setPageSize() and pageSize()
+properly</para></item>
+            <item><para>Made QPrinter work when no printer is
+installed</para></item>
+            <item><para>Fixed font width bug in postscript when font
+embedding is disabled</para></item>
+          </unorderedlist></item>
+          <item><para>QSettings:</para>
+          <unorderedlist>
+            <item><para>Returns correct value for global settings
+when scope is User</para></item>
+          </unorderedlist></item>
+          <item><para>QSlider:</para>
+          <unorderedlist>
+            <item><para>Fixed drawing of tickmarks when minimum
+value is non-zero</para></item>
+          </unorderedlist></item>
+          <item><para>QStyle:</para>
+          <unorderedlist>
+            <item><para>Does not change pixmap of QToolbutton if the
+button is not auto-raised</para></item>
+          </unorderedlist></item>
+          <item><para>QWidget:</para>
+          <unorderedlist>
+            <item><para>Fixed bug where the toolbar is partially
+hidden when showing a mainwindow in fullscreen mode</para></item>
+            <item><para>Made WStyle_StaysOnTop work in the same way
+as on the other platforms</para></item>
+            <item><para>Fixed bug in maximizing windows with a
+maximum size</para></item>
+          </unorderedlist></item>
+          <item><para>QWorkspace:</para>
+          <unorderedlist>
+            <item><para>Fixed bug giving frozen child windows when
+maximizing and restoring</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Platform-Specific Issues (X11)">
+          <item><para>Drag and Drop:</para>
+          <unorderedlist>
+            <item><para>Ignores accelerator events when
+dragging</para></item>
+          </unorderedlist></item>
+          <item><para>QClipboard:</para>
+          <unorderedlist>
+            <item><para>Fixed bug where data()-&gt;format() would
+return the wrong value</para></item>
+            <item><para>Fixed potential crashes with regards to
+iterators</para></item>
+          </unorderedlist></item>
+          <item><para>QFont:</para>
+          <unorderedlist>
+            <item><para>Avoids badly scaled fonts, and prefers exact
+matches</para></item>
+            <item><para>Made sure symbol fonts get loaded
+correctly</para></item>
+            <item><para>Made it possible to load Latin fonts that do
+not contain the Euro symbol</para></item>
+            <item><para>Fixed glyph width bug observed with some
+Khmer fonts</para></item>
+            <item><para>Fixed crash with misconfigured
+Xft</para></item>
+            <item><para>Fixed problem with font selection for Xft2
+when having Latin text with non-Latin locale</para></item>
+            <item><para>Respects custom dpi settings for
+Xft</para></item>
+            <item><para>Does not use Xft if we have FreeType1 but no
+XRender</para></item>
+            <item><para>Fixed memory leak in the font engine when
+drawing transformed fonts</para></item>
+          </unorderedlist></item>
+          <item><para>QGL:</para>
+          <unorderedlist>
+            <item><para>Fixed crash when rendering text in GL
+widgets</para></item>
+          </unorderedlist></item>
+          <item><para>QLocale:</para>
+          <unorderedlist>
+            <item><para>Tru64: Fixed crash when INFINITY is compared
+to another double</para></item>
+            <item><para>Tru64: Uses DBL_INFINITY for Compaq C++
+compiler</para></item>
+          </unorderedlist></item>
+          <item><para>QMimeSource:</para>
+          <unorderedlist>
+            <item><para>Does not re-enter the event loop in
+provides()</para></item>
+          </unorderedlist></item>
+          <item><para>QPainter:</para>
+          <unorderedlist>
+            <item><para>Fixed rendering of anti-aliased text on
+non-XRender enabled displays</para></item>
+          </unorderedlist></item>
+          <item><para>QPrinter:</para>
+          <unorderedlist>
+            <item><para>Fixed setFromTo()</para></item>
+            <item><para>Fixed printing of Arabic text with XLFD
+fonts</para></item>
+          </unorderedlist></item>
+          <item><para>QTextEdit:</para>
+          <unorderedlist>
+            <item><para>Fixed bug with extremely long
+lines</para></item>
+          </unorderedlist></item>
+          <item><para>QThread:</para>
+          <unorderedlist>
+            <item><para>Fixed bug that made program require
+superuser privileges on some Linux machines</para></item>
+          </unorderedlist></item>
+          <item><para>QWidget:</para>
+          <unorderedlist>
+            <item><para>Fixed showFullScreen() and showMaximized()
+for window managers that do not support extended window manager hints
+(EWMH)</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Platform-Specific Issues (Embedded)">
+          <item><para>QFontInfo:</para>
+          <unorderedlist>
+            <item><para>Made QFontInfo work properly on
+Qt/Embedded</para></item>
+          </unorderedlist></item>
+          <item><para>QGfxVNC:</para>
+          <unorderedlist>
+            <item><para>Fixed crash if VNC viewer is closed while
+Qt/E is painting</para></item>
+          </unorderedlist></item>
+          <item><para>QWidget:</para>
+          <unorderedlist>
+            <item><para>Uses correct focus handling if the focus
+widget is hidden or deleted while a popup is open</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Platform-Specific Issues (Linux)">
+          <item><para>Fixed race condition in handling of virtual
+console switching that could cause a deadlock in some
+cases</para></item>
+          <item><para>Switch consoles on key press event</para></item>
+          <item><para>Fixed QWSServer::hideCursor()/showCursor()
+display locking bug which could block client processes</para></item>
+        </items>
+      </change>
+
+      <note type="build">
+        <para>The Qt library has been compiled with support for GIF,
+JPEG, PNG, and MNG images, with thread support, and Xrender support
+for antialias fonts. A non-threaded Qt library is available for all
+platforms where the threaded library is supported. A static Qt library
+is available for all platforms. The associated libqt.prl file should
+be ignored when using the static Qt library as the libqt.prl file is
+associated with the non-threaded Qt library.</para>
+
+        <para>On HP-UX 11.x, IRIX 6.5, and Redhat Linux, Solaris, and
+Tru64 UNIX, Qt is built with the vendor C++ compiler. Versions of the
+library compiled with the GNU C++ compiler (v3.2.2) are available in
+the <command>${SB_INSTALL_PREFIX}/lib/gcc32</command>
+directory.</para>
+
+        <para>When compiled with the GNU C++ compiler, Qt has been
+compiled without exception support.</para>
+
+        <para>Antialias font support is enabled for all platforms. The
+<command>qtconfig</command> program can be used to enable it.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 5" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 3.0/AMD64</para></item>
+      </change>
+
+      <change date="2004 September 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0691 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0691">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0691</ulink>)
+to fix heap overflow in the BMP image docoder. An attacker could
+create a carefully crafted BMP file in such a way that it would cause
+an application linked with Qt to crash or possibly execute arbitrary
+code when the file was opened by a victim.</para></item>
+        <item><para>Apply patch for CAN-2004-0692 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0692">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0692</ulink>)
+and CAN-2004-0693 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0693">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0693</ulink>)
+to fix flaws in the GIF, XPM, and JPEG decoders. An attacker could
+create carefully crafted image files in such a way that it could cause
+an application linked against Qt to crash when the file was opened by
+a victim.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

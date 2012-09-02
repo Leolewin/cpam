@@ -1,0 +1,47 @@
+Index: gzip.c
+===================================================================
+--- gzip.c.orig	2002-09-28 02:38:43.000000000 -0500
++++ gzip.c	2005-11-21 21:09:14.610809000 -0600
+@@ -875,8 +875,11 @@
+     }
+ 
+     close(ifd);
+-    if (!to_stdout && close(ofd)) {
+-	write_error();
++    if (!to_stdout) {
++         /* Copy modes, times, ownership, and remove the input file */
++         copy_stat(&istat);
++         if (close(ofd))
++            write_error();
+     }
+     if (method == -1) {
+ 	if (!to_stdout) xunlink (ofname);
+@@ -896,10 +899,6 @@
+ 	}
+ 	fprintf(stderr, "\n");
+     }
+-    /* Copy modes, times, ownership, and remove the input file */
+-    if (!to_stdout) {
+-	copy_stat(&istat);
+-    }
+ }
+ 
+ /* ========================================================================
+@@ -1725,7 +1724,7 @@
+     reset_times(ofname, ifstat);
+ #endif
+     /* Copy the protection modes */
+-    if (chmod(ofname, ifstat->st_mode & 07777)) {
++    if (fchmod(ofd, ifstat->st_mode & 07777)) {
+ 	int e = errno;
+ 	WARN((stderr, "%s: ", progname));
+ 	if (!quiet) {
+@@ -1734,7 +1733,7 @@
+ 	}
+     }
+ #ifndef NO_CHOWN
+-    chown(ofname, ifstat->st_uid, ifstat->st_gid);  /* Copy ownership */
++    fchown(ofd, ifstat->st_uid, ifstat->st_gid);  /* Copy ownership */
+ #endif
+     remove_ofname = 0;
+     /* It's now safe to remove the input file: */

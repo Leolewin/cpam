@@ -1,0 +1,679 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="graphviz" version="1.12" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}112</install-name>
+
+    <sources>
+      <source checksum="84910caae072c714d107ca9f3e54ace0"
+        checksum-type="md5" size="3371279"
+        path="src/graphviz-1.12.tar.gz"/>
+      <patch checksum="af1aaa1f1e2f664c84157c6ab4e20e2d"
+        checksum-type="md5" size="1070638"
+        path="src/graphviz-1.12.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="tcl" var="TCL"
+        install-name="tcl84">v&gt;=8.4.6</depend>
+      <depend program="tk" var="TK"
+        install-name="tk84">v&gt;=8.4.6</depend>
+      <depend program="flex" install-name="flex"
+        add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="jpeg">v&gt;=6b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf21">v&gt;=2.1.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.8.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  ARGS="--with-Xawincludedir=/usr/contrib/X11R6/include \
+--with-Xawlibdir=/usr/contrib/X11R6/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" CPP="cc -Ae -E"
+  CC_LD_RT="-Wl,+s,+b,"
+  ARGS="--with-Xawincludedir=/usr/contrib/X11R6/include \
+--with-Xawlibdir=/usr/contrib/X11R6/lib" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-Wl,-R" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  LDFLAGS="-L/usr/openwin/lib" CC_LD_RT="-Wl,-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CXX="${CXX:-g++}" \
+CFLAGS="${CFLAGS:--O2}" CPP="${CPP+${CPP}}" \
+CXXFLAGS="${CXXFLAGS:--O2}" LDFLAGS="${CC_LD_RT}${SB_VAR_XPM_LIB} \
+${LDFLAGS+${LDFLAGS}}" --enable-static --enable-shared \
+--with-Xpmincludedir=${SB_VAR_XPM_INC} \
+--with-Xpmlibdir=${SB_VAR_XPM_LIB} \
+--with-expatincludedir=${SB_VAR_LIBEXPAT_INC} \
+--with-expatlibdir=${SB_VAR_LIBEXPAT_LIB} \
+--with-freetypeincludedir=${SB_VAR_LIBTTF_INC}/freetype2 \
+--with-freetypelibdir=${SB_VAR_LIBTTF_LIB} \
+--with-jpegincludedir=${SB_VAR_JPEG_INC} \
+--with-jpeglibdir=${SB_VAR_JPEG_LIB} \
+--with-pngincludedir=${SB_VAR_LIBPNG_INC} \
+--with-pnglibdir=${SB_VAR_LIBPNG_LIB} \
+--with-zincludedir=${SB_VAR_ZLIB_INC} \
+--with-zlibdir=${SB_VAR_ZLIB_LIB} \
+--with-tclsh="${SB_VAR_TCL}/bin/tclsh8.4" \
+--with-wish="${SB_VAR_TK}/bin/wish8.4" \
+--with-png=${SB_VAR_LIBPNG} --with-freetype=${SB_VAR_LIBTTF} \
+--with-jpeg=${SB_VAR_JPEG} --with-xpm=${SB_VAR_XPM} \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!-L(\\\$libdir)!-L\$1 ${CC_LD_RT}\$1!" dotneato/dotneato-config
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgincludedir="${SB_INSTALL_PREFIX}/include" \
+pkglibdir="${SB_INSTALL_PREFIX}/lib" \
+leftydir="${SB_INSTALL_PREFIX}/lib/lefty" \
+graphdir="${SB_INSTALL_PREFIX}/lib/graphs" \
+demodir="${SB_INSTALL_PREFIX}/contrib/demo" \
+pathplanexampledir="${SB_INSTALL_PREFIX}/contrib/demo/pathplan_data" \
+pkgindexdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake pkgincludedir="${SB_INSTALL_PREFIX}/include" \
+pkglibdir="${SB_INSTALL_PREFIX}/lib" \
+leftydir="${SB_INSTALL_PREFIX}/lib/lefty" \
+graphdir="${SB_INSTALL_PREFIX}/lib/graphs" \
+demodir="${SB_INSTALL_PREFIX}/contrib/demo" \
+pathplanexampledir="${SB_INSTALL_PREFIX}/contrib/demo/pathplan_data" \
+pkgindexdir="${SB_INSTALL_PREFIX}/lib" install
+
+# convert .so in pkgIndex.tcl to .sl
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  sed -e "s/\.so/.sl/" ${SB_INSTALL_PREFIX}/lib/pkgIndex.tcl >/tmp/$$
+  cp /tmp/$$ ${SB_INSTALL_PREFIX}/lib/pkgIndex.tcl
+  rm -f /tmp/$$ ;;
+esac
+]]>
+    </install>
+
+    <notes>
+      <change from="1.11" to="1.12">
+        <items name="general">
+          <item><para>rename bcc -&gt; bcomps to avoid name conflict
+with "Bruce's C Compiler" on Redhat distributions</para></item>
+          <item><para>all build without X11 (fix problem in lefty
+tree)</para></item>
+          <item><para>remove from distribution: dag, fdp, geo, grid,
+incr, shape, tcldgr, tcldgl</para></item>
+        </items>
+
+        <items name="dotneato">
+          <item><para>fix "brown-bag" problem resulting in PNG and
+JPEG errors on RH8 and RH9</para></item>
+        </items>
+      </change>
+
+      <change from="1.10" to="1.11">
+        <items name="general">
+          <item><para>fix windows builds</para></item>
+          <item><para>add tool "bcc" to distribution</para></item>
+        </items>
+
+        <items name="dotneato">
+          <item><para>add -Gviewport="X,Y,Z,x,y" where XY are the
+dimensions of a viewport in device coordinates (pixels), Z is a
+zooming factor, x,y is the location of the center of the viewport in
+graph coordinates. Supported in bitmap and imagemap outputs
+only.</para></item>
+          <item><para>fix memory leak in gd/gdft.c</para></item>
+          <item><para>clean up calculation of whitespace around
+labels</para></item>
+        </items>
+
+        <items name="dotty, lefty">
+          <item><para>fix for bug #400</para></item>
+          <item><para>added dijkstra (single source distance)
+filter</para></item>
+        </items>
+
+        <items name="general">
+          <item><para>removed CVS directories from .tar.gz
+distributions</para></item>
+          <item><para>add "config" directory to contain some of the
+autoconf clutter</para></item>
+          <item><para>only remove flex products with "make
+maintainer-clean" to avoid trying to regenerate them after "make
+distclean" basically this is to avoid the broken flex on
+Debian</para></item>
+          <item><para>suppress complaints from ./configure about
+config.rpath</para></item>
+          <item><para>doc/build.html updated with notes about Windows
+builds</para></item>
+          <item><para>build fixes for Forte 6sp2 compiler on Sun
+-xarch=v9a (64bit)</para></item>
+          <item><para>build fixes for OpenBSD</para></item>
+          <item><para>improved configure testing for
+Tcl/Tk</para></item>
+          <item><para>various bug fixes, internal restructuring,
+etc</para></item>
+        </items>
+
+        <items name="dotneato">
+          <item><para>fix problem with extra escape chars in .fig
+output</para></item>
+          <item><para>support for "setlinewidth" in
+-Tfig</para></item>
+          <item><para>improved splines in -Tfig</para></item>
+          <item><para>add manpage for dotneato-config</para></item>
+          <item><para>neato: add defaultdist graph attribute to set
+distance between components</para></item>
+          <item><para>first cut at html table formatter add. not ready
+for use yet as the syntax is going to change some more.</para></item>
+        </items>
+
+        <items name="tools">
+          <item><para>renamed "colorize" to "gvcolor" to avoid
+conflict on Debian</para></item>
+          <item><para>renamed "gpr" to "gvpr" to avoid conflict on
+Debian</para></item>
+          <item><para>add fflush() to acyclic, ccomps, gvcolor, tred,
+dot2gxl to try to fix truncated output when used in php or perl cgi
+scripts</para></item>
+        </items>
+      </change>
+
+      <change from="1.9" to="1.10">
+        <items name="general">
+          <item><para>"mkdir obj;cd obj;../configure;make"   now works
+(bug #293)</para></item>
+          <item><para>"make prefix=xxx"   now works (bug
+#274)</para></item>
+          <item><para>"--with-wish=xxx"   now works (bug
+#270)</para></item>
+          <item><para>remove generated file: ast_common.h from source
+distributions</para></item>
+          <item><para>make GIF support configurable</para></item>
+          <item><para>added .cvsignore thoughout source tree to reduce
+CVS noise</para></item>
+          <item><para>FAQ updates</para></item>
+          <item><para>documentation updates for gpr</para></item>
+          <item><para>improve portability of dotneato-config, but
+requires libtool now</para></item>
+          <item><para>improvements to error processing for library
+users -gd</para></item>
+          <item><para>sync with gd-2.0.15</para></item>
+          <item><para>optimize line drawing code</para></item>
+        </items>
+
+        <items name="dot, neato, twopi">
+          <item><para>fix bugs 240,270,274,293,298,303</para></item>
+          <item><para>support "peripheries=0" without
+crashing</para></item>
+          <item><para>add support for "dia" output format
+(-Tdia)</para></item>
+          <item><para>espf fixes (use of showpage)</para></item>
+          <item><para>svg fixes (coordinates and
+viewBox)</para></item>
+          <item><para>ismap/imap, fixes (quoting of label
+strings)</para></item>
+          <item><para>fix to "point" shape</para></item>
+          <item><para>improve (m|c|re)alloc usage</para></item>
+          <item><para>improve handling of very-small fonts in bitmap
+outputs</para></item>
+          <item><para>various fixes for multiple -T -o
+feature</para></item>
+          <item><para>add support for splines to records and ports
+(neato)</para></item>
+          <item><para>various improvements to libpack</para></item>
+          <item><para>dot_init_graph and neato_init_graph external for
+library users</para></item>
+          <item><para>cluster improvements (neato)</para></item>
+          <item><para>fix support for truecolor</para></item>
+          <item><para>normalize splines so that they now always go
+from tail to head</para></item>
+          <item><para>add some simple help text for any unrecognized
+option</para></item>
+        </items>
+
+        <items name="tools">
+          <item><para>extend gpr language to allow access to
+command-line arguments</para></item>
+          <item><para>add sqrt() function to gpr</para></item>
+          <item><para>add new tool - gvpack</para></item>
+        </items>
+
+        <items name="tcldot">
+          <item><para>use .dll extension if on windows</para></item>
+          <item><para>doted demo:</para>
+          <unorderedlist>
+            <item><para>use tcl's file requestor instead of
+homebrew</para></item>
+            <item><para>add zooming controlled by
+mousewheel</para></item>
+            <item><para>support additonal export formats</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.8.10" to="1.9">
+        <items name="general">
+          <item><para>config.h is no longer installed. config.h is
+generated by ./configure for the current build only. It may not be
+applicable for derivative builds.</para></item>
+          <item><para>improve ICONV configure tests</para></item>
+          <item><para>lots of janitor-work to clean up warning
+messages from -Wall</para></item>
+          <item><para>use @OBJEXT@ in Makefile.am so that .obj is used
+under cygwin</para></item>
+          <item><para>fixes for Solaris builds</para></item>
+          <item><para>use libpng-config if available</para></item>
+          <item><para>reduce long build times due to touching
+ast_common.h too often</para></item>
+          <item><para>improve dependency tracking.  "make -j8" now
+works with distcc</para></item>
+          <item><para>autogen.sh fixes to work on RH7.3, RH8.0, and
+Solaris</para></item>
+          <item><para>eliminate use of suffix rules which confused
+some makes</para></item>
+          <item><para>DOT language allows '+' for concatenation of
+quoted strings</para></item>
+        </items>
+
+        <items name="dot, neato, twopi">
+          <item><para>fix bugs 209, 210, 214, 216, 217, 222, 224, 225,
+229, 230, 233, 236, 237</para></item>
+          <item><para>update gd into alignment with
+gd-2.0.9</para></item>
+          <item><para>change to make libagraph output compatible with
+libgraph input</para></item>
+          <item><para>add shapes: septagon, pentagon, a_ediamond,
+rect, rectangle</para></item>
+          <item><para>introduce "ND_...", "ED_...", "GD_...",
+node/edge/graph-data accessor macros in partial preparation for use of
+libagraph in dot</para></item>
+          <item><para>add libdotneato.so, dotneato.h, dotneato-config
+to aid use of dot libraries by user apps based on installed
+graphviz-devel rpm and without access to graphviz
+sources</para></item>
+          <item><para>new xdot output format providing detailed
+drawing instructions</para></item>
+          <item><para>new -y command line flag, inverts y
+coordinates</para></item>
+          <item><para>support multple -T when -o given, as in: cat
+xxx.dot | dot -Tpng -Tcmap -o xxx which produces xxx.png and xxx.cmap
+from a single layout computation. Intended for use in CGI
+programs.</para></item>
+        </items>
+
+        <items name="agraph">
+          <item><para>correct callback ordering for
+deletions</para></item>
+        </items>
+
+        <items name="tools">
+          <item><para>add gxl2dot and dot2gxl for GXL language
+conversions</para></item>
+          <item><para>gvui now provides *map output</para></item>
+        </items>
+
+        <items name="tcldot, tcldgr, tcldgl">
+          <item><para>improve tcl8.4 support</para></item>
+          <item><para>extend search path for tcl.h to include
+/usr/local/include/tcl8.4/ in support of BSD install
+conventions</para></item>
+        </items>
+
+        <items name="dynagraph">
+          <item><para>many fixes</para></item>
+          <item><para>change to not build dynagraph by default (use
+--with-dynagraph)</para></item>
+        </items>
+
+        <items name="docs">
+          <item><para>dotguide updates</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.9" to="1.8.10">
+        <items name="general">
+          <item><para>various configure.in fixes and
+simplifications</para></item>
+          <item><para>change configure to now build dynagraph by
+default "--without-dynagraph" is supported</para></item>
+          <item><para>fix graphviz.spec.in to partition packages
+properly graphviz no longer depends on graphviz-tcl</para></item>
+          <item><para> Makefile.old cleanups</para></item>
+          <item><para>configure.old now set version number
+automatically from configure.in</para></item>
+        </items>
+
+        <items name="dot, neato, twopi">
+          <item><para>Initial support for image node shapes + URL
+fetch</para></item>
+          <item><para>Made number of dimensions a runtime variable in
+neato</para></item>
+          <item><para>Bug fix in vrmlgen for degenerate
+splines</para></item>
+          <item><para>Bug fix - ordering=in should now
+work</para></item>
+          <item><para>Bug fix - layers no numbered from 0 to match PS
+requirements</para></item>
+          <item><para>Bug fix - don't draw arrows on invisible
+edges</para></item>
+          <item><para>Bug fix - when pack=true and ratio is
+set</para></item>
+          <item><para>Bug fix - agraph/scan.l to work with latest flex
+beta</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.8" to="1.8.9">
+        <items name="general">
+          <item><para>split rpm into: graphviz, graphviz-tcl,
+graphviz-graphs, graphviz-devel</para></item>
+          <item><para>gcc3 warning cleanup</para></item>
+          <item><para>Install lincdt, libgraph, libagraph, libgd,
+libpathplan, libexp, and libpack so that they can be used by other
+programs. Headers and man3 in graphviz-devel</para></item>
+        </items>
+
+        <items name="dynagraph, graphsearch">
+          <item><para>New tools based on libagraph and written in
+C++</para></item>
+        </items>
+
+        <items name="dot, neato, twopi">
+          <item><para>Add node and edge tooltips for use with -Tcmap
+\N,\E,\H,\T substitutions also work in tooltips</para></item>
+          <item><para>Add alt="label_string" to -Tcmap</para></item>
+          <item><para>Add edge-label and port mappings to -Tps and
+-Tps2 so that edges can be hyperlinked in PDF documents</para></item>
+          <item><para>Add support for \E (edge name), \H (head-node
+name), \T (tail-node name) substitutions in edge labels and edge
+URLs</para></item>
+          <item><para>Add support for stylesheet="file.css" for use in
+-Tsvg</para></item>
+          <item><para>Fix -Tpic to work with recent gpic (Bruce
+Lilly)</para></item>
+          <item><para>Fix alignment of imagemaps to
+images</para></item>
+          <item><para>Fix "transparent" color support in
+-Tsvg</para></item>
+          <item><para>Fix support for graph [URL="default.html"] in
+-Tsvg and -Tcmap</para></item>
+          <item><para>Fix '&amp;' escaping in URLs in
+-Tsvg</para></item>
+          <item><para>Fix infinite loop in dot layout
+algorithm</para></item>
+          <item><para>Fix text rotations again (hopefully freetype is
+stable now.)</para></item>
+          <item><para>Cluster layout improvements</para></item>
+          <item><para>Clean up warning messages from
+pathplan</para></item>
+          <item><para>Consolidation of mapping code from imapgen.c and
+ismapgen.c into m apgen.c</para></item>
+        </items>
+
+        <items name="gpr">
+          <item><para>Added additional mode to extract components
+based sharing an edge or a cluster</para></item>
+          <item><para>Fix test for getopt</para></item>
+        </items>
+
+        <items name="tcl-based tools">
+          <item><para>Disable tcl-based tool building if tcl/tk not
+available with stubs support</para></item>
+        </items>
+
+        <item><para>documentation updates: FAQ, dotguide,
+dot.1</para></item>
+      </change>
+
+      <change from="1.8.7" to="1.8.8">
+        <item><para>remove wrong assert in gdgen.c</para></item>
+        <item><para>fix graph centering in bitmap
+outputs</para></item>
+        <item><para>provide enough margins</para></item>
+        <item><para>fix line widths after scaling (test with
+directed/proc3d.dot)</para></item>
+        <item><para>fix text rotations (requires libfreetype.so.6.3.1)
+(test with directed/NaN.dot)</para></item>
+      </change>
+
+      <change from="1.8.6" to="1.8.7">
+        <item><para>Fix missing "]" in ihi demo</para></item>
+        <item><para>Add URL mappings for clusters:
+svg,svgz,ps,ismap,imap,cmap</para></item>
+        <item><para>Fix to avoid white edges in bitmap outputs when
+bgcolor is set</para></item>
+        <item><para>Improve sizing and position of strings in bitmap
+outputs when using builtin fonts (when font file not
+found)</para></item>
+        <item><para>Fix \N substitution in edge URLs in imap and cmap
+outputs</para></item>
+        <item><para>Add -Tcmap for client-side
+imagemaps</para></item>
+        <item><para>Generate warnings instead of access violation for
+EPSF file problems</para></item>
+        <item><para>Various spline fixes in neato</para></item>
+        <item><para>Fixes to pack.c</para></item>
+        <item><para>Add feature to ccomps to allow extraction of
+individual component by number or node</para></item>
+        <item><para>Cdt make to use iffe provided in the tools
+directory</para></item>
+        <item><para>Various Makefile.old fixes</para></item>
+        <item><para>Use HAVE_LIBZ to remove GD2 format if libz not
+available. Now bare-bones programs can be built without any add-on
+libraries.</para></item>
+        <item><para>Modified dot grammar to allow simple name
+attributes in attribute lists.  Thus, [splines] is equivalent to
+[splines=true]. Adopted the same convention for command line
+attributes -G, -E and -N. In addition, such command line attributes
+now override any competing initial attribute statements.</para></item>
+        <item><para>HP-UX 11.11 build fixes for struct
+dioattr</para></item>
+        <item><para>Fix for bug #158 "Nodes disappear with
+ports"</para></item>
+        <item><para>Various Windows-specific #ifdefs</para></item>
+        <item><para>Fix edge coordinates in -Tplain</para></item>
+      </change>
+
+      <change from="1.8.5" to="1.8.6">
+        <item><para>Fixed segfault from use of bgcolor in
+clusters</para></item>
+        <item><para>Changed install location of
+architecture-independent demo scripts and graphs to
+&lt;prefix&gt;/share/graphviz/ to conform to FHS</para></item>
+        <item><para>Avoid multiple linking of libfreetype (and others)
+which caused problems on SunOS-2.8</para></item>
+        <item><para>Factored out some duplicated arrow code from
+dotgen/splines.c and neatorgen/splines.c into
+common/arrows.c</para></item>
+        <item><para>Added new arrow types: halfopen, box, obox,
+crow</para></item>
+        <item><para>Touched up the arrow designs so that they look
+better at default size</para></item>
+        <item><para>Modified/extended graphs/directed/newarrows.dot to
+show new arrows</para></item>
+        <item><para>Added some UML arrow types: empty, invempty, open,
+diamond, odiamond</para></item>
+        <item><para>Added new pack option to neato. This causes each
+connected component to be laid out separately, and then the resulting
+graphs are packed together in a single layout.</para></item>
+        <item><para>Amended neato to accept new tee
+arrowhead</para></item>
+        <item><para>Coords of rectangles changed to left/top
+right/bottom in -Timap</para></item>
+        <item><para>Generate COPYING from LICENSE.html during
+./authogen.sh, remove COPYING from CVS</para></item>
+        <item><para>Minor license file patches</para></item>
+        <item><para>Corrected one of those reversed flat edge bugs
+again</para></item>
+      </change>
+
+      <change from="1.8.4" to="1.8.5">
+        <item><para>various portability fixes</para></item>
+        <item><para>various SVG fixes and optimizations</para></item>
+      </change>
+
+      <change from="1.8.3" to="1.8.4">
+        <items name="SVG renderer">
+          <item><para>make graph|node|edge ids unique, particularly
+for multiedges</para></item>
+          <item><para>put graph|node|edge names in
+&lt;title&gt;...&lt;/title&gt;</para></item>
+          <item><para>use some property inheritance to reduce size of
+output</para></item>
+          <item><para>fix compile errors when no zlib</para></item>
+          <item><para>updated DTD reference</para></item>
+        </items>
+
+        <items name="GD renderer">
+          <item><para>Minimal Type1 font support:</para>
+          <unorderedlist>
+            <item><para>look in
+/usr/lib/X11/fonts/Type1/</para></item>
+            <item><para>look for .pfa or .pfb font files based on
+fontname</para></item>
+          </unorderedlist></item>
+          <item><para>run gdgen.c through dos2unix - problems with gcc
+on SuSE</para></item>
+        </items>
+
+        <items name="Mac-OSX build problems">
+          <item><para>improve strto[u]ll configure tests</para></item>
+          <item><para>add -fno-common for extern problem</para></item>
+          <item><para>function renamed to avoid conflicts (vis -&gt;
+visibility)</para></item>
+          <item><para>add configure tests for search.h, malloc.h,
+getopt.h, errno.h</para></item>
+          <item><para>improve configure tests for FILE struct
+features</para></item>
+          <item><para>add configure tests for lrand48</para></item>
+        </items>
+
+        <items name="add new demo graphs">
+          <item><para>graphs/undirected/Heawood.dot</para></item>
+          <item><para>graphs/undirected/Petersen.dot</para></item>
+        </items>
+
+        <items name="neato">
+          <item><para>fix for -x implementation in neato (Bug
+77)</para></item>
+          <item><para>fix spline problem (Bug 87)</para></item>
+          <item><para>fix some divide-by-zero problems</para></item>
+        </items>
+
+        <items name="twopi">
+          <item><para>fix Bug 117</para></item>
+          <item><para>update man pages for unconnected graphs
+capability</para></item>
+        </items>
+
+        <item><para>added arrowhead or arrowtail = tee</para></item>
+        <item><para>add dotneato/pack code to twopi</para></item>
+        <item><para>add contrib/prune to gnu build and
+install</para></item>
+      </change>
+
+      <change from="1.8.2" to="1.8.3">
+        <item><para>fixed parse error for lines starting with '#' in
+.dot files</para></item>
+        <item><para>fixed a recently introduced bug that caused
+failure of:</para>
+        <screen>
+digraph G { { rank = same; A -&gt; B; B -&gt; A } }
+        </screen></item>
+        <item><para>updated DOCTYPE header in SVG
+outputs</para></item>
+        <item><para>added dotneato/common/xbuf.[ch] for dynamic string
+handling to avoid sprintf buffer overruns</para></item>
+        <item><para>twopigen - handle special case of graphs with &lt;
+3 nodes</para></item>
+        <item><para>neato - handle point shapes</para></item>
+        <item><para>added fontcolor support to svg</para></item>
+        <item><para>Fixed bug 109</para></item>
+        <item><para>Removed duplicate definitions for
+str[n]casecmp</para></item>
+        <item><para>Added missing declarations needed for
+Windows</para></item>
+        <item><para>Cleaned up warning messages from set but unused
+variables</para></item>
+        <item><para>Removed use of DOS preprocessor variable;
+uniformly replaced by MSWIN3</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2004 September 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-4</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

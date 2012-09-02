@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="genshi" version="0.6" revision="2">
+    <build-name>Genshi-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}06</install-name>
+
+    <sources>
+      <source checksum="604e8b23b4697655d36a69c2d8ef7187"
+        checksum-type="md5" size="433946"
+        path="src/Genshi-0.6.tar.gz"/>
+    </sources>
+
+    <module name="default">
+      <validate>
+        <depend program="genshi" module="2.6.7">v==0.6</depend>
+        <depend program="genshi" module="2.7.2">v==0.6</depend>
+      </validate>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies replace="0">
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="setuptools" var="SETUPTOOLS"
+          install-name="setuptools06" module="2.7.2">v&gt;=0.6</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs = ${SB_INSTALL_PREFIX}/include
+library_dirs = ${SB_INSTALL_PREFIX_LIB}
+rpath = ${SB_INSTALL_PREFIX_LIB}
+_EOT_
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS_LIB}/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_install_prefix}
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS_LIB}/${_pysubdir}:${_install_prefix}" \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies replace="0">
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="setuptools" var="SETUPTOOLS"
+          install-name="setuptools06" module="2.6.7">v&gt;=0.6</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs = ${SB_INSTALL_PREFIX}/include
+library_dirs = ${SB_INSTALL_PREFIX_LIB}
+rpath = ${SB_INSTALL_PREFIX_LIB}
+_EOT_
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS_LIB}/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_install_prefix}
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS_LIB}/${_pysubdir}:${_install_prefix}" \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para skip="0">Copyright (C) 2006-2010 Edgewall Software</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>The name of the author may not be used to
+endorse or promote products derived from this software without
+specific prior written permission.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE AUTHOR "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>The genshi Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 18" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add modules for Python 2.6.7 and
+2.7.2</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,1499 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="guile" version="1.8.6" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}18</install-name>
+
+    <sources>
+      <source checksum="9e23d3dbea0e89bab8a9acc6880150de"
+        checksum-type="md5" size="3960608"
+        path="src/guile-1.8.6.tar.gz"/>
+      <patch checksum="06bc87da6670a3668e40f2b2df6de972"
+        checksum-type="md5" size="5110"
+        path="src/guile-1.8.6.setjmp.patch"/>
+      <patch checksum="c9cb0d78ac9f440c186973af7b439054"
+        checksum-type="md5" size="52441"
+        path="src/guile-1.8.6.tww.patch"/>
+      <patch checksum="b667a01f68c9d007c3d21f2a2607c7d2"
+        checksum-type="md5" size="1556968"
+        path="src/guile-1.8.6.ltdl.patch"/>
+      <patch checksum="910b8bbe8edf4271c5cb76134216e5fb"
+        checksum-type="md5" size="389"
+        path="src/guile-1.8.6.tww-ltdl.patch"/>
+      <patch checksum="d3c9ef5a3d0c63120057f77b55d2657d"
+        checksum-type="md5" size="957"
+        path="src/guile-1.8.6.gcc44.patch"/>
+      <patch checksum="356b606905101effac7be6370a4c8232"
+        checksum-type="md5" size="5679372"
+        path="src/guile-1.8.6.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="gmp" var="LIBGMP"
+        install-name="libgmp43">v&gt;=4.3.2</depend>
+      <depend program="texinfo" add-path="prepend">v==4.13</depend>
+      <depend program="readline" var="READLINE">v==6.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-irix*)
+  CC="cc -diag_error 1035" CFLAGS="-Wl,-woff,84 -Wl,-woff,85 \
+-woff 1009,1429 -use_readonly_const -G0 -rdata_shared \
+-DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O1 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBGMP+-I${SB_VAR_LIBGMP_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_LIBGMP+-L${SB_VAR_LIBGMP_LIB}} \
+${SB_VAR_READLINE+${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${SB_VAR_LIBGMP+${CC_LD_RT}${SB_VAR_LIBGMP_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static \
+--with-modules --disable-dependency-tracking \
+--with-readline${SB_VAR_READLINE+=${SB_VAR_READLINE}} \
+--disable-error-on-warning ${ARGS+${ARGS}} --datadir=${_datadir} \
+--datarootdir=${_datadir} --infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" guile-1.8.pc
+
+${SB_PATH_SED} -i -e "\
+s%#! /bin/sh%#! ${SHELL}%" check-guile
+
+# Rebuild info docs
+rm doc/ref/guile.info doc/ref/guile.info-? doc/goops/goops.info \
+doc/r5rs/r5rs.info doc/tutorial/guile-tut.info
+
+case "${SB_SYSTYPE}" in
+ia64*-hpux*)
+  # avoid stack overflows
+  ${SB_PATH_SED} -i -e "\
+  s!@STACK_SIZE@!60000!;" libguile/eval.c ;;
+*)
+  ${SB_PATH_SED} -i -e "\
+  s!@STACK_SIZE@!20000!;" libguile/eval.c ;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir} || exit 1
+
+${SB_PATH_SED} -i -e "\
+/-L.*get-build-info/ {
+s/))$//
+a\\
+                            \" ${CC_LD_RT}\" (get-build-info 'libdir))) 
+}" guile-config/guile-config
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake -k check
+
+# The tests have a sleep 30 in them, so we sleep 30 too, to make sure
+# that the tests are finished before we do.
+echo "Waiting for test processes to complete"
+sleep 30
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/*/*.texi \
+libguile/guile-procedures.texi ${_docdir}/texinfo || :
+]]>
+    </install>
+
+    <notes>
+      <change from="1.8.4" to="1.8.5">
+        <items name="Infrastructure changes">
+          <item><para>Guile repository switched from CVS to Git</para>
+          <para>The new repository can be accessed using "git-clone
+git://git.sv.gnu.org/guile.git", or can be browsed on-line at
+http://git.sv.gnu.org/gitweb/?p=guile.git .  See `README' for
+details.</para></item>
+          <item><para>Add support for `pkg-config' See "Autoconf
+Support" in the manual for details.</para></item>
+        </items>
+
+        <items name="New modules (see the manual for details)">
+          <item><para>`(srfi srfi-88)'</para></item>
+        </items>
+
+        <items name="New features (see the manual for details)">
+          <item><para>New `postfix' read option, for SRFI-88 keyword
+syntax</para></item>
+          <item><para>Some I/O primitives have been inlined, which
+improves I/O performance</para></item>
+          <item><para>New object-based traps infrastructure</para>
+          <para>This is a GOOPS-based infrastructure that builds on
+Guile's low-level evaluator trap calls and facilitates the development
+of debugging features like single-stepping, breakpoints, tracing and
+profiling. See the `Traps' node of the manual for
+details.</para></item>
+          <item><para>New support for working on Guile code from
+within Emacs</para>
+          <para>Guile now incorporates the `GDS' library (previously
+distributed separately) for working on Guile code from within Emacs.
+See the `Using Guile In Emacs' node of the manual for
+details.</para></item>
+        </items>
+
+        <items name="Bugs fixed">
+          <item><para>`scm_add_slot ()' no longer segfaults (fixes bug
+#22369)</para></item>
+          <item><para>Fixed `(ice-9 match)' for patterns like `((_
+...) ...)'</para>
+          <para>Previously, expressions like `(match '((foo) (bar))
+(((_ ...) ...) #t))' would trigger an unbound variable error for
+`match:andmap'.</para></item>
+          <item><para>`(oop goops describe)' now properly provides the
+`describe' feature</para></item>
+          <item><para>Fixed `args-fold' from `(srfi srfi-37)'</para>
+          <para>Previously, parsing short option names of
+argument-less options would lead to a stack overflow.</para></item>
+          <item><para>`(srfi srfi-35)' is now visible through
+`cond-expand'</para></item>
+          <item><para>Fixed type-checking for the second argument of
+`eval'</para></item>
+          <item><para>Fixed type-checking for SRFI-1
+`partition'</para></item>
+          <item><para>Fixed `struct-ref' and `struct-set!' on "light
+structs"</para></item>
+          <item><para>Honor struct field access rights in
+GOOPS</para></item>
+          <item><para>Changed the storage strategy of source
+properties, which fixes a deadlock</para></item>
+          <item><para>Allow compilation of Guile-using programs in C99
+mode with GCC 4.3 and later</para></item>
+          <item><para>Fixed build issue for GNU/Linux on
+IA64</para></item>
+          <item><para>Fixed build issues on NetBSD 1.6</para></item>
+          <item><para>Fixed build issue on Solaris 2.10
+x86_64</para></item>
+          <item><para>Fixed build issue with DEC/Compaq/HP's
+compiler</para></item>
+          <item><para>Fixed `scm_from_complex_double' build issue on
+FreeBSD</para></item>
+          <item><para>Fixed `alloca' build issue on FreeBSD
+6</para></item>
+          <item><para>Removed use of non-portable makefile
+constructs</para></item>
+          <item><para>Fixed shadowing of libc's &lt;random.h&gt; on
+Tru64, which broke compilation</para></item>
+          <item><para>Make sure all tests honor
+`$TMPDIR'</para></item>
+        </items>
+
+        <items name="Changes to the distribution">
+          <item><para>New FAQ</para>
+          <para>We've started collecting Frequently Asked Questions
+(FAQ), and will distribute these (with answers!) in future Guile
+releases.</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.3" to="1.8.4">
+        <items name="Bugs fixed">
+          <item><para>CR (ASCII 0x0d) is (again) recognized as a token
+delimiter by the reader</para></item>
+          <item><para>Fixed a segmentation fault which occurred when
+displaying the backtrace of a stack with a promise object (made by
+`delay') in it.</para></item>
+          <item><para>Make `accept' leave guile mode while
+blocking</para></item>
+          <item><para>`scm_c_read ()' and `scm_c_write ()' now
+type-check their port argument</para></item>
+          <item><para>Fixed a build problem on AIX (use of func_data
+identifier)</para></item>
+          <item><para>Fixed a segmentation fault which occurred when
+hashx-ref or hashx-set! was called with an associator proc that
+returns neither a pair nor #f.</para></item>
+          <item><para>Secondary threads now always return a valid
+module for (current-module).</para></item>
+          <item><para>Avoid MacOS build problems caused by incorrect
+combination of "64" system and library calls.</para></item>
+          <item><para>`guile-snarf' now honors `$TMPDIR'</para></item>
+          <item><para>`guile-config compile' now reports CPPFLAGS used
+at compile-time</para></item>
+          <item><para>Fixed build with Sun Studio (Solaris
+9)</para></item>
+          <item><para>Fixed wrong-type-arg errors when creating zero
+length SRFI-4 uniform vectors on AIX.</para></item>
+          <item><para>Fixed a deadlock that occurs upon GC with
+multiple threads.</para></item>
+          <item><para>Fixed compile problem with GCC on Solaris and
+AIX (use of _Complex_I)</para></item>
+          <item><para>Fixed autotool-derived build problems on AIX
+6.1.</para></item>
+          <item><para>Fixed NetBSD/alpha support</para></item>
+          <item><para>Fixed MacOS build problem caused by use of
+rl_get_keymap(_name)</para></item>
+        </items>
+
+        <items name="New modules (see the manual for details)">
+          <item><para>`(srfi srfi-69)'</para></item>
+        </items>
+
+        <items name="Documentation fixes and improvements">
+          <item><para>Removed premature breakpoint documentation. The
+features described are not available in the series of 1.8.x releases,
+so the documentation was misleading and has been
+removed.</para></item>
+          <item><para>More about Guile's default *random-state*
+variable</para></item>
+          <item><para>GOOPS: more about how to use
+`next-method'</para></item>
+        </items>
+
+        <items name="Changes to the distribution">
+          <item><para>Corrected a few files that referred incorrectly
+to the old GPL + special exception licence</para>
+          <para>fact Guile since 1.8.0 has been licensed with
+the GNU Lesser General Public License, and the few incorrect files
+have now been fixed to agree with the rest of the Guile
+distribution.</para></item>
+          <item><para>Removed unnecessary extra copies of COPYING* The
+distribution now contains a single COPYING.LESSER at its top
+level.</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.2" to="1.8.3">
+        <items name="New modules (see the manual for details)">
+          <item><para>`(srfi srfi-35)'</para></item>
+          <item><para>`(srfi srfi-37)'</para></item>
+        </items>
+
+        <items name="Bugs fixed">
+          <item><para>The `(ice-9 slib)' module now works as
+expected</para></item>
+          <item><para>Expressions like "(set! 'x #t)" no longer yield
+a crash</para></item>
+          <item><para>Warnings about duplicate bindings now go to
+stderr</para></item>
+          <item><para>A memory leak in `make-socket-address' was
+fixed</para></item>
+          <item><para>Alignment issues (e.g., on SPARC) in network
+routines were fixed</para></item>
+          <item><para>A threading issue that showed up at least on
+NetBSD was fixed</para></item>
+          <item><para>Build problems on Solaris and IRIX
+fixed</para></item>
+        </items>
+
+        <items name="Implementation improvements">
+          <item><para>The reader is now faster, which reduces startup
+time</para></item>
+          <item><para>Procedures returned by `record-accessor' and
+`record-modifier' are faster</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.1" to="1.8.2">
+        <items name="New procedures (see the manual for details)">
+          <item><para>set-program-arguments</para></item>
+          <item><para>make-vtable</para></item>
+        </items>
+
+        <items name="Incompatible changes">
+          <item><para>The body of a top-level `define' no longer sees
+the binding being created In a top-level `define', the binding being
+created is no longer visible from the `define' body.  This breaks code
+like "(define foo (begin (set! foo 1) (+ foo 1)))", where `foo' is now
+unbound in the body.  However, such code was not R5RS-compliant
+anyway, per Section 5.2.1.</para></item>
+        </items>
+
+        <items name="Bugs fixed">
+          <item><para>Fractions were not `equal?' if stored in
+unreduced form. (A subtle problem, since printing a value reduced it,
+making it work.)</para></item>
+          <item><para>srfi-60 `copy-bit' failed on 64-bit
+systems</para></item>
+          <item><para>"guile --use-srfi" option at the REPL can
+replace core functions (Programs run with that option were ok, but in
+the interactive REPL the core bindings got priority, preventing SRFI
+replacements or extensions.)</para></item>
+          <item><para>`regexp-exec' doesn't abort() on #\nul in the
+input or bad flags arg</para></item>
+          <item><para>`kill' on mingw throws an error for a PID other
+than oneself</para></item>
+          <item><para>Procedure names are attached to
+procedure-with-setters</para></item>
+          <item><para>Array read syntax works with negative lower
+bound</para></item>
+          <item><para>`array-in-bounds?' fix if an array has different
+lower bounds on each index</para></item>
+          <item><para>`*' returns exact 0 for "(* inexact 0)" This
+follows what it always did for "(* 0 inexact)".</para></item>
+          <item><para>SRFI-19: Value returned by `(current-time
+time-process)' was incorrect</para></item>
+          <item><para>SRFI-19: `date-&gt;julian-day' did not account for
+timezone offset</para></item>
+          <item><para>`ttyname' no longer crashes when passed a
+non-tty argument</para></item>
+          <item><para>`inet-ntop' no longer crashes on SPARC when
+passed an `AF_INET' address</para></item>
+          <item><para>Small memory leaks have been fixed in
+`make-fluid' and `add-history'</para></item>
+          <item><para>GOOPS: Fixed a bug in
+`method-more-specific?'</para></item>
+          <item><para>Build problems on Solaris fixed</para></item>
+          <item><para>Build problems on HP-UX IA64 fixed</para></item>
+          <item><para>Build problems on MinGW fixed</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.0" to="1.8.1">
+        <item><para>LFS functions are now used to access 64-bit
+files on 32-bit systems.</para></item>
+        <items name="New procedures (see the manual for details)">
+          <item><para>primitive-_exit - [Scheme]
+the-root-module</para></item>
+          <item><para>scm_primitive__exit - [C]</para></item>
+          <item><para>make-completion-function - [Scheme] (ice-9
+readline)</para></item>
+          <item><para>scm_c_locale_stringn_to_number -
+[C]</para></item>
+          <item><para>scm_srfi1_append_reverse [C]</para></item>
+          <item><para>scm_srfi1_append_reverse_x [C]</para></item>
+          <item><para>scm_log - [C]</para></item>
+          <item><para>scm_log10 - [C]</para></item>
+          <item><para>scm_exp - [C]</para></item>
+          <item><para>scm_sqrt - [C]</para></item>
+        </items>
+
+        <items name="Bugs fixed">
+          <item><para>Build problems have been fixed on MacOS, SunOS,
+and QNX.</para></item>
+          <item><para>`strftime' fix sign of %z timezone
+offset.</para></item>
+          <item><para>A one-dimensional array can now be 'equal?' to a
+vector.</para></item>
+          <item><para>Structures, records, and SRFI-9 records can now
+be compared with `equal?'.</para></item>
+          <item><para>SRFI-14 standard char sets are recomputed upon a
+successful `setlocale'.</para></item>
+          <item><para>`record-accessor' and `record-modifier' now have
+strict type checks.</para>
+          <para>accessor and modifier procedures now throw an
+error if the record type of the record they're given is not the type
+expected. (Previously accessors returned #f and modifiers silently did
+nothing).</para></item>
+          <item><para>It is now OK to use both autoload and
+use-modules on a given module.</para></item>
+          <item><para>`apply' checks the number of arguments more
+carefully on "0 or 1" funcs.</para>
+          <para>there was no checking on primatives like
+make-vector that accept "one or two" arguments.  Now there
+is.</para></item>
+          <item><para>The srfi-1 assoc function now calls its equality
+predicate properly.</para>
+          <para>srfi-1 assoc would call the equality predicate
+with the key last.  According to the SRFI, the key should be
+first.</para></item>
+          <item><para>A bug in n-par-for-each and n-for-each-par-map
+has been fixed.</para></item>
+          <item><para>The array-set! procedure no longer segfaults
+when given a bit vector.</para></item>
+          <item><para>Bugs in make-shared-array have been
+fixed.</para></item>
+          <item><para>string&lt;? and friends now follow char&lt;? etc
+order on 8-bit chars.</para></item>
+          <item><para>The format procedure now handles inf and nan
+values for ~f correctly.</para></item>
+          <item><para>exact-&gt;inexact should no longer overflow when
+given certain large fractions.</para></item>
+          <item><para>srfi-9 accessor and modifier procedures now have
+strict record type checks. This matches the srfi-9
+specification.</para></item>
+          <item><para>(ice-9 ftw) procedures won't ignore different
+files with same inode number. Previously the (ice-9 ftw) procedures
+would ignore any file that had the same inode number as a file they
+had already seen, even if that file was on a different
+device.</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.x" to="1.8.0">
+        <items name="Changes to the distribution">
+          <item><para>Guile is now licensed with the GNU Lesser
+General Public License.</para></item>
+          <item><para>The manual is now licensed with the GNU Free
+Documentation License.</para></item>
+          <item><para>Guile now requires GNU MP (http://swox.com/gmp).
+Guile now uses the GNU MP library for arbitrary precision
+arithmetic.</para></item>
+          <item><para>Guile now has separate private and public
+configuration headers. That is, things like HAVE_STRING_H no longer
+leak from Guile's headers.</para></item>
+          <item><para>Guile now provides and uses an "effective"
+version number.</para>
+          <para>Guile now provides scm_effective_version and
+effective-version functions which return the "effective" version
+number.  This is just the normal full version string without the final
+micro-version number, so the current effective-version is "1.8".  The
+effective version should remain unchanged during a stable series, and
+should be used for items like the versioned share directory name i.e.
+/usr/share/guile/1.8.</para>
+          <para>Providing an unchanging version number during a
+stable release for things like the versioned share directory can be
+particularly important for Guile "add-on" packages, since it provides
+a directory that they can install to that won't be changed out from
+under them with each micro release during a stable
+series.</para></item>
+          <item><para>Thread implementation has changed.</para>
+          <para>When you configure "--with-threads=null", you will
+get the usual threading API (call-with-new-thread, make-mutex, etc),
+but you can't actually create new threads.  Also, "--with-threads=no"
+is now equivalent to "--with-threads=null".  This means that the
+thread API is always present, although you might not be able to create
+new threads.</para>
+          <para>When you configure "--with-threads=pthreads" or
+"--with-threads=yes", you will get threads that are implemented with
+the portable POSIX threads.  These threads can run concurrently
+(unlike the previous "coop" thread implementation), but need to
+cooperate for things like the GC.</para>
+          <para>The default is "pthreads", unless your platform
+doesn't have pthreads, in which case "null" threads are used.</para>
+          <para>See the manual for details, nodes "Initialization",
+"Multi-Threading", "Blocking", and others.</para></item>
+          <item><para>There is the new notion of 'discouraged'
+features.</para>
+          <para>This is a milder form of deprecation.</para>
+          <para>Things that are discouraged should not be used in
+new code, but it is OK to leave them in old code for now.  When a
+discouraged feature is used, no warning message is printed like there
+is for 'deprecated' features.  Also, things that are merely
+discouraged are nevertheless implemented efficiently, while deprecated
+features can be very slow.</para>
+          <para>You can omit discouraged features from libguile by
+configuring it with the '--disable-discouraged' option.</para></item>
+          <item><para>Deprecation warnings can be controlled at
+run-time.</para>
+          <para>(debug-enable 'warn-deprecated) switches them on and
+(debug-disable 'warn-deprecated) switches them off.</para></item>
+          <item><para>Support for SRFI 61, extended cond syntax for
+multiple values has been added.</para>
+          <para>This SRFI is always available.</para></item>
+          <item><para>Support for require-extension, SRFI-55, has been
+added.</para>
+          <para>The SRFI-55 special form `require-extension' has
+been added.  It is available at startup, and provides a portable way
+to load Scheme extensions.  SRFI-55 only requires support for one type
+of extension, "srfi"; so a set of SRFIs may be loaded via
+(require-extension (srfi 1 13 14)).</para></item>
+          <item><para>New module (srfi srfi-26) provides support for
+`cut' and `cute'.</para>
+          <para>The (srfi srfi-26) module is an implementation of
+SRFI-26 which provides the `cut' and `cute' syntax.  These may be used
+to specialize parameters without currying.</para></item>
+          <item><para>New module (srfi srfi-31)</para>
+          <para>This is an implementation of SRFI-31 which provides
+a special form `rec' for recursive evaluation.</para></item>
+          <item><para>The modules (srfi srfi-13), (srfi srfi-14) and
+(srfi srfi-4) have been merged with the core, making their
+functionality always available.</para>
+          <para>The modules are still available, tho, and you could
+use them together with a renaming import, for example.</para></item>
+          <item><para>Guile no longer includes its own version of
+libltdl.</para>
+          <para>The official version is good enough
+now.</para></item>
+          <item><para>The --enable-htmldoc option has been removed
+from 'configure'. Support for translating the documentation into HTML
+is now always provided.  Use 'make html'.</para></item>
+          <item><para>New module (ice-9 serialize):</para>
+          <para>(serialize FORM1 ...) and (parallelize FORM1 ...)
+are useful when you don't trust the thread safety of most of your
+program, but where you have some section(s) of code which you consider
+can run in parallel to other sections.  See ice-9/serialize.scm for
+more information. </para></item>
+          <item><para>The configure option '--disable-arrays' has been
+removed.</para>
+          <para>Support for arrays and uniform numeric arrays is now
+always included in Guile.</para></item>
+        </items>
+
+        <items name="Changes to the stand-alone interpreter">
+          <item><para>New command line option `-L'. This option adds a
+directory to the front of the load path.</para></item>
+          <item><para>New command line option `--no-debug'. Specifying
+`--no-debug' on the command line will keep the debugging evaluator
+turned off, even for interactive sessions.</para></item>
+          <item><para>User-init file ~/.guile is now loaded with the
+debugging evaluator. Previously, the normal evaluator would have been
+used.  Using the debugging evaluator gives better error
+messages.</para></item>
+          <item><para>The '-e' option now 'read's its argument.</para>
+          <para>This is to allow the new '(@ MODULE-NAME
+VARIABLE-NAME)' construct to be used with '-e'.  For example, you can
+now write a script like</para>
+          <screen>
+#! /bin/sh
+  exec guile -e '(@ (demo) main)' -s "$0" "$@"
+  !#
+
+  (define-module (demo)
+    :export (main))
+
+  (define (main args)
+    (format #t "Demo: ~a~%" args))
+          </screen></item>
+        </items>
+
+        <items name="Changes to Scheme functions and syntax">
+          <item><para>Guardians have changed back to their original
+semantics</para>
+          <para>Guardians now behave like described in the paper by
+Dybvig et al.  In particular, they no longer make guarantees about the
+order in which they return objects, and they can no longer be
+greedy.</para>
+          <para>They no longer drop cyclic data structures.</para>
+          <para>The C function scm_make_guardian has been changed
+incompatibly and no longer takes the 'greedy_p'
+argument.</para></item>
+          <item><para>New function hashx-remove! This function
+completes the set of 'hashx' functions.</para></item>
+          <item><para>The concept of dynamic roots has been factored
+into continuation barriers and dynamic states.</para>
+          <para>Each thread has a current dynamic state that carries
+the values of the fluids.  You can create and copy dynamic states and
+use them as the second argument for 'eval'.  See "Fluids and Dynamic
+States" in the manual.</para>
+          <para>To restrict the influence that captured
+continuations can have on the control flow, you can errect
+continuation barriers.  See "Continuation Barriers" in the
+manual.</para>
+          <para>The function call-with-dynamic-root now essentially
+temporarily installs a new dynamic state and errects a continuation
+barrier.</para></item>
+          <item><para>The default load path no longer includes "." at
+the end.</para>
+          <para>Automatically loading modules from the current
+directory should not happen by default.  If you want to allow it in a
+more controlled manner, set the environment variable GUILE_LOAD_PATH
+or the Scheme variable %load-path.</para></item>
+          <item><para>The uniform vector and array support has been
+overhauled.</para>
+          <para>It now complies with SRFI-4 and the weird prototype
+based uniform array creation has been deprecated.  See the manual for
+more details.</para>
+          <para>Some non-compatible changes have been made: </para>
+          <unorderedlist>
+            <item><para>characters can no longer be stored into
+byte arrays.</para></item>
+            <item><para>strings and bit vectors are no longer
+considered to be uniform numeric vectors.</para></item>
+            <item><para>array-rank throws an error for non-arrays
+instead of returning zero.</para></item>
+            <item><para>array-ref does no longer accept non-arrays
+when no indices are given.</para></item>
+          </unorderedlist>
+          <para>There is the new notion of 'generalized vectors' and
+corresponding procedures like 'generalized-vector-ref'.  Generalized
+vectors include strings, bitvectors, ordinary vectors, and uniform
+numeric vectors.</para>
+          <para>Arrays use generalized vectors as their storage, so
+that you still have arrays of characters, bits, etc.  However,
+uniform-array-read! and uniform-array-write can no longer read/write
+strings and bitvectors.</para></item>
+          <item><para>There is now support for copy-on-write
+substrings, mutation-sharing substrings and read-only strings.</para>
+          <para>Three new procedures are related to this:
+substring/shared, substring/copy, and substring/read-only.  See the
+manual for more information.</para></item>
+          <item><para>Backtraces will now highlight the value that
+caused the error.</para>
+          <para>By default, these values are enclosed in "{...}",
+such as in this example:</para>
+          <screen>
+guile&gt; (car 'a)
+
+    Backtrace:
+    In current input:
+       1: 0* [car {a}]
+
+    &lt;unnamed port&gt;:1:1: In procedure car in expression (car (quote a)):
+    &lt;unnamed port&gt;:1:1: Wrong type (expecting pair): a
+    ABORT: (wrong-type-arg)
+          </screen>
+          <para>The prefix and suffix used for highlighting can be
+set via the two new printer options 'highlight-prefix' and
+'highlight-suffix'.  For example, putting this into ~/.guile will
+output the bad value in bold on an ANSI terminal:</para>
+          <screen>
+(print-set! highlight-prefix "\x1b[1m")
+    (print-set! highlight-suffix "\x1b[22m")
+          </screen></item>
+          <item><para>'gettext' support for internationalization has
+been added. See the manual for details.</para></item>
+          <item><para>New syntax '@' and '@@':</para>
+          <para>You can now directly refer to variables exported
+from a module by writing</para>
+          <screen>
+(@ MODULE-NAME VARIABLE-NAME)
+          </screen>
+          <para>For example (@ (ice-9 pretty-print) pretty-print)
+will directly access the pretty-print variable exported from the
+(ice-9 pretty-print) module.  You don't need to 'use' that module
+first.  You can also use '@' as a target of 'set!', as in (set! (@ mod
+var) val).</para>
+          <para>The related syntax (@@ MODULE-NAME VARIABLE-NAME)
+works just like '@', but it can also access variables that have not
+been exported.  It is intended only for kluges and temporary fixes and
+for debugging, not for ordinary code.</para></item>
+          <item><para>Keyword syntax has been made more
+disciplined.</para>
+          <para>Previously, the name of a keyword was read as a
+'token' but printed as a symbol.  Now, it is read as a general Scheme
+datum which must be a symbol.</para>
+          <para>Previously:</para>
+          <screen>
+guile&gt; #:12
+    #:#{12}#
+    guile&gt; #:#{12}#
+    #:#{\#{12}\#}#
+    guile&gt; #:(a b c)
+    #:#{}#
+    ERROR: In expression (a b c):
+           Unbound variable: a
+    guile&gt; #: foo
+    #:#{}#
+    ERROR: Unbound variable: foo
+          </screen>
+          <para>Now:</para>
+          <screen>
+guile&gt; #:12
+    ERROR: Wrong type (expecting symbol): 12
+    guile&gt; #:#{12}#
+    #:#{12}#
+    guile&gt; #:(a b c)
+    ERROR: Wrong type (expecting symbol): (a b c)
+    guile&gt; #: foo
+    #:foo
+          </screen></item>
+          <item><para>The printing of symbols that might look like
+keywords can be controlled.</para>
+          <para>The new printer option 'quote-keywordish-symbols'
+controls how symbols are printed that have a colon as their first or
+last character.  The default now is to only quote a symbol with
+#{...}# when the read option 'keywords' is not '#f'.  Thus:</para>
+          <screen>
+guile&gt; (define foo (string-&gt;symbol ":foo"))
+    guile&gt; (read-set! keywords #f)
+    guile&gt; foo
+    :foo
+    guile&gt; (read-set! keywords 'prefix)
+    guile&gt; foo
+    #{:foo}#
+    guile&gt; (print-set! quote-keywordish-symbols #f)
+    guile&gt; foo
+    :foo
+          </screen></item>
+          <item><para>'while' now provides 'break' and
+'continue'</para>
+          <para>break and continue were previously bound in a while
+loop, but not documented, and continue didn't quite work properly.
+The undocumented parameter to break which gave a return value for the
+while has been dropped.</para></item>
+          <item><para>'call-with-current-continuation' is now also
+available under the name 'call/cc'.</para></item>
+          <item><para>The module system now checks for duplicate
+bindings.</para>
+          <para>The module system now can check for name conflicts
+among imported bindings.</para>
+          <para>The behavior can be controlled by specifying one or
+more 'duplicates' handlers.  For example, to make Guile return an
+error for every name collision, write:</para>
+          <screen>
+(define-module (foo)
+  :use-module (bar)
+  :use-module (baz)
+  :duplicates check)
+          </screen>
+          <para>The new default behavior of the module system when a
+name collision has been detected is to</para>
+          <unorderedlist>
+            <item><para>1. Give priority to bindings marked as a
+replacement.</para></item>
+            <item><para>2. Issue a warning (different warning if
+overriding core binding).</para></item>
+            <item><para>3. Give priority to the last encountered
+binding (this corresponds to the old behavior).</para></item>
+          </unorderedlist>
+          <para>If you want the old behavior back without
+replacements or warnings you can add the line:</para>
+          <screen>
+(default-duplicate-binding-handler 'last)
+          </screen>
+          <para>to your .guile init file.</para></item>
+          <item><para>New define-module option: :replace</para>
+          <para>:replace works as :export, but, in addition, marks
+the binding as a replacement.</para>
+          <para>A typical example is `format' in (ice-9 format)
+which is a replacement for the core binding `format'.</para></item>
+          <item><para>Adding prefixes to imported bindings in the
+module system</para>
+          <para>There is now a new :use-module option :prefix.  It
+can be used to add a prefix to all imported bindings.</para>
+          <screen>
+(define-module (foo)
+    :use-module ((bar) :prefix bar:))
+          </screen>
+          <para>will import all bindings exported from bar, but
+rename them by adding the prefix `bar:'.</para></item>
+          <item><para>Conflicting generic functions can be
+automatically merged.</para>
+          <para>When two imported bindings conflict and they are
+both generic functions, the two functions can now be merged
+automatically.  This is activated with the 'duplicates' handler
+'merge-generics'.</para></item>
+          <item><para>New function: effective-version</para>
+          <para>Returns the "effective" version number.  This is
+just the normal full version string without the final micro-version
+number.  See "Changes to the distribution" above.</para></item>
+          <item><para>New threading functions: parallel, letpar,
+par-map, and friends</para>
+          <para>These are convenient ways to run calculations in
+parallel in new threads.  See "Parallel forms" in the manual for
+details.</para></item>
+          <item><para>New function 'try-mutex'.</para>
+          <para>This function will attempt to lock a mutex but will
+return immediately instead of blocking and indicate
+failure.</para></item>
+          <item><para>Waiting on a condition variable can have a
+timeout.</para>
+          <para>The function 'wait-condition-variable' now takes a
+third, optional argument that specifies the point in time where the
+waiting should be aborted.</para></item>
+          <item><para>New function
+'broadcast-condition-variable'.</para></item>
+          <item><para>New functions 'all-threads' and
+'current-thread'.</para></item>
+          <item><para>Signals and system asyncs work better with
+threads.</para>
+          <para>The function 'sigaction' now takes a fourth,
+optional, argument that specifies the thread that the handler should
+run in.  When the argument is omitted, the handler will run in the
+thread that called 'sigaction'.</para>
+          <para>Likewise, 'system-async-mark' takes a second,
+optional, argument that specifies the thread that the async should run
+in.  When it is omitted, the async will run in the thread that called
+'system-async-mark'.</para>
+          <para>C code can use the new functions
+scm_sigaction_for_thread and scm_system_async_mark_for_thread to pass
+the new thread argument.</para>
+          <para>When a thread blocks on a mutex, a condition
+variable or is waiting for IO to be possible, it will still execute
+system asyncs.  This can be used to interrupt such a thread by making
+it execute a 'throw', for example.</para></item>
+          <item><para>The function 'system-async' is
+deprecated.</para>
+          <para>You can now pass any zero-argument procedure to
+'system-async-mark'. The function 'system-async' will just return its
+argument unchanged now.</para></item>
+          <item><para>New functions 'call-with-blocked-asyncs' and
+'call-with-unblocked-asyncs'</para>
+          <para>The expression (call-with-blocked-asyncs PROC) will
+call PROC and will block execution of system asyncs for the current
+thread by one level while PROC runs.  Likewise,
+call-with-unblocked-asyncs will call a procedure and will unblock the
+execution of system asyncs by one level for the current thread.</para>
+          <para>Only system asyncs are affected by these
+functions.</para></item>
+          <item><para>The functions 'mask-signals' and
+'unmask-signals' are deprecated.</para>
+          <para>Use 'call-with-blocked-asyncs' or
+'call-with-unblocked-asyncs' instead.  Those functions are easier to
+use correctly and can be nested.</para></item>
+          <item><para>New function 'unsetenv'.</para></item>
+          <item><para>New macro 'define-syntax-public'.</para>
+          <para>It works like 'define-syntax' and also exports the
+defined macro (but only on top-level).</para></item>
+          <item><para>There is support for Infinity and NaNs.</para>
+          <para>Following PLT Scheme, Guile can now work with
+infinite numbers, and 'not-a-numbers'.</para>
+          <para>There is new syntax for numbers: "+inf.0"
+(infinity), "-inf.0" (negative infinity), "+nan.0" (not-a-number), and
+"-nan.0" (same as "+nan.0").  These numbers are inexact and have no
+exact counterpart.</para>
+          <para>Dividing by an inexact zero returns +inf.0 or
+-inf.0, depending on the sign of the dividend.  The infinities are
+integers, and they answer #t for both 'even?' and 'odd?'. The +nan.0
+value is not an integer and is not '=' to itself, but '+nan.0' is
+'eqv?' to itself.</para>
+          <para>For example</para>
+          <screen>
+(/ 1 0.0)
+    =&gt; +inf.0
+
+    (/ 0 0.0)
+    =&gt; +nan.0
+
+    (/ 0)
+    ERROR: Numerical overflow
+          </screen>
+          <para>Two new predicates 'inf?' and 'nan?' can be used to
+test for the special values.</para></item>
+          <item><para>Inexact zero can have a sign.</para>
+          <para>Guile can now distinguish between plus and minus
+inexact zero, if your platform supports this, too.  The two zeros are
+equal according to '=', but not according to 'eqv?'.  For
+example</para>
+          <screen>
+(- 0.0)
+    =&gt; -0.0
+
+    (= 0.0 (- 0.0))
+    =&gt; #t
+
+    (eqv? 0.0 (- 0.0))
+    =&gt; #f
+          </screen></item>
+          <item><para>Guile now has exact rationals.</para>
+          <para>Guile can now represent fractions such as 1/3
+exactly.  Computing with them is also done exactly, of course:</para>
+          <screen>
+(* 1/3 3/2)
+    =&gt; 1/2
+          </screen></item>
+          <item><para>'floor', 'ceiling', 'round' and 'truncate' now
+return exact numbers for exact arguments.</para>
+          <para>For example: (floor 2) now returns an exact 2 where
+in the past it returned an inexact 2.0.  Likewise, (floor 5/4) returns
+an exact 1.</para></item>
+          <item><para>inexact-&gt;exact no longer returns only
+integers.</para>
+          <para>Without exact rationals, the closest exact number
+was always an integer, but now inexact-&gt;exact returns the fraction
+that is exactly equal to a floating point number.  For example:</para>
+          <screen>
+(inexact-&gt;exact 1.234)
+    =&gt; 694680242521899/562949953421312
+          </screen>
+          <para>When you want the old behavior, use 'round'
+explicitly:</para>
+          <screen>
+(inexact-&gt;exact (round 1.234))
+    =&gt; 1
+          </screen></item>
+          <item><para>New function 'rationalize'.</para>
+          <para>This function finds a simple fraction that is close
+to a given real number.  For example (and compare with inexact-&gt;exact
+above):</para>
+          <screen>
+(rationalize (inexact-&gt;exact 1.234) 1/2000)
+    =&gt; 58/47
+          </screen>
+          <para>Note that, as required by R5RS, rationalize returns
+only then an exact result when both its arguments are
+exact.</para></item>
+          <item><para>'odd?' and 'even?' work also for inexact
+integers.</para>
+          <para>Previously, (odd? 1.0) would signal an error since
+only exact integers were recognized as integers.  Now (odd? 1.0)
+returns #t, (odd? 2.0) returns #f and (odd? 1.5) signals an
+error.</para></item>
+          <item><para>Guile now has uninterned symbols.</para>
+          <para>The new function 'make-symbol' will return an
+uninterned symbol.  This is a symbol that is unique and is guaranteed
+to remain unique. However, uninterned symbols can not yet be read back
+in.</para>
+          <para>Use the new function 'symbol-interned?' to check
+whether a symbol is interned or not.</para></item>
+          <item><para>pretty-print has more options.</para>
+          <para>The function pretty-print from the (ice-9
+pretty-print) module can now also be invoked with keyword arguments
+that control things like maximum output width.  See the manual for
+details.</para></item>
+          <item><para>Variables have no longer a special behavior for
+`equal?'.</para>
+          <para>Previously, comparing two variables with `equal?'
+would recursivly compare their values.  This is no longer done.
+Variables are now only `equal?' if they are `eq?'.</para></item>
+          <item><para>`(begin)' is now valid.</para>
+          <para>You can now use an empty `begin' form.  It will
+yield #&lt;unspecified&gt; when evaluated and simply be ignored in a
+definition context.</para></item>
+          <item><para>Deprecated: procedure-&gt;macro</para>
+          <para>Change your code to use 'define-macro' or r5rs
+macros.  Also, be aware that macro expansion will not be done during
+evaluation, but prior to evaluation.</para></item>
+          <item><para>Soft ports now allow a `char-ready?'
+procedure</para>
+          <para>The vector argument to `make-soft-port' can now have
+a length of either 5 or 6.  (Previously the length had to be 5.)  The
+optional 6th element is interpreted as an `input-waiting' thunk --
+i.e. a thunk that returns the number of characters that can be read
+immediately without the soft port blocking.</para></item>
+          <item><para>Deprecated: undefine There is no replacement for
+undefine.</para></item>
+          <item><para>The functions make-keyword-from-dash-symbol and
+keyword-dash-symbol have been discouraged.</para>
+          <para>They are relics from a time where a keyword like
+#:foo was used directly as a Tcl option "-foo" and thus keywords were
+internally stored as a symbol with a starting dash.  We now store a
+symbol without the dash.</para>
+          <para>Use symbol-&gt;keyword and keyword-&gt;symbol
+instead.</para></item>
+          <item><para>The `cheap' debug option is now obsolete</para>
+          <para>Evaluator trap calls are now unconditionally "cheap"
+- in other words, they pass a debug object to the trap handler rather
+than a full continuation.  The trap handler code can capture a full
+continuation by using `call-with-current-continuation' in the usual
+way, if it so desires.</para>
+          <para>The `cheap' option is retained for now so as not to
+break existing code which gets or sets it, but setting it now has no
+effect.  It will be removed in the next major Guile
+release.</para></item>
+          <item><para>Evaluator trap calls now support
+`tweaking'</para>
+          <para>`Tweaking' means that the trap handler code can
+modify the Scheme expression that is about to be evaluated (in the
+case of an enter-frame trap) or the value that is being returned (in
+the case of an exit-frame trap).  The trap handler code indicates that
+it wants to do this by returning a pair whose car is the symbol
+'instead and whose cdr is the modified expression or return
+value.</para></item>
+        </items>
+
+        <items name="Changes to the C interface">
+          <item><para>The functions scm_hash_fn_remove_x and
+scm_hashx_remove_x no longer take a 'delete' function argument.</para>
+          <para>This argument makes no sense since the delete
+function is used to remove a pair from an alist, and this must not be
+configurable.</para>
+          <para>This is an incompatible change.</para></item>
+          <item><para>The GH interface is now subject to the
+deprecation mechanism</para>
+          <para>The GH interface has been deprecated for quite some
+time but now it is actually removed from Guile when it is configured
+with --disable-deprecated.</para>
+          <para>See the manual "Transitioning away from GH" for more
+information.</para></item>
+          <item><para>A new family of functions for converting between
+C values and Scheme values has been added.</para>
+          <para>These functions follow a common naming scheme and
+are designed to be easier to use, thread-safe and more future-proof
+than the older alternatives.</para>
+          <unorderedlist>
+            <item><para>- int scm_is_* (...)</para>
+            <para>These are predicates that return a C boolean:
+1 or 0.  Instead of SCM_NFALSEP, you can now use scm_is_true, for
+example.</para></item>
+            <item><para>- &lt;type&gt; scm_to_&lt;type&gt; (SCM val,
+...)</para>
+            <para>These are functions that convert a Scheme
+value into an appropriate C value.  For example, you can use
+scm_to_int to safely convert from a SCM to an int.</para></item>
+            <item><para>- SCM scm_from_&lt;type&gt; (&lt;type&gt;
+val, ...)</para>
+            <para>These functions convert from a C type to a SCM
+value; for example, scm_from_int for ints.</para></item>
+          </unorderedlist>
+          <para>There is a huge number of these functions, for
+numbers, strings, symbols, vectors, etc.  They are documented in the
+reference manual in the API section together with the types that they
+apply to.</para></item>
+          <item><para>New functions for dealing with complex numbers
+in C have been added.</para>
+          <para>The new functions are scm_c_make_rectangular,
+scm_c_make_polar, scm_c_real_part, scm_c_imag_part, scm_c_magnitude
+and scm_c_angle. They work like scm_make_rectangular etc but take or
+return doubles directly.</para></item>
+          <item><para>The function scm_make_complex has been
+discouraged. Use scm_c_make_rectangular instead.</para></item>
+          <item><para>The INUM macros have been deprecated.</para>
+          <para>A lot of code uses these macros to do general
+integer conversions, although the macros only work correctly with
+fixnums.  Use the following alternatives.</para>
+          <screen>
+SCM_INUMP             -&gt;  scm_is_integer or similar
+  SCM_NINUMP            -&gt;  !scm_is_integer or similar
+  SCM_MAKINUM           -&gt;  scm_from_int or similar
+  SCM_INUM              -&gt;  scm_to_int or similar
+
+  SCM_VALIDATE_INUM_*   -&gt;  Do not use these; scm_to_int, etc. will
+                            do the validating for you.
+          </screen></item>
+          <item><para>The scm_num2&lt;type&gt; and
+scm_&lt;type&gt;2num functions and scm_make_real have been
+discouraged.</para>
+          <para>Use the newer scm_to_&lt;type&gt; and
+scm_from_&lt;type&gt; functions instead for new code.  The functions
+have been discouraged since they don't fit the naming
+scheme.</para></item>
+          <item><para>The 'boolean' macros SCM_FALSEP etc have been
+discouraged.</para>
+          <para>They have strange names, especially SCM_NFALSEP, and
+SCM_BOOLP evaluates its argument twice.  Use scm_is_true, etc. instead
+for new code.</para></item>
+          <item><para>The macro SCM_EQ_P has been discouraged. Use
+scm_is_eq for new code, which fits better into the naming
+conventions.</para></item>
+          <item><para>The macros SCM_CONSP, SCM_NCONSP, SCM_NULLP, and
+SCM_NNULLP have been discouraged. Use the function scm_is_pair or
+scm_is_null instead.</para></item>
+          <item><para>The functions scm_round and scm_truncate have
+been deprecated and are now available as scm_c_round and
+scm_c_truncate, respectively.</para>
+          <para>These functions occupy the names that
+scm_round_number and scm_truncate_number should have.</para></item>
+          <item><para>The functions scm_c_string2str,
+scm_c_substring2str, and scm_c_symbol2str have been deprecated.</para>
+          <para>Use scm_to_locale_stringbuf or similar instead,
+maybe together with scm_substring.</para></item>
+          <item><para>New functions scm_c_make_string,
+scm_c_string_length, scm_c_string_ref, scm_c_string_set_x,
+scm_c_substring, scm_c_substring_shared, scm_c_substring_copy.</para>
+          <para>These are like scm_make_string, scm_length, etc. but
+are slightly easier to use from C.</para></item>
+          <item><para>The macros SCM_STRINGP, SCM_STRING_CHARS,
+SCM_STRING_LENGTH, SCM_SYMBOL_CHARS, and SCM_SYMBOL_LENGTH have been
+deprecated.</para>
+          <para>They export too many assumptions about the
+implementation of strings and symbols that are no longer true in the
+presence of mutation-sharing substrings and when Guile switches to
+some form of Unicode.</para>
+          <para>When working with strings, it is often best to use
+the normal string functions provided by Guile, such as
+scm_c_string_ref, scm_c_string_set_x, scm_string_append, etc.  Be sure
+to look in the manual since many more such functions are now provided
+than previously.</para>
+          <para>When you want to convert a SCM string to a C string,
+use the scm_to_locale_string function or similar instead.  For
+symbols, use scm_symbol_to_string and then work with that string.
+Because of the new string representation, scm_symbol_to_string does
+not need to copy and is thus quite efficient.</para></item>
+          <item><para>Some string, symbol and keyword functions have
+been discouraged.</para>
+          <para>They don't fit into the uniform naming scheme and
+are not explicit about the character encoding.</para>
+          <para>Replace according to the following table:</para>
+          <screen>
+scm_allocate_string       -&gt; scm_c_make_string
+    scm_take_str              -&gt; scm_take_locale_stringn 
+    scm_take0str              -&gt; scm_take_locale_string
+    scm_mem2string            -&gt; scm_from_locale_stringn
+    scm_str2string            -&gt; scm_from_locale_string
+    scm_makfrom0str           -&gt; scm_from_locale_string
+    scm_mem2symbol            -&gt; scm_from_locale_symboln
+    scm_mem2uninterned_symbol -&gt; scm_from_locale_stringn + scm_make_symbol
+    scm_str2symbol            -&gt; scm_from_locale_symbol
+
+    SCM_SYMBOL_HASH           -&gt; scm_hashq
+    SCM_SYMBOL_INTERNED_P     -&gt; scm_symbol_interned_p
+
+    scm_c_make_keyword        -&gt; scm_from_locale_keyword
+          </screen></item>
+          <item><para>The functions scm_keyword_to_symbol and
+sym_symbol_to_keyword are now also available to C code.</para></item>
+          <item><para>SCM_KEYWORDP and SCM_KEYWORDSYM have been
+deprecated.</para>
+          <para>Use scm_is_keyword and scm_keyword_to_symbol
+instead, but note that the latter returns the true name of the
+keyword, not the 'dash name', as SCM_KEYWORDSYM used to
+do.</para></item>
+          <item><para>A new way to access arrays in a thread-safe and
+efficient way has been added. See the manual, node "Accessing Arrays
+From C".</para></item>
+          <item><para>The old uniform vector and bitvector
+implementations have been unceremoniously removed.</para>
+          <para>This implementation exposed the details of the
+tagging system of Guile.  Use the new C API explained in the manual in
+node "Uniform Numeric Vectors" and "Bit Vectors", respectively.</para>
+          <para>The following macros are gone: SCM_UVECTOR_BASE,
+SCM_SET_UVECTOR_BASE, SCM_UVECTOR_MAXLENGTH, SCM_UVECTOR_LENGTH,
+SCM_MAKE_UVECTOR_TAG, SCM_SET_UVECTOR_LENGTH, SCM_BITVECTOR_P,
+SCM_BITVECTOR_BASE, SCM_SET_BITVECTOR_BASE, SCM_BITVECTOR_MAX_LENGTH,
+SCM_BITVECTOR_LENGTH, SCM_MAKE_BITVECTOR_TAG,
+SCM_SET_BITVECTOR_LENGTH, SCM_BITVEC_REF, SCM_BITVEC_SET,
+SCM_BITVEC_CLR.</para></item>
+          <item><para>The macros dealing with vectors have been
+deprecated.</para>
+          <para>Use the new functions scm_is_vector,
+scm_vector_elements, scm_vector_writable_elements, etc, or
+scm_is_simple_vector, SCM_SIMPLE_VECTOR_REF, SCM_SIMPLE_VECTOR_SET,
+etc instead.  See the manual for more details.</para>
+          <para>Deprecated are SCM_VECTORP, SCM_VELTS,
+SCM_VECTOR_MAX_LENGTH, SCM_VECTOR_LENGTH, SCM_VECTOR_REF,
+SCM_VECTOR_SET, SCM_WRITABLE_VELTS.</para>
+          <para>The following macros have been removed:
+SCM_VECTOR_BASE, SCM_SET_VECTOR_BASE, SCM_MAKE_VECTOR_TAG,
+SCM_SET_VECTOR_LENGTH, SCM_VELTS_AS_STACKITEMS, SCM_SETVELTS,
+SCM_GC_WRITABLE_VELTS.</para></item>
+          <item><para>Some C functions and macros related to arrays
+have been deprecated.</para>
+          <para>Migrate according to the following table:</para>
+          <screen>
+scm_make_uve        -&gt; scm_make_typed_array, scm_make_u8vector etc.
+    scm_make_ra         -&gt; scm_make_array
+    scm_shap2ra         -&gt; scm_make_array
+    scm_cvref           -&gt; scm_c_generalized_vector_ref
+    scm_ra_set_contp    -&gt; do not use
+    scm_aind            -&gt; scm_array_handle_pos
+    scm_raprin1         -&gt; scm_display or scm_write
+
+    SCM_ARRAYP          -&gt; scm_is_array
+    SCM_ARRAY_NDIM      -&gt; scm_c_array_rank
+    SCM_ARRAY_DIMS      -&gt; scm_array_handle_dims
+    SCM_ARRAY_CONTP     -&gt; do not use
+    SCM_ARRAY_MEM       -&gt; do not use
+    SCM_ARRAY_V         -&gt; scm_array_handle_elements or similar
+    SCM_ARRAY_BASE      -&gt; do not use
+          </screen></item>
+          <item><para>SCM_CELL_WORD_LOC has been deprecated.</para>
+          <para>Use the new macro SCM_CELL_OBJECT_LOC instead, which
+returns a pointer to a SCM, as opposed to a pointer to a
+scm_t_bits.</para>
+          <para>This was done to allow the correct use of pointers
+into the Scheme heap.  Previously, the heap words were of type
+scm_t_bits and local variables and function arguments were of type
+SCM, making it non-standards-conformant to have a pointer that can
+point to both.</para></item>
+          <item><para>New macros SCM_SMOB_DATA_2, SCM_SMOB_DATA_3,
+etc.</para>
+          <para>These macros should be used instead of
+SCM_CELL_WORD_2/3 to access the second and third words of double
+smobs.  Likewise for SCM_SET_SMOB_DATA_2 and
+SCM_SET_SMOB_DATA_3.</para>
+          <para>Also, there is SCM_SMOB_FLAGS and SCM_SET_SMOB_FLAGS
+that should be used to get and set the 16 exra bits in the zeroth word
+of a smob.</para>
+          <para>And finally, there is SCM_SMOB_OBJECT and
+SCM_SMOB_SET_OBJECT for accesing the first immediate word of a smob as
+a SCM value, and there is SCM_SMOB_OBJECT_LOC for getting a pointer to
+the first immediate smob word.  Like wise for SCM_SMOB_OBJECT_2,
+etc.</para></item>
+          <item><para>New way to deal with non-local exits and
+re-entries.</para>
+          <para>There is a new set of functions that essentially do
+what scm_internal_dynamic_wind does, but in a way that is more
+convenient for C code in some situations.  Here is a quick example of
+how to prevent a potential memory leak:</para>
+          <screen>
+void
+  foo ()
+  {
+    char *mem;
+
+    scm_dynwind_begin (0);
+
+    mem = scm_malloc (100);
+    scm_dynwind_unwind_handler (free, mem, SCM_F_WIND_EXPLICITLY);
+
+    /* MEM would leak if BAR throws an error.
+       SCM_DYNWIND_UNWIND_HANDLER frees it nevertheless.  
+     */
+
+    bar ();
+  
+    scm_dynwind_end ();
+
+    /* Because of SCM_F_WIND_EXPLICITLY, MEM will be freed by 
+       SCM_DYNWIND_END as well. 
+    */
+  }
+          </screen>
+          <para>For full documentation, see the node "Dynamic Wind"
+in the manual.</para></item>
+          <item><para>New function scm_dynwind_free</para>
+          <para>This function calls 'free' on a given pointer when a
+dynwind context is left.  Thus the call to scm_dynwind_unwind_handler
+above could be replaced with simply scm_dynwind_free
+(mem).</para></item>
+          <item><para>New functions scm_c_call_with_blocked_asyncs and
+scm_c_call_with_unblocked_asyncs. Like scm_call_with_blocked_asyncs
+etc. but for C functions.</para></item>
+          <item><para>New functions scm_dynwind_block_asyncs and
+scm_dynwind_unblock_asyncs. In addition to
+scm_c_call_with_blocked_asyncs you can now also use
+scm_dynwind_block_asyncs in a 'dynwind context' (see above).  Likewise
+for scm_c_call_with_unblocked_asyncs and
+scm_dynwind_unblock_asyncs.</para></item>
+          <item><para>The macros SCM_DEFER_INTS, SCM_ALLOW_INTS,
+SCM_REDEFER_INTS, SCM_REALLOW_INTS have been deprecated.</para>
+          <para>They do no longer fulfill their original role of
+blocking signal delivery.  Depending on what you want to achieve,
+replace a pair of SCM_DEFER_INTS and SCM_ALLOW_INTS with a dynwind
+context that locks a mutex, blocks asyncs, or both.  See node
+"Critical Sections" in the manual.</para></item>
+          <item><para>The value 'scm_mask_ints' is no longer
+writable.</para>
+          <para>Previously, you could set scm_mask_ints directly.
+This is no longer possible.  Use scm_c_call_with_blocked_asyncs and
+scm_c_call_with_unblocked_asyncs instead.</para></item>
+          <item><para>New way to temporarily set the current input,
+output or error ports</para>
+          <para>C code can now use
+scm_dynwind_current_&lt;foo&gt;_port in a 'dynwind context' (see
+above).  &lt;foo&gt; is one of "input", "output" or
+"error".</para></item>
+          <item><para>New way to temporarily set fluids</para>
+          <para>C code can now use scm_dynwind_fluid in a 'dynwind
+context' (see above) to temporarily set the value of a
+fluid.</para></item>
+          <item><para>New types scm_t_intmax and scm_t_uintmax.</para>
+          <para>On platforms that have them, these types are
+identical to intmax_t and uintmax_t, respectively.  On other
+platforms, they are identical to the largest integer types that Guile
+knows about.</para></item>
+          <item><para>The functions scm_unmemocopy and scm_unmemoize
+have been removed. You should not have used them.</para></item>
+          <item><para>Many public #defines with generic names have
+been made private.</para>
+          <para>#defines with generic names like HAVE_FOO or
+SIZEOF_FOO have been made private or renamed with a more suitable
+public name.</para></item>
+          <item><para>The macro SCM_TYP16S has been deprecated. This
+macro is not intended for public use.</para></item>
+          <item><para>The macro SCM_SLOPPY_INEXACTP has been
+deprecated. Use scm_is_true (scm_inexact_p (...))
+instead.</para></item>
+          <item><para>The macro SCM_SLOPPY_REALP has been deprecated.
+Use scm_is_real instead.</para></item>
+          <item><para>The macro SCM_SLOPPY_COMPLEXP has been
+deprecated. Use scm_is_complex instead.</para></item>
+          <item><para>Some preprocessor defines have been
+deprecated.</para>
+          <para>These defines indicated whether a certain feature
+was present in Guile or not.  Going forward, assume that the features
+are always present.</para>
+          <para>The macros are: USE_THREADS, GUILE_ISELECT,
+READER_EXTENSIONS, DEBUG_EXTENSIONS, DYNAMIC_LINKING.</para>
+          <para>The following macros have been removed completely:
+MEMOIZE_LOCALS, SCM_RECKLESS, SCM_CAUTIOUS.</para></item>
+          <item><para>The preprocessor define STACK_DIRECTION has been
+deprecated. There should be no need to know about the stack direction
+for ordinary programs.</para></item>
+          <item><para>New function: scm_effective_version</para>
+          <para>Returns the "effective" version number.  This is
+just the normal full version string without the final micro-version
+number.  See "Changes to the distribution" above.</para></item>
+          <item><para>The function scm_call_with_new_thread has a new
+prototype.</para>
+          <para>Instead of taking a list with the thunk and handler,
+these two arguments are now passed directly:</para>
+          <screen>
+SCM scm_call_with_new_thread (SCM thunk, SCM handler);
+          </screen>
+          <para>This is an incompatible change.</para></item>
+          <item><para>New snarfer macro SCM_DEFINE_PUBLIC.</para>
+          <para>This is like SCM_DEFINE, but also calls scm_c_export
+for the defined function in the init section.</para></item>
+          <item><para>The snarfer macro SCM_SNARF_INIT is now
+officially supported.</para></item>
+          <item><para>Garbage collector rewrite.</para>
+          <para>The garbage collector is cleaned up a lot, and now
+uses lazy sweeping. This is reflected in the output of (gc-stats);
+since cells are being freed when they are allocated, the
+cells-allocated field stays roughly constant.</para>
+          <para>For malloc related triggers, the behavior is
+changed. It uses the same heuristic as the cell-triggered collections.
+It may be tuned with the environment variables GUILE_MIN_YIELD_MALLOC.
+This is the percentage for minimum yield of malloc related triggers.
+The default is 40. GUILE_INIT_MALLOC_LIMIT sets the initial trigger
+for doing a GC. The default is 200 kb.</para>
+          <para>Debugging operations for the freelist have been
+deprecated, along with the C variables that control garbage
+collection.  The environment variables GUILE_MAX_SEGMENT_SIZE,
+GUILE_INIT_SEGMENT_SIZE_2, GUILE_INIT_SEGMENT_SIZE_1, and
+GUILE_MIN_YIELD_2 should be used.</para>
+          <para>For understanding the memory usage of a GUILE
+program, the routine gc-live-object-stats returns an alist containing
+the number of live objects for every type.</para></item>
+          <item><para>The function scm_definedp has been renamed to
+scm_defined_p The name scm_definedp is deprecated.</para></item>
+          <item><para>The struct scm_cell type has been renamed to
+scm_t_cell</para>
+          <para>This is in accordance to Guile's naming scheme for
+types.  Note that the name scm_cell is now used for a function that
+allocates and initializes a new cell (see below).</para></item>
+          <item><para>New functions for memory management</para>
+          <para>A new set of functions for memory management has
+been added since the old way (scm_must_malloc, scm_must_free, etc) was
+error prone and indeed, Guile itself contained some long standing bugs
+that could cause aborts in long running programs.</para>
+          <para>The new functions are more symmetrical and do not
+need cooperation from smob free routines, among other
+improvements.</para>
+          <para>The new functions are scm_malloc, scm_realloc,
+scm_calloc, scm_strdup, scm_strndup, scm_gc_malloc, scm_gc_calloc,
+scm_gc_realloc, scm_gc_free, scm_gc_register_collectable_memory, and
+scm_gc_unregister_collectable_memory.  Refer to the manual for more
+details and for upgrading instructions.</para>
+          <para>The old functions for memory management have been
+deprecated.  They are: scm_must_malloc, scm_must_realloc,
+scm_must_free, scm_must_strdup, scm_must_strndup, scm_done_malloc,
+scm_done_free.</para></item>
+          <item><para>Declarations of exported features are marked
+with SCM_API.</para>
+          <para>Every declaration of a feature that belongs to the
+exported Guile API has been marked by adding the macro "SCM_API" to
+the start of the declaration.  This macro can expand into different
+things, the most common of which is just "extern" for Unix platforms.
+On Win32, it can be used to control which symbols are exported from a
+DLL.</para>
+          <para>If you `#define SCM_IMPORT' before including
+&lt;libguile.h&gt;, SCM_API will expand into "__declspec (dllimport)
+extern", which is needed for linking to the Guile DLL in
+Windows.</para>
+          <para>There are also SCM_RL_IMPORT, SCM_SRFI1314_IMPORT,
+and SCM_SRFI4_IMPORT, for the corresponding libraries.</para></item>
+          <item><para>SCM_NEWCELL and SCM_NEWCELL2 have been
+deprecated.</para>
+          <para>Use the new functions scm_cell and scm_double_cell
+instead.  The old macros had problems because with them allocation and
+initialization was separated and the GC could sometimes observe half
+initialized cells.  Only careful coding by the user of SCM_NEWCELL and
+SCM_NEWCELL2 could make this safe and efficient.</para></item>
+          <item><para>CHECK_ENTRY, CHECK_APPLY and CHECK_EXIT have
+been deprecated.</para>
+          <para>Use the variables scm_check_entry_p,
+scm_check_apply_p and scm_check_exit_p instead.</para></item>
+          <item><para>SRCBRKP has been deprecated. Use
+scm_c_source_property_breakpoint_p instead.</para></item>
+          <item><para>Deprecated: scm_makmacro</para>
+          <para>Change your code to use either scm_makmmacro or to
+define macros in Scheme, using 'define-macro'.</para></item>
+          <item><para>New function scm_c_port_for_each. This function
+is like scm_port_for_each but takes a pointer to a C function as the
+callback instead of a SCM value.</para></item>
+          <item><para>The names scm_internal_select, scm_thread_sleep,
+and scm_thread_usleep have been discouraged. Use scm_std_select,
+scm_std_sleep, scm_std_usleep instead.</para></item>
+          <item><para>The GC can no longer be blocked. The global
+flags scm_gc_heap_lock and scm_block_gc have been removed. The GC can
+now run (partially) concurrently with other code and thus blocking it
+is not well defined.</para></item>
+          <item><para>Many definitions have been removed that were
+previously deprecated.</para>
+          <para>scm_lisp_nil, scm_lisp_t, s_nil_ify, scm_m_nil_ify,
+s_t_ify, scm_m_t_ify, s_0_cond, scm_m_0_cond, s_0_ify, scm_m_0_ify,
+s_1_ify, scm_m_1_ify, scm_debug_newcell, scm_debug_newcell2,
+scm_tc16_allocated, SCM_SET_SYMBOL_HASH, SCM_IM_NIL_IFY, SCM_IM_T_IFY,
+SCM_IM_0_COND, SCM_IM_0_IFY, SCM_IM_1_IFY, SCM_GC_SET_ALLOCATED,
+scm_debug_newcell, scm_debug_newcell2, SCM_HUP_SIGNAL, SCM_INT_SIGNAL,
+SCM_FPE_SIGNAL, SCM_BUS_SIGNAL, SCM_SEGV_SIGNAL, SCM_ALRM_SIGNAL,
+SCM_GC_SIGNAL, SCM_TICK_SIGNAL, SCM_SIG_ORD, SCM_ORD_SIG,
+SCM_NUM_SIGS, scm_top_level_lookup_closure_var,
+*top-level-lookup-closure*, scm_system_transformer, scm_eval_3,
+scm_eval2, root_module_lookup_closure, SCM_SLOPPY_STRINGP,
+SCM_RWSTRINGP, scm_read_only_string_p, scm_make_shared_substring,
+scm_tc7_substring, sym_huh, SCM_VARVCELL, SCM_UDVARIABLEP,
+SCM_DEFVARIABLEP, scm_mkbig, scm_big2inum, scm_adjbig, scm_normbig,
+scm_copybig, scm_2ulong2big, scm_dbl2big, scm_big2dbl, SCM_FIXNUM_BIT,
+SCM_SETCHARS, SCM_SLOPPY_SUBSTRP, SCM_SUBSTR_STR, SCM_SUBSTR_OFFSET,
+SCM_LENGTH_MAX, SCM_SETLENGTH, SCM_ROSTRINGP, SCM_ROLENGTH,
+SCM_ROCHARS, SCM_ROUCHARS, SCM_SUBSTRP, SCM_COERCE_SUBSTR,
+scm_sym2vcell, scm_intern, scm_intern0, scm_sysintern, scm_sysintern0,
+scm_sysintern0_no_module_lookup, scm_init_symbols_deprecated,
+scm_vector_set_length_x, scm_contregs, scm_debug_info,
+scm_debug_frame, SCM_DSIDEVAL, SCM_CONST_LONG, SCM_VCELL,
+SCM_GLOBAL_VCELL, SCM_VCELL_INIT, SCM_GLOBAL_VCELL_INIT,
+SCM_HUGE_LENGTH, SCM_VALIDATE_STRINGORSUBSTR, SCM_VALIDATE_ROSTRING,
+SCM_VALIDATE_ROSTRING_COPY, SCM_VALIDATE_NULLORROSTRING_COPY,
+SCM_VALIDATE_RWSTRING, DIGITS, scm_small_istr2int, scm_istr2int,
+scm_istr2flo, scm_istring2number, scm_istr2int, scm_istr2flo,
+scm_istring2number, scm_vtable_index_vcell, scm_si_vcell, SCM_ECONSP,
+SCM_NECONSP, SCM_GLOC_VAR, SCM_GLOC_VAL, SCM_GLOC_SET_VAL,
+SCM_GLOC_VAL_LOC, scm_make_gloc, scm_gloc_p, scm_tc16_variable,
+SCM_CHARS, SCM_LENGTH, SCM_SET_STRING_CHARS, SCM_SET_STRING_LENGTH.
+</para></item>
+        </items>
+
+        <items name="Changes to bundled modules">
+          <item><para>(ice-9 debug)</para>
+          <para>Using the (ice-9 debug) module no longer
+automatically switches Guile to use the debugging evaluator.  If you
+want to switch to the debugging evaluator (which is needed for
+backtrace information if you hit an error), please add an explicit
+"(debug-enable 'debug)" to your code just after the code to use (ice-9
+debug).</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 31" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gmp dependency from 4.2.3 to
+4.3.2</para></item>
+        <item><para>Update readline dependency from 5.2 to
+6.2</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2010 November 2" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

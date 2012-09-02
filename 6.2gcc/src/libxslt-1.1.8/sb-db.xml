@@ -1,0 +1,322 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="libxslt" version="1.1.8" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}11</install-name>
+
+    <sources>
+      <source checksum="bf106f06c12d679055b51cd50c599317"
+        checksum-type="md5" size="2568146"
+        path="src/libxslt-1.1.8.tar.gz"/>
+      <patch checksum="8f3b06062a73a94fa22af312a02623f7"
+        checksum-type="md5" size="1249968"
+        path="src/libxslt-1.1.8.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf4*)
+  CC=cc CFLAGS="-O2 -std1 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -ieee -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} PERL=${SB_VAR_PERL}/bin/perl \
+PKG_CONFIG_PATH="${SB_VAR_LIBXML_LIB}/pkgconfig" \
+--enable-shared --enable-static --datadir="${_datadir}" \
+--with-html-dir="${_docdir}" \
+${PYTHON+--with-python=${SB_VAR_PYTHON}} \
+$(test "${PYTHON+set}" != set && echo --with-python=no) \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SHTOOL} subst -e \
+'s!-L\(${libdir}\) !-L\1 '"${CC_LD_RT}"'\1 !;' \
+xslt-config libxslt.pc libexslt.pc
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml26">v&gt;=2.6.11</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.8.2</depend>
+      </dependencies>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+    </module>
+
+    <module name="python-2.3.2">
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig"
+          add-path="prepend" type="build">v&gt;=0.15.0</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv19"
+          systype="*-osf4*">v&gt;=1.9.2</depend>
+        <depend program="libxml" var="LIBXML"
+          install-name="libxml26">v&gt;=2.6.11</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+        <depend var="PYTHONP" install-name="python232p"
+          type="build"/>
+        <depend program="gcc" add-path="prepend"
+          type="build">v==3.3.2</depend>
+        <depend program="libxslt">v==1.1.8</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.8.2</depend>
+        <depend program="python" var="PYTHON"
+          type="build">v==2.3.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_install_prefix="${SB_VAR_PYTHONP}/lib/python2.3/site-packages"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" LDFLAGS="-Wl,-rpath,${SB_INSTALL_PREFIX}/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CFLAGS="-O2 -march=1.1" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CFLAGS="-O2 -mcpu=v7" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_PYTHON}/lib/support \
+${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+PKG_CONFIG_PATH="${SB_VAR_LIBXML_LIB}/pkgconfig" \
+--enable-shared --enable-static --with-libxml-prefix=${SB_VAR_LIBXML} \
+--datadir="${_datadir}" --with-html-dir="${_docdir}" \
+${PYTHON+--with-python=${SB_VAR_PYTHON}} \
+$(test "${SB_VAR_PYTHON+set}" != set && echo --with-python=no) \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd python
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake AM_LDFLAGS="-Wl,-einitlibxsltmod" ;;
+*-osf4*)
+  gmake libxsltmod_la_LIBADD= \
+  libxsltmod_la_LDFLAGS="-module -avoid-version \
+-L${SB_INSTALL_PREFIX}/lib -L${SB_VAR_LIBXML_LIB} -L${SB_VAR_LIBICONV_LIB} \
+-L${SB_VAR_ZLIB_LIB} -Wl,-no_so,-lexslt,-lxslt,-lxml2,-liconv,-lz,-so_archive"
+  ;;
+*)
+  gmake
+  ;;
+esac)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd python; gmake install pythondir=${_install_prefix})
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/libxslt*
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="1.1.7" to="1.1.8">
+        <item><para>build fixes: Windows runtime options, Windows
+binary package layout, libgcrypt version test and link</para></item>
+        <item><para>documentation: fix libxslt namespace name in
+doc</para></item>
+        <item><para>bug fixes: undefined namespace message, search
+engine, multiple namespace fixups, namespace fix for key evaluation,
+Python memory debug bindings, </para></item>
+        <item><para>improvements: crypto extensions for
+exslt</para></item>
+      </change>
+
+      <change from="1.1.7" to="1.1.8">
+        <item><para>build fix: warning about localtime_r on
+Solaris</para></item>
+        <item><para>bug fix: UTF8 string tokenize, subtle memory
+corruption, linefeed after comment at document level,
+disable-output-escaping problem, pattern compilation in deep imported
+stylesheets, namespace extension prefix bug, libxslt.m4 bug, namespace
+lookup for attribute, namespaced DOCTYPE name</para></item>
+      </change>
+
+      <change from="1.1.5" to="1.1.6">
+        <item><para>2 bug fixes about keys</para></item>
+      </change>
+
+      <change from="1.1.4" to="1.1.5">
+        <item><para>performance: use dictionnary lookup for
+variables</para></item>
+        <item><para>remove use of _private from source
+documents</para></item>
+        <item><para>cleanup of "make tests" output</para></item>
+        <item><para>bugfixes: AVT in local variables, use localtime_r
+to avoid thread troubles, dictionary handling bug, limited number of
+stubstitutions in AVT, tokenize fix for UTF-8, superfluous namespace,
+xsltproc error code on &lt;xsl:message&gt; halt, OpenVMS fix,
+dictionnary reference counting change.</para></item>
+      </change>
+
+      <change from="1.1.3" to="1.1.4">
+        <item><para>bugfixes: attributes without doc, problem with
+Yelp, extension problem</para></item>
+        <item><para>display extension modules</para></item>
+        <item><para>Windows compilation patch, Mingw</para></item>
+      </change>
+
+      <change from="1.1.2" to="1.1.3">
+        <item><para>Rewrote the Attribute Value Template code, new
+XPath compilation interfaces, dictionnary reuses for XSLT with
+potential for serious performance improvements.</para></item>
+        <item><para>bug fixes: portability, key() in node-set()
+results, comment before doctype, math and node-set() problems, cdata
+element and default namespace, behaviour on unknown XSLT elements,
+priority of "//foo" patterns, xsl:element and xsl:attribute QName
+check, comments with --, attribute namespace, check for ?&gt; in
+PI</para></item>
+        <item><para>Documentations: cleanup </para></item>
+        <item><para>Python: patch for OS-X, enums export</para></item>
+      </change>
+
+      <change from="1.1.1" to="1.1.2">
+        <item><para>Documentation fixes, EXSLT
+documentation</para></item>
+        <item><para>Windows compilation fixes for MSVC and
+Mingw</para></item>
+        <item><para>Bug fixes: exslt:date returning NULL strings,
+namespaces output, key and namespace definition problem, passing
+options down to the document() parser, xsl:number fixe </para></item>
+      </change>
+
+      <change from="1.1.0" to="1.1.1">
+        <item><para>code cleanup</para></item>
+        <item><para>Windows: Makefile improvements</para></item>
+        <item><para>documentation improvements, libexslt man
+page</para></item>
+        <item><para>param in EXSLT functions</para></item>
+        <item><para>XSLT debugging improvements</para></item>
+        <item><para>bug fixes: number formatting, exslt:tokenize, key
+selector parsing with, xsl:element with computed namespaces,
+xslt:import/include recursion detection, exslt:function used in keys,
+bug when CDATA_SECTION are foun in the tree, entities handling when
+using XInclude.</para></item>
+      </change>
+
+      <change from="1.0.33" to="1.1.0">
+        <item><para>Removed DocBook SGML broken support</para></item>
+        <item><para>fix xsl:key to work with PIs</para></item>
+        <item><para>Makefile and build improvement, build cleanup,
+macro fix, build outside of source tree</para></item>
+        <item><para>xsltproc option display fix,
+--load-trace</para></item>
+        <item><para>Python: never use stdout for error</para></item>
+        <item><para>extension memory error fix</para></item>
+        <item><para>header path fixes</para></item>
+        <item><para>added saxon:line-number() to
+libexslt</para></item>
+        <item><para>Fix some tortuous template problems when using
+predicates</para></item>
+        <item><para>Debugger status patch</para></item>
+        <item><para>Use new libxml2-2.6.x APIs for faster
+processing</para></item>
+        <item><para>Make sure xsl:sort is empty</para></item>
+        <item><para>Fixed a bug in default processing of
+attributes</para></item>
+        <item><para>Removes the deprecated breakpoint
+library</para></item>
+        <item><para>detect invalid names on templates</para></item>
+        <item><para>fix exslt:document (and similar) base handling
+problem</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>64-bit libraries are available for the following
+platforms:</para>
+        <screen>
+AIX 5.x            ${SB_INSTALL_PREFIX}/lib/ppc64
+HP-UX 11.x         ${SB_INSTALL_PREFIX}/lib/pa20_64
+IRIX 6.5           ${SB_INSTALL_PREFIX}/lib64
+Solaris 7-9/SPARC  ${SB_INSTALL_PREFIX}/lib/sparcv9
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+        <item><para>Accidentally removed PKG_CONFIG_PATH from
+python-2.3.2 module</para></item>
+      </change>
+
+      <change date="2004 August 24" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64-bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

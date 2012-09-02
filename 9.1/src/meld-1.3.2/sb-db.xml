@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="meld" version="1.3.2" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="7bd37cc8688a8cc2db68d26a2f186ff9"
+        checksum-type="md5" size="741154"
+        path="src/meld-1.3.2.tar.bz2"/>
+      <patch checksum="ede6e796ce778d2e4d35ba44a4fc7566"
+        checksum-type="md5" size="8923"
+        path="src/meld-1.3.2.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="libiconv" install-name="libiconv113"
+        add-path="prepend" type="build">v==1.13.1</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="cairo" install-name="libcairo110"
+        module="pycairo-2.6.7">v&gt;=1.10.2</depend>
+      <depend program="gettext" install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="glib" install-name="libglib226"
+        module="pygobject-2.6.7">v&gt;=2.26.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="gtk+" install-name="libgtk+222"
+        module="pygtk-2.6.7">v&gt;=2.22.1</depend>
+      <depend program="intltool" install-name="intltool041"
+        add-path="prepend">v&gt;=0.41.1</depend>
+      <depend program="gnome" install-name="gnome232" module="rarian"
+        add-path="prepend">v&gt;=2.32</depend>
+      <depend program="gnome" install-name="gnome232"
+        module="pyorbit-2.6.7">v&gt;=2.32</depend>
+      <depend program="gnome" var="LIBGNOME" install-name="gnome232"
+        module="gnome-python-2.6.7">v&gt;=2.32</depend>
+      <depend program="python" var="PYTHON" install-name="python26"
+        add-path="prepend">v&gt;=2.6.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_pysubdir="python26"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+:
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install docdir=${_docdir} helpdir="${_datadir}/help" \
+localedir="${_datadir}/locale" sharedir=${_datadir} \
+prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+1s|^.*|#!${SB_VAR_PYTHON}/bin/python|;\
+s|@pycairo@|${SB_VAR_LIBCAIRO_LIB}/${_pysubdir}|;\
+s|@pygobject@|${SB_VAR_LIBGLIB_LIB}/${_pysubdir}|;\
+s|@pygtk@|${SB_VAR_LIBGTK_LIB}/${_pysubdir}|;\
+s|@gnome-python@|${SB_VAR_LIBGNOME_LIB}/${_pysubdir}|;" \
+${SB_INSTALL_PREFIX}/bin/meld
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <changelog>
+      <change date="2012 January 22" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add dependency for intltool 0.41.</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2.</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1.</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1.</para></item>
+        <item><para>Update gnome dependency from 2.22 to
+2.32.</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1.</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1.</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

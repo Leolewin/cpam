@@ -1,0 +1,83 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="X11-GUITest" version="0.25" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="c2ea2418a5cef380e260dce9230c1d8b"
+        checksum-type="md5" size="67872"
+        path="src/X11-GUITest-0.25.tar.gz"/>
+      <patch checksum="d4eb9b4f669d172a5451d6270c3ff90d"
+        checksum-type="md5" size="1173"
+        path="src/X11-GUITest-0.25.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+# Fix path to X includes, libraries
+case "${SB_SYSTYPE}" in
+*-aix*|*-hpux*|*-irix*|*-osf*)
+  ${SB_PATH_SED} -i -e "\
+s!-L/usr/X11R6/lib!!; \
+s!-I/usr/X11R6/include!!;" Makefile.PL ;;
+*-solaris*)
+  ${SB_PATH_SED} -i -e "\
+s!/usr/X11R6/lib!/usr/openwin/lib!" Makefile.PL ;;
+esac
+
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/X11/GUITest/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/X11/GUITest/.packlist
+rmdir ${_installsitearch}/auto/X11/GUITest 2>/dev/null
+rmdir ${_installsitearch}/auto/X11 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<X11::GUITest|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>

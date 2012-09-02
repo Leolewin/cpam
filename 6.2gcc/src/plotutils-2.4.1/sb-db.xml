@@ -1,0 +1,160 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="plotutils" version="2.4.1" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}24</install-name>
+
+    <sources>
+      <source checksum="8da2cc2ed5a837cad0753c7843ef18ee"
+        checksum-type="md5" size="3316030"
+        path="src/plotutils-2.4.1.tar.gz"/>
+      <patch checksum="43520162413915e8e490694f50a6fdfd"
+        checksum-type="md5" size="2262738"
+        path="src/plotutils-2.4.1.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="bison" install-name="bison13"
+        add-path="prepend" type="build">v&gt;=1.35</depend>
+      <depend program="flex" add-path="prepend">v&gt;=2.5.4a</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng12">v&gt;=1.2.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  ARGS="--enable-libplotter --with-motif" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  ARGS="--with-motif" ;;
+*-osf5*)
+  CC=cc CFLAGS="-O2 -std -msym -readonly_strings -ieee"
+  CXX=cxx CXXFLAGS="-O2" CC_LD_RT="-Wl,-rpath,"
+  ARGS="--enable-libplotter --with-motif" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -msym -readonly_strings -ieee"
+  CXX=cxx CXXFLAGS="-O2" CC_LD_RT="-Wl,-rpath,"
+  ARGS="--enable-libplotter --with-motif" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z -Wp,-H16384 +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  CXX=aCC CXXFLAGS="+O2 -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," 
+  ARGS="--enable-libplotter --with-athena=/usr/contrib/X11R6 \
+--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-motif" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z -Wp,-H16384 +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," X_INCLUDES="/usr/include/X11R6"
+  X_LIBRARIES="/usr/lib/X11R6"
+  ARGS="--with-athena=/usr/contrib/X11R6 \
+--x-includes=/usr/include/X11R6 --x-libraries=/usr/lib/X11R6 \
+--with-motif" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-libplotter --with-motif" ;;
+*-linux[89]*|*-linuxe3*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ARGS="--enable-libplotter" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ARGS="--with-motif" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R" ARGS="--with-motif=/usr/dt" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R" ARGS="--with-motif" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${LIBPNG_LIB}:${ZLIB_LIB}:${XPM_LIB} \
+${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static \
+--enable-libxmi --with-zlib=${ZLIB} --with-libpng=${LIBPNG} \
+--with-xpm=${XPM} --datadir="${_datadir}" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+ginstall -m 755 -o root -g 0 -d ${_docdir}
+ginstall -m 644 -o root -g 0 libxmi/info/libxmi.texi \
+info/plotutils.texi ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 26" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2003 June 23" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1</para></item>
+        <item><para>Upgrade to libtool 1.5, autoconf
+2.57</para></item>
+        <item><para>Don't build C++ library on systems without vendor
+C++ compiler</para></item>
+      </change>
+
+      <change date="2003 January 27" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Quote LDFLAGS if not set</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

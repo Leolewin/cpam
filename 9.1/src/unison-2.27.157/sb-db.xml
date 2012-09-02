@@ -1,0 +1,311 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="unison" version="2.27.157" revision="2"
+  systype="*-aix*|*-hpux11*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}227</install-name>
+
+    <sources>
+      <source checksum="4cc2a0332cb8c947adc04b9d4f2a83b0"
+        checksum-type="md5" size="674332"
+        path="src/unison-2.27.157.tar.gz"/>
+      <source checksum="5c1185a47a3217351e37dba55ea937c5"
+        checksum-type="md5" size="235599"
+        path="src/unison-2.27.157-manual.html"
+        noop="1" var="DOC_HTML"/>
+      <source checksum="d4a780abb68af73177f5d59f759e4c89"
+        checksum-type="md5" size="453255"
+        path="src/unison-2.27.157-manual.pdf"
+        noop="1" var="DOC_PDF"/>
+      <patch checksum="d40e6187488587bad1bfdf25833e7df7"
+        checksum-type="md5" size="3076"
+        path="src/unison-2.27.157.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ocaml" install-name="ocaml31"
+        add-path="prepend" type="build">v&gt;=3.11.0</depend>
+      <depend var="OCAMLP" install-name="ocaml31p"
+        type="build"/>
+      <depend program="gcc" add-path="prepend"
+        systype="*-hpux*">v==4.4.6</depend>
+      <depend program="gcc" append="hppa1.1-hp-hpux11.00/bin"
+        add-path="prepend" systype="*-hpux11.00">v==4.4.6</depend>
+      <depend program="gcc" append="hppa1.1-hp-hpux11.11/bin"
+        add-path="prepend" systype="*-hpux11.11">v==4.4.6</depend>
+      <depend program="gcc" append="hppa2.0-hp-hpux11.23/bin"
+        add-path="prepend"
+        systype="hppa*-hpux11.23">v==4.4.6</depend>
+      <depend program="gcc" append="ia64-hp-hpux11.23/bin"
+        add-path="prepend"
+        systype="ia64*-hpux11.23">v==4.4.6</depend>
+      <depend program="gcc" append="hppa2.0-hp-hpux11.31/bin"
+        add-path="prepend"
+        systype="hppa*-hpux11.31">v==4.4.6</depend>
+      <depend program="gcc" append="ia64-hp-hpux11.31/bin"
+        add-path="prepend"
+        systype="ia64*-hpux11.31">v==4.4.6</depend>
+      <depend program="lablgtk">v==2.12.0</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  gmake NATIVE=false UISTYLE=gtk2 OCAMLLIBDIR="${SB_VAR_OCAMLP}/lib" \
+ETAGS=: LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB:-.} \
+-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-aix*|ia64*-hpux*)
+  gmake NATIVE=false UISTYLE=gtk2 OCAMLLIBDIR="${SB_VAR_OCAMLP}/lib" \
+ETAGS=: LDFLAGS=-L${SB_VAR_FCPACKAGE_LIB:-.};;
+*)
+  gmake UISTYLE=gtk2 OCAMLLIBDIR="${SB_VAR_OCAMLP}/lib" ETAGS=: \
+LDFLAGS=-L${SB_VAR_FCPACKAGE_LIB:-.} ;;
+esac
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+DISPLAY= ./unison -selftest
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${_docdir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 unison ${SB_INSTALL_PREFIX}/bin
+${SB_PATH_INSTALL} -m 644 -o root -g 0 ${SB_SRC_DOC_HTML} \
+${SB_SRC_DOC_PDF} ${_docdir}
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.27.57" to="2.27.157">
+        <item><para>Ignore one hour differences for deciding whether a
+file may have been updated. This avoids slow update detection after
+daylight saving time changes under Windows. This makes it slightly
+more likely to miss an update, but that should be safe
+enough.</para></item>
+        <item><para>Improved Unison icon under Windows</para></item>
+        <item><para>Case sensitivity information put in the archive
+(in a backward compatible way) and checked when the archive is
+loaded</para></item>
+        <item><para>Uses improved emulation of "select" call provided
+by Ocaml 3.11 under Windows (the GUI does not freeze as much during
+synchronization)</para></item>
+        <item><para>Upgraded to GPL version 3 and added copyright
+notice to documentation files</para></item>
+        <item><para>Unison can sometimes fail to transfer a file,
+giving the unhelpful message "Destination updated during
+synchronization" even though the file has not been changed. This can
+be caused by programs that change either the file's contents *or* the
+file's extended attributes without changing its modification time. I'm
+not sure what is the best fix for this - it is not Unison's fault, but
+it makes Unison's behavior puzzling - but at least Unison can be more
+helpful about suggesting a workaround (running once with "fastcheck"
+set to false). The failure message has been changed to give this
+advice.</para></item>
+        <items name="Bug fixes">
+          <item><para>Fixed quotation of paths and names when writing
+to a preference file</para></item>
+          <item><para>Fixed bug resulting in slow performances when
+transferring a file using our rsync implementation from a 64-bit
+architecture to a 32-bit architecture.</para></item>
+          <item><para>Fixed bug in Lwt_unix.run which could make it
+fail with a Not_found exception (see [Not_found raised in
+tryCopyMovedFile] errors)</para></item>
+          <item><para>Properly deals with non-conformant AppleDouble
+files produced by Mac OS X</para></item>
+          <item><para>Fixed bug that results in Unison missing
+ressource fork changes</para></item>
+          <item><para>Applied a patch to make the GTK2 version build
+with OCaml 3.11 on Windows</para></item>
+          <item><para>Added some extra debugging code to remote.ml to
+give more informative error messages when people encounter the
+longstanding "assert failed during file transfer" bug.</para></item>
+          <item><para>Applied patch from Antoine Reilles for NetBSD
+compilation</para></item>
+          <item><para>Resizing the update window vertically no longer
+moves the status label</para></item>
+        </items>
+      </change>
+
+      <change from="2.17.x" to="2.27.57">
+        <item><para>Major rewrite and cleanup of the whole Mac OS X
+graphical user interface</para></item>
+        <item><para>Several small fixes to the GTK2 UI to make it work
+better under Windows</para></item>
+        <item><para>The backup functionality has been completely
+rewritten. The external interface has not changed, but numerous bugs,
+irregular behaviors, and cross-platform inconsistencies have been
+corrected.</para></item>
+        <item><para>The Unison project now accepts donations via
+PayPal. You can find a link to the donation page on the Unison home
+page (http://www.cis.upenn.edu/
+bcpierce/unison/lists.html).</para></item>
+        <items name="Some important safety improvements:">
+          <item><para>Added a new mountpoint preference, which can be
+used to specify a path that must exist in both replicas at the end of
+update detection (otherwise Unison aborts). This can be used to avoid
+potentially dangerous situations when Unison is used with removable
+media such as external hard drives and compact flash
+cards.</para></item>
+          <item><para>The confirmation of "big deletes" is now
+controlled by a boolean preference confirmbigdeletes. Default is true,
+which gives the same behavior as previously. (This functionality is at
+least partly superceded by the mountpoint preference, but it has been
+left in place in case it is useful to some people.)</para></item>
+          <item><para>If Unison is asked to "follow" a symbolic link
+but there is nothing at the other end of the link, it will now flag
+this path as an error, rather than treating the symlink itself as
+missing or deleted. This avoids a potentially dangerous situation
+where a followed symlink points to an external filesystem that might
+be offline when Unison is run (whereupon Unison would cheerfully
+delete the corresponding files in the other replica!).</para></item>
+        </items>
+
+        <items name="Smaller changes:">
+          <item><para>Added forcepartial and preferpartial
+preferences, which behave like force and prefer but can be specified
+on a per-path basis.</para></item>
+          <item><para>A bare-bones self test feature was added, which
+runs unison through some of its paces and checks that the results are
+as expected. The coverage of the tests is still very limited, but the
+facility has already been very useful in debugging the new backup
+functionality (especially in exposing some subtle cross-platform
+issues).</para></item>
+          <item><para>Refined debugging code so that the verbosity of
+individual modules can be controlled separately. Instead of just
+putting '-debug verbose' on the command line, you can put '-debug
+update+', which causes all the extra messages in the Update module,
+but not other modules, to be printed. Putting '-debug verbose' causes
+all modules to print with maximum verbosity.</para></item>
+          <item><para>Removed mergebatch preference. (It never seemed
+very useful, and its semantics were confusing.)</para></item>
+          <item><para>Rewrote some of the merging functionality, for
+better cooperation with external Harmony instances.</para></item>
+          <item><para>Changed the temp file prefix from .# to
+.unison.</para></item>
+          <item><para>Compressed the output from the text user
+interface (particularly when run with the -terse flag) to make it
+easier to interpret the results when Unison is run several times in
+succession from a script.</para></item>
+          <item><para>Diff and merge functions now work under
+Windows.</para></item>
+          <item><para>Changed the order of arguments to the default
+diff command (so that the + and - annotations in diff's output are
+reversed).</para></item>
+          <item><para>Added .mpp files to the "never fastcheck" list
+(like .xls files).</para></item>
+          <item><para>Ignore all-whitespace lines in preference
+files</para></item>
+          <item><para>Small fix to ctime (non-)handling in update
+detection under windows with fastcheck.</para></item>
+        </items>
+
+        <items name="Many small bugfixes, including:">
+          <item><para>Fixed a longstanding bug regarding fastcheck and
+daylight saving time under Windows when Unison is set up to
+synchronize modification times. (Modification times cannot be updated
+in the archive in this case, so we have to ignore one hour
+differences.)</para></item>
+          <item><para>Fixed a bug that would occasionally cause the
+archives to be left in non-identical states on the two hosts after
+synchronization.</para></item>
+          <item><para>Fixed a bug that prevented Unison from
+communicating correctly between 32- and 64-bit
+architectures.</para></item>
+          <item><para>On windows, file creation times are no longer
+used as a proxy for inode numbers. (This is unfortunate, as it makes
+fastcheck a little less safe. But it turns out that file creation
+times are not reliable under Windows: if a file is removed and a new
+file is created in its place, the new one will sometimes be given the
+same creation date as the old one!)</para></item>
+          <item><para>Set read-only file to R/W on OSX before
+attempting to change other attributes.</para></item>
+          <item><para>Fixed bug resulting in spurious "Aborted" errors
+during transport</para></item>
+          <item><para>Enable diff if file contents have changed in one
+replica, but only properties in the other.</para></item>
+          <item><para>Removed misleading documentation for 'repeat'
+preference.</para></item>
+          <item><para>Fixed a bug in merging code where Unison could
+sometimes deadlock with the external merge program, if the latter
+produced large amounts of output.</para></item>
+          <item><para>Workaround for a bug compiling gtk2 user
+interface against current versions of gtk2+ libraries.</para></item>
+          <item><para>Added a better error message for "ambiguous
+paths".</para></item>
+          <item><para>Squashed a longstanding bug that would cause
+file transfer to fail with the message "Failed: Error in readWrite: Is
+a directory."</para></item>
+          <item><para>Replaced symlinks with copies of their targets
+in the Growl framework in src/uimac. This should make the sources
+easier to check out from the svn repository on WinXP
+systems.</para></item>
+          <item><para>Added a workaround (suggested by Karl M.) for
+the problem discussed on the unison users mailing list where, on the
+Windows platform, the server would hang when transferring files. I
+conjecture that the problem has to do with the RPC mechanism, which
+was used to make a call back from the server to the client (inside the
+Trace.log function) so that the log message would be appended to the
+log file on the client. The workaround is to dump these messages
+(about when xferbycopying shortcuts are applied and whether they
+succeed) just to the standard output of the Unison process, not to the
+log file.</para></item>
+        </items>
+      </change>
+
+      <change from="2.13.0" to="2.17.x">
+        <item><para>The features for performing backups and for
+invoking external merge programs have been completely. The
+user-visible functionality should not change, but the internals have
+been rationalized and there are a number of new features. See the
+manual (in particular, the description of the backupXXX preferences)
+for details.</para></item>
+        <item><para>Incorporated patches for ipv6 support. (Note that,
+due to a bug in the released OCaml 3.08.3 compiler, this code will not
+actually work with ipv6 unless compiled with the CVS version of the
+OCaml compiler, where the bug has been fixed; however, ipv4 should
+continue to work normally.)</para></item>
+        <item><para>OSX interface: Incorporated cool new icon for the
+Mac UI.</para></item>
+        <item><para>Small fixes: Fixed off by one error in month
+numbers (in printed dates)</para></item>
+      </change>
+
+      <note type="usage">
+        <para>Unison has been compiled with support for both the GUI
+and text UI interfaces. The GUI interface is the default. To select
+the text interface, add the "-ui text" command-line option.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 20" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

@@ -1,0 +1,398 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="syslog-ng" version="2.1.4" revision="2"
+  systype="*-aix*|*-hpux11.11|*-hpux11.[23]*|*-linux*|*-solaris*">
+    <install-name>syslogng214</install-name>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="17c4c7725d2eab62b588395f1ed93f32"
+          checksum-type="md5" size="423703"
+          path="src/syslog-ng_2.1.4.tar.gz"/>
+        <patch checksum="b0b6674ab951c4749aff8bb572d4ea25"
+          checksum-type="md5" size="96730"
+          path="src/syslog-ng-2.1.4.tww.patch"/>
+        <patch checksum="7b3b7e3f9dfec1dd7e11c8fa2935dcb6"
+          checksum-type="md5" size="551300"
+          path="src/syslog-ng-2.1.4.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="flex" var="FLEX" install-name="flex25"
+          add-path="prepend">v&gt;=2.5.35</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB"
+          install-name="libglib226">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libnet" var="LIBNET" install-name="libnet11"
+          add-path="prepend"
+          systype="*-hpux*|*-linux*|*-solaris*">v&gt;=1.1.2.1</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="syslog-ng" var="EVENTLOG"
+          module="eventlog">v==2.1.4</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -ma -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-ipv6 --disable-spoof-source" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-ipv6 --enable-spoof-source" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-ipv6 --enable-spoof-source" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-ipv6 --enable-spoof-source" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-ipv6 --enable-spoof-source" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-ipv6 --enable-spoof-source" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-ipv6 --enable-spoof-source" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  ARGS="--disable-ipv6 --enable-spoof-source" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-ipv6 --enable-spoof-source" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_FLEX+-L${SB_VAR_FLEX_LIB} \
+${CC_LD_RT}${SB_VAR_FLEX_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_EVENTLOG_LIB}/pkgconfig\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBNET+:${SB_VAR_LIBNET_LIB}/pkgconfig}" \
+--disable-tcp-wrapper --disable-dependency-tracking \
+${ARGS+${ARGS}} --sysconfdir=${_sysconfdir} \
+--localstatedir=${_localstatedir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!@localstatedir@!${_localstatedir}!g; \
+s!@sysconfdir@!${_sysconfdir}!g;" \
+doc/man/syslog-ng.8 doc/man/syslog-ng.conf.5
+]]>
+      </configure>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="python" var="PYTHON" install-name="python26"
+            add-path="prepend">v&gt;=2.6.7</depend>
+        </dependencies>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+1 s!/usr/bin/python!${SB_VAR_PYTHON}/bin/python!;" \
+tests/functional/func_test.py
+
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir} \
+${_localstatedir} ${_localstatedir}/log ${_localstatedir}/run
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/syslog-ng.conf
+cat >${_sysconfdir}/syslog-ng.conf <<_EOT_
+options {
+  sync(0);
+  time_reopen (10);
+  log_fifo_size (1000);
+  long_hostnames (off);
+  use_dns (no);
+  use_fqdn (no);
+  create_dirs (no);
+  keep_hostname (yes);
+};
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+
+source stdlog {
+  unix-dgram ("/dev/log");
+  internal ();
+};
+_EOT_
+  ;;
+*-hpux*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+
+source stdlog {
+  pipe ("/dev/log" pad_size (2048));
+  internal ();
+};
+_EOT_
+  ;;
+*-linux*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+
+source stdlog {
+  file ("/proc/kmsg" log_prefix("kernel: "));
+  unix-stream ("/dev/log");
+  internal ();
+};
+_EOT_
+  ;;
+*-solaris*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+
+source stdlog {
+  sun-streams ("/dev/log" door ("/var/run/syslog_door"));
+  internal ();
+};
+_EOT_
+  ;;
+esac
+
+cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+
+destination d_console { file ("/dev/console"); };
+destination d_messages { file ("${_localstatedir}/log/messages"); };
+destination d_mail { file ("${_localstatedir}/log/mail" sync (10)); };
+destination d_auth { file ("${_localstatedir}/log/auth"); };
+destination d_cron { file ("${_localstatedir}/log/cron"); };
+destination d_boot { file ("${_localstatedir}/log/boot"); };
+destination d_mlrt { usertty ("root"); };
+destination d_mlal { usertty ("*"); };
+
+filter f_cron { facility (cron); };
+filter f_kern { facility (kern); };
+filter f_mail { facility (mail); };
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-linux*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+filter f_boot { facility (local7); };
+filter f_auth { facility (auth, authpriv); };
+filter f_messages {
+  level (info) and
+  not (facility (mail) or facility (auth, authpriv) or facility (cron));
+};
+_EOT_
+  ;;
+*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+filter f_auth { facility (auth); };
+filter f_messages {
+  level (info) and
+  not (facility (mail) or facility (auth) or facility (cron));
+};
+_EOT_
+  ;;
+esac
+
+cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+
+log {
+  source (stdlog);
+  filter (f_auth);
+  destination (d_auth);
+};
+log {
+  source (stdlog);
+  filter (f_cron);
+  destination (d_cron);
+};
+log {
+  source (stdlog);
+  filter (f_mail);
+  destination (d_mail);
+};
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-linux*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+log {
+  source (stdlog);
+  filter (f_messages);
+  destination (d_messages);
+};
+log {
+  source (stdlog);
+  filter (f_boot);
+  destination (d_boot);
+};
+_EOT_
+  ;;
+*)
+  cat >>${_sysconfdir}/syslog-ng.conf <<_EOT_
+log {
+  source (stdlog);
+  filter (f_messages);
+  destination (d_messages);
+};
+log {
+  source (stdlog);
+  filter (f_kern);
+  destination (d_messages);
+};
+_EOT_
+  ;;
+esac
+
+# copy contrib directory
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/contrib
+${SB_PATH_INSTALL} -m 644 -o root -g 0 contrib/* \
+${SB_INSTALL_PREFIX}/contrib || :
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="eventlog">
+      <build-name>eventlog-0.2.12</build-name>
+
+      <sources>
+        <source checksum="3d6ebda8a161d36cb40d09328f78786b"
+          checksum-type="md5" size="303925"
+          path="src/eventlog_0.2.12.tar.gz"/>
+        <patch checksum="16e07f66acf799b6ef5bc28a246b351f"
+          checksum-type="md5" size="3173"
+          path="src/eventlog-0.2.12.tww.patch"/>
+        <patch checksum="79e483e8f94d2aaafc68620cfeeaf863"
+          checksum-type="md5" size="1443881"
+          path="src/eventlog-0.2.12.auto.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-static --enable-shared \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" eventlog.pc
+]]>
+      </configure>
+    </module>
+
+    <notes>
+      <change from="2.1.3" to="2.1.4">
+        <item><para>Fixed a possible DoS condition triggered by a
+destination port unreaachable ICMP packet received from a UDP
+destination. syslog-ng started eating all available memory and CPU
+until it crashed if this happened.</para></item>
+        <item><para>Fixed the rate at which files regular were read
+using the file() source</para></item>
+        <item><para>Report connection breaks as a write error instead
+of reporting POLLERR as the write error path reports more sensible
+information in the logs</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2011 November 4" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update bison from 2.3 to 2.4.3</para></item>
+        <item><para>Update eventlog from 0.2.9 to 0.2.12</para></item>
+        <item><para>Update gettext from 0.17 to 0.18.1.1</para></item>
+        <item><para>Update glib from 2.16.5 to 2.26.1</para></item>
+        <item><para>Update libiconv from 1.12 to 1.13.1</para></item>
+        <item><para>Update pkgconfig from 0.23 to 0.25</para></item>
+      </change>
+
+      <change date="2011 January 7" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Make flex a dependency as flex shared library
+needed to run syslog-ng binary</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

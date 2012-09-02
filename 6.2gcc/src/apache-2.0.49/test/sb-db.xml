@@ -1,0 +1,1049 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="apache" version="2.0.49" revision="4">
+    <build-name>httpd-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}2049</install-name>
+
+    <sources>
+      <source checksum="275d3d37eed1b070f333d3618f7d1954"
+        checksum-type="md5" size="5919279"
+        path="src/httpd-2.0.49.tar.gz"/>
+      <patch checksum="ca40de0ad459c3161282e1a03d89c368"
+        checksum-type="md5" size="91478"
+        path="src/httpd-2.0.49.patch"/>
+      <patch checksum="541accaae9974a7d8e14753899e80767"
+        checksum-type="md5" size="1524"
+        path="src/CAN-2004-0493.patch"/>
+    </sources>
+
+    <dependencies>
+    <depend user="www"/>
+
+    <depend group="il02w-web"/>
+
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl097">v&gt;=0.9.7b</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb42">v&gt;=4.2.52</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat">v&gt;=1.95.6</depend>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv19" add-path="prepend"
+        systype="*-hpux*|*-linux*|*-osf*|*-solaris*">v&gt;=1.9.2</depend>
+      <depend program="openldap" var="OPENLDAP">v==2.1.27</depend>
+      <depend program="prngd" var="PRNGD" install-name="prngd"
+        systype="*-aix4*|*-aix5.1*|*-hpux*|*-irix*|*-osf*|*-solaris2.[5678]*">v&gt;=0.9.25</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="zlib11">v&gt;=1.1.4</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir=/etc${SB_INSTALL_PREFIX}
+_localstatedir=/var${SB_INSTALL_PREFIX}
+
+_prngdsocket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+
+case "${SB_SYSTYPE}" in
+*-aix5.2*)
+  CC=xlc CFLAGS="-qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  # iconv() inbuf, outpuf are char **
+  export apu_iconv_inbuf_const=0 ;;
+*-aix*)
+  CC=xlc CFLAGS="-qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  LIBS="-lcl" CC_LD_RT="-Wl,+s,+b," ARGS="--disable-ipv6"
+
+  # getaddrinfo and getnameinfo broken
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  LIBS="-lcl" CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo and getnameinfo only available in newer 6.5.x releases
+  export ac_cv_func_gai_strerror=no
+  export ac_cv_search_gai_strerror=no
+  export ac_cv_search_getaddrinfo=no
+  export ac_cv_search_getnameinfo=no
+  export ac_cv_working_getaddrinfo=no
+  export ac_cv_working_getnameinfo=no ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  # force using our Berkeley DB library
+  export ac_cv_header_db4_db_h=no ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xtarget=generic"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <module name="default">
+      <configure>
+<![CDATA[
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_OPENLDAP_LIB}:\
+${SB_VAR_LIBDB_LIB}:${SB_VAR_ZLIB_LIB}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --with-mpm=prefork \
+--enable-layout=TWW --with-berkeley-db=${SB_VAR_LIBDB} \
+${SB_VAR_LIBICONV+--with-iconv=${SB_VAR_LIBICONV}} \
+${SB_VAR_LIBOPENSSL+--with-ssl=${SB_VAR_LIBOPENSSL}} \
+${SB_VAR_LIBOPENSSL+--enable-ssl} --with-z=${SB_VAR_ZLIB} \
+--enable-so --enable-mods-shared=all --enable-deflate --enable-cgid \
+--enable-proxy --enable-proxy-connect --enable-proxy-http \
+--enable-proxy-ftp --enable-auth-ldap --enable-ldap \
+--enable-info --enable-dav-fs --enable-vhost-alias \
+--with-ldap --with-ldap-include=${SB_VAR_OPENLDAP_INC} \
+--with-ldap-lib=${SB_VAR_OPENLDAP_LIB} \
+--with-expat=${SB_VAR_LIBEXPAT} --with-dbm=db4 \
+--enable-cache --enable-disk-cache \
+${SB_VAR_PRNGD+--with-egd=${_prngdsocket}} \
+--sysconfdir=${_sysconfdir} --localstatedir=${_localstatedir} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+# Allow loading libraries with TLS (thread local storage) on HP-UX 11.x
+case "${SB_SYSTYPE}" in
+*-hpux11*)
+  ${SB_VAR_PERL}/bin/perl -pi -e "s/-lpthread/-lpthread -lcl/" \
+  build/config_vars.mk ;;
+esac
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# fix permissions
+${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+
+${SB_PATH_GINSTALL} -m 755 -o www -g il02w-web -d ${_sysconfdir}
+${SB_PATH_GINSTALL} -m 755 -o www -g il02w-web -d ${_localstatedir}
+${SB_PATH_GINSTALL} -m 755 -o www -g il02w-web -d ${_localstatedir}/log
+${SB_PATH_GINSTALL} -m 755 -o www -g il02w-web -d ${_localstatedir}/proxy
+${SB_PATH_GINSTALL} -m 755 -o www -g il02w-web -d ${_localstatedir}/run
+
+# rename program name to include MPM
+mv ${SB_INSTALL_PREFIX}/bin/httpd \
+${SB_INSTALL_PREFIX}/bin/httpd.prefork
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!progname = httpd!progname = httpd.prefork!" \
+${SB_INSTALL_PREFIX}/share/build/config_vars.mk
+
+# force config file to httpd.conf
+${SB_VAR_PERL}/bin/perl -pi -e "\
+s!^my \\\$CFG_TARGET     = .*!my \\\$CFG_TARGET     = \"httpd\";!" \
+${SB_INSTALL_PREFIX}/bin/apxs
+
+# slimmed down httpd.conf
+cat >${_sysconfdir}/httpd.conf <<_EOT_
+# global directives
+ServerRoot "${SB_INSTALL_PREFIX}"
+ServerAdmin webmaster@[hostname].[domainname]
+ServerName [hostname].[domainname]
+
+Listen 80
+
+PidFile "${_localstatedir}/run/httpd.pid"
+
+HostnameLookups off
+UseCanonicalName off
+
+Timeout 300
+KeepAlive on
+MaxKeepAliveRequests 100
+KeepAliveTimeout 15
+
+<IfModule prefork.c>
+StartServers 5
+MinSpareServers 5
+MaxSpareServers 10
+MaxClients 150
+MaxRequestsPerChild 0
+</IfModule>
+
+<IfModule worker.c>
+StartServers 2
+MaxClients 150
+MinSpareThreads 25
+MaxSpareThreads 75
+ThreadsPerChild 25
+MaxRequestsPerChild 0
+</IfModule>
+
+LoadModule access_module modules/mod_access.so
+LoadModule auth_module modules/mod_auth.so
+LoadModule auth_anon_module modules/mod_auth_anon.so
+LoadModule auth_dbm_module modules/mod_auth_dbm.so
+LoadModule auth_digest_module modules/mod_auth_digest.so
+LoadModule cache_module modules/mod_cache.so
+LoadModule disk_cache_module modules/mod_disk_cache.so
+LoadModule ext_filter_module modules/mod_ext_filter.so
+LoadModule include_module modules/mod_include.so
+LoadModule deflate_module modules/mod_deflate.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule env_module modules/mod_env.so
+LoadModule mime_magic_module modules/mod_mime_magic.so
+LoadModule cern_meta_module modules/mod_cern_meta.so
+LoadModule expires_module modules/mod_expires.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule usertrack_module modules/mod_usertrack.so
+LoadModule unique_id_module modules/mod_unique_id.so
+LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_connect_module modules/mod_proxy_connect.so
+LoadModule proxy_ftp_module modules/mod_proxy_ftp.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+LoadModule mime_module modules/mod_mime.so
+LoadModule dav_module modules/mod_dav.so
+LoadModule status_module modules/mod_status.so
+LoadModule autoindex_module modules/mod_autoindex.so
+LoadModule asis_module modules/mod_asis.so
+LoadModule info_module modules/mod_info.so
+LoadModule cgi_module modules/mod_cgi.so
+LoadModule cgid_module modules/mod_cgid.so
+LoadModule dav_fs_module modules/mod_dav_fs.so
+LoadModule vhost_alias_module modules/mod_vhost_alias.so
+LoadModule negotiation_module modules/mod_negotiation.so
+LoadModule dir_module modules/mod_dir.so
+LoadModule imap_module modules/mod_imap.so
+LoadModule actions_module modules/mod_actions.so
+LoadModule speling_module modules/mod_speling.so
+LoadModule userdir_module modules/mod_userdir.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule rewrite_module modules/mod_rewrite.so
+#LoadModule ldap_module modules/mod_ldap.so
+#LoadModule auth_ldap_module modules/mod_auth_ldap.so
+#LoadModule ssl_module modules/mod_ssl.so
+
+<IfModule worker.c>
+LoadModule mem_cache_module modules/mod_mem_cache.so
+</IfModule>
+
+# =====================================================
+#                      DO NOT DELETE                   
+#    Additional modules added by postinstall scripts   
+# =====================================================
+# =====================================================
+
+User www
+Group www
+
+DocumentRoot "${SB_INSTALL_PREFIX}/share/htdocs"
+
+<Directory />
+  Options FollowSymLinks
+  AllowOverride None
+</Directory>
+
+<Directory "${SB_INSTALL_PREFIX}/share/htdocs">
+  Options Indexes FollowSymLinks
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+DirectoryIndex index.html index.html.var
+AccessFileName .htaccess
+
+<Files ~ "^\.ht">
+  Order allow,deny
+  Deny from all
+</Files>
+
+TypesConfig /etc${SB_INSTALL_PREFIX}/mime.types
+DefaultType text/plain
+
+<IfModule mod_mime_magic.c>
+  MIMEMagicFile /etc${SB_INSTALL_PREFIX}/magic
+</IfModule>
+
+ErrorLog ${_localstatedir}/log/error_log
+TransferLog ${_localstatedir}/log/access_log
+LogLevel warn
+LogFormat \
+  "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+LogFormat "%h %l %u %t \"%r\" %>s %b" common
+LogFormat "%{Referer}i -> %U" referer
+LogFormat "%{User-agent}i" agent
+
+CustomLog ${_localstatedir}/log/access_log common
+
+ServerTokens Full
+ServerSignature On
+Alias /icons/ "${SB_INSTALL_PREFIX}/share/icons/"
+
+<Directory "${SB_INSTALL_PREFIX}/share/icons">
+  Options Indexes MultiViews
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+AliasMatch ^/manual(?:/(?:de|en|fr|ja|ko|ru))?(/.*)?$ \\
+  "${SB_INSTALL_PREFIX}/share/manual\$1"
+
+<Directory "${SB_INSTALL_PREFIX}/share/manual">
+  Options Indexes
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+
+  <Files *.html>
+    SetHandler type-map
+  </Files>
+
+  SetEnvIf Request_URI ^/manual/de/ prefer-language=de
+  SetEnvIf Request_URI ^/manual/en/ prefer-language=en
+  SetEnvIf Request_URI ^/manual/fr/ prefer-language=fr
+  SetEnvIf Request_URI ^/manual/ja/ prefer-language=ja
+  SetEnvIf Request_URI ^/manual/ko/ prefer-language=ko
+  SetEnvIf Request_URI ^/manual/ru/ prefer-language=ru
+  RedirectMatch 301 ^/manual(?:/(de|en|fr|ja|ko|ru)){2,}(/.*)?$ /manual/\$1\$2
+</Directory>
+
+ScriptAlias /cgi-bin/ "${SB_INSTALL_PREFIX}/cgi-bin/"
+
+<Directory "${SB_INSTALL_PREFIX}/cgi-bin">
+  AllowOverride None
+  Options None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+IndexOptions FancyIndexing VersionSort
+
+AddIconByEncoding (CMP,/icons/compressed.gif) x-compress x-gzip
+
+AddIconByType (TXT,/icons/text.gif) text/*
+AddIconByType (IMG,/icons/image2.gif) image/*
+AddIconByType (SND,/icons/sound2.gif) audio/*
+AddIconByType (VID,/icons/movie.gif) video/*
+
+AddIcon /icons/binary.gif .bin .exe
+AddIcon /icons/binhex.gif .hqx
+AddIcon /icons/tar.gif .tar
+AddIcon /icons/world2.gif .wrl .wrl.gz .vrml .vrm .iv
+AddIcon /icons/compressed.gif .Z .z .tgz .gz .zip
+AddIcon /icons/a.gif .ps .ai .eps
+AddIcon /icons/layout.gif .html .shtml .htm .pdf
+AddIcon /icons/text.gif .txt
+AddIcon /icons/c.gif .c
+AddIcon /icons/p.gif .pl .py
+AddIcon /icons/f.gif .for
+AddIcon /icons/dvi.gif .dvi
+AddIcon /icons/uuencoded.gif .uu
+AddIcon /icons/script.gif .conf .sh .shar .csh .ksh .tcl
+AddIcon /icons/tex.gif .tex
+AddIcon /icons/bomb.gif core
+
+AddIcon /icons/back.gif ..
+AddIcon /icons/hand.right.gif README
+AddIcon /icons/folder.gif ^^DIRECTORY^^
+AddIcon /icons/blank.gif ^^BLANKICON^^
+
+DefaultIcon /icons/unknown.gif
+
+ReadmeName README.html
+HeaderName HEADER.html
+
+IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t
+
+AddLanguage ca .ca
+AddLanguage cs .cz .cs
+AddLanguage da .dk
+AddLanguage de .de
+AddLanguage el .el
+AddLanguage en .en
+AddLanguage eo .eo
+AddLanguage es .es
+AddLanguage et .et
+AddLanguage fr .fr
+AddLanguage he .he
+AddLanguage hr .hr
+AddLanguage it .it
+AddLanguage ja .ja
+AddLanguage ko .ko
+AddLanguage ltz .ltz
+AddLanguage nl .nl
+AddLanguage nn .nn
+AddLanguage no .no
+AddLanguage pl .po
+AddLanguage pt .pt
+AddLanguage pt-BR .pt-br
+AddLanguage ru .ru
+AddLanguage sv .sv
+AddLanguage zh-CN .zh-cn
+AddLanguage zh-TW .zh-tw
+
+LanguagePriority \\
+  en ca cs da de el eo es et fr he hr it ja ko ltz nl nn no pl \\
+  pt pt-BR ru sv zh-CN zh-TW
+
+ForceLanguagePriority Prefer Fallback
+
+AddDefaultCharset ISO-8859-1
+
+AddCharset ISO-8859-1 .iso8859-1 .latin1
+AddCharset ISO-8859-2 .iso8859-2 .latin2 .cen
+AddCharset ISO-8859-3 .iso8859-3 .latin3
+AddCharset ISO-8859-4 .iso8859-4 .latin4
+AddCharset ISO-8859-5 .iso8859-5 .latin5 .cyr .iso-ru
+AddCharset ISO-8859-6 .iso8859-6 .latin6 .arb
+AddCharset ISO-8859-7 .iso8859-7 .latin7 .grk
+AddCharset ISO-8859-8 .iso8859-8 .latin8 .heb
+AddCharset ISO-8859-9 .iso8859-9 .latin9 .trk
+AddCharset ISO-2022-JP .iso2022-jp .jis
+AddCharset ISO-2022-KR .iso2022-kr .kis
+AddCharset ISO-2022-CN .iso2022-cn .cis
+AddCharset Big5 .Big5 .big5
+AddCharset WINDOWS-1251 .cp-1251 .win-1251
+AddCharset CP866 .cp866
+AddCharset KOI8-r .koi8-r .koi8-ru
+AddCharset KOI8-ru .koi8-uk .ua
+AddCharset ISO-10646-UCS-2 .ucs2
+AddCharset ISO-10646-UCS-4 .ucs4
+AddCharset UTF-8 .utf8
+AddCharset GB2312 .gb2312 .gb
+AddCharset utf-7 .utf7
+AddCharset utf-8 .utf8
+AddCharset big5 .big5 .b5
+AddCharset EUC-TW .euc-tw
+AddCharset EUC-JP .euc-jp
+AddCharset EUC-KR .euc-kr
+AddCharset shift_jis .sjis
+
+AddType application/x-tar .tgz
+AddType application/x-compress .Z
+AddType application/x-gzip .gz .tgz
+AddType image/x-icon .ico
+
+AddHandler type-map var
+
+BrowserMatch "Mozilla/2" nokeepalive
+BrowserMatch "MSIE 4\.0b2;" nokeepalive downgrade-1.0 force-response-1.0
+BrowserMatch "RealPlayer 4\.0" force-response-1.0
+BrowserMatch "Java/1\.0" force-response-1.0
+BrowserMatch "JDK/1\.0" force-response-1.0
+BrowserMatch \\
+  "Microsoft Data Access Internet Publishing Provider" redirect-carefully
+BrowserMatch "^WebDrive" redirect-carefully
+BrowserMatch "^WebDAVFS/1.[012]" redirect-carefully
+BrowserMatch "^gnome-vfs" redirect-carefully
+
+<IfModule mod_ssl.c>
+  Include ${_sysconfdir}/ssl.conf
+</IfModule>
+
+# Virtual hosts
+Include ${_sysconfdir}/virtual.conf
+_EOT_
+
+cat >${_sysconfdir}/virtual.conf <<_EOT_
+# virtual hosts
+#<VirtualHost [ip]>
+# ...
+#</VirtualHost>
+_EOT_
+
+cat >${_sysconfdir}/ssl.conf <<_EOT_
+Listen 443
+
+AddType application/x-x509-ca-cert .crt
+AddType application/x-pkcs7-crl    .crl
+
+SSLPassPhraseDialog builtin
+
+SSLMutex sem
+SSLSessionCache shm:${_localstatedir}/run/ssl.cache(512000)
+SSLSessionCacheTimeout 300
+
+SSLRandomSeed startup builtin
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-aix5.2*|*-linux*)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+  ;;
+*-solaris2.9)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed startup file:/dev/random 512
+SSLRandomSeed startup file:/dev/urandom 512
+_EOT_
+  ;;
+*)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed startup egd:/var${SB_VAR_PRNGD}/pool
+_EOT_
+  ;;
+esac
+
+cat >>${_sysconfdir}/ssl.conf <<_EOT_
+
+SSLRandomSeed connect builtin
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-aix5.2*|*-linux*)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+  ;;
+*-solaris2.9)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect file:/dev/random 512
+SSLRandomSeed connect file:/dev/urandom 512
+_EOT_
+  ;;
+*)
+  cat >>${_sysconfdir}/ssl.conf <<_EOT_
+SSLRandomSeed connect egd:/var${SB_VAR_PRNGD}/pool
+_EOT_
+  ;;
+esac
+
+cat >>${_sysconfdir}/ssl.conf <<_EOT_
+
+#<VirtualHost _default_:443>
+#  DocumentRoot "${SB_INSTALL_PREFIX}/share/htdocs"
+#  ServerName new.host.name:443
+#  ServerAdmin you@your.address
+#  SSLEngine on
+#  SSLCipherSuite \\
+#    ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
+#  SSLCertificateFile ${_sysconfdir}/ssl/server.crt
+#  SSLCertificateKeyFile ${_sysconfdir}/ssl/server.key
+
+#  <Files ~ "\.(cgi|shtml|phtml|php3?)$">
+#    SSLOptions +StdEnvVars
+#  </Files>
+#  <Directory "${SB_INSTALL_PREFIX}/cgi-bin">
+#    SSLOptions +StdEnvVars
+#  </Directory>
+
+#  SetEnvIf User-Agent ".*MSIE.*" \\
+#    nokeepalive ssl-unclean-shutdown \\
+#    downgrade-1.0 force-response-1.0
+
+#  CustomLog logs/ssl_request_log \\
+#    "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+#</VirtualHost>
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="worker"
+    systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+      <configure>
+<![CDATA[
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LIBS+LIBS="${LIBS}"} LDFLAGS="${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:\
+${SB_VAR_OPENLDAP_LIB}:${SB_VAR_LIBDB_LIB}:${SB_VAR_ZLIB_LIB}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --with-mpm=worker \
+--enable-layout=TWW --with-berkeley-db=${SB_VAR_LIBDB} \
+${SB_VAR_LIBICONV+--with-iconv=${SB_VAR_LIBICONV}} \
+${SB_VAR_LIBOPENSSL+--with-ssl=${SB_VAR_LIBOPENSSL}} \
+${SB_VAR_LIBOPENSSL+--enable-ssl} --with-z=${SB_VAR_ZLIB} \
+--enable-so --enable-mods-shared=all --enable-deflate --enable-cgid \
+--enable-proxy --enable-proxy-connect --enable-proxy-http \
+--enable-proxy-ftp --enable-auth-ldap --enable-ldap \
+--enable-info --enable-dav-fs --enable-vhost-alias \
+--with-ldap --with-ldap-include=${SB_VAR_OPENLDAP_INC} \
+--with-ldap-lib=${SB_VAR_OPENLDAP_LIB} \
+--with-expat=${SB_VAR_LIBEXPAT} --with-dbm=db4 \
+--enable-cache --enable-disk-cache --enable-mem-cache \
+${SB_VAR_PRNGD+--with-egd="/var${SB_VAR_PRNGD}/pool"} \
+--sysconfdir=${_sysconfdir} --localstatedir=${_localstatedir} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+/bin/sh ${SB_BUILD_PREFIX}/srclib/apr/libtool --mode=install \
+${SB_BUILD_PREFIX}/build/install.sh -c -m 755 -o root -g 0 httpd \
+${SB_INSTALL_PREFIX}/bin/httpd.worker
+
+(cd modules/experimental
+gmake shared='mod_mem_cache.la' install)
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/bin/httpd.worker
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.0.48" to="2.0.49">
+        <item><para>SECURITY: CAN-2004-0174 (cve.mitre.org). Fix
+starvation issue on listening sockets where a short-lived connection
+on a rarely-accessed listening socket will cause a child to hold the
+accept mutex and block out new connections until another connection
+arrives on that rarely-accessed listening socket. With Apache 2.x
+there is no performance concern about enabling the logic for platforms
+which don't need it, so it is enabled everywhere except for
+Win32.</para></item>
+        <item><para>SECURITY: CAN-2004-0113 (cve.mitre.org). mod_ssl:
+Fix a memory leak in plain-HTTP-on-SSL-port handling. PR
+27106.</para></item>
+        <item><para>SECURITY: CAN-2003-0020 (cve.mitre.org). Escape
+arbitrary data before writing into the errorlog. Unescaped errorlogs
+are still possible using the compile time switch
+"-DAP_UNSAFE_ERROR_LOG_UNESCAPED".</para></item>
+        <item><para>mod_cgid: Fix storage corruption caused by use of
+incorrect pool</para></item>
+        <item><para>Win32: find_read_listeners was not correctly
+handling multiple listeners on the Win32DisableAcceptEx
+path</para></item>
+        <item><para>Fix bug in mod_usertrack when no CookieName is
+set. PR 24483.</para></item>
+        <item><para>Fix some piped log problems: bogus "piped log
+program '(null)' failed" messages during restart and problem with the
+logger respawning again after Apache is stopped. PR 21648, PR
+24805.</para></item>
+        <item><para>Fixed file extensions for real media files and
+removed rpm extension from mime.types. PR 26079.</para></item>
+        <item><para>Remove compile-time length limit on request
+strings. Length is now enforced solely with the LimitRequestLine
+config directive.</para></item>
+        <item><para>mod_ssl: Send the Close Alert message to the peer
+before closing the SSL session. PR 27428.</para></item>
+        <item><para>mod_ssl: Fix bug in passphrase handling which
+could cause spurious failures in SSL functions later. PR
+21160.</para></item>
+        <item><para>mod_log_config: Fix corruption of buffered logs
+with threaded MPMs. PR 25520.</para></item>
+        <item><para>Fix mod_include's expression parser to recognize
+strings correctly even if they start with an escaped
+token.</para></item>
+        <item><para>Add fatal exception hook for use by diagnostic
+modules. The hook is only available if the --enable-exception-hook
+configure parm is used and the EnableExceptionHook directive has been
+set to "on".</para></item>
+        <item><para>Allow mod_auth_digest to work with sub-requests
+with different methods than the original request. PR
+25040.</para></item>
+        <item><para>fix "Expected &lt;/Foo&gt;&gt; but saw
+&lt;/Foo&gt;" errors in nested, argumentless containers.</para></item>
+        <item><para>mod_auth_ldap: Fix some segfaults in the cache
+logic. PR 18756.</para></item>
+        <item><para>mod_cgid: Restart the cgid daemon if it crashes.
+PR 19849.</para></item>
+        <item><para>The whole codebase was relicensed and is now
+available under the Apache License, Version 2.0
+(http://www.apache.org/licenses)</para></item>
+        <item><para>Fixed cache-removal order in
+mod_mem_cache</para></item>
+        <item><para>mod_setenvif: Fix the regex optimizer, which under
+circumstances treated the supplied regex as literal string. PR
+24219.</para></item>
+        <item><para>ap_mpm.h: Fix include guard of ap_mpm.h to
+reference mpm instead of mmn.</para></item>
+        <item><para>mod_rewrite: Catch an edge case, where strange
+subsequent RewriteRules could lead to a 400 (Bad Request)
+response.</para></item>
+        <item><para>Keep focus of ITERATE and ITERATE2 on the current
+module when the module chooses to return DECLINE_CMD for the
+directive. PR 22299.</para></item>
+        <item><para>Add support for IMT minor-type wildcards (e.g.,
+text/*) to ExpiresByType. PR#7991.</para></item>
+        <item><para>Fix segfault in mod_mem_cache cache_insert() due
+to cache size becoming negative. PR: 21285, 21287.</para></item>
+        <item><para>core.c: If large file support is enabled, allow
+any file that is greater than AP_MAX_SENDFILE to be split into
+multiple buckets. This allows Apache to send files that are greater
+than 2gig. Otherwise we run into 32/64 bit type mismatches in the file
+size.</para></item>
+        <item><para>proxy_http fix: mod_proxy hangs when both
+KeepAlive and ProxyErrorOverride are enabled, and a non-200 response
+without a body is generated by the backend server. (e.g.: a client
+makes a request containing the "If-Modified-Since" and "If-None-Match"
+headers, to which the backend server respond with status
+304.)</para></item>
+        <item><para>mod_dav: Reject requests which include an
+unescaped fragment in the Request-URI. PR 21779.</para></item>
+        <item><para>Build array of allowed methods with proper
+dimensions, fixing possible memory corruption</para></item>
+        <item><para>mod_ssl: Fix potential segfault on lookup of
+SSL_SESSION_ID. PR 15057.</para></item>
+        <item><para>mod_ssl: Fix streaming output from an nph- CGI
+script. PR 21944.</para></item>
+        <item><para>mod_usertrack no longer inspects the Cookie2
+header for the cookie name. PR 11475.</para></item>
+        <item><para>mod_usertrack no longer overwrites other cookies.
+PR 26002.</para></item>
+        <item><para>worker MPM: fix stack overlay bug that could cause
+the parent process to crash</para></item>
+        <item><para>Win32: Add Win32DisableAcceptEx directive. This
+Windows NT/2000/CP directive is useful to work around bugs in some
+third party layered service providers like virus scanners, VPN and
+firewall products, that do not properly handle WinSock 2 APIs. Use
+this directive if your server is issuing AcceptEx failed
+messages.</para></item>
+        <item><para>Make REMOTE_PORT variable available in
+mod_rewrite. PR 25772.</para></item>
+        <item><para>Fix a long delay with CGI requests and keepalive
+connections on AIX.</para></item>
+        <item><para>mod_autoindex: Add 'XHTML' option in order to
+allow switching between HTML 3.2 and XHTML 1.0 output. PR
+23747.</para></item>
+        <item><para>Add XHTML Document Type Definitions to httpd.h
+(minor MMN bump)</para></item>
+        <item><para>mod_ssl: Advertise SSL library version as
+determined at run-time rather than at compile-time. PR
+23956.</para></item>
+        <item><para>mod_ssl: Fix segfault on a non-SSL request if the
+'c' log format code is used. PR 22741.</para></item>
+        <item><para>Fix build with parallel make. PR
+24643.</para></item>
+        <item><para>mod_rewrite: In external rewrite maps lookup keys
+containing a newline now cause a lookup failure. PR
+14453.</para></item>
+        <item><para>Backport major overhaul of mod_include's filter
+parser from 2.1. The new parser code is expected to be more robust and
+should catch all of the edge cases that were not handled by the
+previous one. The 2.1 external API changes were hidden by a wrapper
+which is expected to keep the API backwards compatible.</para></item>
+        <item><para>Add a hook (insert_error_filter) to allow filters
+to re-insert themselves during processing of error responses. Enable
+mod_expires to use the new hook to include Expires headers in valid
+error responses. This addresses an RFC violation. It fixes PRs 19794,
+24884, and 25123.</para></item>
+        <item><para>Add Polish translation of error messages. PR
+25101.</para></item>
+        <item><para>Add AP_MPMQ_MPM_STATE function code for
+ap_mpm_query. (Not yet supported for BeOS or OS/2 MPMs.)</para></item>
+        <item><para>Add mod_status hook to allow modules to add to the
+mod_status report</para></item>
+        <item><para>Fix htdbm to generate comment fields in DBM files
+correctly</para></item>
+        <item><para>mod_dav: Use bucket brigades when reading PUT
+data. This avoids problems if the data stream is modified by an input
+filter. PR 22104.</para></item>
+        <item><para>Fix RewriteBase directive to not add double
+slashes</para></item>
+        <item><para>Improve 'configure --help' output for some
+modules</para></item>
+        <item><para>Correct UseCanonicalName Off to properly check
+incoming port number</para></item>
+        <item><para>Fix slow graceful restarts with prefork
+MPM</para></item>
+        <item><para>Fix a problem with namespace mappings being
+dropped in mod_dav_fs; if any property values were set which defined
+namespaces these came out mangled in the PROPFIND response. PR
+11637.</para></item>
+        <item><para>mod_dav: Return a WWW-auth header for MOVE/COPY
+requests where the destination resource gives a 401. PR
+15571.</para></item>
+        <item><para>mod_autoindex / core: Don't fail to show filenames
+containing special characters like '%'. PR 13598.</para></item>
+        <item><para>mod_status: Report total CPU time accurately when
+using a threaded MPM. PR 23795.</para></item>
+        <item><para>Fix memory leak in handling of request bodies
+during reverse proxy operations. PR 24991.</para></item>
+        <item><para>Win32 MPM: Implement MaxMemFree to enable setting
+an upper limit on the amount of storage used by the bucket brigades in
+each server thread</para></item>
+        <item><para>Modified the cache code to be header-location
+agnostic. Also fixed a number of other cache code bugs related to PR
+15852. This fixes mod_mem_cache but not mod_disk_cache yet so I'm not
+closing the PR since that is what they are using. </para></item>
+        <item><para>complain via error_log when mod_include's INCLUDES
+filter is enabled, but the relevant Options flag allowing the filter
+to run for the specific resource wasn't set, so that the filter won't
+silently get skipped. next remove itself, so the warning will be
+logged only once.</para></item>
+        <item><para>mod_info: HTML escape configuration information so
+it displays correctly. PR 24232.</para></item>
+        <item><para>Restore the ability to add a description for
+directories that don't contain an index file. (Broken in
+2.0.48)</para></item>
+        <item><para>Fix a problem with the display of empty variables
+("SetEnv foo") in mod_include. PR 24734.</para></item>
+        <item><para>mod_log_config: Log the minutes component of the
+timezone correctly. PR 23642.</para></item>
+        <item><para>mod_proxy: Fix cases where an invalid status-line
+could be sent to the client. PR 23998.</para></item>
+        <item><para>mod_ssl: Fix segfaults at startup if other modules
+which use OpenSSL are also loaded</para></item>
+        <item><para>mod_ssl: Use human-readable OpenSSL error strings
+in logs; use thread-safe interface for retrieving error
+strings</para></item>
+        <item><para>mod_expires: Initialize ExpiresDefault to NULL
+instead of "" to avoid reporting an Internal Server error if it is
+used without having been set in the httpd.conf file. PR: 23748,
+24459</para></item>
+        <item><para>mod_autoindex: Don't omit the &lt;tr&gt; start tag
+if the SuppressIcon option is set. PR 21668.</para></item>
+        <item><para>mod_include no longer allows an ETag header on 304
+responses. PR 19355.</para></item>
+        <item><para>EBCDIC: Convert header fields to ASCII before
+sending (broken since 2.0.44).</para></item>
+        <item><para>Fix the inability to log errors like exec failure
+in mod_ext_filter/mod_cgi script children. This was broken after such
+children stopped inheriting the error log handle.</para></item>
+        <item><para>Fix mod_info to use the real config file name, not
+the default config file name</para></item>
+        <item><para>Set the scoreboard state to indicate logging prior
+to running logging hooks so that server-status will show 'L' for hung
+loggers instead of 'W'</para></item>
+      </change>
+
+      <note type="installation">
+        <para>Apache requires a special user and group,
+"<command>www</command>". This can be changed by modifying the
+<command>User</command> and <command>Group</command> directives in the
+<command>/etc${SB_INSTALL_PREFIX}/httpd.conf</command> configuration file.</para>
+
+        <para>On all platforms, the default MPM (Multi-Processing
+Module) is "prefork" (non-threaded, pre-forking). The "worker" MPM is
+also available (hybrid multi-threaded multi-process). The
+"<command>MPM</command>" variable in the startup script is used to set
+which MPM to use. The "worker" MPM is available for all platforms
+except HP-UX 10.20. Further information on Apache MPMs is available at
+<ulink url="http://httpd.apache.org/docs-2.0/mpm.html">http://httpd.apache.org/docs-2.0/mpm.html</ulink></para>
+
+        <para>Log files are saved to
+<command>/var${SB_INSTALL_PREFIX}/log</command> by default. The
+"<command>ErrorLog</command>" and "<command>TransferLog</command>"
+directives can be used to change the log file paths.</para>
+
+        <para>The Apache and SSL configuration files, httpd.conf and
+ssl.conf, are located in <command>/etc${SB_INSTALL_PREFIX}</command>. The
+"<command>-f</command>" command-line switch can be used to specify an
+alternate location for the <command>httpd.conf</command> file.</para>
+
+        <para>Apache was built with DSO support. All modules were
+built at compilation time, in particular <command>mod_ldap</command>
+for LDAP authentication, <command>mod_dav</command> for DAV support,
+and <command>mod_ssl</command> for SSL support. Additional 3rd-party
+modules are also available:</para>
+        <screen>
+mod_perl 1.99_13
+mod_python 3.1.3
+PHP 4.3.6
+        </screen>
+      </note>
+
+      <note type="configuration">
+        <para>Apache underwent major architectural changes between the
+older 1.3.x release and the 2.0.x release. Before copying the
+<command>httpd.conf</command> file from the 1.3.x release, please
+start with the <command>httpd.conf</command> file from this release.
+Notes on upgrading to the 2.0 release are available at <ulink url="http://httpd.apache.org/docs-2.0/upgrading.html">http://httpd.apache.org/docs-2.0/upgrading.html</ulink>:</para>
+        <unorderedlist>
+          <item><para>Many directives that were in the core server in
+Apache 1.3 are now in the MPMs. If you wish the behavior of the server
+to be as similar as possible to the behavior of Apache 1.3, you should
+select the prefork MPM. Other MPMs will have different directives to
+control process creation and request processing.</para></item>
+          <item><para>The proxy module has been revamped to bring it
+up to HTTP/1.1. Among the important changes, proxy access control is
+now placed inside a &lt;Proxy&gt; block rather than a &lt;Directory
+proxy:&gt; block.</para></item>
+          <item><para>The handling of <command>PATH_INFO</command>
+(trailing path information after the true filename) has changed for
+some modules. Modules that were previously implemented as a handler
+but are now implemented as a filter may no longer accept requests with
+<command>PATH_INFO</command>. Filters such as INCLUDES or PHP are
+implemented on top of the core handler, and therefore reject requests
+with <command>PATH_INFO</command>. You can use the AcceptPathInfo
+directive to force the core handler to accept requests with
+<command>PATH_INFO</command> and thereby restore the ability to use
+<command>PATH_INFO</command> in server-side includes.</para></item>
+          <item><para>The <command>CacheNegotiatedDocs</command>
+directive now takes the argument on or off. Existing instances of
+<command>CacheNegotiatedDocs</command> should be replaced with
+<command>CacheNegotiatedDocs</command> on.</para></item>
+          <item><para>The <command>ErrorDocument</command> directive
+no longer uses a quote at the beginning of the argument to indicate a
+text message. Instead, you should enclose the message in double
+quotes. For example, existing instances of</para>
+          <screen>
+ErrorDocument 403 "Some Message
+          </screen>
+          <para>should be replaced with</para>
+          <screen>
+ErrorDocument 403 "Some Message"
+          </screen>
+          <para>As long as the second argument is not a valid URL or
+pathname, it will be treated as a text message.</para></item>
+          <item><para>The <command>AccessConfig</command> and
+<command>ResourceConfig</command> directives no longer exist. Existing
+instances of these directives can be replaced with the Include
+directive which has equivalent functionality. If you were making use
+of the default values of these directives without including them in
+the configuration files, you may need to add <command>Include
+conf/access.conf</command> and <command>Include
+conf/srm.conf</command> to your httpd.conf. In order to assure that
+Apache reads the configuration files in the same order as was implied
+by the older directives, the Include directives should be placed at
+the end of httpd.conf, with the one for srm.conf  preceding the one
+for access.conf.</para></item>
+          <item><para>The <command>BindAddress</command> and
+<command>Port</command> directives no longer exist. Equivalent
+functionality is provided with the more flexible
+<command>Listen</command> directive.</para></item>
+          <item><para>Another use of the <command>Port</command>
+directive in Apache-1.3 was setting the port number to be used in
+self-referential URL's. The Apache-2.0 equivalent is the new
+<command>ServerName</command> syntax: it has been changed to allow
+specifying both the hostname and the port number for self-referential
+URL's in one directive.</para></item>
+          <item><para>The <command>ServerType</command> directive no
+longer exists. The method used to serve requests is now determined by
+the selection of MPM. There is currently no MPM designed to be
+launched by inetd.</para></item>
+          <item><para>The <command>mod_log_agent</command> and
+<command>mod_log_referer</command> modules which provided the
+<command>AgentLog</command>, <command>RefererLog</command> and
+<command>RefererIgnore</command> directives have been removed. Agent
+and referer logs are still available using the
+<command>CustomLog</command> directive of
+<command>mod_log_config</command>.</para></item>
+          <item><para>The <command>AddModule</command> and
+<command>ClearModuleList</command> directives no longer exist. These
+directives were used to ensure that modules could be enabled in the
+correct order. The new Apache 2.0 API allows modules to explicitly
+specify their ordering, eliminating the need for these
+directives.</para></item>
+          <item><para>The <command>FancyIndexing</command> directive
+has been removed. The same functionality is available through the
+<command>FancyIndexing</command> option to the
+<command>IndexOptions</command> directive.</para></item>
+          <item><para>The MultiViews content-negotiation technique
+provided by mod_negotiation has become more strict in its default file
+matching. It will select only from negotiable files. The old behavior
+can be restored using the <command>MultiviewsMatch</command>
+directive.</para></item>
+          <item><para>The module <command>mod_auth_digest</command>,
+which was experimental in Apache 1.3, is now a standard
+module.</para></item>
+          <item><para>The <command>mod_mmap_static</command> module,
+which was experimental in Apache 1.3, has been replaced with
+<command>mod_file_cache</command>.</para></item>
+          <item><para>The distribution has been completely reorganized
+so that it no longer contains an independent src directory. Instead,
+the sources are logically organized under the main distribution
+directory, and installations of the compiled server should be directed
+to a separate directory.</para></item>
+        </unorderedlist>
+      </note>
+
+      <note type="configuration">
+        <para>Unlike previous releases, PHP, mod_perl, and mod_python
+have been split off into separate packages. The postinstall scripts
+for these packages will automatically update
+<command>/etc${SB_INSTALL_PREFIX}/httpd.conf</command> to add support for the new
+module.</para>
+
+        <para>A separate configuration file is now available for
+virtual hosts, "<command>/etc${SB_INSTALL_PREFIX}/virtual.conf</command>".</para>
+      </note>
+
+      <note type="usage">
+        <para>The <command>auth_ldap</command> module is not enabled
+by default. To enable it, uncomment the following lines in the
+configuration file:</para>
+        <screen>
+#LoadModule ldap_module modules/mod_ldap.so
+#LoadModule auth_ldap_module modules/mod_auth_ldap.so
+        </screen>
+
+        <para>The <command>/etc${SB_INSTALL_PREFIX}/ssl.conf</command>,
+configuration file contains the default mod_ssl configuration. The
+mod_ssl module is not enabled by default. To enable it, uncomment the
+following line in the configuration file:</para>
+        <screen>
+#LoadModule ssl_module modules/mod_ssl.so
+        </screen>
+
+        <para>Once enabled, the
+<command>/etc${SB_INSTALL_PREFIX}/ssl.conf</command> will be automatically
+included.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 August 2" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update libiconv dependency to 1.9.2</para></item>
+      </change>
+
+      <change date="2004 July 8" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Force early linkage of PCRE library so the PCRE
+regcomp(), regexec(), regerror(), and regfree() entries are picked up
+rather than the entries in libc. Fix for mod_rewrite bug on
+HP-UX (cf bug #26088).</para></item>
+      </change>
+
+      <change date="2004 July 5" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Disable IPv6 and getaddrinfo(), getnameinfo(),
+gai_strerror() on IRIX to work with older 6.5.x releases</para></item>
+      </change>
+
+      <change date="2004 June 30" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CAN-2004-0488 to fix a stack buffer
+overflow in mod_ssl which can be triggered if using the FakeBasicAuth
+option. If mod_ssl is sent a client certificate with a subject DN
+field longer than 6000 characters, a stack overflow can occur if
+FakeBasicAuth has been enabled. In order to exploit this issue the
+carefully crafted malicious certificate would have to be signed by a
+Certificate Authority which mod_ssl is configured to trust. <ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0488">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0488</ulink></para></item>
+        <item><para>Apply patch for CAN-2004-0493 to fix remotely
+triggered memory leak in http header parsing which can allow a denial 
+of service attack due to excessive memory consumption (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0493">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2004-0493</ulink>)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

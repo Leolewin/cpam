@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="mpc" version="0.9" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}09</install-name>
+
+    <sources>
+      <source checksum="0d6acab8d214bd7d1fbbc593e83dd00d"
+        checksum-type="md5" size="565953"
+        path="src/mpc-0.9.tar.gz"/>
+      <patch checksum="d8efa09a6de484eb83ecf43854187de6"
+        checksum-type="md5" size="317"
+        path="src/mpc-0.9.tww.patch"/>
+      <patch checksum="d9ac903dc937cdf0835c3781119c64c5"
+        checksum-type="md5" size="1258428"
+        path="src/mpc-0.9.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gmp" var="LIBGMP"
+        install-name="libgmp43">v&gt;=4.3.2</depend>
+      <depend program="mpfr" var="LIBMPFR"
+        install-name="libmpfr30">v&gt;=3.0.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Onofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O1 +ESlit +DAportable"
+  CPPFLAGS="-DLONGLONG_STANDALONE"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Onofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-DLONGLONG_STANDALONE"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-irix64=off" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  # Needs -nodtk because mpfr has nodtk
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBGMP+${CC_LD_RT}${SB_VAR_LIBGMP_LIB}}\
+${SB_VAR_LIBMPFR+:${SB_VAR_LIBMPFR_LIB}} \
+${LDFLAGS+${LDFLAGS}}" ${SB_VAR_LIBGMP+--with-gmp=${SB_VAR_LIBGMP}} \
+${SB_VAR_LIBMPFR+--with-mpfr=${SB_VAR_LIBMPFR}} \
+--enable-shared --enable-static --disable-dependency-tracking \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/version.texi \
+doc/mpc.texi ${_docdir}/texinfo
+]]>
+    </install>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="0.8.2" to="0.9">
+        <items name="New functions">
+          <item><para>mpc_set_dc, mpc_set_ldc, mpc_get_dc, mpc_get_ldc
+for converting between mpc type variables and C variables of type
+double _Complex or long double _Complex</para></item>
+          <item><para>mpc_sin_cos, computing simultaneously the sine and
+cosine</para></item>
+        </items>
+
+        <items name="Speed-ups">
+          <item><para>mpc_pow_si through binary
+exponentiation</para></item>
+          <item><para>mpc_pow_z when the exponent fits in a
+long</para></item>
+          <item><para>mpc_tan through the use of
+mpc_sin_cos</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>trigonometric functions: infinite loop due to
+overflow for large arguments</para></item>
+          <item><para>exp: close to infinite loop for argument close
+to 0</para></item>
+          <item><para>sqrt: close to infinite loop for argument close
+to 1</para></item>
+          <item><para>add_si: replaced macro by function, since the
+macro evaluated the same expression twice</para></item>
+        </items>
+
+        <item><para>Logging feature for debugging:</para>
+        <screen>
+./configure --enable-logging
+#include "mpc-log.h" instead of #include "mpc.h"
+        </screen></item>
+        <item><para>Minimally required library versions: gmp 4.3.2,
+mpfr 2.4.2</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

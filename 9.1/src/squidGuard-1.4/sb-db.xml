@@ -1,0 +1,136 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="squidGuard" version="1.4" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>squidguard14</install-name>
+
+    <sources>
+      <source checksum="de834150998c1386c30feae196f16b06"
+        checksum-type="md5" size="1968492"
+        path="src/squidGuard-1.4.tar.gz"/>
+      <patch checksum="5e05dfb3915d479945e717fe565f628f"
+        checksum-type="md5" size="26268"
+        path="src/squidGuard-1.4.tww.patch"/>
+      <patch checksum="e7419c75a445f934a2e8b5bbc7cdd3d1"
+        checksum-type="md5" size="186754"
+        path="src/squidGuard-1.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb47">v&gt;=4.7.25</depend>
+      <depend program="flex" install-name="flex25"
+        add-path="prepend">v==2.5.35</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure PERL=${SB_VAR_PERL}/bin/perl CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_LIBDB_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--with-sg-config="${_sysconfdir}/filter.conf" \
+--with-sg-logdir="${_localstatedir}/log" \
+--with-sg-dbhome="${_localstatedir}/db" \
+--with-db=${SB_VAR_LIBDB} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/filter.conf
+
+# install documentation
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/html
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/*.txt ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/*.html ${_docdir}/html
+]]>
+    </install>
+
+    <notes>
+      <note type="usage">
+        <para>The default configuration file is
+<command>/etc${SB_INSTALL_PREFIX}/filter.conf</command>. An alternate
+configuration file can be specified with the "<command>-c</command>"
+option. The default path for the log directory is
+<command>/var${SB_INSTALL_PREFIX}/logs</command> and the default database path
+is <command>/var${SB_INSTALL_PREFIX}/db</command>. An alternate log and
+database directory can be specified with the
+"<command>logdir</command>" and "<command>dbhome</command>"
+configuration directives, respectively.</para>
+        <para>Configuration information is available in the
+documentation directory, <command>${SB_INSTALL_PREFIX}/doc</command>,
+or on the web at the project home page, <ulink url="http://www.squidguard.org">http://www.squidguard.org</ulink>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 25" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

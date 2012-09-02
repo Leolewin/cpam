@@ -1,0 +1,1188 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="mysql" version="4.0.20" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}4020</install-name>
+
+    <sources>
+      <source checksum="7c75ac74e23396bd228dbc2c2d1131df"
+        checksum-type="md5" size="13807983"
+        path="src/mysql-4.0.20.tar.gz"/>
+      <patch checksum="fca6d4b8bc50f753e1958e2f0d5ec3f5"
+        checksum-type="md5" size="2250882"
+        path="src/mysql-4.0.20.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <module name="default">
+      <dependencies>
+      <depend user="mysql"/>
+
+      <depend group="mysql"/>
+
+        <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+        <depend var="GCC_RT" install-name="gcc332r"/>
+        <depend program="bison" install-name="bison13"
+          add-path="prepend" type="build">v&gt;=1.35</depend>
+        <depend program="tcp_wrappers" var="TCPWRAP"
+          install-name="tcpwrap">v&gt;=7.6</depend>
+        <depend program="ncurses" var="NCURSES"
+          install-name="ncurses54">v&gt;=5.4</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.8.2</depend>
+        <depend program="readline" var="READLINE"
+          install-name="readline43">v&gt;=4.3</depend>
+        <depend program="texinfo" var="TEXINFO"
+          add-path="prepend">v==4.6</depend>
+        <depend program="zlib" var="ZLIB"
+          install-name="zlib11">v&gt;=1.1.4</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5.2*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC_r CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--enable-thread-safe-client --with-named-thread-libs=-lthread"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix5*)
+  CC=xlc_r CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  CXX=xlC_r CXXFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  ARGS="--enable-thread-safe-client"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix*)
+  CFLAGS="-O2 -mpower -mcpu=common"
+  CXXFLAGS="-O2 -mpower -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT" CPPFLAGS="-D_REENTRANT"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT"
+  ARGS="--with-low-memory --disable-largefile --with-pthread \
+--with-named-thread-libs=-lpthread"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux10*)
+  CFLAGS="-O2 -march=1.1 -D_REENTRANT"
+  CXXFLAGS="-O2 -march=1.1 -D_REENTRANT" CPPFLAGS="-D_REENTRANT"
+  ARGS="--with-mit-threads" CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2"
+  CXX=CC CXXFLAGS="-LANG:libc_in_namespace_std=OFF -Wl,-woff,84 \
+-Wl,-woff,85 -Wl,-woff,134 -woff 1429 -O2"
+  ARGS="--with-pthread --enable-thread-safe-client"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--with-pthread --enable-thread-safe-client"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -std1 -msym -readonly_strings -D_REENTRANT"
+  CXX=cxx CXXFLAGS="-O2 -ieee -msym -D_REENTRANT"
+  ARGS="--enable-thread-safe-client"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8"
+  CXXFLAGS="-O2 -mcpu=v8"
+  ARGS="--enable-thread-safe-client" CC_LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  ARGS="--enable-thread-safe-client --enable-large-files" CC_LD_RT="-R" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:=g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_READLINE_INC} -I${SB_VAR_ZLIB_INC} \
+-I${SB_VAR_NCURSES_INC} -I${SB_VAR_NCURSES_INC}/ncurses \
+${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="-L${SB_VAR_READLINE_LIB} \
+-L${SB_VAR_ZLIB_LIB} -L${SB_VAR_NCURSES_LIB} \
+${CC_LD_RT}${SB_VAR_READLINE_LIB}:${SB_VAR_NCURSES_LIB}:\
+${SB_VAR_ZLIB_LIB}${GCC_RT+:${GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--sysconfdir="${_sysconfdir}" --datadir="${_datadir}" \
+${_localstatedir+--localstatedir="${_localstatedir}"} \
+${_localstatedir+--with-unix-socket-path="${_localstatedir}/run/mysql.sock"} \
+--enable-shared --enable-static --without-debug \
+${TCPWRAP+--with-libwrap=${SB_VAR_TCPWRAP}} \
+--with-innodb --with-berkeley-db --without-readline \
+--without-bench --with-mysqlfs=no --with-openssl=no \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+case "${SB_SYSTYPE}" in
+*-osf*)
+  # Work around libdb.so in /usr/shlib
+  sed "s!^bdb_libs = .*!bdb_libs = \$(top_builddir)/bdb/build_unix/libdb.a!" \
+  sql/Makefile >/tmp/$$
+  cp /tmp/$$ sql/Makefile && rm -f /tmp/$$ ;;
+esac
+
+# fix up -config script
+${SB_VAR_PERL}/bin/perl -pi -e \
+"s!-L'\\\$pkglibdir' !-L'\\\$pkglibdir' ${CC_LD_RT}'\\\$pkglibdir' !" \
+scripts/mysql_config.sh
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir} \
+pkgincludedir="${SB_INSTALL_PREFIX}/include" \
+pkglibdir="${SB_INSTALL_PREFIX}/lib"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir} \
+pkgincludedir="${SB_INSTALL_PREFIX}/include" \
+pkglibdir="${SB_INSTALL_PREFIX}/lib"
+
+# remove test directory
+rm -r ${SB_INSTALL_PREFIX}/mysql-test
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 Docs/include.texi \
+Docs/manual.html Docs/manual.texi Docs/manual.txt \
+Docs/manual_toc.html Docs/reservedwords.texi ${_docdir}
+
+if [ "${_localstatedir+set}" = set ]; then
+  # install DB and make sure our hostname is not in user table
+  cp scripts/mysql_install_db tww_install_db.$$
+  ${SB_PATH_SHTOOL} subst -q -e "\
+/VALUES.*hostname/ d; \
+/host,user.*hostname/ d; \
+s!^\(.*host,user.*localhost.*\)!\1\"!;" tww_install_db.$$
+  ./tww_install_db.$$
+  rm tww_install_db.$$
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_localstatedir}
+
+  ${SB_PATH_CHOWN} -hR mysql:mysql ${_localstatedir}
+  rm -f ${_localstatedir}/$(hostname).log
+  rm -rf ${_localstatedir}/test
+
+  # directory for pid file
+  ${SB_PATH_INSTALL} -m 755 -o mysql -g mysql -d ${_localstatedir}/run
+
+  # directory for log files
+  ${SB_PATH_INSTALL} -m 755 -o mysql -g mysql -d ${_localstatedir}/log
+  ${SB_PATH_INSTALL} -m 755 -o mysql -g mysql -d ${_localstatedir}/log/innodb
+
+  # directory for InnoDB data files
+  ${SB_PATH_INSTALL} -m 755 -o mysql -g mysql -d ${_localstatedir}/innodb
+
+  # config file
+  ${SB_PATH_INSTALL} -m 755 -o mysql -g mysql -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o mysql -g mysql /dev/null ${_sysconfdir}/my.cnf
+  cat >${_sysconfdir}/my.cnf <<_EOT_
+[client]
+port                      = 3306
+socket                    = ${_localstatedir}/run/mysql.sock
+
+[mysqld_safe]
+err-log                   = ${_localstatedir}/log/mysql.err
+socket                    = ${_localstatedir}/run/mysql.sock
+
+[mysqld]
+port                      = 3306
+user                      = mysql
+pid-file                  = ${_localstatedir}/run/mysqld.pid
+socket                    = ${_localstatedir}/run/mysql.sock
+log                       = ${_localstatedir}/log/mysql.log
+basedir                   = ${_localstatedir}
+datadir                   = ${_localstatedir}
+language                  = ${_datadir}/english
+character-sets-dir        = ${_datadir}/charsets
+
+innodb_data_home_dir      = ${_localstatedir}/innodb
+innodb_log_group_home_dir = ${_localstatedir}/log/innodb
+_EOT_
+else
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/my.cnf
+fi
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="4.0.19" to="4.0.20">
+        <items name="New/changed features">
+          <item><para>Phrase search in 'MATCH ... AGAINST ( ... IN
+BOOLEAN MODE)' no longer matches partial words.</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Fixed a bug in division '/' reporting incorrect
+metadata (number of digits after the decimal point). It can be seen,
+e.g. in 'CREATE TABLE t1 SELECT "0.01"/"3"'. (Bug
+#3612)</para></item>
+          <item><para>Fixed a problem with non-working 'DROP DATABASE'
+on some configurations (in particular, Linux 2.6.5 with ext3 are known
+to expose this bug). (Bug #3594)</para></item>
+          <item><para>Fixed that in some replication error messages, a
+very long query caused the rest of the message to be invisible
+(truncated), by putting the query last in the message. (Bug
+#3357)</para></item>
+        </items>
+      </change>
+
+      <change from="4.0.18" to="4.0.19">
+        <items name="New/changed features">
+          <item><para>If length of a timestamp field is defined as 19,
+the timestamp will be displayed as '"YYYY-MM-DD HH:MM:SS'. This is
+done to make it easier to use tables created in MySQL 4.1 to be used
+in MySQL 4.0.</para></item>
+          <item><para>If you use 'RAID_CHUNKS' with a value &gt; 255 it
+will be set to 255. This was made to ensure that all raid directories
+are always 2 hex bytes. (Bug #3182)</para></item>
+          <item><para>Changed that the optimizer will now consider the
+index specified in 'FORCE INDEX' clause as a candidate to resolve
+'ORDER BY' as well.</para></item>
+          <item><para>Non-standard behavior of 'UNION' statements has
+changed to the standard ones. So far, a table name in the 'ORDER BY'
+clause was tolerated. From now on a proper error message is issued
+(Bug #3064).</para></item>
+          <item><para>Added 'max_insert_delayed_threads' system
+variable as a synonym for 'max_delayed_threads'.</para></item>
+          <item><para>Added 'query_cache_wlock_invalidate' system
+variable. It allow emulation of 'MyISAM' table write-locking behavior,
+even for queries in the query cache. (Bug #2693)</para></item>
+          <item><para>The keyword 'MASTER_SERVER_ID' is not reserved
+anymore.</para></item>
+          <item><para>The following is mainly relevant for Mac OS X
+users who use a case-insensitive filesystem. This is not relevant for
+Windows users as 'InnoDB' in this case always stores file names in
+lower case.</para>
+          <para>One can now force 'lower_case_table_names' to 0 from
+the command line or a configuration file. This is useful with
+case-insensitive filesystems when you have previously not used
+'lower_case_table_names=1' or 'lower_case_table_names=2' and your have
+already created 'InnoDB' tables. With 'lower_case_table_names=0',
+'InnoDB' tables were stored in mixed case while setting
+lower_case_table_names &lt;&gt; 0 will now force it to lower case (to
+make the table names case insensitive).</para>
+          <para>Because it's possible to crash 'MyISAM' tables by
+referring to them with different case on a case-insensitive
+filesystem, we recommend that you use 'lower_case_table_names' or
+'lower_case_table_names=2' on such filesystems.</para>
+          <para>The easiest way to convert to use
+'lower_case_table_names=2' is to dump all your 'InnoDB' tables with
+'mysqldump', drop them and then restore them.</para></item>
+          <item><para>Non-standard behavior of 'UNION' statements has
+changed to the standard ones. So far, a table name in the 'ORDER BY'
+clause was tolerated. From now on a proper error message is issued
+(Bug #3064).</para></item>
+          <item><para>Added 'max_insert_delayed_threads' system
+variable as a synonym for 'max_delayed_threads'.</para></item>
+          <item><para>Added 'query_cache_wlock_invalidate' system
+variable. It allow emulation of 'MyISAM' table write-locking behavior,
+even for queries in the query cache. (Bug #2693)</para></item>
+          <item><para>Changed that the relay log is flushed to disk by
+the slave I/O thread every time it reads a relay log event. This
+reduces the risk of losing some part of the relay log in case of
+brutal crash.</para></item>
+          <item><para>When a session having open temporary tables
+terminates, the statement automatically written to the binary log is
+now 'DROP TEMPORARY TABLE IF EXISTS' instead of 'DROP TEMPORARY
+TABLE', for more robustness.</para></item>
+          <item><para>Added option
+'--replicate-same-server-id'.</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Added missing full-text variable
+'ft_stopword_file' to 'myisamchk'.</para></item>
+          <item><para>Don't allow stray '','' at the end of field
+specifications. (Bug #3481)</para></item>
+          <item><para>'INTERVAL' now can handle big values for
+seconds, minutes and hours. (Bug #3498)</para></item>
+          <item><para>Blank hostname did not work as documented for
+table and column privileges. Now it's works the same way as ''%''.
+(Bug #3473)</para></item>
+          <item><para>Fixed a harmless buffer overflow in 'replace'
+utility. (Bug# 3541)</para></item>
+          <item><para>Fixed 'SOUNDEX()' to ignore non-alphabetic
+characters also in the beginning of the string. (Bug
+#3556)</para></item>
+          <item><para>Fixed a bug in 'MATCH ... AGAINST()' searches
+when another thread was doing concurrent inserts into the 'MyISAM'
+table in question. The first -- full-text search -- query could return
+incorrect results in this case (e.g. "phantom" rows or not all
+matching rows, even an empty result set). The easiest way to check
+whether you are affected is to start 'mysqld' with
+'--skip-concurrent-insert' switch and see if it helps.</para></item>
+          <item><para>Fixed bug when doing 'DROP DATABASE' on a
+directory containing non- MySQL files. Now a proper error message is
+returned.</para></item>
+          <item><para>Fixed bug in 'ANALYZE TABLE' on a 'BDB' table
+inside a transaction that hangs server thread. (Bug
+#2342)</para></item>
+          <item><para>Fixed a symlink vulnerability in 'mysqlbug'
+script. (Bug #3284)</para></item>
+          <item><para>Fixed core dump bug in 'SELECT DISTINCT' where
+all selected parts where constants and there were hidden columns in
+the created temporary table. (Bug #3203)</para></item>
+          <item><para>Fixed core dump bug in 'COUNT(DISTINCT)' when
+there was a lot of values and one had a big value for
+'max_heap_table_size'.</para></item>
+          <item><para>Fixed problem with multi-table-update and BDB
+tables. (Bug: #3098)</para></item>
+          <item><para>Fixed memory leak when dropping database with
+'RAID' tables. (Bug #2882)</para></item>
+          <item><para>Fixed core dump crash in replication during
+relay-log switch when the relay log went over 'max_relay_log_size' and
+the slave thread did a 'flush_io_cache()' at the same
+time.</para></item>
+          <item><para>Fixed hangup bug when issuing multiple 'SLAVE
+START' from different threads at the same time. (Bug
+#2921)</para></item>
+          <item><para>Fixed bug when using 'DROP DATABASE' with
+'lower_case_table_names=2'.</para></item>
+          <item><para>Fixed wrong result in 'UNION' when using
+'lower_case_table_names=2'. (Bug #2858)</para></item>
+          <item><para>One can now kill threads that is 'stuck' in the
+join optimizer (can happen when there is MANY tables in the join in
+which case the optimizer can take really long time). (Bug
+#2825)</para></item>
+          <item><para>Rollback 'DELETE' and 'UPDATE' statements if
+thread is killed. (Bug #2422)</para></item>
+          <item><para>Ensure that all rows in an 'INSERT DELAYED'
+statement is written at once if binary logging is enabled. (Bug
+#2491).</para></item>
+          <item><para>Fixed bug in query cache statistic, more
+accurate formula linked statistic variables mentioned in the
+manual.</para></item>
+          <item><para>Fixed a bug in parallel repair ('myisamchk -p',
+'myisam_repair_threads') - sometimes repair process failed to repair a
+table. (Bug #1334)</para></item>
+          <item><para>Fixed bugs with names of tables, databases and
+columns that end to space (Bug #2985)</para></item>
+          <item><para>Fixed a bug in multiple-table 'UPDATE'
+statements involving at least one constant table. Bug was exhibited in
+allowing non matching row to be updated. (Bug #2996).</para></item>
+          <item><para>Fixed all bugs in scripts for creating/upgrading
+system database (Bug #2874) Added tests which guarantee against such
+bugs in the future.</para></item>
+          <item><para>Fixed bug in 'mysql' command-line client in
+interpreting quotes within comments. (Bug #539)</para></item>
+          <item><para>'--set-character-set' and '--character-sets-dir'
+options in 'myisamchk' now work.</para></item>
+          <item><para>Fixed a bug in 'mysqlbinlog' that caused one
+pointer to be free'd twice in some cases.</para></item>
+          <item><para>Fixed a bug in boolean full-text search, that
+sometimes could lead to false matches in queries with several levels
+of subexpressions using '+' operator (for example, 'MATCH ...
+AGAINST('+(+(word1 word2)) +word3*' IN BOOLEAN MODE)'.</para></item>
+          <item><para>Fixed Windows-specific portability bugs in
+'myisam_ftdump'.</para></item>
+          <item><para>Fixed a bug in multiple-table 'DELETE' that was
+caused by foreign key constraints. If the order of the tables
+established by MySQL optimizer did not match parent-child order, no
+rows were deleted and no error message was provided. (Bug
+#2799)</para></item>
+          <item><para>Fixed a few years old bug in the range optimizer
+that caused a segmentation fault on some very rare queries. (Bug
+#2698)</para></item>
+          <item><para>Replication: If a client connects to a slave
+server and issues an administrative statement for a table (for
+example, 'OPTIMIZE TABLE' or 'REPAIR TABLE'), this could sometimes
+stop the slave SQL thread. This does not lead to any corruption, but
+you must use 'START SLAVE' to get replication going again. (Bug #1858)
+The bug was accidentally not fixed in 4.0.17 as it was unfortunately
+earlier said.</para></item>
+          <item><para>Fixed that when a 'Rotate' event is found by the
+slave SQL thread in the middle of a transaction, the value of
+'Relay_Log_Pos' in 'SHOW SLAVE STATUS' remains correct. (Bug
+#3017)</para></item>
+          <item><para>Corrected the master's binary log position that
+'InnoDB' reports when it is doing a crash recovery on a slave server.
+(Bug #3015)</para></item>
+          <item><para>Changed that when a 'DROP TEMPORARY TABLE'
+statement is automatically written to the binary log when a session
+ends, the statement is recorded with an error code of value zero (this
+ensures that killing a 'SELECT' on the master does not result in a
+superfluous error on the slave). (Bug #3063)</para></item>
+          <item><para>Changed that when a thread handling 'INSERT
+DELAYED' (also known as a 'delayed_insert' thread) is killed, its
+statements are recorded with an error code of value zero (killing such
+a thread does not endanger replication, so we thus avoid a superfluous
+error on the slave). (Bug #3081)</para></item>
+          <item><para>Fixed deadlock when two 'START SLAVE' commands
+were run at the same time. (Bug #2921)</para></item>
+          <item><para>Fixed that a statement never triggers a
+superfluous error on the slave, if it must be excluded given the
+'replicate-*' options. The bug was that if the statement had been
+killed on the master, the slave would stop. (Bug #2983)</para></item>
+          <item><para>The '--local-load' option of 'mysqlbinlog' now
+requires an argument.</para></item>
+          <item><para>Fixed a segmentation fault when running 'LOAD
+DATA FROM MASTER' after 'RESET SLAVE'. (Bug #2922)</para></item>
+          <item><para>Fixed a rare error condition that caused the
+slave SQL thread spuriously to print the message 'Binlog has bad magic
+number' and stop when it was not necessary to do so. (Bug
+#3401)</para></item>
+          <item><para>Fixed the column 'Exec_master_log_pos' (and its
+disk image in the 'relay-log.info' file) to be correct if the master
+had version 3.23 (it was too big by 6 bytes). This bug does not exist
+in the 5.0 version. (Bug #3400)</para></item>
+          <item><para>Fixed that 'mysqlbinlog' does not forget to
+print a 'USE' command under rare circumstances where the binary log
+contained a 'LOAD DATA INFILE' command. (Bug #3415)</para></item>
+          <item><para>Fixed a memory corruption when replicating a
+'LOAD DATA INFILE' when the master had version 3.23. Some smaller
+problems remain in this setup, *Note Replication Features::. (Bug
+#3422)</para></item>
+          <item><para>Multiple-table 'DELETE' statements were always
+replicated by the slave if there were some 'replicate-*-ignore-table'
+options and no 'replicate-*-do-table' options. (Bug
+#3461)</para></item>
+          <item><para>Fixed a crash of the MySQL slave server when it
+was built with '--with-debug' and replicating itself. (BUG
+#3568)</para></item>
+        </items>
+      </change>
+
+      <change from="4.0.17" to="4.0.18">
+        <items name="New/changed features">
+          <item><para>Fixed processing of 'LOAD DATA' by 'mysqlbinlog'
+in remote mode. (Bug #1378)</para></item>
+          <item><para>New utility program 'myisam_ftdump' was added to
+binary distributions.</para></item>
+          <item><para>'ENGINE' is now a synonym for the 'TYPE' option
+for 'CREATE TABLE' and 'ALTER TABLE'.</para></item>
+          <item><para>'lower_case_table_names' system variable now can
+take a value of '2', to store table names in mixed case on
+case-insensitive filesystems. It's forced to 2 if the database
+directory is located on a case-insensitive filesystem.</para></item>
+          <item><para>For replication of 'MEMORY' ('HEAP') tables:
+Made the master automatically write a 'DELETE FROM' statement to its
+binary log when a 'MEMORY' table is opened for the first time since
+master's startup. This is for the case where the slave has replicated
+a non-empty 'MEMORY' table, then the master is shut down and
+restarted: the table is now empty on master; the 'DELETE FROM' empties
+it on slave too. Note that even with this fix, between the master's
+restart and the first use of the table on master, the slave still has
+out-of-date data in the table. But if you use the 'init-file' option
+to populate the 'MEMORY' table on the master at startup, it ensures
+that the failing time interval is zero. (Bug #2477)</para></item>
+          <item><para>Optimizer is now better tuned for the case where
+the first used key part (of many) is a constant. (Bug
+#1679)</para></item>
+          <item><para>Removed old non-working '--old-rpl-compat'
+server option, which was a holdover from the very first 4.0.x
+versions. (Bug #2428)</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>'mysqlhotcopy' now works on
+NetWare.</para></item>
+          <item><para>'DROP DATABASE' could not drop databases with
+RAID tables that had more than nine 'RAID_CHUNKS'. (Bug
+#2627)</para></item>
+          <item><para>Fixed bug in range optimizer when using
+overlapping ranges. (Bug #2448)</para></item>
+          <item><para>Limit 'wait_timeout' to 2147483 on Windows (OS
+limit). (Bug #2400)</para></item>
+          <item><para>Fixed bug when '--init-file' crashes MySQL if it
+contains a large 'SELECT'. (Bug #2526)</para></item>
+          <item><para>'SHOW KEYS' now shows 'NULL' in the 'Sub_part'
+column for 'FULLTEXT' indexes.</para></item>
+          <item><para>The signal thread's stack size was increased to
+enable 'mysqld' to run on Debian/IA-64 with a TLS-enabled 'glibc'.
+(Bug #2599)</para></item>
+          <item><para>Now only the 'SELECT' privilege is needed for
+tables that are only read in multiple-table 'UPDATE' statements. (Bug
+#2377)</para></item>
+          <item><para>Give proper error message if one uses 'LOCK
+TABLES ... ; INSERT ... SELECT' and one used the same table in the
+'INSERT' and 'SELECT' part. (Bug #2296)</para></item>
+          <item><para>'SELECT INTO ... DUMPFILE' now deletes the
+generated file on error.</para></item>
+          <item><para>Fixed foreign key reference handling to allow
+references to column names that contain spaces. (Bug
+#1725)</para></item>
+          <item><para>Fixed problem with index reads on character
+columns with 'BDB' tables. The symptom was that data could be returned
+in the wrong lettercase. (Bug #2509)</para></item>
+          <item><para>Fixed a spurious table corruption problem that
+could sometimes appear on tables with indexed 'TEXT' columns if these
+columns happened to contain values having trailing spaces. This bug
+was introduced in 4.0.17.</para></item>
+          <item><para>Fixed a problem where some queries could hang if
+a condition like 'indexed_TEXT_column = expr' was present and the
+column contained values having trailing spaces. This bug was
+introduced in 4.0.17.</para></item>
+          <item><para>Fixed a bug that could cause incorrect results
+from a query that involved range conditions on indexed 'TEXT' columns
+that happened to contain values having trailing spaces. This bug was
+introduced in 4.0.17. (Bug #2295)</para></item>
+          <item><para>Fixed incorrect path names in some of the manual
+pages. (Bug #2270)</para></item>
+          <item><para>Fixed spurious "table corrupted" errors in
+parallel repair operations. *Note Server system
+variables::.</para></item>
+          <item><para>Fixed a crashing bug in parallel repair
+operations. *Note Server system variables::.</para></item>
+          <item><para>Fixed bug in updating 'MyISAM' tables for 'BLOB'
+values longer than 16MB. (Bug #2159)</para></item>
+          <item><para>Fixed bug in 'mysqld_safe' when running multiple
+instances of MySQL. (Bug #2114)</para></item>
+          <item><para>Fixed a bug in using 'HANDLER' statement with
+tables not from a current database. (Bug #2304)</para></item>
+          <item><para>Fixed a crashing bug that occurred due to the
+fact that multiple-table 'UPDATE' statements did not check that there
+was only one table to be updated. (Bug #2103)</para></item>
+          <item><para>Fixed a crashing bug that occurred due to 'BLOB'
+column type index size being calculated incorrectly in 'MIN()' and
+'MAX()' optimizations. (Bug #2189)</para></item>
+          <item><para>Fixed a bug with incorrect syntax for 'LOCK
+TABLES' in 'mysqldump'. (Bug #2242)</para></item>
+          <item><para>Fixed a bug in 'mysqld_safe' that caused
+'mysqld' to generate a warning about duplicate 'user=xxx' options if
+this option was specified in the '[mysqld]' or '[server]' sections of
+'my.cnf'. (Bug #2163)</para></item>
+          <item><para>'INSERT DELAYED ... SELECT ...' could cause
+table corruption because tables were not locked properly. This is now
+fixed by ignoring 'DELAYED' in this context. (Bug #1983)</para></item>
+          <item><para>Replication: Sometimes the master gets a
+non-fatal error during the execution of a statement that does not
+immediately succeed. (For example, a write to a 'MyISAM' table may
+first receive "no space left on device," but later complete when disk
+space becomes available. *Note Full disk::.)  The bug was that the
+master forgot to reset the error code to 0 after success, so the error
+code got into its binary log, thus causing the slave to issue false
+alarms such as "did not get the same error as on master." (Bug
+#2083)</para></item>
+          <item><para>Removed a misleading "check permissions on
+master.info" from a replication error message, because the cause of
+the problem could be something other than permissions. (Bug
+#2121)</para></item>
+          <item><para>Fixed a crash when the replication slave was
+unable to create the first relay log. (Bug #2145)</para></item>
+          <item><para>Replication of 'LOAD DATA INFILE' for an empty
+file from a 3.23 master to a 4.0 slave caused the slave to print an
+error. (Bug #2452)</para></item>
+          <item><para>When automatically forcing
+'lower_case_table_names' to 1 if the file system was case insensitive,
+'mysqld' could crash. This bug existed only in MySQL 4.0.17. (Bug
+#2481)</para></item>
+          <item><para>Restored ability to specify default values for
+'TIMESTAMP' columns that was erroneously disabled in previous release.
+(Bug #2539) Fixed 'SHOW CREATE TABLE' to reflect these values. (Bug
+#1885) Note that because of the auto-update feature for the first
+'TIMESTAMP' column in a table, it makes no sense to specify a default
+value for the column. Any such default will be silently ignored
+(unless another 'TIMESTAMP' column is added before this one). Also
+fixed the meaning of the 'DEFAULT' keyword when it is used to specify
+the value to be inserted into a 'TIMESTAMP' column other than the
+first. (Bug #2464)</para></item>
+          <item><para>Fixed bug for out-of-range arguments on QNX
+platform that caused 'UNIX_TIMESTAMP()' to produce incorrect results
+or that caused non-zero values to be inserted into 'TIMESTAMP'
+columns. (Bug #2523) Also, current time zone now is taken into
+account when checking if datetime values satisfy both range boundaries
+for 'TIMESTAMP' columns. The range allowed for a 'TIMESTAMP' column is
+time zone-dependent and equivalent to a range of '1970-01-01 00:00:01'
+UTC to '2037-12-31 23:59:59' UTC.</para></item>
+          <item><para>Multiple-table 'DELETE' statements were never
+replicated by the slave if there were any 'replicate-*-table' options.
+(Bug #2527)</para></item>
+          <item><para>Changes to session counterparts of variables
+'query_prealloc_size', 'query_alloc_block_size',
+'trans_prealloc_size', 'trans_alloc_block_size' now have an effect.
+(Bug #1948)</para></item>
+          <item><para>Fixed bug in 'ALTER TABLE RENAME', when rename
+to the table with the same name in another database silently dropped
+destination table if it existed. (Bug #2628)</para></item>
+        </items>
+      </change>
+
+      <change from="4.0.16" to="4.0.17">
+        <items name="New/changed features">
+          <item><para>'mysqldump' no longer dumps data for 'MERGE'
+tables. (Bug #1846)</para></item>
+          <item><para>'lower_case_table_names' is now forced to 1 if
+the database directory is located on a case-insensitive filesystem.
+(Bug #1812)</para></item>
+          <item><para>Symlink creation is now disabled on systems
+where 'realpath()' doesn't work. (Before one could use 'CREATE TABLE
+.. DATA DIRECTORY=..' even if 'HAVE_BROKEN_REALPATH' was defined. This
+is now disabled to avoid problems when running 'ALTER
+TABLE').</para></item>
+          <item><para>Inserting a negative 'AUTO_INCREMENT' value in a
+'MyISAM' table no longer updates the 'AUTO_INCREMENT' counter to a big
+unsigned value. (Bug #1366)</para></item>
+          <item><para>Added four new modes to 'WEEK(..., mode)'
+function. *Note 'WEEK(date,mode)': Date and time functions. (Bug
+#1178)</para></item>
+          <item><para>Allow 'UNION DISTINCT' syntax.</para></item>
+          <item><para>'mysql_server_init()' now returns 1 if it can't
+initialize the environment. (Previously 'mysql_server_init()' called
+'exit(1)' if it could not create a key with 'pthread_key_create()'.
+(Bug #2062)</para></item>
+          <item><para>Allow spaces in Windows service
+names.</para></item>
+          <item><para>Changed the default Windows service name for
+'mysqld' from 'MySql' to 'MySQL'. This should not affect usage,
+because service names are not case sensitive.</para></item>
+          <item><para>When you install 'mysqld' as a service on
+Windows systems, 'mysqld' will read startup options in option files
+from the option group with the same name as the service name. (Except
+when the service name is 'MySQL').</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Sending 'SIGHUP' to 'mysqld' crashed the server
+if it was running with '--log-bin'. (Bug #2045)</para></item>
+          <item><para>One can now configure MySQL as a Windows service
+as a normal user. (Bug #1802). Thanks to Richard Hansen for fixing
+this.</para></item>
+          <item><para>Database names are now compared in lowercase in
+'ON' clauses when 'lower_case_table_names' is set. (Bug
+#1736)</para></item>
+          <item><para>'IGNORE ... LINES' option to 'LOAD DATA INFILE'
+didn't work when used with fixed length rows. (Bug
+#1704)</para></item>
+          <item><para>Fixed problem with 'UNIX_TIMESTAMP()' for
+timestamps close to 0. (Bug #1998)</para></item>
+          <item><para>Fixed problem with character values greater than
+128 in the 'QUOTE()' function. (Bug #1868)</para></item>
+          <item><para>Fixed searching of 'TEXT' with endspace. (Bug
+#1651)</para></item>
+          <item><para>Fixed caching bug in multiple-table updates
+where same table was used twice. (Bug #1711)</para></item>
+          <item><para>Fixed directory permissions for the MySQL-server
+RPM documentation directory. (Bug #1672)</para></item>
+          <item><para>Fixed server crash when updating an 'ENUM'
+column that is set to the empty string (for example, with
+'REPLACE()'). (Bug #2023)</para></item>
+          <item><para>'mysql' client program now correctly prints
+connection identifier returned by 'mysql_thread_id()' as unsigned
+integer rather than as signed integer. (Bug #1951)</para></item>
+          <item><para>'FOUND_ROWS()' could return incorrect number of
+rows after a query with an impossible 'WHERE' condition. (Bug
+#1468)</para></item>
+          <item><para>'SHOW DATABASES' no longer shows '.sym' files
+(on Windows) that do not point to a valid directory. (Bug
+#1385)</para></item>
+          <item><para>Fixed a possible memory leak on Mac OS X when
+using the shared 'libmysql.so' library. (from 'pthread_key_create()').
+(Bug #2061)</para></item>
+          <item><para>Fixed bug in 'UNION' statement with alias '*'.
+(Bug #1249)</para></item>
+          <item><para>Fixed a bug in 'DELETE ... ORDER BY ... LIMIT'
+where the rows where not deleted in the proper order. (Bug #1024, Bug
+#1697).</para></item>
+          <item><para>Fixed serious problem with multi-threaded
+programs on Windows that used the embedded MySQL libraries. (Locks of
+tables were not handled correctly between different
+threads).</para></item>
+          <item><para>Code cleanup: Fixed a few code defects
+(potential memory leaks, null pointer dereferences, uninitialized
+variables). Thanks to Reasoning Inc. for informing us about these
+findings.</para></item>
+          <item><para>Fixed a buffer overflow error that occurred with
+prepended '0' characters in some columns of type 'DECIMAL'. (Bug
+#2128)</para></item>
+          <item><para>Filesort was never shown in 'EXPLAIN' if query
+contained an 'ORDER BY NULL' clause. (Bug #1335)</para></item>
+          <item><para>Fixed invalidation of whole query cache on 'DROP
+DATABASE'. (Bug #1898)</para></item>
+          <item><para>Fixed bug in range optimizer that caused wrong
+results for some unlikely 'AND'/'OR' queries. (Bug
+#1828)</para></item>
+          <item><para>Fixed a crash in 'ORDER BY' when ordering by
+expression and identifier. (Bug #1945)</para></item>
+          <item><para>Fixed a crash in an open 'HANDLER' when an
+'ALTER TABLE' was executed in a different connection. (Bug
+#1826)</para></item>
+          <item><para>Fixed a bug in 'trunc*' operator of full-text
+search which sometimes caused MySQL not to find all matched
+rows.</para></item>
+          <item><para>Fixed bug in prepending '0' characters to
+'DECIMAL' column values.</para></item>
+          <item><para>Fixed optimizer bug, introduced in 4.0.16, when
+'REF' access plan was preferred to more efficient 'RANGE' on another
+column.</para></item>
+          <item><para>Fixed problem when installing a MySQL server as
+a Windows service using a command of the form 'mysqld --install mysql
+--defaults-file=path-to-file'. (Bug #1643)</para></item>
+          <item><para>Fixed an incorrect result from a query that uses
+only 'const' tables (such as one-row tables) and non-constant
+expression (such as 'RAND()'). (Bug #1271)</para></item>
+          <item><para>Fixed bug when the optimizer did not take
+'SQL_CALC_FOUND_ROWS' into account if 'LIMIT' clause was present. (Bug
+#1274)</para></item>
+          <item><para>'mysqlbinlog' now asks for a password at the
+console when the '-p' or '--password' option is used with no argument.
+This is consistent with the way that other clients such 'mysqladmin'
+and 'mysqldump' already behave. *Note:* A consequence of this change
+is that it is no longer possible to invoke 'mysqlbinlog' as
+'mysqlbinlog -p pass_val' (with a space between the '-p' option and
+the following password value). (Bug #1595)</para></item>
+          <item><para>Fixed bug accidentally introduced in 4.0.16
+where the slave SQL thread deleted its replicated temporary tables
+when 'STOP SLAVE' was issued.</para></item>
+          <item><para>In a "chain" replication setup 'A-&gt;B-&gt;C', if 2
+sessions on A updated temporary tables of the same name at the same
+time, the binary log of 'B' became incorrect, resulting in 'C'
+becoming confused. (Bug #1686)</para></item>
+          <item><para>In a "chain" replication setup 'A-&gt;B-&gt;C', if
+'STOP SLAVE' was issued on 'B' while it was replicating a temporary
+table from 'A', then when 'START SLAVE' was issued on 'B', the binary
+log of 'B' became incorrect, resulting in 'C' becoming confused. (Bug
+#1240)</para></item>
+          <item><para>When 'MASTER_LOG_FILE' and 'MASTER_LOG_POS' were
+not specified, 'CHANGE MASTER' used the coordinates of the slave I/O
+thread to set up replication, which broke replication if the slave SQL
+thread lagged behind the slave I/O thread. This caused the slave SQL
+thread to lose some events. The new behavior is to use the coordinates
+of the slave SQL thread instead. *Note 'CHANGE MASTER TO': CHANGE
+MASTER TO. (Bug #1870)</para></item>
+          <item><para>Now if integer is stored or converted to
+'TIMESTAMP' or 'DATETIME' value checks of year, month, day, hour,
+minute and second ranges are performed and numbers representing
+illegal timestamps are converted to 0 value. This behavior is
+consistent with manual and with behavior of string to
+'TIMESTAMP'/'DATETIME' conversion. (Bug #1448)</para></item>
+          <item><para>Fixed bug when 'BIT_AND()' and 'BIT_OR()' group
+functions returned incorrect value if 'SELECT' used a temporary table
+and no rows were found. (Bug #1790).</para></item>
+          <item><para>'BIT_AND()' is now unsigned in all contexts.
+This means that it will now return 18446744073709551615 (=
+0xffffffffffffffff) instead of -1 if there were no rows in the
+result.</para></item>
+          <item><para>Fixed bug with 'BIT_AND()' still returning
+signed value for an empty set in some cases. (Bug #1972)</para></item>
+          <item><para>Fixed bug with '^' (XOR) and '&gt;&gt;' (bit shift)
+still returning signed value in some cases. (Bug #1993)</para></item>
+          <item><para>Replication: a rare race condition in the slave
+SQL thread, which could lead to a wrong complain that the relay log is
+corrupted. (Bug #2011)</para></item>
+          <item><para>Replication: in the slave SQL thread, a
+multiple-table 'UPDATE' could produce a wrong complain that some
+record was not found in one table, if the 'UPDATE' was preceded by a
+'INSERT ... SELECT'. (Bug #1701)</para></item>
+          <item><para>Fixed deficiency in MySQL code which is
+responsible for scanning directories. This deficiency caused 'SHOW
+TABLE STATUS' to be very slow when a database contained a large number
+of tables, even if a single particular table were specified. (Bug
+#1952)</para></item>
+        </items>
+      </change>
+
+      <change from="4.0.15" to="4.0.16">
+        <items name="New/changed features">
+          <item><para>Option values in option files now may be quoted.
+This is useful for values that contain whitespace or comment
+characters.</para></item>
+          <item><para>Write memory allocation information to error log
+when doing 'mysqladmin debug'. This works only on systems that
+support the 'mallinfo()' call (like newer Linux
+systems).</para></item>
+          <item><para>Added the following new server variables to
+allow more precise memory allocation: 'range_alloc_block_size',
+'query_alloc_block_size', 'query_prealloc_size',
+'transaction_alloc_block_size', and
+'transaction_prealloc_size'.</para></item>
+          <item><para>'mysqlbinlog' now reads option files. To make
+this work, you must now specify '--read-from-remote-server' when
+reading binary logs from a MySQL server. (Note that using a remote
+server is deprecated and may disappear in future 'mysqlbinlog'
+versions).</para></item>
+          <item><para>Block 'SIGPIPE' signals also for non-threaded
+programs. The blocking is moved from 'mysql_init()' to
+'mysql_server_init()', which is automatically called on the first call
+to 'mysql_init()'.</para></item>
+          <item><para>Added '--libs_r' and '--include' options to
+'mysql_config'.</para></item>
+          <item><para>New ''&gt;' prompt for 'mysql'. This prompt is
+similar to the ''&gt;' and '"&gt;' prompts, but indicates that an identifier
+quoted with backticks was begun on an earlier line and the closing
+backtick has not yet been seen.</para></item>
+          <item><para>Updated 'mysql_install_db' to be able to use the
+local machine's IP address instead of the hostname when building the
+initial grant tables if 'skip-name-resolve' has been specified. This
+option can be helpful on FreeBSD to avoid thread-safety problems with
+the FreeBSD resolver libraries. (Thanks to Jeremy Zawodny for the
+patch.)</para></item>
+          <item><para>A documentation change: Added a note that when
+backing up a slave, it is necessary also to back up the 'master.info'
+and 'relay-log.info' files, as well as any 'SQL_LOAD-*' files located
+in the directory specified by the '--slave-load-tmpdir' option. All
+these files are needed when the slave resumes replication after you
+restore the slave's data.</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>Fixed a spurious error 'ERROR 14: Can't change
+size of file (Errcode: 2)' on Windows in 'DELETE FROM tbl_name'
+without a 'WHERE' clause or 'TRUNCATE TABLE tbl_name', when 'tbl_name'
+is a 'MyISAM' table. (Bug #1397)</para></item>
+          <item><para>Fixed a bug that resulted in 'thr_alarm queue is
+full' warnings after increasing the 'max_connections' variable with
+'SET GLOBAL'. (Bug #1435)</para></item>
+          <item><para>Made 'LOCK TABLES' to work when
+'Lock_tables_priv' is granted on the database level and 'Select_priv'
+is granted on the table level.</para></item>
+          <item><para>Fixed crash of 'FLUSH QUERY CACHE' on queries
+that use same table several times (Bug #988).</para></item>
+          <item><para>Fixed core dump bug when setting an enum system
+variable (such as 'SQL_WARNINGS') to 'NULL'.</para></item>
+          <item><para>Extended the default timeout value for Windows
+clients from 30 seconds to 1 year. (The timeout that was added in
+MySQL 4.0.15 was way too short). This fixes a bug that caused 'ERROR
+2013: Lost connection to MySQL server during query' for queries that
+lasted longer than 30 seconds, if the client didn't specify a limit
+with 'mysql_options()'. Users of 4.0.15 on Windows should upgrade to
+avoid this problem.</para></item>
+          <item><para>More "out of memory" checking in range
+optimizer.</para></item>
+          <item><para>Fixed and documented a problem when setting and
+using a user variable within the same 'SELECT' statement. (Bug
+#1194).</para></item>
+          <item><para>Fixed bug in overrun check for 'BLOB' values
+with compressed tables. This was a bug introduced in 4.0.14. It
+caused MySQL to regard some correct tables containing 'BLOB' values as
+corrupted. (Bug #770, Bug #1304, and maybe Bug #1295)</para></item>
+          <item><para>'SHOW GRANTS' showed 'USAGE' instead of the real
+column-level privileges when no table-level privileges were
+given.</para></item>
+          <item><para>When copying a database from the master, 'LOAD
+DATA FROM MASTER' dropped the corresponding database on the slave,
+thus erroneously dropping tables that had no counterpart on the master
+and tables that may have been excluded from replication using
+'replicate-*-table' rules. Now 'LOAD DATA FROM MASTER' no longer drops
+the database. Instead, it drops only the tables that have a
+counterpart on the master and that match the 'replicate-*-table'
+rules. 'replicate-*-db' rules can still be used to include or exclude
+a database as a whole from 'LOAD DATA FROM MASTER'. A database will
+also be included or excluded as a whole if there are some rules like
+'replicate-wild-do-table=db1.%' or
+'replicate-wild-ignore-table=db1.%', as is already the case for
+'CREATE DATABASE' and 'DROP DATABASE' in replication. (Bug
+#1248)</para></item>
+          <item><para>Fixed a bug where 'mysqlbinlog' crashed with a
+segmentation fault when used with the '-h' or '--host' option. (Bug
+#1258)</para></item>
+          <item><para>Fixed a bug where 'mysqlbinlog' crashed with a
+segmentation fault when used on a binary log containing only final
+events for 'LOAD DATA'. (Bug #1340)</para></item>
+          <item><para>'mysqlbinlog' will not reuse temporary file
+names from previous runs. Previously 'mysqlbinlog' failed if was used
+several times on the same binary log file that contained a 'LOAD DATA'
+command.</para></item>
+          <item><para>Fixed compilation problem when compiling with
+OpenSSL 0.9.7 with disabled old DES support (If
+'OPENSSL_DISABLE_OLD_DES_SUPPORT' option was enabled).</para></item>
+          <item><para>Fixed a bug when two (or more) MySQL servers
+were running on the same machine, and they were both slaves, and at
+least one of them was replicating some 'LOAD DATA INFILE' command from
+its master. The bug was that one slave MySQL server sometimes deleted
+the 'SQL_LOAD-*' files (used for replication of 'LOAD DATA INFILE' and
+located in the 'slave-load-tmpdir' directory, which defaults to
+'tmpdir') belonging to the other slave MySQL server of this machine,
+if these slaves had the same 'slave-load-tmpdir' directory. When that
+happened, the other slave could not replicate 'LOAD DATA INFILE' and
+complained about not being able to open some 'SQL_LOAD-*' file. (Bug
+#1357)</para></item>
+          <item><para>If 'LOAD DATA INFILE' failed for a small file,
+the master forgot to write a marker (a 'Delete_file' event) in its
+binary log, so the slave could not delete 2 files ('SQL_LOAD-*.info'
+and 'SQL_LOAD-*.data' from its 'tmpdir'. (Bug #1391)</para></item>
+          <item><para>On Windows, the slave forgot to delete a
+'SQL_LOAD-*.info' file from 'tmpdir' after successfully replicating a
+'LOAD DATA INFILE' command. (Bug #1392)</para></item>
+          <item><para>When a connection terminates, MySQL writes 'DROP
+TEMPORARY TABLE' statements to the binary log for all temporary tables
+which the connection had not explicitly dropped. MySQL forgot to use
+backticks to quote the database and table names in the statement. (Bug
+#1345)</para></item>
+          <item><para>On some 64-bit machines (some HP-UX and Solaris
+machines), a slave installed with the 64-bit MySQL binary could not
+connect to its master (it connected to itself instead). (Bug #1256,
+Bug #1381)</para></item>
+          <item><para>Code was introduced in MySQL 4.0.15 for the
+slave to detect that the master had died while writing a transaction
+to its binary log. This code reported an error in a legal situation:
+When the slave I/O thread was stopped while copying a transaction to
+the relay log, the slave SQL thread would later pretend that it found
+an unfinished transaction. (Bug #1475)</para></item>
+        </items>
+      </change>
+
+      <note type="configuration">
+        <para>If upgrading from a 3.23 release, the following is a
+list of items to watch for when upgrading:</para>
+        <unorderedlist>
+          <item><para>MySQL 4.0 has a lot of new privileges in the
+<command>mysql.user</command> table. See section "4.3.1 GRANT and
+REVOKE Syntax". To get these new privileges to work, you must run the
+<command>mysql_fix_privilege_tables</command> script. Until you do,
+all users have the <command>SHOW DATABASES</command>, <command>CREATE
+TEMPORARY TABLES</command>, and <command>LOCK TABLES</command>
+privileges. <command>SUPER</command> and <command>EXECUTE</command>
+privileges take their value from <command>PROCESS</command>.
+<command>REPLICATION SLAVE</command> and <command>REPLICATION
+CLIENT</command> take their values from <command>FILE</command>. If
+you have any scripts that create new users, you may want to change
+them to use the new privileges. If you are not using
+<command>GRANT</command> commands in the scripts, this is a good time
+to change your scripts to use <command>GRANT</command> instead of
+modifying the grant tables directly. From version 4.0.2 on, the option
+<command>--safe-show-database</command> is deprecated (and no longer
+does anything). See section "4.2.3 Startup Options for mysqld
+Concerning Security". If you get "Access denied" errors for new users
+in version 4.0.2 and up, you should check if you need some of the new
+grants that you didn't need before. In particular, you will need
+<command>REPLICATION SLAVE</command> (instead of
+<command>FILE</command>) for new slaves.</para></item>
+          <item><para>"<command>safe_mysqld</command>" is renamed to
+"<command>mysqld_safe</command>". For backward compatibility, binary
+distributions will for some time include
+<command>safe_mysqld</command> as a symlink to
+<command>mysqld_safe</command>.</para></item>
+          <item><para>The startup parameters
+<command>myisam_max_extra_sort_file_size</command> and
+<command>myisam_max_extra_sort_file_size</command> are now given in
+bytes (they were given in megabytes before 4.0.3).</para></item>
+          <item><para>External system locking of MyISAM/ISAM files is
+now turned off by default. Your can turn this on by doing
+<command>--external-locking</command>. (However, this is never needed
+for most users).</para></item>
+          <item><para>The following startup variables/options have
+been renamed:</para>
+          <screen>
+Old Name                          New Name
+myisam_bulk_insert_tree_size      bulk_insert_buffer_size
+query_cache_startup_type          query_cache_type
+record_buffer                     read_buffer_size
+record_rnd_buffer                 read_rnd_buffer_size
+sort_buffer                       sort_buffer_size
+warnings                          log-warnings
+--err-log                         --log-error (for mysqld_safe)
+          </screen>
+          <para>The startup options record_buffer, sort_buffer and
+warnings will still work in MySQL 4.0 but are
+deprecated.</para></item>
+          <item><para>The following SQL variables have changed
+name:</para>
+          <screen>
+Old Name                          New Name
+SQL_BIG_TABLES                    BIG_TABLES
+SQL_LOW_PRIORITY_UPDATES          LOW_PRIORITY_UPDATES
+SQL_MAX_JOIN_SIZE                 MAX_JOIN_SIZE
+SQL_QUERY_CACHE_TYPE              QUERY_CACHE_TYPE
+          </screen>
+          <para>The old names still work in MySQL 4.0 but are
+deprecated.</para></item>
+          <item><para>You have to use <command>SET GLOBAL
+SQL_SLAVE_SKIP_COUNTER=#</command> instead of <command>SET
+SQL_SLAVE_SKIP_COUNTER=#</command>.</para></item>
+          <item><para>The mysqld startup options --skip-locking and
+<command>--enable-locking</command> were renamed to
+<command>--skip-external-lockin</command>g and
+<command>--external-lockin</command>g</para></item>
+          <item><para><command>SHOW MASTER STATUS</command> now
+returns an empty set if binary logging is not enabled</para></item>
+          <item><para><command>SHOW SLAVE STATUS</command> now returns
+an empty set if slave is not initialised</para></item>
+          <item><para><command>mysqld</command> now has the option
+<command>--temp-pool</command> enabled by default as this gives better
+performance with some operating systems (most notably
+Linux)</para></item>
+          <item><para><command>DOUBLE</command> and
+<command>FLOAT</command> columns now honour the
+<command>UNSIGNED</command> flag on storage (before,
+<command>UNSIGNED</command> was ignored for these
+columns).</para></item>
+          <item><para><command>ORDER BY col_name DESC</command> sorts
+<command>NULL</command> values last, as of MySQL 4.0.11. In 3.23 and
+in earlier 4.0 versions, this was not always consistent</para></item>
+          <item><para><command>SHOW INDEX</command> has two more
+columns (<command>Null</command> and <command>Index_type</command>)
+than it had in 3.23</para></item>
+          <item><para><command>CHECK</command>,
+<command>SIGNED</command>, <command>LOCALTIME</command> and
+<command>LOCALTIMESTAMP</command> are now reserved
+words.</para></item>
+          <item><para>The result of all bitwise operators
+(<command>|</command>, <command>&amp;</command>,
+<command>&lt;&lt;</command>, <command>&gt;&gt;</command>, and
+<command>~</command>)) is now unsigned. This may cause problems if you
+are using them in a context where you want a signed result. See
+section "6.3.5 Cast Functions".</para></item>
+          <item><para>Note: when you use subtraction between integer
+values where one is of type <command>UNSIGNED</command>, the result
+will be unsigned. In other words, before upgrading to MySQL 4.0, you
+should check your application for cases where you are subtracting a
+value from an unsigned entity and want a negative answer or
+subtracting an unsigned value from an integer column. You can disable
+this behaviour by using the
+<command>--sql-mode=NO_UNSIGNED_SUBTRACTION</command> option when
+starting <command>mysqld</command>. See section "6.3.5 Cast
+Functions".</para></item>
+          <item><para>To use <command>MATCH ... AGAINST (... IN
+BOOLEAN MODE)</command> with your tables, you need to rebuild them
+with <command>REPAIR TABLE table_name USE_FRM</command>.</para></item>
+          <item><para><command>LOCATE()</command> and
+<command>INSTR()</command> are case-sensitive if one of the arguments
+is a binary string. Otherwise they are case-insensitive.</para></item>
+          <item><para><command>STRCMP()</command> now uses the current
+character set when doing comparisons, which means that the default
+comparison behaviour now is case-insensitive</para></item>
+          <item><para><command>HEX(string)</command> now returns the
+characters in <command>string</command> converted to hexadecimal. If
+you want to convert a number to hexadecimal, you should ensure that
+you call <command>HEX()</command> with a numeric
+argument.</para></item>
+          <item><para>In 3.23, <command>INSERT INTO ...
+SELECT</command> always had <command>IGNORE</command> enabled. In
+4.0.1, MySQL will stop (and possibly roll back) by default in case of
+an error unless you specify <command>IGNORE</command>.</para></item>
+          <item><para>The old C API functions
+<command>mysql_drop_db()</command>,
+<command>mysql_create_db()</command>, and
+<command>mysql_connect()</command> are no longer supported unless you
+compile MySQL with <command>CFLAGS=-DUSE_OLD_FUNCTIONS</command>.
+However, it is preferable to change client programs to use the new 4.0
+API instead.</para></item>
+          <item><para>In the <command>MYSQL_FIELD</command> structure,
+<command>length</command> and <command>max_length</command> have
+changed from <command>unsigned int</command> to <command>unsigned
+long</command>. This should not cause any problems, except that they
+may generate warning messages when used as arguments in the
+<command>printf()</command> class of functions.</para></item>
+          <item><para>You should use <command>TRUNCATE TABLE</command>
+when you want to delete all rows from a table and you don't need to
+obtain a count of the number of rows that were deleted.
+(<command>DELETE FROM table_name</command> returns a row count in 4.0,
+and <command>TRUNCATE TABLE</command> is faster.)</para></item>
+          <item><para>You will get an error if you have an active
+<command>LOCK TABLES</command> or transaction when trying to execute
+<command>TRUNCATE TABLE</command> or <command>DROP
+DATABASE</command>.</para></item>
+          <item><para>You should use integers to store values in
+<command>BIGINT</command> columns (instead of using strings, as you
+did in MySQL 3.23). Using strings will still work, but using integers
+is more efficient.</para></item>
+          <item><para>The format of <command>SHOW OPEN
+TABLES</command> has changed.</para></item>
+          <item><para>Multi-threaded clients should use
+<command>mysql_thread_init()</command> and
+<command>mysql_thread_end()</command>. See section "9.1.14 How to Make
+a Threaded Client".</para></item>
+          <item><para>If you want to recompile the Perl
+<command>DBD::mysql</command> module, you must get
+<command>DBD-mysql</command> version 1.2218 or newer because older DBD
+modules used the deprecated <command>mysql_drop_db()</command> call.
+Version 2.1022 or newer is recommended.</para></item>
+          <item><para><command>RAND(seed)</command> returns a
+different random number series in 4.0 than in 3.23; this was done to
+further differentiate <command>RAND(seed</command>) and
+<command>RAND(seed+1)</command>.</para></item>
+          <item><para>The default type returned by
+<command>IFNULL(A,B)</command> is now set to be the more "general" of
+the types of <command>A</command> and <command>B</command>. (The
+general-to-specific order is string, <command>REAL</command> or
+<command>INTEGER</command>).</para></item>
+        </unorderedlist>
+      </note>
+
+      <note type="configuration">
+        <para>The default location for the database is
+<command>/var${SB_INSTALL_PREFIX}</command>. The default location for the
+"<command>my.cnf</command>" configuration file is
+<command>/etc${SB_INSTALL_PREFIX}/my.cnf</command>. The global configuration file
+<command>/etc${SB_INSTALL_PREFIX}/my.cnf</command> is read before the
+<command>~/.my.cnf</command> local file. Unlike previous releases, the
+global configuration file is now populated with the following
+defaults:</para>
+        <screen>
+[client]
+port                      = 3306
+socket                    = /var${SB_INSTALL_PREFIX}/run/mysql.sock
+
+[mysqld_safe]
+err-log                   = /var${SB_INSTALL_PREFIX}/log/mysql.err
+socket                    = /var${SB_INSTALL_PREFIX}/run/mysql.sock
+
+[mysqld]
+port                      = 3306
+user                      = mysql
+pid-file                  = /var${SB_INSTALL_PREFIX}/run/mysqld.pid
+socket                    = /var${SB_INSTALL_PREFIX}/run/mysql.sock
+log                       = /var${SB_INSTALL_PREFIX}/log/mysql.log
+basedir                   = /var${SB_INSTALL_PREFIX}
+datadir                   = /var${SB_INSTALL_PREFIX}
+language                  = ${SB_INSTALL_BASE}/share/english
+character-sets-dir        = ${SB_INSTALL_BASE}/share/charsets
+
+innodb_data_home_dir      = /var${SB_INSTALL_PREFIX}/innodb
+innodb_log_group_home_dir = /var${SB_INSTALL_PREFIX}/log/innodb
+        </screen>
+
+        <para>The startup script assumes mysqld will be run as user
+"<command>mysql</command>". Therefore, prior to installing MySQL, a
+"<command>mysql</command>" user and "<command>mysql</command>" group
+should be created. The default user can be changed by modifying the
+"<command>user</command>" variable in the
+<command>/etc${SB_INSTALL_PREFIX}/my.cnf</command> configuration file.</para>
+
+        <para>On IRIX 6.5.3 and newer, the
+<command>CAP_SCHED_MGT</command> capability needs to be enabled for
+the "mysql" user or the mysqld binary,
+<command>${SB_INSTALL_PREFIX}/libexec/mysqld</command>, for thread
+creation to work:</para>
+        <screen>
+chcap "CAP_SCHED_MGT+epi" ${SB_INSTALL_PREFIX}/libexec/mysqld
+        </screen>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Solaris 2.6/SPARC">
+        <para>Patch <command>105591-09</command> or newer is required
+as the Sun C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST650V14.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>

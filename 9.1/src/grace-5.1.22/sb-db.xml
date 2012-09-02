@@ -1,0 +1,282 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="grace" version="5.1.22" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}51</install-name>
+
+    <sources>
+      <source checksum="672356466f18fe59ed21a8fb44f9851d"
+        checksum-type="md5" size="2516576"
+        path="src/grace-5.1.22.tar.gz"/>
+      <patch checksum="0998770f93234c48498942c4b830b8b0"
+        checksum-type="md5" size="1703"
+        path="src/grace-5.1.22.tww.patch"/>
+      <patch checksum="046f742bd792ed294a56eb526ca3ea6d"
+        checksum-type="md5" size="7659"
+        path="src/grace-5.1.22.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="fftw" var="LIBFFTW"
+        install-name="libfftw21">v&gt;=2.1.5</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff39">v&gt;=3.9.5</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib51">v&gt;=5.1.2</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  # Don't depend on -lXp. Not installed by default on Solaris.
+  export ac_cv_lib_Xp_main=no ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  # Don't depend on -lXp. Not installed by default on Solaris.
+  export ac_cv_lib_Xp_main=no ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  # Don't depend on -lXp. Not installed by default on Solaris.
+  export ac_cv_lib_Xp_main=no ;;
+esac
+
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}}\
+ ${SB_VAR_LIBFFTW+-I${SB_VAR_LIBFFTW_INC}}\
+ ${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}}\
+ ${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}}\
+ ${SB_VAR_XPM+-I${SB_VAR_XPM_INC}}\
+ ${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}\
+ ${SB_VAR_T1LIB+-I${SB_VAR_T1LIB_INC}}\
+ ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}}\
+ ${SB_VAR_LIBFFTW+-L${SB_VAR_LIBFFTW_LIB}}\
+ ${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}}\
+ ${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}}\
+ ${SB_VAR_XPM+-L${SB_VAR_XPM_LIB}}\
+ ${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}}\
+ ${SB_VAR_T1LIB+-L${SB_VAR_T1LIB_LIB}}\
+ ${SB_VAR_JPEG+${CC_LD_RT}${SB_VAR_JPEG_LIB}}\
+ ${SB_VAR_LIBFFTW+${CC_LD_RT}${SB_VAR_LIBFFTW_LIB}}\
+ ${SB_VAR_LIBPNG+${CC_LD_RT}${SB_VAR_LIBPNG_LIB}}\
+ ${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}}\
+ ${SB_VAR_LIBTIFF+${CC_LD_RT}${SB_VAR_LIBTIFF_LIB}}\
+ ${SB_VAR_XPM+${CC_LD_RT}${SB_VAR_XPM_LIB}}\
+ ${SB_VAR_T1LIB+${CC_LD_RT}${SB_VAR_T1LIB_LIB}}\
+ ${LDFLAGS+${LDFLAGS}}" \
+--with-cc="${CC:-gcc}" --with-fftw --enable-editres \
+--enable-grace-home=${SB_INSTALL_PREFIX} \
+--mandir="${SB_INSTALL_PREFIX}/man" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+]]>
+    </install>
+
+    <notes>
+      <change from="5.1.21" to="5.1.22">
+        <items name="Interface">
+          <item><para>mention object type when asking for user's
+confirmation on delete</para></item>
+        </items>
+
+        <items name="Parser">
+          <item><para>added "LINCONV(set1, set2)" command - an
+equivalent of Transformations-&gt;Linear convolution</para></item>
+          <item><para>added "VOIGT(gamma, sigma, x)" function (rep.
+#2144)</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>in the grace_np library GraceClose() could kill
+all user processes if by that time the Grace subprocess has exited
+(rep. #2035)</para></item>
+          <item><para>certain hand-modified settings in project files
+might cause the GUI crash (incl. rep. #2139)</para></item>
+          <item><para>ungraceful closing of anonymous pipes could
+result in high CPU load</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.20" to="5.1.21">
+        <items name="Functionality">
+          <item><para>added IsoLatin5 (ISO 8859-9) encoding
+file</para></item>
+          <item><para>now honor locale in number stringifications
+(rep. #2109)</para></item>
+          <item><para>extended range of prefixes in the Engineering
+format up to 10^{+/-24}</para></item>
+          <item><para>added "Computing" tick label
+format</para></item>
+        </items>
+
+        <items name="Interface">
+          <item><para>added "-maxpath" command line option for setting
+maximal drawing path length</para></item>
+          <item><para>allow for longer legend lines</para></item>
+        </items>
+
+        <items name="Parser">
+          <item><para>added "KILL BLOCK" command (deallocates the
+memory of the current block data)</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>there was a misleading error message when
+attempting to redefine an existing variable/keyword in the
+parser</para></item>
+          <item><para>fixed rounding-off problem with zero labels
+(rep. #2098)</para></item>
+        </items>
+
+        <items name="Portability/Compilation">
+          <item><para>eliminated some of gcc-4.1 warnings (rep.
+#2111)</para></item>
+          <item><para>man page cleaned (rep. #2110)</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.19" to="5.1.20">
+        <items name="Parser">
+          <item><para>added SGN() function</para></item>
+        </items>
+
+        <items name="Defaults">
+          <item><para>changed default major tick spacings to
+0.2</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>command argument "-graphtype pie" wasn't
+recognized (rep. #2058)</para></item>
+          <item><para>fixed openning of help documents when using an
+external browser</para></item>
+          <item><para>"Geometric transforms" with order: "Rotate,
+scale, translate" in fact was doing "Translate, scale,
+rotate"</para></item>
+          <item><para>Grace might crash when using "Engineering" tick
+label format (rep. #2094)</para></item>
+          <item><para>file selection dialog wasn't closed when fit
+parameters file was read in successfully</para></item>
+        </items>
+      </change>
+
+      <change from="5.1.18" to="5.1.19">
+        <items name="Functionality">
+          <item><para>BARDY and BARDYDY sets are now allowed in XY
+graphs</para></item>
+        </items>
+
+        <items name="Bug fixes">
+          <item><para>loading a DL module could fail with an
+irrelevant error message (rep. #2071)</para></item>
+          <item><para>a bug in the PS driver caused CUPS to output
+empty page if printing accounting was enabled in
+foomatic</para></item>
+          <item><para>automatic data point purging (enabled when set
+length exceeds "Max drawing path length" in Edit/Preferences) could
+fail silently (rep. #2069)</para></item>
+          <item><para>the point purging could result in wrong set
+filling when fill to the baseline was selected</para></item>
+          <item><para>configure's option --with-helpviewer was broken
+(rep. #1414)</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 26" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for AIX 4.3.</para></item>
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL 3 and SLED.</para></item>
+        <item><para>Remove support for Solaris 2.6 and 7.</para></item>
+        <item><para>Upgrade bison dependency from 2.3 to
+2.4.3.</para></item>
+        <item><para>Upgrade jpeg dependency from 6b to 8b.</para></item>
+        <item><para>Upgrade libpng dependency from 1.2.29 to
+1.4.4.</para></item>
+        <item><para>Upgrade tiff dependency from 3.8.2 to
+3.9.5.</para></item>
+        <item><para>Upgrade zlib dependency from 1.2.3 to
+1.2.5.</para></item>
+      </change>
+
+      <change date="2010 November 9" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

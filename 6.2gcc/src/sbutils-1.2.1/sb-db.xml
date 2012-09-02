@@ -1,0 +1,1268 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="sbutils" version="1.2.1" revision="1">
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <install-name>${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="18df4a7ef57622840c90910174d758dd"
+          checksum-type="md5" size="151260"
+          path="src/sbutils-1.2.1.tar.bz2"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="BASH" install-name="sbutils12"
+          module="bash" append="lib/aux/bash">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="FILEUTILS"
+          install-name="sbutils12" module="fileutils"
+          append="lib/aux/fileutils">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="FINDUTILS"
+          install-name="sbutils12" module="findutils"
+          append="lib/aux/findutils">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="GREP" install-name="sbutils12"
+          module="grep" append="lib/aux/grep">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="GTAR" install-name="sbutils12"
+          module="gtar" append="lib/aux/gtar">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="PYTHON" install-name="sbutils12"
+          module="python"
+          append="lib/aux/libexpat">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="SHTOOL" install-name="sbutils12"
+          module="shtool" append="lib/aux/shtool">v&gt;=1.2.0</depend>
+        <depend program="sbutils" install-name="sbutils12"
+          module="PyXML" append="lib/aux/pythonp">v&gt;=1.2.0</depend>
+        <depend program="sbutils" install-name="sbutils12"
+          module="python-fchksum"
+          append="lib/aux/pythonp">v&gt;=1.2.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+ac_cv_path_BASH="${SB_VAR_BASH}/bin/bash" \
+ac_cv_path_PYTHON="${SB_VAR_PYTHON}/bin/python" \
+ac_cv_path_CHGRP="${SB_VAR_FILEUTILS}/bin/gchgrp" \
+ac_cv_path_CHMOD="${SB_VAR_FILEUTILS}/bin/gchmod" \
+ac_cv_path_CHOWN="${SB_VAR_FILEUTILS}/bin/gchown" \
+ac_cv_path_FIND="${SB_VAR_FINDUTILS}/bin/gfind" \
+ac_cv_path_EGREP="${SB_VAR_GREP}/bin/gegrep" \
+ac_cv_path_INSTALL="${SB_VAR_FILEUTILS}/bin/ginstall" \
+ac_cv_path_LN="${SB_VAR_FILEUTILS}/bin/gln" \
+ac_cv_path_TAR="${SB_VAR_GTAR}/bin/gtar" \
+ac_cv_path_TOUCH="${SB_VAR_FILEUTILS}/bin/gtouch" \
+ac_cv_path_SHTOOL="${SB_VAR_SHTOOL}/bin/shtool" \
+--datadir="${_datadir}" --sysconfdir="${_sysconfdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# create config file
+cat >${_sysconfdir}/sbutils.conf <<_EOT_
+# show what actions would be performed while unpacking, configuring,
+# building, and installing
+verbose = 1
+
+# path to bash
+bash-path = "${SB_INSTALL_PREFIX}/lib/aux/bash/bin/bash"
+
+# path to systype
+systype-path = "${SB_INSTALL_PREFIX}/lib/systype"
+
+# default build directory
+build-dir = /opt/build
+
+# default distribution
+dist = ${SB_DIST}
+
+rename-matching-install-prefix-entries = 1
+
+unique-install-prefix = 1
+
+# variables specific to this distribution
+dist-opts ${SB_DIST} {
+  install-base = "${INSTALL_BASE}"
+  install-path = "\${SB_INSTALL_NAME}"
+}
+
+# hard-code search path
+environment {
+  PATH = "${SB_INSTALL_PREFIX}/lib/aux/bzip2/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/fileutils/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/findutils/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/grep/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gmake/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gpatch/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gsed/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gtar/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/gzip/bin:\\
+${SB_INSTALL_PREFIX}/lib/aux/shtool/bin:\\
+/bin:/usr/bin:/usr/ccs/bin:/usr/vac/bin:/usr/vacpp/bin:\\
+/sbin:/usr/sbin:/etc:/usr/etc:/usr/openwin/bin:/usr/dt/bin:\\
+/usr/bin/X11:/opt/imake/bin:/usr/ucb:/usr/bsd"
+}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="gmake">
+      <build-name>make-3.79.1</build-name>
+
+      <install-name append="lib/aux/gmake">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="22ea95c125c7b80e04354d4ee4ae960d"
+          checksum-type="md5" size="1030393"
+          path="src/make-3.79.1.tar.gz"/>
+        <patch checksum="8bb4909ca2602fe0dbaeea8c562c9f99"
+          checksum-type="md5" size="130082"
+          path="src/make-3.79.1.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:=gcc}" CFLAGS="${CFLAGS=-O2}" ./configure \
+--program-prefix=g --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+make
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+./make install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/share
+
+# setgid unnecessary
+case "${SB_SYSTYPE}" in
+*-linux*)
+  chgrp 0 ${SB_INSTALL_PREFIX}/bin/gmake
+  chmod g-s ${SB_INSTALL_PREFIX}/bin/gmake ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <module name="bzip2">
+      <build-name>bzip2-1.0.2</build-name>
+
+      <install-name append="lib/aux/bzip2">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="3375c4abd4452ce240b06d7dcf31c885"
+          checksum-type="md5" size="1093673"
+          path="src/bzip2-1.0.2-tww.tar.gz"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ./configure \
+--enable-shared --enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/bin/bzip2recover \
+${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="zlib">
+      <build-name>zlib-1.1.4</build-name>
+
+      <install-name append="lib/aux/zlib">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="1712545383160399458572fd878283cf"
+          checksum-type="md5" size="611107"
+          path="src/zlib-1.1.4-tww.tar.gz"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --enable-shared --enable-static \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="grep">
+      <build-name>grep-2.5.1</build-name>
+
+      <install-name append="lib/aux/grep">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="ddd99e2d5d4f4611357e31e97f080cf2"
+          checksum-type="md5" size="559232"
+          path="src/grep-2.5.1.tar.bz2"/>
+        <patch checksum="58ca398baf7ed6e00ac45e0d15625ccf"
+          checksum-type="md5" size="427629"
+          path="src/grep-2.5.1.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--disable-dependency-tracking --program-prefix=g \
+--disable-nls --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/man ${SB_INSTALL_PREFIX}/info
+]]>
+      </install>
+    </module>
+
+    <module name="PyXML">
+      <build-name>PyXML-0.8.3</build-name>
+
+      <install-name append="lib/aux/pythonp">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="7083d950064ce90840d9ed48c818dc85"
+          checksum-type="md5" size="729172"
+          path="src/PyXML-0.8.3.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="LIBEXPAT"
+          install-name="sbutils12" module="expat"
+          append="lib/aux/libexpat">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="PYTHON" install-name="sbutils12"
+          module="python" append="lib/aux/python">v&gt;=1.2.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LD_RT="-blibpath:" LD_RT_POST=":/usr/lib:/lib" ;;
+*-hpux*)
+  LD_RT="+s +b " ;;
+*-irix6*|*-osf*)
+  LD_RT="-rpath " ;;
+*-linux*)
+  LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${PYTHON}/bin/python setup.py build --without-xpath \
+--without-xslt --with-libexpat=${SB_VAR_LIBEXPAT} \
+${LD_RT+--ldflags="${LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${LD_RT_POST+${LD_RT_POST}}"}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${PYTHON}/bin/python setup.py install --without-xpath \
+--without-xslt --with-libexpat=${SB_VAR_LIBEXPAT} \
+${LD_RT+--ldflags="${LD_RT}${SB_VAR_LIBEXPAT_LIB}\
+${LD_RT_POST+${LD_RT_POST}}"} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <module name="shtool">
+      <build-name>shtool-2.0.0</build-name>
+
+      <install-name append="lib/aux/shtool">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="b93415536c0af62fc69e66e5db2e9cca"
+          checksum-type="md5" size="91067"
+          path="src/shtool-2.0.0.tar.gz"/>
+        <patch checksum="3e41e28fb5e80444ef0ce570474e934f"
+          checksum-type="md5" size="12266"
+          path="src/shtool-2.0.0.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+        <depend program="sbutils" install-name="sbutils12"
+          module="gsed" append="lib/aux/gsed"
+          add-path="prepend">v&gt;=1.2.0</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--disable-dependency-tracking --program-prefix=g \
+--disable-nls --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/bin/shtoolize \
+${SB_INSTALL_PREFIX}/share/aclocal
+]]>
+      </install>
+    </module>
+
+    <module name="gsed">
+      <build-name>sed-4.0.9</build-name>
+
+      <install-name append="lib/aux/gsed">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="d8fb554bc6577aaedd39b94b3cb3df70"
+          checksum-type="md5" size="769849"
+          path="src/sed-4.0.9.tar.gz"/>
+        <patch checksum="6b1c96105179aa55bf7a995980e7841f"
+          checksum-type="md5" size="265541"
+          path="src/sed-4.0.9.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="perl" add-path="prepend">v==5.8.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--program-prefix=g --disable-dependency-tracking \
+--disable-nls --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="expat">
+      <build-name>expat-1.95.6</build-name>
+
+      <install-name append="lib/aux/libexpat">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="ca78d94e83e9f077b5da2bfe28ba986a"
+          checksum-type="md5" size="291876"
+          path="src/expat-1.95.6.tar.gz"/>
+        <patch checksum="db79b5d5a0e1fe94f4b8a682f674e211"
+          checksum-type="md5" size="881259"
+          path="src/expat-1.95.6.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +DAportable +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -O2 -OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} --enable-shared \
+--enable-static --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="openssl">
+      <build-name>openssl-0.9.7b</build-name>
+
+      <install-name append="lib/aux/libopenssl">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="fae4bec090fa78e20f09d76d55b6ccff"
+          checksum-type="md5" size="2784331"
+          path="src/openssl-0.9.7b.tar.gz"/>
+        <patch checksum="10253ee9ce1b351914c17b8c80ea234d"
+          checksum-type="md5" size="20151"
+          path="src/openssl-0.9.7b.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.8.2</depend>
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-aix4*|*-aix5.1*|*-hpux*|*-irix*|*-osf*|*-solaris2.[5678]*">v&gt;=0.9.25</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ARCH=aix43-cc ;;
+*-osf*)
+  ARCH=alpha-cc ;;
+*-hpux*)
+  ARCH=hpux-parisc-cc ;;
+*-irix6*)
+  ARCH=irix-mips3-cc ;;
+x86_64-*-linux*)
+  ARCH=linux-x86_64 ;;
+*-linux*)
+  ARCH=linux-elf ;;
+*-solaris2.[89])
+  ARCH=solaris-sparcv8-cc ;;
+*-solaris2*)
+  ARCH=solaris-sparcv7-cc ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix5.2*|*-linux*|*-solaris2.9)
+  PERL=${SB_VAR_PERL}/bin/perl ./Configure ${ARCH} no-idea shared \
+  --openssldir=${SB_INSTALL_PREFIX} --prefix=${SB_INSTALL_PREFIX} ;;
+*)
+  PRNGD_SOCKET=/var${PRNGD}/pool
+
+  # set path to PRNGD socket
+  sed -e "s!^is located at.*!is located at ${PRNGD_SOCKET}.!" \
+  doc/crypto/RAND_egd.pod >/tmp/$$
+  cp /tmp/$$ doc/crypto/RAND_egd.pod && rm /tmp/$$
+
+  PERL=${PERL}/bin/perl ./Configure ${ARCH} no-idea shared \
+  -DDEVRANDOM_EGD=\"${PRNGD_SOCKET}\" \
+  --openssldir=${SB_INSTALL_PREFIX} --prefix=${SB_INSTALL_PREFIX} ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-blibpath:/usr/lib:/lib" ;;
+esac
+
+gmake LDFLAGS="${LDFLAGS+${LDFLAGS}}"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-blibpath:/usr/lib:/lib"
+  RPATH="-Wl,-blibpath:" ;;
+*-osf*|*-irix*)
+  RPATH="-rpath " ;;
+*-hpux*)
+  RPATH="+s +b " CC_LD_RT="-Wl,+s,+b," ;;
+*-linux*)
+  RPATH="-Wl,-rpath," ;;
+*-solaris*)
+  RPATH="-R" ;;
+esac
+
+gmake MAKE=gmake RPATH="${RPATH}${SB_INSTALL_PREFIX}/lib \
+${LDFLAGS+${LDFLAGS}}" install
+
+# Fix library path in pkgconfig file
+sed "s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT:-${RPATH}}\1!" \
+${SB_INSTALL_PREFIX}/lib/pkgconfig/openssl.pc >/tmp/$$
+cp /tmp/$$ ${SB_INSTALL_PREFIX}/lib/pkgconfig/openssl.pc && rm /tmp/$$
+
+rm -rf ${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/certs \
+${SB_INSTALL_PREFIX}/man ${SB_INSTALL_PREFIX}/misc \
+${SB_INSTALL_PREFIX}/openssl.cnf ${SB_INSTALL_PREFIX}/private
+]]>
+      </install>
+    </module>
+
+    <module name="gtar">
+      <build-name>tar-1.13.25</build-name>
+
+      <install-name append="lib/aux/gtar">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="6ef8c906e81eee441f8335652670ac4a"
+          checksum-type="md5" size="1312227"
+          path="src/tar-1.13.25.tar.gz"/>
+        <patch checksum="6dcd06ee70a014561298161a6b24dbd1"
+          checksum-type="md5" size="665286"
+          path="src/tar-1.13.25.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  # and __linux_strerror_r()
+  export ac_cv_func___linux_strerror_r=no;
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -woff 1429 -O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--program-prefix=g --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/lib \
+${SB_INSTALL_PREFIX}/libexec ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/share
+]]>
+      </install>
+    </module>
+
+    <module name="python">
+      <build-name>Python-2.3.2</build-name>
+
+      <install-name append="lib/aux/python">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="9271171d55690e5cacd692e563924305"
+          checksum-type="md5" size="7161770"
+          path="src/Python-2.3.2.tar.bz2"/>
+        <patch checksum="ecefb0faabe46449626973236bcd864e"
+          checksum-type="md5" size="478019"
+          path="src/Python-2.3.2.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="LIBEXPAT"
+          install-name="sbutils12" module="expat"
+          append="lib/aux/libexpat">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="LIBOPENSSL"
+          install-name="sbutils12" module="openssl"
+          append="lib/aux/libopenssl">v&gt;=1.2.0</depend>
+        <depend program="perl" var="PERL">v==5.8.2</depend>
+        <depend program="sbutils" var="ZLIB" module="zlib"
+          append="lib/aux/zlib">v&gt;=1.2.0</depend>
+        <depend var="PYTHONP" version="1.2" append="lib/aux/pythonp"
+          set-var-only="1"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-D_LARGE_FILES=1 -qarch=com"
+  OPT="-D_LARGE_FILES=1 -O2 -qfloat=nomaf -qmaxmem=-1 -qarch=com"
+  ARGS="--with-threads" LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  LD_RT="-brtl -blibpath:" LD_RT_POST=":/usr/lib" ;;
+*-hpux11*)
+  CC="cc" CFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-D_FILE_OFFSET_BITS=64 +O2 -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--with-threads" LD_RT="+s +b " ;;
+*-hpux10*)
+  CC="cc" CFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-D_FILE_OFFSET_BITS=64 +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--without-threads" LD_RT="+s +b " ;;
+*-irix6*)
+  CC=cc OPT="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0"
+  ARGS="--with-threads" LD_RT="-rpath " ;;
+*-linux*)
+  OPT="-O2" ARGS="--with-threads" LD_RT="-Wl,-rpath," ;;
+*-osf5*)
+  CC=cc OPT="-O2 -ieee" CFLAGS="-std1 -msym -readonly_strings"
+  ARGS="--with-dec-threads" LD_RT="-rpath " ;;
+*-osf*)
+  CC=cc OPT="-O2 -ieee" CFLAGS="-std1 -msym -readonly_strings"
+  ARGS="--with-dec-threads" LD_RT="-rpath "
+  LDFLAGS="-rpath ${ZLIB_LIB}:${LIBOPENSSL_LIB}:${LIBEXPAT_LIB}" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-D_FILE_OFFSET_BITS=64 -mr -Qn -xO2 -xtarget=generic -xarch=v8"
+  ARGS="--with-threads" LD_RT="-R" ;;
+*-solaris2.5.1)
+  CC=cc OPT="-mr -Qn -xO2 -xtarget=generic"
+  ARGS="--with-threads" LD_RT="-R" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-D_FILE_OFFSET_BITS=64"
+  OPT="-D_FILE_OFFSET_BITS=64 -mr -Qn -xO2 -xtarget=generic"
+  ARGS="--with-threads" LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >Modules/Setup.local <<_EOT_
+termios termios.c
+timing timingmodule.c
+
+*shared*
+_ssl _ssl.c -DUSE_SSL -I${SB_VAR_LIBOPENSSL_INC} \
+ -L${SB_VAR_LIBOPENSSL_LIB} ${LD_RT}${SB_VAR_LIBOPENSSL_LIB}\
+${LD_RT_POST+${LD_RT_POST}} -lssl -lcrypto
+pyexpat pyexpat.c -I${LIBEXPAT_INC} -L${LIBEXPAT_LIB} \
+ ${LD_RT}${LIBEXPAT_LIB}${LD_RT_POST+${LD_RT_POST}} -lexpat
+zlib zlibmodule.c -I${ZLIB_INC} -L${ZLIB_LIB} \
+ ${LD_RT}${ZLIB_LIB}${LD_RT_POST+${LD_RT_POST}} -lz
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-linux*)
+  cat >>Modules/Setup.local <<_EOT_
+crypt cryptmodule.c -lcrypt
+_EOT_
+  ;;
+*)
+  cat >>Modules/Setup.local <<_EOT_
+crypt cryptmodule.c
+_EOT_
+  ;;
+esac
+
+# add path to 3rd-party libraries to default search path
+sed -e "s!^prefixes = .*!prefixes = [sys.prefix, '${SB_VAR_PYTHONP}']!" \
+Lib/site.py >/tmp/$$
+cp /tmp/$$ Lib/site.py && rm -f /tmp/$$
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS+${CFLAGS}}" \
+OPT="${OPT:--O2}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+${ARGS+${ARGS}} --with-cxx=no --without-libdb --with-cycle-gc \
+--disable-ipv6 --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}
+gmake install
+
+# Create module directory
+ginstall -m 755 -o root -g 0 -d ${SB_VAR_PYTHONP} \
+${SB_VAR_PYTHONP}/lib ${SB_VAR_PYTHONP}/lib/python2.3 \
+${SB_VAR_PYTHONP}/lib/python2.3/site-packages \
+${SB_VAR_PYTHONP}/lib/site-python
+
+# BLDSHARED used at build-time only. switch to LDSHARED
+${SB_VAR_PERL}/bin/perl -pi -e "s!BLDSHARED!LDSHARED!" \
+${SB_INSTALL_PREFIX}/lib/python2.3/config/makesetup
+
+# Remove cruft
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.3/lib-old
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.3/lib-tk
+rm -rf ${SB_INSTALL_PREFIX}/man
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.3/test
+rm -rf ${SB_INSTALL_PREFIX}/lib/python2.3/*.py
+
+# Remove .py file when .pyc file exists
+find ${SB_INSTALL_PREFIX}/lib/python2.3 \
+-name '*.py' 2>/dev/null | while read _py; do
+  _pyc=${_py}c
+  test -f ${_pyc} && rm -f ${_py}
+done
+
+# Remove .pyo file when .pyc file exists
+find ${SB_INSTALL_PREFIX}/lib/python2.3 \
+-name '*.pyc' 2>/dev/null | while read _pyc; do
+  _pyo=${_pyc%%c}o
+  rm -f ${_pyo}
+done
+]]>
+      </install>
+    </module>
+
+    <module name="python-fchksum">
+      <build-name>python-fchksum-1.7</build-name>
+
+      <install-name append="lib/aux/pythonp">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="0d35b64eb2c99e6463025611cdc081a8"
+          checksum-type="md5" size="26678"
+          path="src/python-fchksum-1.7.tar.gz"/>
+        <patch checksum="bb6491a6aebeea60a48017718f5aa2e1"
+          checksum-type="md5" size="1576"
+          path="src/python-fchksum-1.7.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="sbutils" var="PYTHON" install-name="sbutils12"
+          module="python" append="lib/aux/python">v&gt;=1.2.0</depend>
+        <depend program="sbutils" var="ZLIB" install-name="sbutils12"
+          module="zlib" append="lib/aux/zlib">v&gt;=1.2.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LD_RT="-blibpath:" LD_RT_POST=":/usr/lib" ;;
+*-hpux*)
+  LD_RT="+s +b " ;;
+*-irix6*|*-osf5.1*)
+  LD_RT="-rpath " ;;
+*-linux*)
+  LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py --zlib-prefix=${SB_VAR_ZLIB} \
+${LD_RT+--lflags="${LD_RT}${SB_VAR_ZLIB_LIB}${LD_RT_POST+${LD_RT_POST}}"} \
+${LIBS+--zlib="${LIBS}"} build_ext --inplace
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py --zlib-prefix=${SB_VAR_ZLIB} \
+${LD_RT+--lflags="${LD_RT}${SB_VAR_ZLIB_LIB}${LD_RT_POST+${LD_RT_POST}}"} \
+${LIBS+--zlib="${LIBS}"} install --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <module name="findutils">
+      <build-name>findutils-4.1.20</build-name>
+
+      <install-name append="lib/aux/findutils">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="e90ce7222daadeb8616b8db461e17cbc"
+          checksum-type="md5" size="777980"
+          path="src/findutils-4.1.20.tar.gz"/>
+        <patch checksum="a968db5c6b018b9205d60901c0df476c"
+          checksum-type="md5" size="190110"
+          path="src/findutils-4.1.20.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  ARGS="ac_cv_func_stpcpy=no" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std -msym -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--disable-dependency-tracking --program-prefix=g \
+--disable-nls ${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/var ${SB_INSTALL_PREFIX}/libexec \
+${SB_INSTALL_PREFIX}/bin/glocate ${SB_INSTALL_PREFIX}/bin/gupdatedb \
+${SB_INSTALL_PREFIX}/man ${SB_INSTALL_PREFIX}/info
+]]>
+      </install>
+    </module>
+
+    <module name="fileutils">
+      <build-name>fileutils-4.1.7</build-name>
+
+      <install-name append="lib/aux/fileutils">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="d95401bdbcaa3d2e17d8107d18ae1916"
+          checksum-type="md5" size="1663871"
+          path="src/fileutils-4.1.7.tar.bz2"/>
+        <patch checksum="7beafc7108b931cea214e60e4a0f6727"
+          checksum-type="md5" size="1173673"
+          path="src/fileutils-4.1.7.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.8.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+
+  # We do not want to -D_LINUX_SOURCE_COMPAT for stpcpy()
+  export ac_cv_func_stpcpy=no ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" PERL=${SB_VAR_PERL}/bin/perl \
+./configure --disable-nls --program-prefix=g \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/lib \
+${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="gzip">
+      <build-name>gzip-1.3.5</build-name>
+
+      <install-name append="lib/aux/gzip">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="3d6c191dfd2bf307014b421c12dc8469"
+          checksum-type="md5" size="331550"
+          path="src/gzip-1.3.5.tar.gz"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1 -readonly_strings" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" ./configure \
+--disable-nls --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="texinfo">
+      <build-name>texinfo-4.6</build-name>
+
+      <install-name append="lib/aux/texinfo">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="d6a771de9e05efd8c1c9152f8b8686d6"
+          checksum-type="md5" size="1348113"
+          path="src/texinfo-4.6.tar.bz2"/>
+        <patch checksum="42fb53881ef628b8283e4598cbc6254d"
+          checksum-type="md5" size="997"
+          path="src/texinfo-4.6.patch"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae +O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--disable-nls --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/share ${SB_INSTALL_PREFIX}/bin/info \
+${SB_INSTALL_PREFIX}/bin/infokey ${SB_INSTALL_PREFIX}/bin/makeinfo \
+${SB_INSTALL_PREFIX}/bin/texindex ${SB_INSTALL_PREFIX}/bin/texi2dvi
+]]>
+      </install>
+    </module>
+
+    <module name="bash">
+      <build-name>bash-2.05b</build-name>
+
+      <install-name append="lib/aux/bash">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="5238251b4926d778dfe162f6ce729733"
+          checksum-type="md5" size="1956216"
+          path="src/bash-2.05b.tar.gz"/>
+        <patch checksum="119ab288950de1f10d88cae3f30a1cbc"
+          checksum-type="md5" size="552418"
+          path="src/bash-2.05b.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="bison" install-name="bison13"
+          add-path="prepend">v&gt;=1.35</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-hpux*)
+  CC="cc -Ae" CFLAGS="+O2 -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  ARGS="--with-bash-malloc=no"
+
+  export ac_cv_c_long_double=no ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  ARGS="--with-bash-malloc=no" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" --enable-alias \
+--enable-array-variables --enable-bang-history \
+--enable-brace-expansion --enable-command-timing \
+--enable-cond-command --enable-directory-stack --enable-dparen-arithmetic \
+--enable-extended-glob --enable-help-builtin --enable-history \
+--enable-job-control --enable-process-substitution \
+--enable-prompt-string-decoding --enable-readline \
+--enable-restricted --enable-progcomp --disable-largefile \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -f ${SB_INSTALL_PREFIX}/bin/bashbug
+rm -rf ${SB_INSTALL_PREFIX}/info ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <module name="gpatch">
+      <build-name>patch-2.5.8</build-name>
+
+      <install-name append="lib/aux/gpatch">${SB_PROG_NAME}12</install-name>
+
+      <sources>
+        <source checksum="0e84970b1f7cf226af37ce7ebee012aa"
+          checksum-type="md5" size="189013"
+          path="src/patch-2.5.8.tar.gz"/>
+      </sources>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-irix6*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0" ;;
+*-solaris2.[89])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+./configure CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" --program-prefix=g \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX}/man
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="1.2.0" to="1.2.1">
+        <item><para>New configuration variable lib-path-component
+defines the path component for the [var]_LIB variable. The default is
+'lib'.</para></item>
+        <item><para>-m all is now context-dependent. When purging, -m
+all will purge all built modules. When uninstalling, -m all will
+remove all installed modules.</para></item>
+        <item><para>If request for a module which is neither built nor
+installed, a more descriptive error message is given</para></item>
+        <item><para>If request for a module which is installed, warn
+and continue rather than giving an error</para></item>
+        <item><para>For some actions, check if module exists in build
+or install database before proceeding</para></item>
+        <item><para>Two new predefined variables:</para>
+        <screen>
+${SB_INSTALL_PREFIX_INC} = \${SB_INSTALL_PREFIX}/include
+${SB_INSTALL_PREFIX_LIB} = \${SB_INSTALL_PREFIX}/[lib-path-component]
+        </screen></item>
+        <item><para>.tar.gz and .tar.bz2 files no longer piped through
+gzip. The GNU tar -z/-j options, respectively, used to uncompress and
+untar.</para></item>
+        <item><para>&lt;install-name/&gt; is now
+supported</para></item>
+        <item><para>Allow 'build-dir' variable in dist-opts section of
+config file</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>

@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="dhcp" version="3.0.1rc14" revision="1"
+  systype="*-hpux*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}301</install-name>
+
+    <sources>
+      <source checksum="a68074d9ebdeb355c293d9b3645b3c2c"
+        checksum-type="md5" size="842712"
+        path="src/dhcp-3.0.1rc14.tar.gz"/>
+      <patch checksum="778a92ce79948495ced63a1beaee9277"
+        checksum-type="md5" size="10169"
+        path="src/dhcp-3.0.1rc14.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-osf4*)
+  CC=cc CFLAGS="-DNO_SNPRINTF -O2 -msym -readonly_strings" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+*-solaris2.[89])
+  CFLAGS="-O2 -mcpu=v8 -fno-strict-aliasing" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-DNO_SNPRINTF -mr -Qn -xstrconst -xO2 \
+-xtarget=generic" ;;
+*-solaris2*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+cat >>site.conf <<_EOT_
+CC = ${CC:-gcc}
+USERBINDIR = ${SB_INSTALL_PREFIX}/bin
+BINDIR = ${SB_INSTALL_PREFIX}/sbin
+CLIENTBINDIR = ${SB_INSTALL_PREFIX}/sbin
+ADMMANDIR = ${SB_INSTALL_PREFIX}/man/man8
+ADMMANEXT = .8
+FFMANDIR = ${SB_INSTALL_PREFIX}/man/man5
+FFMANEXT = .5
+LIBMANDIR = ${SB_INSTALL_PREFIX}/man/man3
+LIBMANEXT = .3
+USRMANDIR = ${SB_INSTALL_PREFIX}/man/man1
+USRMANEXT = .1
+MANCAT = man
+ETC = ${_sysconfdir}
+VARRUN = ${_localstatedir}/run
+VARDB = ${_localstatedir}/db
+LIBDIR = ${SB_INSTALL_PREFIX}/lib
+INCDIR = ${SB_INSTALL_PREFIX}/include
+CLIENT_PATH = '"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
+DEBUG =
+_EOT_
+
+cat >>includes/site.h <<_EOT_
+#define _PATH_DHCLIENT_PID "${_localstatedir}/run/dhclient.pid"
+#define _PATH_DHCPD_PID "${_localstatedir}/run/dhcpd.pid"
+#define _PATH_DHCRELAY_PID "${_localstatedir}/run/dhcrelay.pid"
+#define _PATH_DHCLIENT_DB "${_localstatedir}/db/dhclient.leases"
+#define _PATH_DHCPD_DB "${_localstatedir}/db/dhcpd.leases"
+#define _PATH_DHCPD_CONF "${_sysconfdir}/dhcpd.conf"
+#define _PATH_DHCLIENT_CONF "${_sysconfdir}/dhclient.conf"
+_EOT_
+
+./configure --copts "${CFLAGS:--O2}"
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install documentation
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 doc/* ${SB_INSTALL_PREFIX}/doc
+
+# install default configuration file
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/dhcpd.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/dhclient.conf
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_localstatedir}/db/dhcpd.leases
+${SB_PATH_GINSTALL} -m 644 -o root -g 0 /dev/null \
+${_localstatedir}/db/dhclient.leases
+
+# create directory to hold PID file
+${SB_PATH_GINSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/run
+
+${SB_PATH_GCHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="3.0.1rc13" to="3.0.1rc14">
+        <item><para>CAN-2004-0460 - CERT VU#317350: Five stack
+overflow exploits were closed in logging messages with excessively
+long hostnames provided by the clients. It is highly probable that
+these could have been used by attackers to gain arbitrary root access
+on systems using ISC DHCP 3.0.1 release candidates 12 or 13. Special
+thanks to Gregory Duchemin for both finding and solving the
+problem.</para></item>
+        <item><para>CAN-2004-0461 - CERT VU#654390: Once the above was
+closed, an opening in log_*() functions was evidented, on some
+specific platforms where vsnprintf() was not believed to be available
+and calls were wrapped to sprintf() instead. Again, credit goes to
+Gregory Duchemin for finding the problem. Calls to snprintf() are now
+linked to a distribution-local snprintf implementation, only in those
+cases where the architecture is not known to provide one (see
+includes/cf/[arch].h). If you experience linking problems with
+snprintf/vsnprintf or 'isc_print_' functions, this is where to look.
+This vulnerability did not exist in any previously published version
+of ISC DHCP.</para></item>
+        <item><para>Compilation on hpux 11.11 was
+repaired.</para></item>
+        <item><para>'The cross-compile bug fix' was backed
+out.</para></item>
+      </change>
+
+      <change from="3.0.1rc12" to="3.0.1rc13">
+        <item><para>Fixed a bug in omapi lease lookup function, to
+form the hardware address for the hash lookup correctly, thanks to a
+patch from Richard Hirst</para></item>
+        <item><para>Fixed a bug where dhcrelay was sending relayed
+responses back to the broadcast address, but with the source's unicast
+mac address. Should now conform to rfc2131 section 4.1.</para></item>
+        <item><para>Cross-compile bug fix; use $(AR) instead of
+ar</para></item>
+        <item><para>Fixed a crash bug in dhclient where dhcpd servers
+that do not provide renewal times results in an FPE. As a side
+effect, dhclient can now properly handle 0xFFFFFFFF (-1) expiry times
+supplied by servers.</para></item>
+        <item><para>The 'ping timeout' debugs from rc12 were removed
+to -DDEBUG only, and reformatted to correct a compilation error on
+solaris platforms</para></item>
+        <item><para>A patch was applied which fixes a case where
+leases read from the leases database do not properly over-ride
+previously read leases</para></item>
+        <item><para>dhcpctl.3 manpage was tweaked</para></item>
+      </change>
+
+      <note type="installation">
+        <para>The default location for log files and other runtime
+information is stored in <command>/var${SB_INSTALL_PREFIX}</command>. The path to
+the daemon PID file and lease file can be configured in the
+configuration file if different from defaults
+<command>/var${SB_INSTALL_PREFIX}/run</command> and
+<command>/var${SB_INSTALL_PREFIX}/db</command>, respectively.</para>
+
+        <para>The default configuration file is
+<command>/etc${SB_INSTALL_PREFIX}/dhcpd.conf</command>. The
+"<command>-cf</command>" argument to the <command>dhcpd</command>
+command can be used to specify an alternate path to the configuration
+file.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2004 July 1" revision="1"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Fixed a missing format argument to log_fatal in
+server/failover.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>

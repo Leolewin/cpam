@@ -1,0 +1,533 @@
+<?xml version="1.0"?>
+<programs>
+  <program name="apache" version="1.3.31" revision="2">
+    <build-name>${SB_PROG_NAME}_${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}1331</install-name>
+
+    <sources>
+      <source checksum="bd548a06ac48dda496b4e613572bb020"
+        checksum-type="md5" size="2467371"
+        path="src/apache_1.3.31.tar.gz"/>
+      <patch checksum="ee120301f7bdc9785b63e3311c930d8a"
+        checksum-type="md5" size="62244"
+        path="src/eapi.patch"/>
+      <patch checksum="05e052cb158739c41bdb70c8de06e48a"
+        checksum-type="md5" size="87791"
+        path="src/apache_1.3.31.patch"/>
+    </sources>
+
+    <dependencies>
+    <depend user="nobody"/>
+
+    <depend group="nobody"/>
+
+      <depend program="gcc" add-path="prepend">v==3.3.2</depend>
+      <depend program="db" var="LIBDB"
+        install-name="libdb42">v&gt;=4.2.52</depend>
+      <depend program="mm" var="LIBMM"
+        install-name="libmm13">v&gt;=1.3.1</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.8.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-D_LARGE_FILES=1 -O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-bnortllib -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux11*)
+  CC=cc OPTIM=" " CFLAGS="-z -Ae +DAportable"
+  CC_LD_RT="-Wl,+s,+b," LIBS="-lnsl" ;;
+*-hpux*)
+  CC=cc OPTIM=" " CFLAGS="-z -Ae +DAportable"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix6*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429"
+  OPTIM="-O2 -OPT:Olimit=0" CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf5*)
+  CC=cc OPTIM="-O2" CFLAGS="-std1" CC_LD_RT="-Wl,-rpath,"
+  LIBS="-lpthread" ;;
+*-osf*)
+  CC=cc OPTIM="-O2" CFLAGS="-std1" CC_LD_RT="-Wl,-rpath," ;;
+*-solaris2.[89])
+  CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -O2 -mcpu=v8"
+  OPTIM="-O2"
+  CC_LD_RT="-R" LIBS="-lnsl" ;;
+*-solaris2.[67]*)
+  CC=cc CFLAGS="-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 \
+-mr -Qn -xtarget=generic" OPTIM="-xO2"
+  CC_LD_RT="-R" LIBS="-lnsl" ;;
+*-solaris2.5.1)
+  CC=cc CFLAGS="-mr -Qn -xtarget=generic" OPTIM="-xO2"
+  CC_LD_RT="-R" LIBS="-lnsl" ;;
+esac
+
+CC="${CC:-gcc}" OPTIM="${OPTIM:--O2}" CFLAGS="${CFLAGS:--O2} \
+-DEAPI_MM_CORE_PATH=\\\\\\\"/var${SB_INSTALL_PREFIX}/mm/mm\\\\\\\"" \
+INCLUDES="-I${SB_VAR_LIBDB_INC}" LDFLAGS="-L${SB_VAR_LIBDB_LIB} \
+${CC_LD_RT}${SB_VAR_LIBDB_LIB}:${SB_VAR_LIBMM_LIB} \
+${LDFLAGS+${LDFLAGS}}" LIBS="${LIBS+${LIBS}}" \
+EAPI_MM="${SB_VAR_LIBMM}" ./configure \
+--enable-module=access --enable-shared=access \
+--enable-module=actions --enable-shared=actions \
+--enable-module=alias --enable-shared=alias \
+--enable-module=asis --enable-shared=asis \
+--enable-module=auth --enable-shared=auth \
+--enable-module=auth_anon --enable-shared=auth_anon \
+--enable-module=auth_db --enable-shared=auth_db \
+--enable-module=auth_dbm --enable-shared=auth_dbm \
+--enable-module=autoindex --enable-shared=autoindex \
+--enable-module=cern_meta --enable-shared=cern_meta \
+--enable-module=digest --enable-shared=digest \
+--enable-module=dir --enable-shared=dir \
+--enable-module=env --enable-shared=env \
+--enable-module=expires --enable-shared=expires \
+--enable-module=headers --enable-shared=headers \
+--enable-module=imap --enable-shared=imap \
+--enable-module=include --enable-shared=include \
+--enable-module=info --enable-shared=info \
+--enable-module=log_agent --enable-shared=log_agent \
+--enable-module=log_config --enable-shared=log_config \
+--enable-module=log_referer --enable-shared=log_referer \
+--enable-module=mime --enable-shared=mime \
+--enable-module=mime_magic --enable-shared=mime_magic \
+--enable-module=mmap_static --enable-shared=mmap_static \
+--enable-module=negotiation --enable-shared=negotiation \
+--enable-module=proxy --enable-shared=proxy \
+--enable-module=rewrite --enable-shared=rewrite \
+--enable-module=setenvif --enable-shared=setenvif \
+--enable-module=speling --enable-shared=speling \
+--enable-module=status --enable-shared=status \
+--enable-module=unique_id --enable-shared=unique_id \
+--enable-module=userdir --enable-shared=userdir \
+--enable-module=usertrack --enable-shared=usertrack \
+--enable-module=vhost_alias --enable-shared=vhost_alias \
+--enable-module=so --enable-rule=EAPI \
+--with-perl=${SB_VAR_PERL}/bin/perl \
+--sysconfdir=/etc${SB_INSTALL_PREFIX} \
+--localstatedir=/var${SB_INSTALL_PREFIX} \
+--logfiledir=/var${SB_INSTALL_PREFIX}/log \
+--runtimedir=/var${SB_INSTALL_PREFIX}/run \
+--proxycachedir=/var${SB_INSTALL_PREFIX}/proxy \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o nobody -g nobody -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 755 -o nobody -g nobody -d ${_localstatedir} \
+${_localstatedir}/log ${_localstatedir}/mm \
+${_localstatedir}/proxy ${_localstatedir}/run
+
+# install linker substitute for AIX
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/lib
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 src/support/ldAix \
+  ${SB_INSTALL_PREFIX}/lib
+
+  # modify apxs to use it
+  ${SB_PATH_SHTOOL} subst -q -e "\
+s!(ld)!(${SB_INSTALL_PREFIX}/lib/ldAix)!" \
+  ${SB_INSTALL_PREFIX}/bin/apxs ;;
+esac
+
+${SB_PATH_SHTOOL} subst -q -e "\
+s!^ServerAdmin.*!ServerAdmin login@domain!" \
+${_sysconfdir}/httpd.conf
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/icons \
+${SB_INSTALL_PREFIX}/htdocs
+
+# slimmed down httpd.conf
+cat >${_sysconfdir}/httpd.conf <<_EOT_
+# global directives
+ServerType standalone
+ServerRoot "${SB_INSTALL_PREFIX}"
+ServerAdmin webmaster@[hostname].[domainname]
+ServerName [hostname].[domainname]
+
+Listen 80
+
+PidFile "${_localstatedir}/run/httpd.pid"
+ScoreBoardFile "${_localstatedir}/run/httpd.scoreboard"
+
+HostnameLookups off
+UseCanonicalName off
+
+Timeout 300
+KeepAlive on
+MaxKeepAliveRequests 100
+KeepAliveTimeout 15
+MinSpareServers 5
+MaxSpareServers 10
+StartServers 5
+MaxClients 150
+MaxRequestsPerChild 0
+
+LoadModule mmap_static_module libexec/mod_mmap_static.so
+LoadModule vhost_alias_module libexec/mod_vhost_alias.so
+LoadModule env_module libexec/mod_env.so
+LoadModule config_log_module libexec/mod_log_config.so
+LoadModule agent_log_module libexec/mod_log_agent.so
+LoadModule referer_log_module libexec/mod_log_referer.so
+LoadModule mime_magic_module libexec/mod_mime_magic.so
+LoadModule mime_module libexec/mod_mime.so
+LoadModule negotiation_module libexec/mod_negotiation.so
+LoadModule status_module libexec/mod_status.so
+LoadModule info_module libexec/mod_info.so
+LoadModule includes_module libexec/mod_include.so
+LoadModule autoindex_module libexec/mod_autoindex.so
+LoadModule dir_module libexec/mod_dir.so
+LoadModule asis_module libexec/mod_asis.so
+LoadModule imap_module libexec/mod_imap.so
+LoadModule action_module libexec/mod_actions.so
+LoadModule speling_module libexec/mod_speling.so
+LoadModule userdir_module libexec/mod_userdir.so
+LoadModule alias_module libexec/mod_alias.so
+LoadModule rewrite_module libexec/mod_rewrite.so
+LoadModule access_module libexec/mod_access.so
+LoadModule auth_module libexec/mod_auth.so
+LoadModule anon_auth_module libexec/mod_auth_anon.so
+LoadModule dbm_auth_module libexec/mod_auth_dbm.so
+LoadModule db_auth_module libexec/mod_auth_db.so
+LoadModule digest_module libexec/mod_digest.so
+LoadModule proxy_module libexec/libproxy.so
+LoadModule cern_meta_module libexec/mod_cern_meta.so
+LoadModule expires_module libexec/mod_expires.so
+LoadModule headers_module libexec/mod_headers.so
+LoadModule usertrack_module libexec/mod_usertrack.so
+LoadModule unique_id_module libexec/mod_unique_id.so
+LoadModule setenvif_module libexec/mod_setenvif.so
+
+User nobody
+Group nobody
+
+DocumentRoot "${SB_INSTALL_PREFIX}/htdocs"
+
+<Directory />
+  Options FollowSymLinks
+  AllowOverride None
+</Directory>
+
+<Directory "${SB_INSTALL_PREFIX}/htdocs">
+  Options Indexes FollowSymLinks MultiViews
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+</Directory>
+
+<IfModule mod_userdir.c>
+  UserDir public_html
+</IfModule>
+
+<IfModule mod_dir.c>
+  DirectoryIndex index.html
+</IfModule>
+
+AccessFileName .htaccess
+
+<Files ~ "^\.ht">
+  Order allow,deny
+  Deny from all
+  Satisfy All
+</Files>
+
+<IfModule mod_mime.c>
+  TypesConfig "${_sysconfdir}/mime.types"
+</IfModule>
+
+DefaultType text/plain
+
+<IfModule mod_mime_magic.c>
+  MIMEMagicFile "${_sysconfdir}/magic"
+</IfModule>
+
+ErrorLog "${_localstatedir}/log/error_log"
+LogLevel warn
+LogFormat \\
+  "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+LogFormat "%h %l %u %t \"%r\" %>s %b" common
+LogFormat "%{Referer}i -> %U" referer
+LogFormat "%{User-agent}i" agent
+
+CustomLog "${_localstatedir}/log/access_log" common
+
+ServerSignature on
+
+<IfModule mod_alias.c>
+  Alias /icons/ "${SB_INSTALL_PREFIX}/icons/"
+
+  <Directory "${SB_INSTALL_PREFIX}/icons">
+    Options Indexes MultiViews
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  Alias /manual/ "${SB_INSTALL_PREFIX}/htdocs/manual/"
+
+  <Directory "${SB_INSTALL_PREFIX}/htdocs/manual">
+    Options Indexes FollowSymlinks MultiViews
+    AllowOverride None
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  ScriptAlias /cgi-bin/ "${SB_INSTALL_PREFIX}/cgi-bin/"
+
+  <Directory "${SB_INSTALL_PREFIX}/cgi-bin">
+    AllowOverride None
+    Options None
+    Order allow,deny
+    Allow from all
+  </Directory>
+</IfModule>
+
+<IfModule mod_autoindex.c>
+  IndexOptions FancyIndexing
+
+  AddIconByEncoding (CMP,/icons/compressed.gif) x-compress x-gzip
+
+  AddIconByType (TXT,/icons/text.gif) text/*
+  AddIconByType (IMG,/icons/image2.gif) image/*
+  AddIconByType (SND,/icons/sound2.gif) audio/*
+  AddIconByType (VID,/icons/movie.gif) video/*
+
+  AddIcon /icons/binary.gif .bin .exe
+  AddIcon /icons/binhex.gif .hqx
+  AddIcon /icons/tar.gif .tar
+  AddIcon /icons/world2.gif .wrl .wrl.gz .vrml .vrm .iv
+  AddIcon /icons/compressed.gif .Z .z .tgz .gz .zip
+  AddIcon /icons/a.gif .ps .ai .eps
+  AddIcon /icons/layout.gif .html .shtml .htm .pdf
+  AddIcon /icons/text.gif .txt
+  AddIcon /icons/c.gif .c
+  AddIcon /icons/p.gif .pl .py
+  AddIcon /icons/f.gif .for
+  AddIcon /icons/dvi.gif .dvi
+  AddIcon /icons/uuencoded.gif .uu
+  AddIcon /icons/script.gif .conf .sh .shar .csh .ksh .tcl
+  AddIcon /icons/tex.gif .tex
+  AddIcon /icons/bomb.gif core
+
+  AddIcon /icons/back.gif ..
+  AddIcon /icons/hand.right.gif README
+  AddIcon /icons/folder.gif ^^DIRECTORY^^
+  AddIcon /icons/blank.gif ^^BLANKICON^^
+
+  DefaultIcon /icons/unknown.gif
+  ReadmeName README
+  HeaderName HEADER
+
+  IndexIgnore .??* *~ *# HEADER* README* RCS CVS *,v *,t
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddEncoding x-compress Z
+  AddEncoding x-gzip gz tgz
+
+  AddLanguage da .dk
+  AddLanguage nl .nl
+  AddLanguage en .en
+  AddLanguage et .ee
+  AddLanguage fr .fr
+  AddLanguage de .de
+  AddLanguage el .el
+  AddLanguage he .he
+  AddCharset ISO-8859-8 .iso8859-8
+  AddLanguage it .it
+  AddLanguage ja .ja
+  AddCharset ISO-2022-JP .jis
+  AddLanguage kr .kr
+  AddCharset ISO-2022-KR .iso-kr
+  AddLanguage nn .nn
+  AddLanguage no .no
+  AddLanguage pl .po
+  AddCharset ISO-8859-2 .iso-pl
+  AddLanguage pt .pt
+  AddLanguage pt-br .pt-br
+  AddLanguage ltz .lu
+  AddLanguage ca .ca
+  AddLanguage es .es
+  AddLanguage sv .sv
+  AddLanguage cs .cz .cs
+  AddLanguage ru .ru
+  AddLanguage zh-TW .zh-tw
+  AddCharset Big5 .Big5    .big5
+  AddCharset WINDOWS-1251 .cp-1251
+  AddCharset CP866 .cp866
+  AddCharset ISO-8859-5 .iso-ru
+  AddCharset KOI8-R .koi8-r
+  AddCharset UCS-2 .ucs2
+  AddCharset UCS-4 .ucs4
+  AddCharset UTF-8 .utf8
+
+  <IfModule mod_negotiation.c>
+    LanguagePriority \\
+      en da nl et fr de el it ja kr no pl pt pt-br ru ltz ca es sv tw
+  </IfModule>
+
+  AddType application/x-tar .tgz
+</IfModule>
+
+<IfModule mod_setenvif.c>
+  BrowserMatch "Mozilla/2" nokeepalive
+  BrowserMatch "MSIE 4\.0b2;" nokeepalive downgrade-1.0 force-response-1.0
+  BrowserMatch "RealPlayer 4\.0" force-response-1.0
+  BrowserMatch "Java/1\.0" force-response-1.0
+  BrowserMatch "JDK/1\.0" force-response-1.0
+</IfModule>
+
+# =====================================================
+#                      DO NOT DELETE                   
+#    Additional modules added by postinstall scripts   
+# =====================================================
+# =====================================================
+
+# Virtual hosts
+Include ${_sysconfdir}/virtual.conf
+_EOT_
+
+cat >${_sysconfdir}/virtual.conf <<_EOT_
+# virtual hosts
+#<VirtualHost [ip]>
+# ...
+#</VirtualHost>
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <change from="1.3.30" to="1.3.31">
+        <item><para>SECURITY: CAN-2003-0987 (cve.mitre.org) --
+Verification as to whether the nonce returned in the client response
+is one we issued ourselves by means of a AuthDigestRealmSeed secret
+exposed as an md5(). See mod_digest documentation for more details.
+The experimental mod_auth_digest.c does not have this
+issue.</para></item>
+      </change>
+
+      <change from="1.3.29" to="1.3.30">
+        <item><para>Fix memory corruption problem with
+ap_custom_response() function. The core per-dir config would later
+point to request pool data that would be reused for different purposes
+on different requests.</para></item>
+        <item><para>Reinit socket to allow mod_proxy to continue to
+try connections when invalid IPs are accessed. PR 27542.</para></item>
+        <item><para>SECURITY: CAN-2004-0174 (cve.mitre.org) -- Fix
+starvation issue on listening sockets where a short-lived connection
+on a rarely-accessed listening socket will cause a child to hold the
+accept mutex and block out new connections until another connection
+arrives on that rarely-accessed listening socket. Enabled for some
+platforms known to have the issue (accept() blocking after select()
+returns readable). Define NONBLOCK_WHEN_MULTI_LISTEN if needed for
+your platform and not already defined.</para></item>
+        <item><para>SECURITY: CAN-2003-0993 (cve.mitre.org) -- Fix
+parsing of Allow/Deny rules using IP addresses without a netmask;
+issue is only known to affect big-endian 64-bit platforms; on affected
+platforms such rules would never produce matches. PR
+23850.</para></item>
+        <item><para>Fix mod_include's expression parser to recognize
+strings correctly even if they start with an escaped
+token</para></item>
+        <item><para>The whole codebase was relicensed and is now
+available under the Apache License, Version 2.0 (<ulink url="http://www.apache.org/licenses">http://www.apache.org/licenses</ulink>)</para></item>
+        <item><para>Add mod_whatkilledus and mod_backtrace
+(experimental) for reporting diagnostic information after a child
+process crash. See source code for documentation.</para></item>
+        <item><para>mod_usertrack no longer inspects the Cookie2
+header for the cookie name. PR 11475.</para></item>
+        <item><para>mod_usertrack no longer overwrites other cookies.
+PR 26002.</para></item>
+        <item><para>Add fatal exception hook for running diagnostic
+code after a crash</para></item>
+        <item><para>Make REMOTE_PORT variable available in
+mod_rewrite. PR 25772.</para></item>
+        <item><para>Forensic logging shouldn't log internal
+redirects</para></item>
+        <item><para>Some syntax errors in mod_mime_magic's magic file
+can result in a 500 error, which previously was unlogged. Now we log
+the error.</para></item>
+        <item><para>Linux 2.4+: If Apache is started as root and you
+code CoreDumpDirectory, coredumps are enabled via the prctl() syscall.
+Backport of a 2.x feature by Greg Ames.</para></item>
+        <item><para>Fix bug causing core dump when using
+CookieTracking without specifying a CookieName directly. Bugz#
+24483.</para></item>
+        <item><para>Fix RewriteBase directive to not add double
+slashes</para></item>
+        <item><para>mod_rewrite: In external rewrite maps lookup keys
+containing a newline now cause a lookup failure. PR
+14453.</para></item>
+        <item><para>Forensic logging module added
+(mod_log_forensic)</para></item>
+        <item><para>SECURITY: CAN-2003-0020 (cve.mitre.org) -- Escape
+arbitrary data before writing into the errorlog. Unescaped errorlogs
+are still possible using the compile time switch
+"-DAP_UNSAFE_ERROR_LOG_UNESCAPED".</para></item>
+        <item><para>'%X' is now accepted as an alias for '%c' in the
+LogFormat directive. This allows you to configure logging to still log
+the connection status even with mod_ssl (which changes what '%c'
+means).</para></item>
+        <item><para>UseCanonicalName off was ignoring the client
+provided port information</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>Unlike previous releases, PHP, auth_ldap, mod_dav,
+mod_perl, and mod_python have been split off into separate packages.
+The postinstall scripts for these packages (except PHP) will
+automatically update <command>/etc${SB_INSTALL_PREFIX}/httpd.conf</command> to add
+support for the new module.</para>
+
+        <para>A separate configuration file is now available for
+virtual hosts, "<command>/etc${SB_INSTALL_PREFIX}/virtual.conf</command>".</para>
+      </note>
+
+      <note type="installation">
+        <para>Apache requires a special user and group,
+"<command>nobody</command>". This can be changed by modifying the
+<command>User</command> and <command>Group</command> directives in the
+<command>/etc${SB_INSTALL_PREFIX}/httpd.conf</command> configuration file.</para>
+
+        <para>Log files are saved to
+<command>/var${SB_INSTALL_PREFIX}/log</command> by default. The
+"<command>ErrorLog</command>" and "<command>TransferLog</command>"
+directives can be used to change the log file paths.</para>
+
+        <para>All Apache configuration files are located in
+<command>/etc${SB_INSTALL_PREFIX}</command>. The "<command>-f</command>"
+command-line switch can be used to specify an alternate location for
+the <command>httpd.conf</command> file.</para>
+      </note>
+
+      <note type="usage">
+        <para>Because runtime paths are not honored in shared
+libraries under Tru64 UNIX 4.0D, <command>LD_LIBRARY_PATH</command>
+will need to be set for the PHP and SSL modules to load.</para>
+      </note>
+    </notes>
+  </program>
+</programs>

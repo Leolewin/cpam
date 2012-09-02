@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<programs>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+  <program name="Quota" version="1.6.6" revision="1"
+  systype="!hppa*-hpux11.31">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="f1ba83193e7f7212fbef769c10a0296b"
+        checksum-type="md5" size="48597"
+        path="src/Quota-1.6.6.tar.gz"/>
+      <patch checksum="34495db9243227ff560946aecda77021"
+        checksum-type="md5" size="1034"
+        path="src/Quota-1.6.6.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Quota/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Quota/.packlist
+rmdir ${_installsitearch}/auto/Quota 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Quota|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2011 September 18" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove 5.8.6, 5.8.8, 5.10.1, 5.12.1
+modules</para></item>
+        <item><para>Add 5.12.2 module</para></item>
+      </change>
+
+      <change date="2009 May 19" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove 5.6.1, 5.8.0, 5.8.2 modules</para></item>
+        <item><para>Add 5.8.8 module</para></item>
+      </change>
+
+      <change date="2005 February 15" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 5.8.6 module</para></item>
+      </change>
+
+      <change date="2004 October 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add uninstall section</para></item>
+        <item><para>Build linuxapi.c with -fpic on Linux as shared
+objects on AMD64 must be PIC</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
