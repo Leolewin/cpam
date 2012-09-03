@@ -1,0 +1,353 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="lxml" version="2.2.8" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}22</install-name>
+
+    <sources>
+      <source checksum="d6c612d63a84d79440912a1b29d3b981"
+        checksum-type="md5" size="2922192"
+        path="src/lxml-2.2.8.tar.gz"/>
+      <patch checksum="3b6ce6d928a05f7a5d47eaf9df34b857"
+        checksum-type="md5" size="435"
+        path="src/lxml-2.2.8.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        add-path="prepend">v&gt;=2.6.8</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11"
+        add-path="prepend">v&gt;=1.1.26</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_INC}:}\
+${SB_VAR_LIBXML_INC-/usr/include/libxml2}:${SB_VAR_LIBZ_INC}
+library_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+rpath=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+_EOT_
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+_pythonpath=$(ls -d build/lib*)
+
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest.py
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest2.py
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_install_prefix}
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS+$SB_VAR_SETUPTOOLS_LIB/${_pysubdir}:}\
+${_install_prefix}" \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+    </uninstall>
+
+    <module name="default">
+      <validate>
+        <depend program="lxml" module="2.6.7">v==2.2.8</depend>
+        <depend program="lxml" module="2.7.2">v==2.2.8</depend>
+      </validate>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_INC}:}\
+${SB_VAR_LIBXML_INC-/usr/include/libxml2}:${SB_VAR_LIBZ_INC}
+library_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+rpath=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pythonpath=$(ls -d build/lib*)
+
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest.py
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest2.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_install_prefix}
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS+$SB_VAR_SETUPTOOLS_LIB/${_pysubdir}:}\
+${_install_prefix}" \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies replace="0">
+        <depend program="setuptools" var="SETUPTOOLS"
+          install-name="setuptools06" module="2.7.2"
+          type="build">v&gt;=0.6</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_INC}:}\
+${SB_VAR_LIBXML_INC-/usr/include/libxml2}:${SB_VAR_LIBZ_INC}
+library_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+rpath=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pythonpath=$(ls -d build/lib*)
+
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest.py
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest2.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_install_prefix}
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS+$SB_VAR_SETUPTOOLS_LIB/${_pysubdir}:}\
+${_install_prefix}" \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies replace="0">
+        <depend program="setuptools" var="SETUPTOOLS"
+          install-name="setuptools06" module="2.6.7"
+          type="build">v&gt;=0.6</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+include_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_INC}:}\
+${SB_VAR_LIBXML_INC-/usr/include/libxml2}:${SB_VAR_LIBZ_INC}
+library_dirs=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+rpath=${SB_VAR_LIBXSLT+${SB_VAR_LIBXSLT_LIB}:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+_pythonpath=$(ls -d build/lib*)
+
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest.py
+PYTHONPATH=${_pythonpath} ${SB_VAR_PYTHON}/bin/python selftest2.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_install_prefix}
+
+PYTHONPATH="${SB_VAR_SETUPTOOLS+$SB_VAR_SETUPTOOLS_LIB/${_pysubdir}:}\
+${_install_prefix}" \
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--single-version-externally-managed --root=/ \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>lxml is copyright Infrae and distributed under the BSD
+license, with the following exceptions:</para>
+        <para>Some code, such a selftest.py, selftest2.py and
+src/lxml/_elementpath.py are derived from ElementTree and
+cElementTree. See doc/licenses/elementtree.txt for the license
+text.</para>
+        <para>test.py, the test-runner script, is GPL and copyright
+Shuttleworth Foundation. See doc/licenses/GPL.txt. It is believed the
+unchanged inclusion of test.py to run the unit test suite falls under
+the "aggregation" clause of the GPL and thus does not affect the
+license of the rest of the package.</para>
+        <para>the doctest.py module is taken from the Python library
+and falls under the PSF Python License.</para>
+      </license>
+
+      <license>
+        <para>Copyright (c) 2004 Infrae. All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of Infrae nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+INFRAE OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>The lxml Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
