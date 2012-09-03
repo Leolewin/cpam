@@ -1,0 +1,331 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gv" version="3.6.6" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}36</install-name>
+
+    <sources>
+      <source checksum="0b9c02724af876d9e5556c4e957b6343"
+        checksum-type="md5" size="540968"
+        path="src/gv-3.6.6.tar.gz"/>
+      <patch checksum="d53759e29e09b0553a9888ba79fe5470"
+        checksum-type="md5" size="57837"
+        path="src/gv-3.6.6.tww.patch"/>
+      <patch checksum="7457fd6cdbab942f58a202146bb5f9de"
+        checksum-type="md5" size="10513"
+        path="src/gv-3.6.6.backport-from-3_7_1.patch"/>
+      <patch checksum="b4a09f7e8fe8fe2f43291b51f294816b"
+        checksum-type="md5" size="669268"
+        path="src/gv-3.6.6.gnulib.patch"/>
+      <patch checksum="aba2a737607c16822f43718305caacda"
+        checksum-type="md5" size="938900"
+        path="src/gv-3.6.6.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip210">v&gt;=1.0.6</depend>
+      <depend program="Xaw3d" var="LIBXAW3D"
+        install-name="libxaw3d15">v&gt;=1.5e</depend>
+      <depend program="xpm" var="LIBXPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_papersize=letter
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+# patch doesn't actually remove empty files
+rm -f src/config.h
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl,-blibpath:/usr/lib:/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-Wl,+nodefaultrpath -L/usr/contrib/X11R6/lib"
+
+  ARGS="--x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+
+  ARGS="--x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+
+  ARGS="--x-includes=/usr/include/X11R6 \
+--x-libraries=/usr/lib/X11R6" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_BZIP2+-I${SB_VAR_BZIP2_INC}}\
+ ${SB_VAR_LIBXAW3D+-I${SB_VAR_LIBXAW3D_INC}}\
+ ${SB_VAR_LIBXPM+-I${SB_VAR_LIBXPM_INC}}\
+ ${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_BZIP2+-L${SB_VAR_BZIP2_LIB}\
+ ${CC_LD_RT}${SB_VAR_BZIP2_LIB}}\
+ ${SB_VAR_LIBXAW3D+-L${SB_VAR_LIBXAW3D_LIB}\
+ ${CC_LD_RT}${SB_VAR_LIBXAW3D_LIB}}\
+ ${SB_VAR_LIBXPM+-L${SB_VAR_LIBXPM_LIB}\
+ ${CC_LD_RT}${SB_VAR_LIBXPM_LIB}}\
+ ${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB} ${CC_LD_RT}${SB_VAR_LIBZ_LIB}}\
+ ${LDFLAGS+${LDFLAGS}}" \
+--with-default-papersize=${_papersize} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--datadir=${_datadir} --infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/gv.texi doc/gpl.texi \
+doc/version.texi ${_docdir}/texinfo
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.6.5" to="3.6.6">
+        <item><para>Updated maintainer's e-mail address</para></item>
+        <item><para>libzio is now used if available during compile
+time</para></item>
+        <item><para>gv-update-userconfig now offers the options -n
+resp. -N to switch to an alternative navigation: After each page
+switch (except if selected by the page number) the page is scrolled to
+the top (if switching forward) resp. the bottom (if switching
+backward).</para></item>
+        <item><para>gv-update-userconfig can remove the resources
+inserted by -n resp. -N with the new option -s.</para></item>
+        <item><para>Support for encrypted PDF files. New command line
+switch "--password=PASSWORD" for opening encrypted PDFs. If the
+password is not supplied via command line, the user will be asked to
+enter it.</para></item>
+        <item><para>Support for files &gt; 2GB on file systems with
+large file support.</para></item>
+        <item><para>Interactive prompting for the password of
+encrypted PDF files do not work if and only if DSC is turned off. As a
+workarouund, you can load the file with DSC turned on and then turn
+DSC off.</para></item>
+        <item><para>the current coordinate can be saved to a file by
+the z resp. the u key. See gv.info for details.</para></item>
+        <item><para>The return key now scrolls through the whole
+document vertically. Unlike the space key no horizontal scrolling is
+performed. The old function of the return key is still available
+through the "Page Down" and the "f" key.</para></item>
+        <item><para>*.ad and *.dat files are installed to
+$PREFIX/share/gv</para></item>
+        <item><para>"ERROR:" and "error:" now also trigger the info
+popup in error mode</para></item>
+        <item><para>Xinerama support. It can be configured by the
+"xinerama"-resource. Its values can be "On", "Off" or "Auto". "Auto"
+is the default.</para></item>
+        <item><para>New helper Script "gv-update-userconfig", which is
+a simple script to update an .gv config file to the current version of
+gv.</para></item>
+      </change>
+
+      <change from="3.6.4" to="3.6.5">
+        <item><para>"Fit to window magnification" and "Fit width to
+window magnification" with "Automatic resizing" turned on sometime
+miss rescaling, especially when changing the orientation or resizing
+the window. You can force rescaling by selecting the active "special"
+scale in the scales menu.</para></item>
+        <item><para>~/.gv now contains the version that has saved that
+configuration.</para></item>
+        <item><para>Build-system ensures that the man-page is always
+up to date</para></item>
+        <item><para>Fixed some compiler warnings</para></item>
+        <item><para>Added new widgetless mode, usable via option
+"--widgetless"</para></item>
+        <item><para>--help, --usage and --version now work without
+having an X11 display</para></item>
+        <item><para>--spartan and --widgetless now use embedded
+resources. Before this bugfix, you had to use --style=gv_spartan.dat
+to use the embedded resource.</para></item>
+        <item><para>--infoSilent, --infoErrors and --infoAll will
+control, which ghostscript messages will lead to an info pop-up
+window. The same effect can be reached via a resource "infoVerbose",
+which values can be "Silent", "Errors" and "All". It can also be
+edited via the "gv options" dialog.</para></item>
+        <item><para>"Fit to window magnification" and "Fit width to
+window magnification" -- currently works best with "Automatic
+resizing" turned off. With --scale=-1000 resp. --scale=-1001, you can
+access these special scales from the command line. </para></item>
+        <item><para>"Fit to window magnification" and "Fit width to
+window magnification" with "Automatic resizing" turned on sometime
+miss rescaling, especially when changing the orientation or resizing
+the window. You can force rescaling by selecting the active "special"
+scale in the scales menu.</para></item>
+        <item><para>Arbitrary scales are now possible - input them in
+the gv options dialog or with --scale=n, where n is a
+float.</para></item>
+        <item><para>New fullscreen mode which needs support from the
+window manager </para></item>
+        <item><para>New command line switch "--presentation" as a
+shortcut for "--fullscreen --noresize --scale=-1000
+--widgetless"</para></item>
+      </change>
+
+      <change from="3.6.3" to="3.6.4">
+        <item><para>DSC parser now respects the level of
+BeginDocument/EndDocument</para></item>
+        <item><para>Possible segfault has been fixed</para></item>
+        <item><para>Fixed bug #21239: Vlist.c produces garbage if
+International is set</para></item>
+        <item><para>Fixed bug #21740: popup windows may partly
+invisible as not on the screen</para></item>
+        <item><para>The escape key is now working in more
+contexts</para></item>
+        <item><para>The filename can optionally be shown insted of the
+title</para></item>
+        <item><para>Fixed bug #23199: No error message for errors in
+opened file</para></item>
+        <item><para>Got rid of non-free code.</para></item>
+      </change>
+
+      <change from="3.6.2" to="3.6.3">
+        <item><para>gv is now able to work with latest ghostscript: gs
+8.57</para></item>
+        <item><para>The bug causing the version not to figure in the
+manual has been fixed</para></item>
+        <item><para>The SIGINT signal is now masked (ignored) by
+gv</para></item>
+        <item><para>gv no more segfaults when reading a configuration
+file as produced by State -&gt; Setup Options -&gt; Save</para></item>
+        <item><para>gv should compile in non-GNU system that doesnt
+have glib2. The 'getopt' gnulib module has been imported to fix
+this.</para></item>
+        <item><para>gv now correctly adjust the page index window
+after PAGE-UP and PAGE-DOWN events</para></item>
+        <item><para>gv is now able to open files with minus character
+beginning filenames</para></item>
+        <item><para>X resources related bugs has been fixed. gv is now
+able to get resources from the display database, user file, gv system
+database and command line doing the Right Thing (TM)</para></item>
+        <item><para>gv is now able to correctly understand
+DocumentMedia and other DSC directives that uses postscript strings.
+It was not possible with previous versions due to a bug in the
+postscript names scanning routine.</para></item>
+        <item><para>Vulnerability CVE-2006-5864 has been
+fixed</para></item>
+        <item><para>gs is now invoked with
+`-dFIXEDMEDIA'</para></item>
+        <item><para>The internal gettext implementation has been
+renamed to `ps_gettext' to avoid collisions with the builtin `gettext'
+function</para></item>
+        <item><para>--quiet and --noquiet now works as
+expected</para></item>
+        <item><para>There are troubles with 64 bits machines: the use
+of x-pointers to store data should be eliminated in subsequent
+versions</para></item>
+      </change>
+
+      <change from="3.6.1" to="3.6.2">
+        <item><para>There are troubles with 64 bits machines: the use
+of x-pointers to store data should be eliminated from the
+sources</para></item>
+        <item><para>It is not possible to zoom when viewing PDF 1.4
+files. PDF 1.5 files are not supported at all</para></item>
+        <item><para>The quality of postcript files generated by saving
+PDF files is poor</para></item>
+        <item><para>See http://savannah.gnu.org/bugs/?group=gv for
+more known bugs on this release</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 25" revision="6"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for AIX 4.3.</para></item>
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL3 and SLED.</para></item>
+        <item><para>Remove supoort for solaris 2.6 and 7.</para></item>
+        <item><para>Upgrade perl dependency from 5.8.8 to
+5.12.2.</para></item>
+        <item><para>Upgrade zlib dependency from 1.2.3 to
+1.2.5.</para></item>
+      </change>
+
+      <change date="2011 March 15" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Backport from 3.7.1 release to improve tmp
+filename handling</para></item>
+      </change>
+
+      <change date="2011 February 8" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace improper usage of gnulib xstrtold() with
+gnulib c_strtold() to fix SEGV</para></item>
+      </change>
+
+      <change date="2010 November 9" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2010 January 30" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Build against custom Xaw3d library rather than
+system library</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
