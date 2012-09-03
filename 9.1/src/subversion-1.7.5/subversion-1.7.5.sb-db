@@ -1,0 +1,3327 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="subversion" version="1.7.5" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}17</install-name>
+
+    <sources>
+      <source checksum="f6353b9b581081cdf97299300c9eada3"
+        checksum-type="md5" size="6002955"
+        path="src/subversion-1.7.5.tar.bz2"/>
+      <patch checksum="207fd31cd525991b43a78802e19aed1e"
+        checksum-type="md5" size="36926"
+        path="src/subversion-1.7.5.tww.patch"/>
+      <patch checksum="ad2339d21412eb5f59b38233a376547f"
+        checksum-type="md5" size="1629797"
+        path="src/subversion-1.7.5.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="doxygen" var="DOXYGEN"
+        install-name="doxygen17" type="build">v&gt;=1.7.4</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="apr" var="LIBAPR"
+        install-name="libapr14">v&gt;=1.4.5</depend>
+      <depend program="apr-util" var="LIBAPRUTIL"
+        install-name="libaprutil13">v&gt;=1.3.12</depend>
+      <depend program="db" var="LIBDB" install-name="libdb47"
+        systype="!*-hpux*">v&gt;=4.7.25</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v&gt;=2.0.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v==0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libxml" install-name="libxml27"
+        add-path="prepend">v&gt;=2.7.8</depend>
+      <depend program="libxslt" install-name="libxslt11"
+        add-path="prepend">v&gt;=1.1.26</depend>
+      <depend program="neon" var="LIBNEON"
+        install-name="libneon029">v&gt;=0.29.6</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10"
+        add-path="prepend">v&gt;=1.0.0e</depend>
+      <depend program="sqlite" var="LIBSQLITE"
+        install-name="libsqlite37">v&gt;=3.7.7.1</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+      <depend program="xmlcatalog" var="XMLCATALOG"
+        module="docbook-xml-4.0" type="build">v==1.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_xsl_stylesheets="${SB_VAR_XMLCATALOG}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # for proper transitive linking
+  LDFLAGS="-L${SB_VAR_LIBAPR_LIB}" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+if [ "${SB_VAR_PYTHON+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!/usr/bin/env.*!${SB_VAR_PYTHON}/bin/python!" \
+  gen-make.py build/getversion.py 
+fi
+
+# Disable Berkeley DB filesystem library
+if [ "${SB_VAR_LIBDB+set}" != "set" ]; then
+  ARGS="${ARGS+${ARGS}} --without-berkeley-db"
+fi
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+LDFLAGS="${SB_VAR_SWIG+-L${SB_INSTALL_PREFIX}/lib} \
+-L${SB_VAR_LIBEXPAT_LIB} -L${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_LIBSQLITE_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_PYTHON+set}" = set && PYTHON="${SB_VAR_PYTHON}/bin/python") \
+${SB_VAR_HTTPD+--with-apxs="${SB_VAR_HTTPD}/bin/apxs"} \
+${SB_VAR_LIBDB+--with-berkeley-db="db.h:${SB_VAR_LIBDB_INC}:\
+${SB_VAR_LIBDB_LIB}:db-4.7"} \
+${SB_VAR_SWIG+--with-swig="${SB_VAR_SWIG}/bin/swig"} \
+$(test "${SB_VAR_SWIG+set}" != "set" && echo "--without-swig") \
+--with-apr="${SB_VAR_LIBAPR}/bin/apr-1-config" \
+--with-apr-util="${SB_VAR_LIBAPRUTIL}/bin/apu-1-config" \
+--with-sqlite=${SB_VAR_LIBSQLITE} --with-neon=${SB_VAR_LIBNEON} \
+--enable-shared --disable-mod-activation --without-jdk \
+${_python_libdir+--with-python-libdir=${_python_libdir}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--sysconfdir=${_sysconfdir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="subversion"
+          module="httpd-2.2.21">v==1.7.5</depend>
+        <depend program="subversion"
+          module="python-2.6.7">v==1.7.5</depend>
+        <depend program="subversion"
+          module="python-2.7.2">v==1.7.5</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_xsl_stylesheets="${SB_VAR_XMLCATALOG}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # for proper transitive linking
+  LDFLAGS="-L${SB_VAR_LIBAPR_LIB}" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+if [ "${SB_VAR_PYTHON+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!/usr/bin/env.*!${SB_VAR_PYTHON}/bin/python!" \
+  gen-make.py build/getversion.py 
+fi
+
+# Disable Berkeley DB filesystem library
+if [ "${SB_VAR_LIBDB+set}" != "set" ]; then
+  ARGS="${ARGS+${ARGS}} --without-berkeley-db"
+fi
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+LDFLAGS="${SB_VAR_SWIG+-L${SB_INSTALL_PREFIX}/lib} \
+-L${SB_VAR_LIBEXPAT_LIB} -L${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_LIBSQLITE_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_PYTHON+set}" = set && PYTHON="${SB_VAR_PYTHON}/bin/python") \
+${SB_VAR_HTTPD+--with-apxs="${SB_VAR_HTTPD}/bin/apxs"} \
+${SB_VAR_LIBDB+--with-berkeley-db="db.h:${SB_VAR_LIBDB_INC}:\
+${SB_VAR_LIBDB_LIB}:db-4.7"} \
+${SB_VAR_SWIG+--with-swig="${SB_VAR_SWIG}/bin/swig"} \
+$(test "${SB_VAR_SWIG+set}" != "set" && echo "--without-swig") \
+--with-apr="${SB_VAR_LIBAPR}/bin/apr-1-config" \
+--with-apr-util="${SB_VAR_LIBAPRUTIL}/bin/apu-1-config" \
+--with-sqlite=${SB_VAR_LIBSQLITE} --with-neon=${SB_VAR_LIBNEON} \
+--enable-shared --disable-mod-activation --without-jdk \
+${_python_libdir+--with-python-libdir=${_python_libdir}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--sysconfdir=${_sysconfdir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake && {
+  if [ "${SB_VAR_DOXYGEN+set}" = set ]; then
+    # build Doxygen documentation
+    (${SB_VAR_DOXYGEN}/bin/doxygen doc/doxygen.conf)
+  fi
+}
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+gmake check
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/config
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/servers
+
+if [ "${SB_VAR_DOXYGEN+set}" = set ]; then
+  # install Doxygen documentation
+  (cd doc/doxygen/html
+   ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/doxygen
+   ${SB_PATH_FIND} . | cpio -pdmuv ${_docdir}/doxygen)
+fi
+
+${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <module name="python-2.6.7">
+      <dependencies replace="0">
+        <depend program="swig" var="SWIG"
+          install-name="swig20">v&gt;=2.0.4</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="subversion">v==1.7.5</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_python_libdir="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # for proper transitive linking
+  LDFLAGS="-L${SB_VAR_LIBAPR_LIB}" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+if [ "${SB_VAR_PYTHON+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!/usr/bin/env.*!${SB_VAR_PYTHON}/bin/python!" \
+  gen-make.py build/getversion.py 
+fi
+
+# Disable Berkeley DB filesystem library
+if [ "${SB_VAR_LIBDB+set}" != "set" ]; then
+  ARGS="${ARGS+${ARGS}} --without-berkeley-db"
+fi
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+LDFLAGS="${SB_VAR_SWIG+-L${SB_INSTALL_PREFIX}/lib} \
+-L${SB_VAR_LIBEXPAT_LIB} -L${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_LIBSQLITE_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_PYTHON+set}" = set && PYTHON="${SB_VAR_PYTHON}/bin/python") \
+${SB_VAR_HTTPD+--with-apxs="${SB_VAR_HTTPD}/bin/apxs"} \
+${SB_VAR_LIBDB+--with-berkeley-db="db.h:${SB_VAR_LIBDB_INC}:\
+${SB_VAR_LIBDB_LIB}:db-4.7"} \
+${SB_VAR_SWIG+--with-swig="${SB_VAR_SWIG}/bin/swig"} \
+$(test "${SB_VAR_SWIG+set}" != "set" && echo "--without-swig") \
+--with-apr="${SB_VAR_LIBAPR}/bin/apr-1-config" \
+--with-apr-util="${SB_VAR_LIBAPRUTIL}/bin/apu-1-config" \
+--with-sqlite=${SB_VAR_LIBSQLITE} --with-neon=${SB_VAR_LIBNEON} \
+--enable-shared --disable-mod-activation --without-jdk \
+${_python_libdir+--with-python-libdir=${_python_libdir}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--sysconfdir=${_sysconfdir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake external-all swig-py
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-swig-py
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_python_libdir}/include.paths.d
+cat >${_python_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_python_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_python_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="perl-5.12.2">
+      <dependencies replace="0">
+        <depend program="swig" var="SWIG"
+          install-name="swig20">v&gt;=2.0.4</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+        <depend program="subversion">v==1.6.17</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_gcc_subdir="gcc44"
+
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CFLAGS="-O2 -mips4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+# Disable Berkeley DB filesystem library
+if [ "${SB_VAR_LIBDB+set}" != "set" ]; then
+  ARGS="${ARGS+${ARGS}} --without-berkeley-db"
+fi
+
+(cd ${SB_BUILD_PREFIX}/subversion/bindings/swig/perl/native
+ ${SB_PATH_SED} -i -e "\
+s!@libdir@!${SB_INSTALL_PREFIX_LIB}!;" Makefile.PL.in)
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+LDFLAGS="${SB_VAR_SWIG+-L${SB_INSTALL_PREFIX}/lib} \
+-L${SB_VAR_GCC_RT_LIB} -L${SB_VAR_LIBEXPAT_LIB} \
+-L${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}:${SB_VAR_LIBEXPAT_LIB}:\
+${SB_VAR_LIBSQLITE_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_PYTHON+set}" = set &&
+PYTHON="${SB_VAR_PYTHON}/bin/python") \
+${SB_VAR_HTTPD+--with-apxs="${SB_VAR_HTTPD}/bin/apxs"} \
+${SB_VAR_LIBDB+--with-berkeley-db="db.h:${SB_VAR_LIBDB_INC}:\
+${SB_VAR_LIBDB_LIB}:db-4.7"} \
+${SB_VAR_SWIG+--with-swig="${SB_VAR_SWIG}/bin/swig"} \
+$(test "${SB_VAR_SWIG+set}" != "set" && echo "--without-swig") \
+--with-apr="${SB_VAR_LIBAPR}/bin/${_gcc_subdir}/apr-1-config" \
+--with-apr-util="${SB_VAR_LIBAPRUTIL}/bin/${_gcc_subdir}/apu-1-config" \
+--with-sqlite=${SB_VAR_LIBSQLITE} --with-neon=${SB_VAR_LIBNEON} \
+--enable-shared --disable-mod-activation --without-jdk \
+${_python_libdir+--with-python-libdir=${_python_libdir}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--sysconfdir=${_sysconfdir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libsvn_swig_perl
+
+sudo -h >/dev/null 2>&1 || {
+  sb_msg_err "'sudo' program not found. As part of the build \
+process for this module, the libsvn_swig_perl must be built and \
+then installed before the Perl SVN module can be built. 'sudo' is \
+used to run the necessary commands as root because the configuration \
+step is usually run as a non-root user. Please configure 'sudo' per \
+the sb(1) manual and rerun."
+  exit 1
+}
+
+sudo gmake install-swig-pl-lib
+
+(cd ${SB_BUILD_PREFIX}/subversion/bindings/swig/perl/native
+ ${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${_perl_libdir} \
+ INSTALLPRIVLIB=${_perl_libdir} \
+ INSTALLSITEARCH=${_perl_libdir} \
+ INSTALLSITEMAN3DIR="${SB_INSTALL_PREFIX}/man/man3")
+gmake swig-pl
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -C subversion/bindings/swig/perl/native install
+
+rm ${_perl_libdir}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_perl_libdir}/include.paths.d
+cat >${_perl_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_perl_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_perl_libdir} ${SB_INSTALL_PREFIX}/man/man3
+]]>
+      </uninstall>
+    </module>
+
+    <module name="python-2.7.2">
+      <dependencies replace="0">
+        <depend program="swig" var="SWIG"
+          install-name="swig20">v&gt;=2.0.4</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="subversion">v==1.7.5</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_python_libdir="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # for proper transitive linking
+  LDFLAGS="-L${SB_VAR_LIBAPR_LIB}" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+if [ "${SB_VAR_PYTHON+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!/usr/bin/env.*!${SB_VAR_PYTHON}/bin/python!" \
+  gen-make.py build/getversion.py 
+fi
+
+# Disable Berkeley DB filesystem library
+if [ "${SB_VAR_LIBDB+set}" != "set" ]; then
+  ARGS="${ARGS+${ARGS}} --without-berkeley-db"
+fi
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+LDFLAGS="${SB_VAR_SWIG+-L${SB_INSTALL_PREFIX}/lib} \
+-L${SB_VAR_LIBEXPAT_LIB} -L${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_LIBSQLITE_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_PYTHON+set}" = set && PYTHON="${SB_VAR_PYTHON}/bin/python") \
+${SB_VAR_HTTPD+--with-apxs="${SB_VAR_HTTPD}/bin/apxs"} \
+${SB_VAR_LIBDB+--with-berkeley-db="db.h:${SB_VAR_LIBDB_INC}:\
+${SB_VAR_LIBDB_LIB}:db-4.7"} \
+${SB_VAR_SWIG+--with-swig="${SB_VAR_SWIG}/bin/swig"} \
+$(test "${SB_VAR_SWIG+set}" != "set" && echo "--without-swig") \
+--with-apr="${SB_VAR_LIBAPR}/bin/apr-1-config" \
+--with-apr-util="${SB_VAR_LIBAPRUTIL}/bin/apu-1-config" \
+--with-sqlite=${SB_VAR_LIBSQLITE} --with-neon=${SB_VAR_LIBNEON} \
+--enable-shared --disable-mod-activation --without-jdk \
+${_python_libdir+--with-python-libdir=${_python_libdir}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--sysconfdir=${_sysconfdir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake external-all swig-py
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-swig-py
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_python_libdir}/include.paths.d
+cat >${_python_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_python_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_python_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="httpd-2.2.21">
+      <dependencies replace="0">
+        <depend program="httpd" var="HTTPD">v==2.2.21</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="subversion">v==1.7.5</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_xsl_stylesheets="${SB_VAR_XMLCATALOG}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.23)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-DEBUG:optimize_space=ON -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # for proper transitive linking
+  LDFLAGS="-L${SB_VAR_LIBAPR_LIB}" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+if [ "${SB_VAR_PYTHON+set}" = set ]; then
+  ${SB_PATH_SED} -i -e "\
+s!/usr/bin/env.*!${SB_VAR_PYTHON}/bin/python!" \
+  gen-make.py build/getversion.py 
+fi
+
+# Disable Berkeley DB filesystem library
+if [ "${SB_VAR_LIBDB+set}" != "set" ]; then
+  ARGS="${ARGS+${ARGS}} --without-berkeley-db"
+fi
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}}" \
+LDFLAGS="${SB_VAR_SWIG+-L${SB_INSTALL_PREFIX}/lib} \
+-L${SB_VAR_LIBEXPAT_LIB} -L${SB_VAR_LIBSQLITE_LIB} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_LIBSQLITE_LIB}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_GETTEXT+:${SB_VAR_GETTEXT_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+$(test "${SB_VAR_PYTHON+set}" = set && PYTHON="${SB_VAR_PYTHON}/bin/python") \
+${SB_VAR_HTTPD+--with-apxs="${SB_VAR_HTTPD}/bin/apxs"} \
+${SB_VAR_LIBDB+--with-berkeley-db="db.h:${SB_VAR_LIBDB_INC}:\
+${SB_VAR_LIBDB_LIB}:db-4.7"} \
+${SB_VAR_SWIG+--with-swig="${SB_VAR_SWIG}/bin/swig"} \
+$(test "${SB_VAR_SWIG+set}" != "set" && echo "--without-swig") \
+--with-apr="${SB_VAR_LIBAPR}/bin/apr-1-config" \
+--with-apr-util="${SB_VAR_LIBAPRUTIL}/bin/apu-1-config" \
+--with-sqlite=${SB_VAR_LIBSQLITE} --with-neon=${SB_VAR_LIBNEON} \
+--enable-shared --disable-mod-activation --without-jdk \
+${_python_libdir+--with-python-libdir=${_python_libdir}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--sysconfdir=${_sysconfdir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake apache-mod \
+APACHE_LIBEXECDIR="${SB_INSTALL_PREFIX}/modules/2.2.21"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-mods-shared \
+APACHE_LIBEXECDIR="${SB_INSTALL_PREFIX}/modules/2.2.21"
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/modules/2.2.21
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="apache-2.0.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.7.4" to="1.7.5">
+        <items name="User-visible changes">
+          <item><para>Client- and server-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>http: report deleted-revision upon delete
+during update (r1327474)</para></item>
+          </unorderedlist></item>
+          <item><para>Client-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>avoid potential segfault when canonicalizing
+properties (r1296369)</para></item>
+            <item><para>improve memory and file-handle management with
+externals (issue #4130)</para></item>
+            <item><para>serf: convert assertions to "MERGE failed"
+errors (r1302417)</para></item>
+            <item><para>fix undefined behaviour during multi-segment
+reverse merges (issue #4144)</para></item>
+            <item><para>fix potential use of already freed memory
+during diff operation (r1311935)</para></item>
+            <item><para>improve performance of scan for the working
+copy root (r1306334)</para></item>
+            <item><para>cmdline: fix segfault during 'svn diff'
+argument processing (r1311702)</para></item>
+            <item><para>fix regression from 1.6 in update with --depth
+option (issue #4136)</para></item>
+            <item><para>propset: avoid undefined behaviour in error
+path (r1325361)</para></item>
+            <item><para>reset sqlite statements, partly for
+sqlite-3.7.11 compat (r1328846, et al)</para></item>
+            <item><para>fix assertion during 'svn diff -r BASE:HEAD
+^/trunk' (issue #4161)</para></item>
+            <item><para>notify upon 'update' just removing locks on
+files (r1329876)</para></item>
+            <item><para>neon: fix potential use of freed memory during
+commits (r1329388)</para></item>
+            <item><para>'status --xml' doesn't show repository deletes
+correctly (issue #4167)</para></item>
+            <item><para>fix assert on svn:externals with drive letter
+on Windows (issue #4073)</para></item>
+            <item><para>fix 'svn update --depth=empty' against 1.4
+servers (issue #4046)</para></item>
+            <item><para>handle missing svn:date reported by svnserve
+gracefully (r1306111)</para></item>
+            <item><para>fix merges which first add a subtree and then
+delete it (issue #4166)</para></item>
+            <item><para>fix a regression with checkout of file
+externals (issue #4087)</para></item>
+            <item><para>don't add spurious mergeinfo to subtrees in
+edge-case merge (issue #4169)</para></item>
+            <item><para>improve performance of status on large working
+copies (issue #4178)</para></item>
+          </unorderedlist></item>
+          <item><para>Server-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>fix non-fatal FSFS corruption bug with
+concurrent commits (issue #4129)</para></item>
+            <item><para>mod_dav_svn: raise an error on MERGE of
+non-existent resource (r1298343)</para></item>
+            <item><para>mod_dav_svn: support compiling/running under
+httpd-2.4 (r1232267)</para></item>
+            <item><para>mod_dav_svn: forbid BDB repositories under
+httpd's event MPM (issue #4157)</para></item>
+          </unorderedlist></item>
+          <item><para>Other tool improvements and bugfixes:</para>
+          <unorderedlist>
+            <item><para>emacs support: updates to dsvn.el and
+vc-svn.el (r1200896, et al)</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>General:</para>
+          <unorderedlist>
+            <item><para>windows example distribution scripts: include
+svnrdump (r1295007)</para></item>
+            <item><para>fix running the test suite with jsvn
+(r1335555)</para></item>
+          </unorderedlist></item>
+          <item><para>Bindings:</para>
+          <unorderedlist>
+            <item><para>swig-py tests: avoid FAILs on APR hash order
+(r1296137, r1292248)</para></item>
+            <item><para>swig-rb tests: avoid FAILs on APR hash order
+(r1310535, r1310594)</para></item>
+            <item><para>swig-pl: Improved perl detection in
+gen-make.py (r1291797, r1291810)</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.7.3" to="1.7.4">
+        <items name="User-visible changes">
+          <item><para>fix 'svn log --diff' for moved paths (r1210147,
+et al)</para></item>
+          <item><para>fix ra_serf problem with reading directory
+entries via HTTPv2 (r1238121)</para></item>
+          <item><para>prepend "sqlite:" to error messages from SQLite
+(r1245738, -817)</para></item>
+          <item><para>fix randomly missing "Merged via" notifications
+in 'svn log -g' (r1293229)</para></item>
+          <item><para>fix spurious conflict when merging deleted
+symbolic link (issue #4052)</para></item>
+          <item><para>fix URL-to-WC copy of externals on Windows
+(issue #4123)</para></item>
+          <item><para>improve an FSFS sanity-check error message
+(r1294470)</para></item>
+          <item><para>fix regressions with symlinks pointing at
+externals (issue #4102)</para></item>
+          <item><para>fix 'svn log --diff' output ordering issue on
+Windows (r1295671)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>don't build mod_dontdothat if not building with
+httpd (r1243976)</para></item>
+          <item><para>fix the testsuite to avoid FAILs on APR hash
+order (r1230714, et al)</para></item>
+        </items>
+      </change>
+
+      <change from="1.7.2" to="1.7.3">
+        <items name="General">
+          <item><para>ship mod_dontdothat with the standard
+release</para></item>
+        </items>
+
+        <items name="User-visible changes">
+          <item><para>fix segfault on 'svn rm $ROOT_URL' (issue
+#4074)</para></item>
+          <item><para>replace a couple of assertions in favor of
+errors (r1207858, -949)</para></item>
+          <item><para>fix a server assert after being upgraded
+(r1210195)</para></item>
+          <item><para>fix segfault on 'svn mkdir svn://localhost'
+(r1211483)</para></item>
+          <item><para>make 'svnadmin recover' prune the rep cache
+(r1213331, et al)</para></item>
+          <item><para>make svnmucc use values from --config-dir
+option</para></item>
+          <item><para>update and clarify the merge help text
+(r1154121, et al)</para></item>
+          <item><para>replace wc assertion with informative error
+(r1222521, -693)</para></item>
+          <item><para>copy permissions correctly for FSFS dirs
+(r1229252)</para></item>
+          <item><para>improve 'svn log --with-all-revprops' over
+ra-dav (issue #4082)</para></item>
+          <item><para>fix segfault when remapping a file external
+(issue #4093)</para></item>
+          <item><para>fix segfault caused by obstructing unversioned
+dir (r1229677)</para></item>
+          <item><para>fix regression on first update of external dir
+with '-r' (issue #4053)</para></item>
+          <item><para>fix various EOL-handling problems in 'svn patch'
+(issues #3814, #3991)</para></item>
+          <item><para>fix segfault in 'svn revert'
+(r1229303)</para></item>
+          <item><para>improve correctness of 'svn patch --dry-run'
+(r1231944, -5)</para></item>
+          <item><para>enforce revisions given in 'svn:externals'
+(issue #4053)</para></item>
+          <item><para>fix potential corruption on 32-bit FSFS with
+large files (r1230212)</para></item>
+          <item><para>make 'svn status --xml' show new files (issue
+#4097)</para></item>
+          <item><para>fix 'svn mergeinfo' correctness (issue
+#4050)</para></item>
+          <item><para>return the correct status for non-present nodes
+(r1232202, -07, -21, -22)</para></item>
+          <item><para>improve SASL error messages (r1236343, et
+al)</para></item>
+          <item><para>improve server cert error code for ra_serf
+(r1232413)</para></item>
+          <item><para>fix SVNParentPath listings for parent path
+symlinks (r1221767, -80)</para></item>
+          <item><para>fix mod_dav_svn's handling of POST errors (issue
+#4086)</para></item>
+          <item><para>log some mod_dav_svn errors, rather than
+ignoring them (r1237720, -9596)</para></item>
+          <item><para>relax requirements for canonicalization in
+mod_dav_svn (r1236173)</para></item>
+          <item><para>fix a rare source of FSFS corruption
+(r1240752)</para></item>
+          <item><para>allow committing the result of some copy
+operations (issue #4059)</para></item>
+          <item><para>prevent one-byte buffer overflow in base64
+decoding (r1242337)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>JavaHL: Add missing notify action, fixing an
+exception (r1221793)</para></item>
+          <item><para>fix swig-py memory leak (r1235264, -296, -302,
+-736)</para></item>
+          <item><para>fix spurious test suite failure (r1220742,
+-50)</para></item>
+          <item><para>allow running tests on UNC shares
+(r1225491)</para></item>
+          <item><para>bindings: see platform-specific password
+providers (r1242660, -1)</para></item>
+          <item><para>skip 'svnrdump dump' tests over ra_serf
+(r1242537)</para></item>
+          <item><para>convert a few ra_serf assertions to errors
+(r1242607)</para></item>
+        </items>
+      </change>
+
+      <change from="1.7.1" to="1.7.2">
+        <items name="User-visible changes">
+          <item><para>fix working copy corruption after interrupted
+update/switch (issue #4040)</para></item>
+          <item><para>avoid segfaults against pre-1.5 servers
+(r1186928)</para></item>
+          <item><para>improve configure error message if apr-util uses
+old or no bdb (r1186784)</para></item>
+          <item><para>make 'svn patch' ignore '/dev/null' targets for
+compat with git (r1197998)</para></item>
+          <item><para>fix 'svn patch' segfault on patch that skips and
+deletes files (r1199950)</para></item>
+          <item><para>omit "Committed revision N." output from 'svn
+commit --quiet' (r1200837)</para></item>
+          <item><para>fix authz denial when svnserve root is a
+repository (issue #4060)</para></item>
+          <item><para>fix uninitialized memory read in client diff
+code (r1201002)</para></item>
+          <item><para>avoid potential segfault during merges
+(r1202807)</para></item>
+          <item><para>fix an assertion failure when a symlink is
+updated (r1186944, -81, -83)</para></item>
+          <item><para>make working copy operations fail if nodes have
+no base checksum (r1202630)</para></item>
+          <item><para>fix nested &lt;Location&gt;s when using v2
+protocol (r1203546, -651, -653)</para></item>
+          <item><para>make mod_dav_svn ignore non-Subversion POST
+requests (r1187695)</para></item>
+          <item><para>avoid reading freed memory
+(r1204478)</para></item>
+          <item><para>recognize empty (only byte order mark) UTF-8
+files as text (issue #4064)</para></item>
+          <item><para>fix 1.7 client regression when operating against
+a 1.0.x server (r1199876)</para></item>
+          <item><para>remove empty parent dirs of removed externals on
+update (issue #4044)</para></item>
+          <item><para>make 'svn diff -c N' work for files added in rN
+(issue #2873)</para></item>
+          <item><para>plug a memory leak in the bdb backend
+(r1205726)</para></item>
+          <item><para>fix 'svn import' with native eol-style and
+inconsistent EOLs (r1205193)</para></item>
+          <item><para>fix reading beyond the end of a string in bdb
+backend (r1205839, -48)</para></item>
+          <item><para>don't assert when committing an incomplete
+directory (issue #4042)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>JavaHL: allow 'status -u' to function properly
+(r1189190, -395)</para></item>
+          <item><para>don't put '\r' characters in our generate sql
+headers (r1189580)</para></item>
+          <item><para>properly define WIN64 on Windows x64 builds
+(r1188609)</para></item>
+          <item><para>better adherence to C89 in enum definitions
+(r1189665)</para></item>
+          <item><para>bump copyright year in Windows DLLs
+(r1189261)</para></item>
+          <item><para>log a better error when opening rep-cache.db
+fails (r1204610, -73)</para></item>
+        </items>
+      </change>
+
+      <change from="1.7.0" to="1.7.1">
+        <items name="User-visible changes">
+          <item><para>improve performance of 'svn info'
+(r1164386)</para></item>
+          <item><para>improve hash table sorting performance
+(r1167659)</para></item>
+          <item><para>update bash completion for 1.7
+(r1177001)</para></item>
+          <item><para>make 'svn ls' continue to work with 1.0-1.3
+repos (r1154278, -379, -82)</para></item>
+          <item><para>improve handling of error messages generated by
+Cyrus SASL (r1179767)</para></item>
+          <item><para>update INSTALL documentation file (r1182115, and
+others)</para></item>
+          <item><para>error instead of assert when upgrading corrupt
+WCs (r1182904, -9)</para></item>
+          <item><para>improve memory usage in merge
+(r1176915)</para></item>
+          <item><para>fix an invalid assertion in merge (r1149103,
+-35)</para></item>
+          <item><para>improve performance of 'merge --reintegrate' in
+edge-case (r1167681)</para></item>
+          <item><para>fixed: 'svn mergeinfo' shows wrong revisions for
+added nodes (issue #3791)</para></item>
+          <item><para>make 'svn add --parents D/file' work if D is
+deleted (r1185222)</para></item>
+          <item><para>improve performance of trivial text file merges
+(issue #4009)</para></item>
+          <item><para>add FSFS sanity check to prevent corruption seen
+in the wild (r1178280)</para></item>
+          <item><para>improve correctness/performance of recursive
+info and proplist (r1164426)</para></item>
+          <item><para>fix memory leak in 'merge --reintegrate'
+(r1180154)</para></item>
+          <item><para>fix handling of directories after 'update
+--set-depth=empty' (r1185911)</para></item>
+          <item><para>fix 'checksum != NULL' assertions in some
+upgraded WCs (r1177732)</para></item>
+          <item><para>fix upgrading of WCs containing authz-restricted
+dirs (r1185738)</para></item>
+          <item><para>make the server tolerate svn:mergeinfo with
+malformed paths (r1182771)</para></item>
+          <item><para>fix some erroneous warning messages from the svn
+client (r1185746)</para></item>
+          <item><para>fix WC upgrade with replaced nodes in edge-case
+(issue #4033)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>fix object lifetime issues in the JavaHL
+bindings (r1175888)</para></item>
+          <item><para>fix org.tigris JavaHL wrappers to avoid double
+finalize (r1179680)</para></item>
+          <item><para>don't write to const memory
+(r1177492)</para></item>
+          <item><para>improve zlib configuration (r1174761, -98,
+-806)</para></item>
+          <item><para>improve SQLite runtime init for OS X 10.7 compat
+(r1181666)</para></item>
+          <item><para>improve test suite correctness
+(r1174111)</para></item>
+          <item><para>fix potential segfault seen by TSVN
+(r1183263)</para></item>
+          <item><para>fix backward compat crashes in JavaHL (r1183054,
+-347)</para></item>
+          <item><para>fill in repos_* fields of svn_wc_status3_t for
+repos-only nodes (r1181609)</para></item>
+          <item><para>disable the SQLite shared process cache
+(r1185242, r1185280)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.18" to="1.7.0">
+        <items name="User-visible changes">
+          <item><para>General:</para>
+          <unorderedlist>
+            <item><para>No longer including contrib/ in the release
+tarballs (r877798)</para></item>
+          </unorderedlist></item>
+          <item><para>Major new features:</para>
+          <unorderedlist>
+            <item><para>Less verbose HTTP-based repository access
+protocol (issue #1161, #3371)</para></item>
+            <item><para>Rewritten working copy metadata storage (issue
+#3357)</para></item>
+            <item><para>New 'svn patch' subcommand (issue
+#511)</para></item>
+            <item><para>Rewritten FSFS in-memory caching for better
+performance</para></item>
+            <item><para>New remote repository dump/load client
+'svnrdump'</para></item>
+          </unorderedlist></item>
+          <item><para>Minor new features and improvements:</para>
+          <unorderedlist>
+            <item><para>Better handling of HTTP redirects (issue
+#2779)</para></item>
+            <item><para>Improved and much more consistent path
+handling (issue #2028, and others)</para></item>
+            <item><para>'svnadmin load' rewrites changed revnums in
+mergeinfo (issue #3020)</para></item>
+            <item><para>Error message and help text
+improvements</para></item>
+            <item><para>'svn log' can print unidiff of changes made in
+a revision (issue #2909)</para></item>
+            <item><para>'svn diff' can print git-style unidiff
+annotations </para></item>
+            <item><para>svnsync can now steal locks on a mirror
+repository (issue #3309)</para></item>
+            <item><para>display the wc root in the output of 'svn
+info' (issue #3355)</para></item>
+            <item><para>add 'svnlook filesize' (issue
+#3509)</para></item>
+            <item><para>add 'svn upgrade' command for upgrading
+working copies (r877675)</para></item>
+            <item><para>add 'svnsync --disable-locking' (issue
+#3545)</para></item>
+            <item><para>subtree merges don't unconditionally stop
+reintegrate merge (issue #3577)</para></item>
+            <item><para>'svn relocate' replaces 'svn switch
+--relocate'  (r1026475)</para></item>
+            <item><para>'svn relocate' updates relative externals
+(issue #3597)</para></item>
+            <item><para>allow svnsync users to specify the source repo
+(issue #3637)</para></item>
+            <item><para>remove redundant mergeinfo notifications for
+2-URL merges (issue #3671)</para></item>
+            <item><para>'svn export' into the current directory (issue
+#3727)</para></item>
+            <item><para>added '--parents' to 'svn update' (issue
+#3748)</para></item>
+            <item><para>allow configurable connection timeout in
+ra_serf (r876161)</para></item>
+            <item><para>add digest authentication in ra_serf
+(r876405)</para></item>
+            <item><para>add extensive caching support to servers
+(r1067669, -75, -72302)</para></item>
+            <item><para>add configurable caching to svnadmin
+(r1078357)</para></item>
+            <item><para>make server-side network data compression rate
+configurable (r1072288)</para></item>
+            <item><para>added support for auto-detecting mime-types
+with libmagic (r1131120)</para></item>
+            <item><para>'svn rm url1 url2 url3' uses single txn per
+repo (issue #1199)</para></item>
+            <item><para>don't leave unversioned files when reverting
+copies (issue #3101)</para></item>
+          </unorderedlist></item>
+          <item><para>Client-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>'svn cp A B; svn mv B C' is equivalent to 'svn
+cp A C' (issue #756)</para></item>
+            <item><para>revert fetches missing directories from the
+server (issue #1040)</para></item>
+            <item><para>allow subdirs of moved dirs to be moved and
+committed (issue #1259)</para></item>
+            <item><para>improved performance of 'svn mv' with whole
+directories (issue #1284)</para></item>
+            <item><para>'svn rm B; svn cp A B' now works (issue
+#1516)</para></item>
+            <item><para>'svn diff URL1 URL2' now reverse of 'svn diff
+URL2 URL1' (issue #2333)</para></item>
+            <item><para>error if relocating to an unused URL (issue
+#2531)</para></item>
+            <item><para>'svn blame -rWORKING' is now supported (issue
+#2544)</para></item>
+            <item><para>improve correctness of commit on a relocated
+wc over ra_dav (issue #2578)</para></item>
+            <item><para>add early error to 'svn add --auto-props' with
+mixed eols (issue #2713)</para></item>
+            <item><para>allow 'svn diff' to accept symlinks as targets
+(issue #2716)</para></item>
+            <item><para>don't lose props for replaced items (issue
+#2743)</para></item>
+            <item><para>handle mergeinfo for subtrees removed outside
+of svn (issue #2915)</para></item>
+            <item><para>add ability to force 'svn diff' to use
+internal diff (issue #3701)</para></item>
+            <item><para>correctly recover a schedule-for-delete rm'd
+outside of svn (issue #3106)</para></item>
+            <item><para>don't create self-referential mergeinfo from
+own history (issue #3157)</para></item>
+            <item><para>improve 'svn log -g' handling of bad mergeinfo
+source paths (issue #3270)</para></item>
+            <item><para>better conflict stat printing (issue #3342,
+issue #3594)</para></item>
+            <item><para>'svn update' restores excluded files (issue
+#3544)</para></item>
+            <item><para>allow reintegrate merges into WCs with missing
+subtrees (issue #3603)</para></item>
+            <item><para>more gracefully error when given back cmdline
+input (issue #3620)</para></item>
+            <item><para>update exit codes to reflect command failure
+(issue #3622)</para></item>
+            <item><para>don't double-update file externals (issue
+#3665)</para></item>
+            <item><para>improve output of multi-target update (issue
+#3693, #3746)</para></item>
+            <item><para>make 'svn up --set-depth=exclude FILE' work
+(issue #3736)</para></item>
+            <item><para>return correct error code for 'svn cat' on
+nonexisting file (issue #3713)</para></item>
+            <item><para>support svn:externals on locally added
+directories (issue #2267)</para></item>
+            <item><para>use installed GSSAPI lib for Kerberos in
+ra_serf (r877381)</para></item>
+            <item><para>allow 'svn info' to run on an excluded item
+(issue #3792)</para></item>
+            <item><para>improve 'log -g' output with reverse merges
+(issue #3176)</para></item>
+            <item><para>don't print error message if stdout is a pipe
+and is closed (issue #3014)</para></item>
+            <item><para>removed special copy-handling during updates
+added in 1.5.0 (issue #3711)</para></item>
+            <item><para>fix warning about copies committed with
+non-infinity depth (issue #3752)</para></item>
+            <item><para>can now commit multiple wc paths lacking a
+common parent (issue #2381)</para></item>
+            <item><para>'svn export --depth $WC' now works correctly
+(issue #3800)</para></item>
+            <item><para>added support for case-only renames on Windows
+(issue #3702)</para></item>
+            <item><para>'svn delete --force' removes tree conflicts
+(issue #3805)</para></item>
+            <item><para>don't throw an error when skipping tree
+conflicts in update (issue #3329)</para></item>
+            <item><para>don't break commits of wc-&gt;wc copies with
+file externals (issue #3589)</para></item>
+            <item><para>allow 'svn info' to work on symlinks to
+working copies (issue #2305)</para></item>
+            <item><para>allow 'svn st --show-updates' to work across
+symlinks (issue #3117)</para></item>
+            <item><para>'svn revert' shouldn't loop on symlinks (issue
+#3972)</para></item>
+            <item><para>fixed: wc-to-wc copy of a switch source (issue
+#1802)</para></item>
+            <item><para>fixed: 'svn st' reports symlinks as obstructed
+items (issue #2284)</para></item>
+            <item><para>fixed: 'cd e:\; svn up e:\' fails (issue
+#2556)</para></item>
+            <item><para>fixed: svn aborts on commiting from root dir
+on windows (issue #3346)</para></item>
+            <item><para>fixed: removing a dir scheduled for deletion
+corrupts wc (issue #2741)</para></item>
+            <item><para>fixed: 'svn cleanup' fails on obstructed paths
+(issue #2867)</para></item>
+            <item><para>fixed: case-only renames resulting from merges
+don't work (issue #3115)</para></item>
+            <item><para>fixed: 'svn mergeinfo' ignores peg rev for wc
+target (issue #3180)</para></item>
+            <item><para>fixed: unable to merge to wc of deleted branch
+(issue #3221)</para></item>
+            <item><para>fixed: move via merge leaves behind versioned
+move source (issue #3324)</para></item>
+            <item><para>fixed: ra_serf does not honor
+http-proxy-exceptions (issue #3428)</para></item>
+            <item><para>fixed: 'svn mv A B; svn mv B A' loses history
+(issue #3429)</para></item>
+            <item><para>fixed: ra_serf doesn't support http-auth-types
+config (issue #3435)</para></item>
+            <item><para>fixed: merge sets incorrect mergeinfo on
+skipped paths (issue #3440)</para></item>
+            <item><para>fixed: ra_serf inconsistent handling of cached
+authn creds (issue #3450)</para></item>
+            <item><para>fixed: ra_serf sefault with using NTLM or
+Negotiate auth (r876910)</para></item>
+            <item><para>fixed: excluded subtrees are not detected by
+svnversion (issue #3461)</para></item>
+            <item><para>fixed: submitting a changelist while
+obstructed item exists (issue #3484)</para></item>
+            <item><para>fixed: crash when changing an external's URL
+(issue #3530)</para></item>
+            <item><para>fixed: target moved after branching breaks
+reintegrate (issue #3640)</para></item>
+            <item><para>fixed: potential race condition in svnsync
+(issue #3546)</para></item>
+            <item><para>fixed: spurious merge conflicts with pre-1.7
+mod_dav_svn (issue #3657)</para></item>
+            <item><para>fixed: repeat merge is not a no-op (issue
+#3564)</para></item>
+            <item><para>fixed: inheritance results in self-referential
+mergeinfo (issue #3668)</para></item>
+            <item><para>fixed: inheritance results in nonexistent
+mergeinfo sources (issue #3669)</para></item>
+            <item><para>fixed: memory leaks in ra_serf (issue
+#3684)</para></item>
+            <item><para>fixed: corruption of 'svn pg' output for large
+properties (issue #3721)</para></item>
+            <item><para>fixed: 'svnsync copy-revprops' doesn't sync
+revprop dels (issue #3728)</para></item>
+            <item><para>fixed: executable flag not correctly set on
+merge (issue #3686)</para></item>
+            <item><para>fixed: 'svn rm' fails on multiple URLs with
+encoded spaces (issue #3839)</para></item>
+            <item><para>fixed: children of replaced dirs cannot be
+deleted (issue #3468)</para></item>
+            <item><para>fixed: executable flag of binary file lost
+during merge (issue #3686)</para></item>
+            <item><para>fixed: merging a symlink-turned-regular-file
+breaks the wc (issue #2530)</para></item>
+            <item><para>fixed: can't remove file externals (issue
+#3351)</para></item>
+            <item><para>fixed: 'svn unlock' attempts to unlock wrong
+token on DAV (issue #3794)</para></item>
+            <item><para>fixed: forced DAV 'svn unlock' results in 403,
+not warning (issue #3801)</para></item>
+            <item><para>fixed: rm -&gt; ci -&gt; cp = missing
+directory (issue #2763)</para></item>
+            <item><para>fixed: 'svn info' returns parent info on
+missing dirs (issue #3178)</para></item>
+            <item><para>fixed: spurious prop conflict with 'merge
+--reintegrate' (issue #3919)</para></item>
+            <item><para>fixed: 'svn --version' fails with non-existant
+$HOME (issue #3947)</para></item>
+            <item><para>fixed: unforced export silently overwites
+existing file (issue #3799)</para></item>
+            <item><para>fixed: reverse merge which adds subtree
+mergeinfo fails (issue #3978)</para></item>
+            <item><para>fixed: 'svn up -r{R&gt;HEAD}' hangs client over
+ra_svn (issue #3963)</para></item>
+            <item><para>fixed: 'svn up' updates file externals in
+target siblings (issue #3819)</para></item>
+            <item><para>many other minor bugfixes, optimizations,
+plugs of memory leaks, etc</para></item>
+          </unorderedlist></item>
+          <item><para>Server-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>mod_dav_svn is less strict about auto-merging
+for commits (issue #1704)</para></item>
+            <item><para>allow SVNListParentPath to be used with authz
+(issue #2753)</para></item>
+            <item><para>allow nav to repo list from repo top with
+SVNListParentPath (issue #3159)</para></item>
+            <item><para>allow repositories in the root of a drive on
+windows (issue #3535)</para></item>
+            <item><para>don't destroy mergeinfo with 'svnadmin load
+--parent-dir' (issue #3547)</para></item>
+            <item><para>fixed: 'svnadmin hotcopy' does not duplicate
+symlinks (issue #2591)</para></item>
+            <item><para>fixed: post-revprop-change errors cancel
+commit (issue #2990)</para></item>
+            <item><para>fixed: mod_dav_svn runs pre-revprop-change
+hook twice (issue #3085)</para></item>
+            <item><para>fixed: mod_dav_svn doesn't return stderr to
+user on failure (issue #3112)</para></item>
+            <item><para>fixed: hotcopy may corrupt target rep-cache.db
+(issue #3596)</para></item>
+            <item><para>fixed: mod_dav_svn can cause spurious merge
+conflicts (issue #3657)</para></item>
+            <item><para>fixed: DAV can overwrite directories during
+copy (issue #3314)</para></item>
+            <item><para>fixed: 'svn log' returns log of unrelated path
+(issue #3931)</para></item>
+            <item><para>match paths against authz rules in case
+sensitive way (issue #3781)</para></item>
+            <item><para>svnserve can now force usernames to
+upper/lower case (issue #3726)</para></item>
+            <item><para>reduce duplicate log messages in 'log -g'
+(issue #3650)</para></item>
+            <item><para>svnserve: don't crash on shutdown with SASL in
+inetd mode (issue #3664)</para></item>
+            <item><para>disallow arbitrary HTTP headers from
+committers (issue #2872)</para></item>
+            <item><para>limit FSFS memory consumption (issue #3478,
+#3593)</para></item>
+            <item><para>many other minor bugfixes too numerous to list
+here</para></item>
+          </unorderedlist></item>
+          <item><para>Other tool improvements and bugfixes:</para>
+          <unorderedlist>
+            <item><para>svnsync now takes the '--config-option'
+argument (issue #2027)</para></item>
+            <item><para>svnsync can translate non-UTF-8 properties to
+UTF-8 (issue #3817)</para></item>
+            <item><para>svnadmin now errors on non-UTF-8 revision
+properties (issue #3755)</para></item>
+            <item><para>svnadmin verify now errors on non-UTF-8 paths
+(r1129641)</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>General:</para>
+          <unorderedlist>
+            <item><para>improved output of 'make check'</para></item>
+            <item><para>introduce scratch_pool/result_pool parameter
+paradigm</para></item>
+            <item><para>improved error tracing (r877208,
+-736)</para></item>
+            <item><para>improve building with sqlite on Windows (issue
+#3364)</para></item>
+            <item><para>allow mod_dav_svn to compile against Apache
+2.4 (issue #3548)</para></item>
+            <item><para>support running tests against older servers
+(r876016)</para></item>
+            <item><para>notification of unversioned obstructions
+(r877344)</para></item>
+            <item><para>removed virtually all abort() calls (issue
+#2780)</para></item>
+            <item><para>don't include client-specific suggestions in
+error msgs (issue #3887)</para></item>
+          </unorderedlist></item>
+          <item><para>API changes:</para>
+          <unorderedlist>
+            <item><para>don't crash svn_client_copy if
+ctx-&gt;log_msg_func is NULL (issue #3234)</para></item>
+            <item><para>much improved ra_serf error handling (issue
+#3375)</para></item>
+            <item><para>provide clients with old and new revision on
+update (r876515)</para></item>
+            <item><para>close both files, even on error in
+svn_stream_copy3() (r887262)</para></item>
+            <item><para>added 'work-in-progress' XFail test status
+(r876549)</para></item>
+            <item><para>notifications sent when mergeinfo changes
+(r877588)</para></item>
+            <item><para>add information on text and property mods in
+log APIs (r877688)</para></item>
+            <item><para>fixed: svn_ra_local__get_file() leaks file
+descriptors (issue #3290)</para></item>
+            <item><para>svn_ra_neon__get_dir() returns correct dir set
+for URLs (issue #3093)</para></item>
+            <item><para>swig-py: always set ChangedPath.path (also for
+deletes) (issue #2630)</para></item>
+            <item><para>improve conflict resolver API for a specific
+direction (issue #3049)</para></item>
+          </unorderedlist></item>
+          <item><para>Bindings:</para>
+          <unorderedlist>
+            <item><para>New JavaHL package:
+org.apache.subversion</para></item>
+            <item><para>Deprecate the SVNClientSynchronized class in
+JavaHL (issue #2755)</para></item>
+            <item><para>fixed setting binary properties in JavaHL
+(issue #3770)</para></item>
+            <item><para>fix type mapping of svn_txdelta_window_t in
+python bindings (issue #3688)</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.6.17" to="1.6.18">
+        <items name="User-visible changes">
+          <item><para>reject invalid svn:mergeinfo at commit time over
+DAV (issue #3953)</para></item>
+          <item><para>fix reintegrate merge regression introduced in
+1.6.13 (issue #3957)</para></item>
+          <item><para>make the stderr output of the post-commit hook
+XML-safe (r893478)</para></item>
+          <item><para>fix a rare source of FSFS corruption
+(r1240752)</para></item>
+          <item><para>plug a memory leak in the bdb backend
+(r1205726)</para></item>
+          <item><para>server-side performance fix for "log -g"
+(r1152282)</para></item>
+          <item><para>fix description of svndumpfilter's --targets
+option (r1151911)</para></item>
+          <item><para>fix datastream corruption during resumed
+transfer in ra_serf (r1154733)</para></item>
+          <item><para>fix a crash in ra_svn SASL authentication
+(r1166555, -678)</para></item>
+          <item><para>fix potential corruption on 32-bit FSFS with
+large files (r1230212)</para></item>
+          <item><para>make website links point to
+subversion.apache.org (r896893, -901, r915036)</para></item>
+          <item><para>fix non-fatal FSFS corruption bug with
+concurrent commits (issue #4129)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>fix sqlite distfile retrieval in get-deps.sh
+(r1134734)</para></item>
+          <item><para>fix swig-py memory leak (r1235264, -296, -302,
+-736)</para></item>
+          <item><para>allow passing --with-jdk to gen-make.py on
+Windows (r966167)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.16" to="1.6.17">
+        <items name="User-visible changes">
+          <item><para>improve checkout speed on Windows (issue
+#3719)</para></item>
+          <item><para>make 'blame -g' more efficient on with large
+mergeinfo (r1094692)</para></item>
+          <item><para>avoid some invalid handle exceptions on Windows
+(r1095654)</para></item>
+          <item><para>preserve log message with a non-zero editor exit
+(r1072084)</para></item>
+          <item><para>fix FSFS cache performance on 64-bit platforms
+(r1103665)</para></item>
+          <item><para>make svn cleanup tolerate obstructed directories
+(r1091881)</para></item>
+          <item><para>fix deadlock in multithreaded servers serving
+FSFS repositories (r1104093)</para></item>
+          <item><para>detect very occasional corruption and abort
+commit (issue #3845)</para></item>
+          <item><para>fixed: file externals cause non-inheritable
+mergeinfo (issue #3843)</para></item>
+          <item><para>fixed: file externals cause mixed-revision
+working copies (issue #3816)</para></item>
+          <item><para>fix crash in mod_dav_svn with GETs of baselined
+resources (r1104126). See CVE-2011-1752.</para></item>
+          <item><para>fixed: write-through proxy could direcly commit
+to slave (r917523)</para></item>
+          <item><para>detect a particular corruption condition in FSFS
+(r1100213)</para></item>
+          <item><para>improve error message when clients refer to
+unkown revisions (r939000)</para></item>
+          <item><para>bugfixes and optimizations to the DAV mirroring
+code (r878607)</para></item>
+          <item><para>fixed: locked and deleted file causes tree
+conflict (issue #3525)</para></item>
+          <item><para>fixed: update touches locked file with
+svn:keywords property (issue #3471)</para></item>
+          <item><para>fix svnsync handling of directory copyfrom
+(issue #3641)</para></item>
+          <item><para>fix 'log -g' excessive duplicate output (issue
+#3650)</para></item>
+          <item><para>fix svnsync copyfrom handling bug with BDB
+(r1036429)</para></item>
+          <item><para>server-side validation of svn:mergeinfo syntax
+during commit (issue #3895)</para></item>
+          <item><para>fix remotely triggerable mod_dav_svn DoS. See
+CVE-2011-1783.</para></item>
+          <item><para>fix potential leak of authz-protected file
+contents. See CVE-2011-1921.</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>fix reporting FS-level post-commit processing
+errors (r1104098)</para></item>
+          <item><para>fix JVM recognition on OS X Snow Leopard (10.6)
+(r1028084)</para></item>
+          <item><para>allow building on Windows with recent Expat
+(r1074572)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.15" to="1.6.16">
+        <items name="User-visible changes">
+          <item><para>more improvement to the 'blame -g' memory leak
+from 1.6.15 (r1041438)</para></item>
+          <item><para>avoid a crash in mod_dav_svn when using locks
+(r1071239, -307). See CVE-2011-0715.</para></item>
+          <item><para>avoid unnecessary globbing for performance
+(r1068988)</para></item>
+          <item><para>don't add tree conflicts when one already exists
+(issue #3486)</para></item>
+          <item><para>fix potential crash when requesting mergeinfo
+(r902467)</para></item>
+          <item><para>don't attempt to resolve prop conflicts in
+'merge --dry-run' (r880146)</para></item>
+          <item><para>more fixes for issue #3270.</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>ensure report_info_t is properly initialized by
+ra_serf (r1058722)</para></item>
+          <item><para>locate errors properly on a malfunction
+(r1053208)</para></item>
+          <item><para>fix output param timing of svn_fs_commit_txn()
+on fsfs (r1051751)</para></item>
+          <item><para>for svn_fs_commit_txn(), set invalid rev on
+failed commit (r1051632, -8)</para></item>
+          <item><para>fix sporadic Ruby bindings test failures
+(r1038792)</para></item>
+          <item><para>fix JavaHL JVM object leak when dumping large
+revisions (r947006)</para></item>
+          <item><para>use Perl to resolve symlinks when building
+swig-pl (r1039040)</para></item>
+          <item><para>allow Perl bindings to build within a symlinked
+working copy (r1036534)</para></item>
+          <item><para>don't overwrite the LD_LIBRARY_PATH during make
+check-swig-pl (r946355)</para></item>
+          <item><para>improve unit tests for some fs functions
+(r1051744, -5, -3185, -241)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.13" to="1.6.15">
+        <items name="User-visible changes">
+          <item><para>improve svnsync handling of dir copies (r962377,
+-8)</para></item>
+          <item><para>hide unreadable dirs in mod_dav_svn's GET
+response (r996884)</para></item>
+          <item><para>make 'svnmucc propsetf' actually work
+(r1005446)</para></item>
+          <item><para>limit memory fragmentation in svnserve
+(r1022675)</para></item>
+          <item><para>fix 'svn export' regression from 1.6.13
+(r1032970)</para></item>
+          <item><para>fix 'svn export' mistakenly uri-encodes paths
+(issue #3745)</para></item>
+          <item><para>fix server-side memory leaks triggered by 'blame
+-g' (r1032808)</para></item>
+          <item><para>prevent crash in mod_dav_svn when using
+SVNParentPath (r1033166)</para></item>
+          <item><para>allow 'log -g' to continue in the face of
+invalid mergeinfo (r1028108)</para></item>
+          <item><para>filter unreadable paths for 'svn ls' and 'svn
+co' (r997026, -070, -474)</para></item>
+          <item><para>fix abort in 'svn blame -g' (issue
+#3666)</para></item>
+          <item><para>fix file handle leak in ruby bindings (issue
+#3512)</para></item>
+          <item><para>remove check for 1.7-style working copies (issue
+#3729)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>improve some swig parameter mapping (r984565,
+r1035745)</para></item>
+          <item><para>improve test accuracy over dav (r991534,
+r877814)</para></item>
+          <item><para>create fails.log for test runs
+(r964349)</para></item>
+          <item><para>improve detection of 'svnversion' when buildling
+(r877219, et al)</para></item>
+          <item><para>don't violate API layering in dumpstream logic
+(issue #3733)</para></item>
+          <item><para>don't report working copy installs as switched
+(r1033921)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.12" to="1.6.13">
+        <items name="User-visible changes">
+          <item><para>don't drop properties during foreign-repo merges
+(issue #3623)</para></item>
+          <item><para>improve auto-props failure error message
+(r961970)</para></item>
+          <item><para>improve error message for 403 status with
+ra_neon (r876615)</para></item>
+          <item><para>don't allow 'merge --reintegrate' for 2-url
+merges (r959004)</para></item>
+          <item><para>improve handling of missing fsfs.conf during
+hotcopy (r980811, -1449)</para></item>
+          <item><para>escape unsafe characters in a URL during export
+(issue #3683)</para></item>
+          <item><para>don't leak stale locks in FSFS
+(r959760)</para></item>
+          <item><para>better detect broken working copies during
+update over ra_neon (r979045)</para></item>
+          <item><para>fsfs: make rev files read-only
+(r981921)</para></item>
+          <item><para>properly canonicalize a URL (r984928,
+-31)</para></item>
+          <item><para>fix wc corruption with 'commit --depth=empty'
+(issue #3700)</para></item>
+          <item><para>permissions fixes when doing reintegrate merges
+(related to issue #3242)</para></item>
+          <item><para>fix mergeinfo miscalculation during 2-url merges
+(issue #3648)</para></item>
+          <item><para>fix error transmission problems in svnserve
+(r997457, -66)</para></item>
+          <item><para>fixed: record-only merges create
+self-referential mergeinfo (issue #3646)</para></item>
+          <item><para>fixed: 'SVNPathAuthz short_circuit' unsolicited
+read access (issue #3695)</para></item>
+          <item><para>make 'svnmucc propset' handle existing and
+non-existing URLs (r1000607)</para></item>
+          <item><para>add new 'propsetf' subcommand to svnmucc
+(r1000612)</para></item>
+          <item><para>warn about copied dirs during 'svn ci' with
+limited depth (r1002094)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>make ruby bindings compatible with Ruby 1.9
+(r957507)</para></item>
+          <item><para>use the repos verify API in JavaHL
+(r948916)</para></item>
+          <item><para>teach ra_serf to parse md5 checksums with update
+editors (r979429)</para></item>
+          <item><para>let ra_serf work with current serf releases
+(r879757, r880320, r943796)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.11" to="1.6.12">
+        <items name="User-visible changes">
+          <item><para>further improvements for issue
+#3242</para></item>
+          <item><para>allow deletion of uris which need character
+escaping (issue #3636)</para></item>
+          <item><para>fix errors with 'svn mkdir --parents' (issue
+#3649)</para></item>
+          <item><para>update address to which crash reports are sent
+(r901304)</para></item>
+          <item><para>check for server certificate revocation on
+Windows (r898048)</para></item>
+          <item><para>disable custom file mutexes on Windows (r879902,
+-16)</para></item>
+          <item><para>fix handling of peg revision'd copy targets
+(issue #3651)</para></item>
+          <item><para>more improvements to 'svn merge --reintegrate'
+(r935631)</para></item>
+          <item><para>allow copying of broken symlinks (issue
+#3303)</para></item>
+          <item><para>improve rep-sharing performance on
+high-concurrency repos (issue #3506)</para></item>
+          <item><para>fixed: added subtrees with mergeinfo break
+reintegrate (issue #3654)</para></item>
+          <item><para>fixed: assertion triggered by tree-conflicted
+externals (issue #3469)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>give windows devs more flexibility with sqlite
+versions (r944635)</para></item>
+          <item><para>allow the pack tests to work with low file
+descriptor limits (r937610)</para></item>
+          <item><para>improve exception handling on Windows Vista and
+7 (r878447, -910, -916)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.9" to="1.6.11">
+        <items name="User-visible changes">
+          <item><para>fix for repositories mounted via NFS (issue
+#3501)</para></item>
+          <item><para>enable TCP keep-alives in svnserve
+(r880552)</para></item>
+          <item><para>tighten restrictions on revprops for 'svnadmin
+verify' (r904594)</para></item>
+          <item><para>make ra_serf give better out-of-date information
+(issue #3561)</para></item>
+          <item><para>improve error message upon connection failure
+with svn+ssh:// (r922516)</para></item>
+          <item><para>allow 'svn log' on an uncommitted copy/move
+destination (r901752)</para></item>
+          <item><para>make 'svnadmin hotcopy' copy the fsfs config file
+(r905303)</para></item>
+          <item><para>mergeinfo improvements with non-inheritable
+mergeinfo (issue #3573)</para></item>
+          <item><para>make mergeinfo queries not require access to the
+repo root (issue #3242)</para></item>
+          <item><para>update URLs to refer the new apache.org
+repository (r904301, -94)</para></item>
+          <item><para>update relative externals during a switch (issue
+#3390)</para></item>
+          <item><para>fix 'merge --reintegrate' with self-referential
+mergeinfo (r892050, -85)</para></item>
+          <item><para>improve wc-ng working copy detection
+(r929382)</para></item>
+          <item><para>improve handling of mergeinfo when using serf
+(r880461)</para></item>
+          <item><para>fixed: 'svnlook plist --revprop' with '-t
+TXN_NAME' (r917640, -8211)</para></item>
+          <item><para>fixed: file external from URL cannot overwrite
+existing item (issue #3552)</para></item>
+          <item><para>fixed: potential memory error in 'svn status'
+(r923674, -9)</para></item>
+          <item><para>fixed: merge records mergeinfo from natural
+history gaps (issue #3432)</para></item>
+          <item><para>fixed: theoretical possibility of DB corruption
+(r926151, -67)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>disable checks for wc-ng working copies when
+running the test suite</para></item>
+          <item><para>on Windows, don't ignore move operation error
+codes (r896915)</para></item>
+          <item><para>more precise reporting of errors occuring with
+sqlite init (r927323, -8)</para></item>
+          <item><para>ensure rangelist APIs are commutative (r923389,
+-91)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.6" to="1.6.9">
+        <items name="User-visible changes">
+          <item><para>allow multiple external updates over ra_svn
+(issue #3487)</para></item>
+          <item><para>fix a segmentation fault when using FSFS
+(r881905)</para></item>
+          <item><para>support Berkeley DB 4.8 (r879688)</para></item>
+          <item><para>various autoprop improvements (r880274,
+-5)</para></item>
+          <item><para>improve usage of svn+ssh:// on Windows (issue
+#2580)</para></item>
+          <item><para>teach 1.6.x to recognize 1.7 working copies
+(1.6.x-future-proof branch)</para></item>
+          <item><para>update help text for 'svn update' and 'svn
+switch' (r886164, -97)</para></item>
+          <item><para>make 'svnadmin load --parent-dir' create valid
+mergeinfo (r888979, -9081)</para></item>
+          <item><para>tolerate relative merge source paths in mergeinfo
+(r889840)</para></item>
+          <item><para>teach mod_dav_svn to support the Label header
+(issue #3519)</para></item>
+          <item><para>fixed: svnsync leaves stale sync-locks on mirrors
+(r884842)</para></item>
+          <item><para>fix applicability of 'svn resolve
+--accept=theirs-conflict' (r880525, -6)</para></item>
+          <item><para>fixed: segfault in 'svn resolve' (r896522,
+-47)</para></item>
+          <item><para>fix commit failure against an out-of-date mirror
+(r900797)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>update ruby bindings test expectation
+(r880162)</para></item>
+          <item><para>don't allow rangelist and mergeinfo API to modify
+input args (r879093)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.5" to="1.6.6">
+        <items name="User-visible changes">
+          <item><para>fix crash during 'svn update'
+(r39673)</para></item>
+          <item><para>respect Apache's ServerSignature directive
+(r40008, -21, -31)</para></item>
+          <item><para>don't add a file with mixed line endings, and
+then abort (issue #2713)</para></item>
+          <item><para>support Neon 0.29.</para></item>
+          <item><para>fix a crash in 'svn rm --force'
+(r37953)</para></item>
+          <item><para>handle tree conflicts involving replacements
+(issue #3486)</para></item>
+          <item><para>allow non-threadsafe sqlite if APR has no
+threads (r39301)</para></item>
+          <item><para>print newline before plaintext SSL cert /
+password prompts (r38982, r39302)</para></item>
+          <item><para>improve merge performance with implicit subtree
+mergeinfo (issue #3443)</para></item>
+          <item><para>fix "libsvn_ra_svn/marshal.c assertion failed
+(opt || cstr)" (issue #3485)</para></item>
+          <item><para>make file externals work for binary files (issue
+#3368)</para></item>
+          <item><para>perform MIME type matching case-insensitively
+(issue #3479)</para></item>
+          <item><para>do not treat non-existent revisions as HEAD in
+'svn export' (issue #3400)</para></item>
+          <item><para>revert r36720's default MIME type change back to
+"text/plain" (issue #3508)</para></item>
+          <item><para>improve "tree conflict already exists" error
+message (r38872)</para></item>
+          <item><para>fix failure to commit replacement of a directory
+(issue #3281)</para></item>
+          <item><para>fix mod_dav_svn parent dir links to preserve peg
+revisions (issue #3425)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>fix 2 failing tests in ruby bindings
+(r38886)</para></item>
+          <item><para>do not require GNU grep for build (issue
+#3453)</para></item>
+          <item><para>use '$SED' instead of 'sed' in build scripts
+(issue #3458)</para></item>
+          <item><para>add svn.client.{log5,merge_peg3} to python
+bindings (r39635, -6, -7)</para></item>
+          <item><para>include the time of a test run in tests.log
+(r39887)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.4" to="1.6.5">
+        <items name="User-visible changes">
+          <item><para>fix mod_dav_svn directory view links to preserve
+peg revisions (r38021)</para></item>
+          <item><para>do not error on Windows when ALLUSERPROFILE dir
+nonexistent (r38053, -5, -7)</para></item>
+          <item><para>properly escape lock comments over ra_neon
+(r38101, -2)</para></item>
+          <item><para>allow syncing copies of '/' over ra_neon and
+ra_serf (issue #3438)</para></item>
+          <item><para>make 'svnlook diff' show empty added or deleted
+files (r38458)</para></item>
+          <item><para>fix building with Apache 2.4
+(r36720)</para></item>
+          <item><para>fix possible data loss on ext4 and GPFS
+filesystems (issue #3442)</para></item>
+          <item><para>resolve symlinks when checking for ~/.subversion
+(r36023)</para></item>
+          <item><para>don't let svn+ssh SIGKILL ssh processes (issue
+#2580)</para></item>
+          <item><para>allow PLAIN and LOGIN mechanisms with SASL in
+svnserve (r38205)</para></item>
+          <item><para>fix peg revision parsing in filenames like
+'dir/@file.txt' (issue #3416)</para></item>
+          <item><para>fix detection of Apache &lt;2.0.56 (r38290, -3,
+-4)</para></item>
+          <item><para>don't pretend to do tree conflict resolution
+(r38799, -801, -805)</para></item>
+          <item><para>fix data corruption when syncing from svnserve
+to mod_dav_svn (r38686, -7)</para></item>
+          <item><para>fix GNOME Keyring with '--non-interactive'
+option (r38222, -3, -61, -410)</para></item>
+          <item><para>fixed: false "File '...' already exists" error
+during commit (issue #3119)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>avoid referencing uninitialized variables
+(r38388)</para></item>
+          <item><para>plug a couple of error leaks
+(r38572)</para></item>
+          <item><para>improve windows test output (r38616, -7, -9,
+-49)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.3" to="1.6.4">
+        <items name="User-visible changes">
+          <item><para>fixed: heap overflow vulnerability on server and
+client (CVE-2009-2411)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.2" to="1.6.3">
+        <items name="User-visible changes">
+          <item><para>fix segfault in WC-&gt;URL copy (r37646,
+-56)</para></item>
+          <item><para>let 'svnadmin load' tolerate mergeinfo with
+"\r\n" (r37768)</para></item>
+          <item><para>make svnsync normalize svn:* props to LF line
+endings (issue #3404)</para></item>
+          <item><para>better integration with external merge tools
+(r36178)</para></item>
+          <item><para>return a friendly error message for 'svn diff'
+(r37735)</para></item>
+          <item><para>update dsvn.el for 1.6 (r37774)</para></item>
+          <item><para>don't allow setting of props on out-of-date dirs
+under neon (r37745)</para></item>
+          <item><para>improve BASH completion (r36450, -52, -70, -79,
+-538)</para></item>
+          <item><para>always show tree conflicts with 'svn st' (issue
+#3382)</para></item>
+          <item><para>improve correctness of 'svn mergeinfo' (issue
+#3126)</para></item>
+          <item><para>decrease the amount of memory needed for large
+commits (r37894, -6)</para></item>
+          <item><para>work around an APR buffer overflow seen by
+svnsync (r37622)</para></item>
+          <item><para>ra_svn clients now use TCP keep-alives if
+available (issue #3347)</para></item>
+          <item><para>improve 'svn merge' perf by reducing server
+contact (r37491, -593, -618)</para></item>
+          <item><para>stop propagating self-referential mergeinfo in
+reintegrate merges (r37931)</para></item>
+          <item><para>fix NLS detection where -liconv is required for
+bindtextdomain() (r37827)</para></item>
+          <item><para>don't delete unversioned files with 'rm
+--keep-local' (r38015, -17, -19)</para></item>
+          <item><para>bump apr and apr-util versions included in deps
+to latest. (r37941)</para></item>
+          <item><para>avoid temp file name collisions with ra_serf,
+ra_neon (r37972)</para></item>
+          <item><para>fixed: potential segfault with noop file merges
+(r37779)</para></item>
+          <item><para>fixed: incorrect output with 'svn blame -g'
+(r37719, -23, -41)</para></item>
+          <item><para>fixed: bindings don't load FS libs when module
+search enabled (issue #3413)</para></item>
+          <item><para>fixed: DAV RA layers not properly handling
+update/switch working copy directory to revision/place in which it
+doesn't exist (issue #3414)</para></item>
+          <item><para>fixed: potential abort() in the working copy
+library (r37857)</para></item>
+          <item><para>fixed: memory leak in hash reading functions
+(r37868, -979)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>improve memory usage in file-to-stringbuf APIs
+(r37907)</para></item>
+          <item><para>reduce memory usage for temp string manipulation
+(r38010)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.1" to="1.6.2">
+        <items name="User-visible changes">
+          <item><para>vastly improve memory usage with 'svn merge'
+(issue #3393)</para></item>
+          <item><para>make default depth for merge 'infinity'
+(r37156)</para></item>
+          <item><para>make 'status --quiet' show tree conflicts (issue
+#3396)</para></item>
+          <item><para>allow '--set-depth infinity' to expand shallow
+subtrees (r37169)</para></item>
+          <item><para>return an error if attempting to reintegrate
+from/to the repo root (r37385)</para></item>
+          <item><para>don't store bogus mergeinfo for
+'--ignore-ancestry', foreign merges (r37333)</para></item>
+          <item><para>don't allow merge of difference between two
+repos (r37519)</para></item>
+          <item><para>avoid potential segfault with subtree mergeinfo
+(r36613, -15, -31, -41)</para></item>
+          <item><para>recommend sqlite 3.6.13 (r37245)</para></item>
+          <item><para>avoid unnecessary server query for implicit
+mergeinfo (r36509)</para></item>
+          <item><para>avoid unnecessary server query during reverse
+merges (r36527)</para></item>
+          <item><para>set depth=infinity on 'svn add' items with
+restricted depth (r37607)</para></item>
+          <item><para>fixed: commit log message template missing paths
+(issue #3399)</para></item>
+          <item><para>fixed: segfault on merge with servers &lt; 1.6
+(r37363, -67, -68, -79)</para></item>
+          <item><para>fixed: repeat merge failures with
+non-inheritable mergeinfo (issue #3392)</para></item>
+          <item><para>fixed: another memory leak when performing
+mergeinfo-aware merges (r37398)</para></item>
+          <item><para>fixed: incorrect mergeinfo on children of
+shallow merges (issue #3407)</para></item>
+          <item><para>fixed: pool lifetime issues in the BDB backend
+(r37137)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>don't fail if an embedding app has already
+initialized SQLite (issue #3387)</para></item>
+          <item><para>resolve naming collisions with static stat()
+function in svnserve (r37527)</para></item>
+          <item><para>fix an expectation for a failing dirent windows
+test (r37121)</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.0" to="1.6.1">
+        <items name="User-visible changes">
+          <item><para>recommend Neon 0.28.4. (r36388)</para></item>
+          <item><para>improve performance of 'svn merge
+--ignore-ancestry' (r36256)</para></item>
+          <item><para>improve 'svn merge' performance with subtree
+mergeinfo (r36444)</para></item>
+          <item><para>correctly proxy LOCK and UNLOCK requests
+(r36159)</para></item>
+          <item><para>prevent a crash when updating old working copies
+(r36751)</para></item>
+          <item><para>don't let svnmerge.py delete a nonexistent
+property (r36086, -767, -769)</para></item>
+          <item><para>don't fail when upgrading pre-1.2 repositories
+(r36851, -7)</para></item>
+          <item><para>allow escaping of separator characters in
+autoprops (r36763, -84)</para></item>
+          <item><para>improve tempfile creation robustness on Windows
+(r36442, -3)</para></item>
+          <item><para>fix change-svn-wc-format.py for 1.6.x working
+copies (r36874, -5)</para></item>
+          <item><para>improve configure's detection of Berkeley DB
+(r36741, -2)</para></item>
+          <item><para>don't allow foreign merges to add foreign
+mergeinfo (issue #3383)</para></item>
+          <item><para>improve performance of 'svn update' on large
+files (r36389, et. al.)</para></item>
+          <item><para>fixed: error leak and potential crash
+(r36860)</para></item>
+          <item><para>fixed: parent directory handling on Windows
+(r36049, -50, -51, -131)</para></item>
+          <item><para>fixed: unintialized memory errors (r36252,
+-3)</para></item>
+          <item><para>fixed: potential working copy corruption
+(r36714)</para></item>
+          <item><para>fixed: working copy upgrade error
+(r36302)</para></item>
+          <item><para>fixed: pointer dereference error
+(r36783)</para></item>
+          <item><para>fixed: error diff'ing large data with ignored
+whitespace (r36816)</para></item>
+          <item><para>fixed: potential hang in ra_serf
+(r36913)</para></item>
+          <item><para>fixed: problem with merge and non-inheritable
+mergeinfo (r36879)</para></item>
+          <item><para>fixed: repeated merging of conflicted properties
+fails (issue #3250)</para></item>
+          <item><para>fixed: excluding an absent directory segfaults
+(issue #3391)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>ensure svn_subst_translate_cstring2() properly
+flushes data (r36747)</para></item>
+          <item><para>make serf report a base checksum to
+apply_textdelta (r36890)</para></item>
+          <item><para>syntax updates for strict C89 compilers
+(r36799)</para></item>
+          <item><para>update RPM scripts for RHEL4
+(r36834)</para></item>
+          <item><para>allow tests to be run with Python 2.6.1 on
+Windows (r36149, -50, -51, -56)</para></item>
+          <item><para>allow building JavaHL with Visual Studio 2008
+(r36954)</para></item>
+          <item><para>stop setting default translation domain in
+JavaHL (r36955)</para></item>
+          <item><para>fixed: warning with Python 2.6 and ctypes
+bindings (r36559)</para></item>
+          <item><para>fixed: undefined references to
+svn_fs_path_change2_create() (r36823)</para></item>
+        </items>
+      </change>
+
+      <change from="1.5.6" to="1.6.0">
+        <items name="User-visible changes">
+          <item><para>General:</para>
+          <unorderedlist>
+            <item><para>Now require Windows 2000 or newer on Windows
+(r33170)</para></item>
+          </unorderedlist></item>
+          <item><para>Major new features:</para>
+          <unorderedlist>
+            <item><para>identical files share storage space in
+repository (issue #2286)</para></item>
+            <item><para>file-externals support for intra-repository
+files (issue #937)</para></item>
+            <item><para>"tree" conflicts now handled more gracefully
+(issue #2282, #2908)</para></item>
+            <item><para>repository root relative URL support on most
+commands (issue #3193)</para></item>
+          </unorderedlist></item>
+          <item><para>Minor new features and improvements:</para>
+          <unorderedlist>
+            <item><para>pre-lock hook can now specify lock tokens via
+stdout (r32778)</para></item>
+            <item><para>svnmucc: support '--with-revprop'
+(r29492)</para></item>
+            <item><para>merge: log include-descendants in operational
+log (r30426, r30428)</para></item>
+            <item><para>improved operational logging for 'svn switch'
+(r30517)</para></item>
+            <item><para>new 'Header' keyword, similar to 'Id' but with
+full URL (r35386)</para></item>
+            <item><para>warn/disallow when storing plain-text
+passwords (r31046)</para></item>
+            <item><para>support KWallet and GNOME keyring for password
+storage (r31241, -337)</para></item>
+            <item><para>client now caches SSL client cert passphrases
+(issue #2489)</para></item>
+            <item><para>add '--prefix-file' option to 'svndumpfilter'
+(issue #2697)</para></item>
+            <item><para>add '--ignore-externals' option to 'svn cp'
+(issue #3365)</para></item>
+            <item><para>add '--with-no-revprops' to 'svn log' (issue
+#3286)</para></item>
+            <item><para>new 'svnadmin pack' command to compress FSFS
+filesystems</para></item>
+            <item><para>new SVNAllowBulkUpdates mod_dav_svn directive
+(issue #3121)</para></item>
+            <item><para>new public mod_dav_svn URI syntax:
+path?[p=PEG][&amp;r=REV] (r34076)</para></item>
+            <item><para>new 'svnsync info' command to show
+synchronization information (r35053)</para></item>
+            <item><para>conflict resolver supports display-conflict,
+mine-conflict and theirs-conflict</para></item>
+          </unorderedlist></item>
+          <item><para>Client-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>faulty reflexive merges (issue
+#2897)</para></item>
+            <item><para>buffer overflow on a 0 byte string buffer
+(r35968, -74)</para></item>
+            <item><para>conflict resolver needed more useful 'diff'
+option (issue #3048)</para></item>
+            <item><para>disable username assumption (issue
+#2324)</para></item>
+            <item><para>more accurate usage message for 'svn log'
+(r30449)</para></item>
+            <item><para>do not repeat merge if target has explicit
+mergeinfo (issue #2821)</para></item>
+            <item><para>corruption when filtering self-referential
+mergeinfo (r30467)</para></item>
+            <item><para>filter empty mergeinfo with self-referential
+mergeinfo (r30510)</para></item>
+            <item><para>pay attention to partial replay from the
+server in svnsync (r30440)</para></item>
+            <item><para>improved property name handling in svnsync
+(r30480)</para></item>
+            <item><para>properly recognize the file:/// in repository
+with svnsync (r30482)</para></item>
+            <item><para>svn+ssh SIGKILLs ssh processes (issue
+#2580)</para></item>
+            <item><para>'svn up'/'svn co' early abort with
+svn:externals (issue #3148)</para></item>
+            <item><para>improve tempfile names for conflict resolver
+(issue #3166)</para></item>
+            <item><para>ra_serf: 'svn merge' aborts (issue
+#3212)</para></item>
+            <item><para>'svn cleanup' failed on non-ASCII characters
+(issue #3313)</para></item>
+            <item><para>'svn update' fails on moved, modified file
+with local mods (issue #3354)</para></item>
+            <item><para>easier use of NTLM for proxy with ra_neon
+(r29874)</para></item>
+            <item><para>2-url merge from DAV-accessed foreign repo
+makes bad wcprops (issue #3118)</para></item>
+            <item><para>can't add .svn (and children) to your wc via
+'--parents' (r35819)</para></item>
+            <item><para>improved performance removing unversioned
+directories (r36111)</para></item>
+            <item><para>'svn cp --parents' had path URL encoding
+issues (issue #3374)</para></item>
+            <item><para>support shell quoting rules in externals
+definitions (issue #2461)</para></item>
+            <item><para>new SVN_LOCALE_DIR environment variable for
+localization (issue #2879)</para></item>
+            <item><para>scheme and domain name in urls handled case
+insensitive (issue #2475)</para></item>
+            <item><para>merge: pick default revisions with peg
+revision in single url (r30455)</para></item>
+            <item><para>many other minor bugfixes, optimizations,
+plugs of memory leaks, etc</para></item>
+          </unorderedlist></item>
+          <item><para>Server-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>mod_dav_svn runs pre-revprop-change twice
+(issue #3085)</para></item>
+            <item><para>mod_dav_svn ignores pre-revprop-change failure
+on delete (issue #3086)</para></item>
+            <item><para>mod_dav_svn prevented lock breaks from being
+propagated to client (r29914)</para></item>
+            <item><para>non-UTF8 filenames could enter repository
+(issue #2748)</para></item>
+            <item><para>'svnlook proplist' xml output (issue
+#2809)</para></item>
+            <item><para>don't let mod_dav_svn hide errors from client
+(issue #3102)</para></item>
+            <item><para>ra_serf failure during update (issue
+#3113)</para></item>
+            <item><para>ra_serf comply with RFC 2617 in handling
+authentication headers (r35981)</para></item>
+            <item><para>use both SHA1 and MD5 in the FS backends
+(r34388)</para></item>
+            <item><para>many other minor bugfixes too numerous to list
+here</para></item>
+          </unorderedlist></item>
+          <item><para>Contributed tools improvements and bugfixes:</para>
+          <unorderedlist>
+            <item><para>commit-email.pl: Deprecated; use mailer.py
+instead (r31755, -67)</para></item>
+            <item><para>svnmerge.py migration tool munged
+svn:mergeinfo ordering (issue #3302)</para></item>
+            <item><para>And other random sundry stuff</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>General:</para>
+          <unorderedlist>
+            <item><para>serf 0.3.0 required, when building with serf
+(r35586)</para></item>
+            <item><para>require SQLite 3.4.0 or newer
+(r33520)</para></item>
+            <item><para>allow the use of an in-tree SQLite
+amalgamation (r35263)</para></item>
+            <item><para>svn_log_changed_path_t now includes a 'kind'
+field (issue #1967)</para></item>
+            <item><para>BDB `changes' table inconsistency when APIs
+are misused (issue #3349)</para></item>
+            <item><para>configure should prefer apr-1 over apr-0 if
+both are present (issue #2671)</para></item>
+            <item><para>make 'Not Found' errors consistent between RA
+layers (issue #3137)</para></item>
+            <item><para>fix a potential buffer overrun
+(r34374)</para></item>
+            <item><para>many bug fixes and improvements to the test
+suite</para></item>
+          </unorderedlist></item>
+          <item><para>API changes:</para>
+          <unorderedlist>
+            <item><para>notification system for properties and
+revision properties (issue #783)</para></item>
+            <item><para>make ra_svn's merge commit-revprops public
+(r30462, r30453)</para></item>
+            <item><para>mod_dav_svn operational logging compatible
+with svnserve logging (r30518) </para></item>
+            <item><para>improve speed of svn_client__get_copy_source()
+(issue #3356)</para></item>
+            <item><para>if fsfs commit fails return SVN_INVALID_REVNUM
+(r35950)</para></item>
+          </unorderedlist></item>
+          <item><para>Bindings:</para>
+          <unorderedlist>
+            <item><para>new: ctypes python bindings</para></item>
+            <item><para>many improvements to all bindings (Java, Perl,
+Python, and Ruby)</para></item>
+            <item><para>respect CFLAGS in SWIG bindings
+(r35879)</para></item>
+            <item><para>fix building Ruby bindings with Ruby 1.9
+(r35852, r35883)</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.5.5" to="1.5.6">
+        <items name="User-visible changes">
+          <item><para>allow colons within mergeinfo path names
+(r35040)</para></item>
+          <item><para>make it impossible to add .svn to wc via 'svn
+add --parents' (r35143, -5)</para></item>
+          <item><para>copy properties of added but uncommitted files
+(r32448)</para></item>
+          <item><para>speedup JavaHL bindings on Windows
+(r35733)</para></item>
+          <item><para>improve performance of log operation on &lt; 1.5
+servers (r35566)</para></item>
+          <item><para>allow commits over Neon of files &gt;2GB (POSIX
+only) (r34919, -24)</para></item>
+          <item><para>allow serf from behind MS ISA proxy servers
+(r35981)</para></item>
+          <item><para>prevent svnmerge-migrate-history.py from
+committing bogus mergeinfo (r35516)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>fix error handling in mod_dav_svn (r35250,
+-86)</para></item>
+          <item><para>support --server-minor-version in windows
+testsuite (r31393)</para></item>
+          <item><para>fix depth_tests.py 23 on Windows with a BDB repo
+(r34875)</para></item>
+          <item><para>allow svn_mergeinfo_parse() to tolerate
+unordered mergeinfo (r35297, -367)</para></item>
+          <item><para>allow overlapping rangelists into
+svn_mergeinfo_parse() (r35466, -712, -713)</para></item>
+        </items>
+      </change>
+
+      <change from="1.5.4" to="1.5.5">
+        <items name="User-visible changes">
+          <item><para>allow prop commits on dirs with modified
+children (r34487, -92, -94)</para></item>
+          <item><para>make Cyrus auth implementation always prefer
+EXTERNAL to ANONYMOUS (r33866)</para></item>
+          <item><para>do not create mergeinfo for wc-wc moves or
+copies (r34184, -585)</para></item>
+          <item><para>do not autoupgrade old BDB filesystems to 1.5 or
+1.4 format (r34653, -6)</para></item>
+          <item><para>return mergeinfo to prior state during reverse
+merges (r30257, r33024, -6)</para></item>
+          <item><para>remove mergeinfo deleted by merge (issue
+#3323)</para></item>
+          <item><para>make proxy slaves pass through txn GET and
+PROPFIND requests (issue #3275)</para></item>
+          <item><para>merge can now use targets with inconsistent
+newlines (issue #3262)</para></item>
+          <item><para>don't allow empty-string changelists (issue
+#3344)</para></item>
+          <item><para>remove false positive ra_neon mergeinfo errors
+(r34822)</para></item>
+          <item><para>improve performance of 'svn merge --reintegrate'
+(r34091, -4, and others)</para></item>
+          <item><para>fixed: foreign merges keep UUID of foreign
+repository (r34050, -1, -3)</para></item>
+          <item><para>fixed: properly encode diff headers used in
+conflict resolution (r34171)</para></item>
+          <item><para>fixed: segfault in 'svn cp --parents' (r31311,
+-4)</para></item>
+          <item><para>fixed: mergeinfo for '...' maps to empty
+revision range (issue #3312)</para></item>
+          <item><para>fixed: segfault in BDB backend node-origins
+cache (r34506)</para></item>
+          <item><para>fixed: broken merge if target's history includes
+resurrections (r34385, -93)</para></item>
+          <item><para>fixed: invalid mergeinfo created on a subtree
+during merge (r34560, -2)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>fixed: svn_repos_get_logs() chokes on some
+revision arguments (r33873, -4)</para></item>
+        </items>
+      </change>
+
+      <change from="1.5.3" to="1.5.4">
+        <items name="User-visible changes">
+          <item><para>Properly handle explicit mergeinfo added in
+merge source (r32968, -75)</para></item>
+          <item><para>fixed: merging of paths containing spaces
+(r33641, -44)</para></item>
+          <item><para>fixed: regression in mergeinfo-aware merges
+against 1.5.3 (r33693, -704)</para></item>
+        </items>
+      </change>
+
+      <change from="1.5.2" to="1.5.3">
+        <items name="User-visible changes">
+          <item><para>Allow switch to continue after deleting locally
+modified dirs (issue #2505)</para></item>
+          <item><para>Update bash_completion to be compatible with 1.5
+(r32900, -11, -12)</para></item>
+          <item><para>Improve "svn merge" execution time by 30% on
+Windows (r33447)</para></item>
+          <item><para>Reuse network sessions during "svn merge",
+improving performance (r33476)</para></item>
+          <item><para>Improve temp file creation time on Windows
+(r33464)</para></item>
+          <item><para>Greatly improve merge performance (r29969,
+r32463, r33013, -016, -022, -112)</para></item>
+          <item><para>Improve file IO performance on Windows (r33178,
+-85)</para></item>
+          <item><para>fixed: merging files with spaces in name
+(r33109, -121, -369)</para></item>
+          <item><para>fixed: incorrect relative externals expansion
+(r33109, -121, -369)</para></item>
+          <item><para>fixed: "svn mv" hangs and consumes infinite
+memory (r33201, -12)</para></item>
+          <item><para>fixed: correctness regression in "svn log -g"
+(issue #3285)</para></item>
+          <item><para>fixed: current early bailout of "svn log -g"
+(r32977)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>Allow the tests to run as non-administrator on
+Windows Vista (r31203)</para></item>
+          <item><para>Allow out-of-tree build of bindings on BSD
+(r32409)</para></item>
+          <item><para>Translate messages in svn_fs_util.h
+(r32771)</para></item>
+          <item><para>fixed: bindings test for Perl 5.10
+(r31546)</para></item>
+          <item><para>fixed: building bindings and C API tests with
+VS2008 (r32012)</para></item>
+          <item><para>fixed: svn_ra_replay API over ra_serf
+(r33173)</para></item>
+        </items>
+      </change>
+
+      <change from="1.5.1" to="1.5.2">
+        <items name="User-visible changes">
+          <item><para>Set correct permissions on created fsfs shards
+(r32355, -7)</para></item>
+          <item><para>Pass client capabilities to start-commit hook
+(issue #3255)</para></item>
+          <item><para>Disallow creating nested repositories (issue
+#3269)</para></item>
+          <item><para>Support Neon 0.28.3</para></item>
+          <item><para>Properly canonicalize URIs with an empty
+hostname (issue #2116)</para></item>
+          <item><para>Improved merge performance for superfluous
+ranges (r32643)</para></item>
+          <item><para>Better error message for "Malformed URL for
+repository" (r31867, r32365)</para></item>
+          <item><para>Improved svn:externals parsing (r32672, -673,
+-674, -739)</para></item>
+          <item><para>fixed: improper ordering in "svnlook diff"
+output (r32019)</para></item>
+          <item><para>fixed: mod_dav_svn memory leak with
+"SVNPathAuthz short_circuit" (r32360)</para></item>
+          <item><para>fixed: duplicate svn:externals targets fail on
+co/up (issue #3246)</para></item>
+          <item><para>fixed: "svn merge --depth" inconsistencies
+(issue #2825)</para></item>
+          <item><para>fixed: ra_serf test failures
+(1.5.x-ra_serf-backports branch)</para></item>
+          <item><para>fixed: memory leak and crashes in FS (r32545,
+-58, -82)</para></item>
+          <item><para>fixed: core dump with relative externals (issue
+#3237)</para></item>
+          <item><para>fixed: "svn copy" working copy corruption
+(r32467, -70)</para></item>
+          <item><para>fixed: perl bindings errors in non-English
+locale (issue #3258)</para></item>
+          <item><para>fixed: "svn merge" incorrectly reverses previous
+merges (r32494, -522, -523)</para></item>
+          <item><para>fixed: "svn merge" errors with subtree mergeinfo
+(issue #3067)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>make libsvn_ra_neon initialization thread-safe
+(r32497, r32510)</para></item>
+          <item><para>respect LDFLAGS in Swig bindings (r32416,
+r32421, r32442)</para></item>
+          <item><para>fixed: test failures in non-English locales
+(r32491)</para></item>
+        </items>
+      </change>
+
+      <change from="1.5.0" to="1.5.1">
+        <items name="User-visible changes">
+          <item><para>mergeinfo on switched subtrees should elide in
+repos (issue #3188)</para></item>
+          <item><para>Add support for --config-dir to svnmerge.py
+(r31727)</para></item>
+          <item><para>improve performance of bdb post-commit
+deltification (r31820, -59)</para></item>
+          <item><para>return faster when there is nothing to be merged
+(r30748)</para></item>
+          <item><para>don't commit an add of a missing item (issue
+#3198)</para></item>
+          <item><para>don't create unneeded self-referential mergeinfo
+(issue #3157)</para></item>
+          <item><para>support "http-library" (if
+--enable-runtime-module-search) (r31425, -722)</para></item>
+          <item><para>support Berkeley DB 4.7 (r32017,
+-29)</para></item>
+          <item><para>fixed: make serf usable with root-level authz
+(r31464)</para></item>
+          <item><para>fixed: "svndumpfilter" partial-path matching bug
+(r31833)</para></item>
+          <item><para>fixed: crash on invalid dates in "log" and
+"blame" (issue #2721)</para></item>
+          <item><para>fixed: "svn status --xml" outputting invalid XML
+(issue #2887)</para></item>
+          <item><para>fixed: "svn merge" prints incorrect range
+(r30746, -47)</para></item>
+          <item><para>fixed: using neon/serf, can not replace branch
+(issue #2939)</para></item>
+          <item><para>fixed: 'file not found' error when merging to a
+broken symlink (r31159, -79)</para></item>
+          <item><para>fixed: using serf, crash or endless loop
+fetching authn data (r31619)</para></item>
+          <item><para>fixed: ArrayIndexOutOfBoundsException in JavaHL
+bindings (r31719, -806)</para></item>
+          <item><para>fixed: authn password lookup used wrong username
+(issue #2242)</para></item>
+          <item><para>fixed: unbounded memory usage in wc-to-wc copy
+and move (r31868)</para></item>
+          <item><para>fixed: subtree merges broken for
+non-intersecting ranges (issue #3199)</para></item>
+          <item><para>fixed: invalid XML from 'svn log --xml' against
+pre-1.2 servers (r31875)</para></item>
+          <item><para>fixed: 'svnlook diff' ignores --diff-copy-from
+for properties (issue #3248)</para></item>
+          <item><para>fixed: 'svnlook diff' doesn't report that binary
+files differ (issue #3249)</para></item>
+          <item><para>fixed: bogus results from commits to subtrees
+added by merge (issue #3240)</para></item>
+          <item><para>fixed: non-existent subtree in destination
+breaks the merge (issue #3067)</para></item>
+          <item><para>fixed: serf merge bug too complex to describe
+here (r32056)</para></item>
+          <item><para>fixed: 'svn log -g' correctness and speed (issue
+#3220, issue #3235)</para></item>
+          <item><para>fixed: merge chokes on renamed subtrees (issue
+#3174)</para></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>export svn_path_is_url() to the bindings
+(r31603)</para></item>
+          <item><para>don't clobber LDFLAGS in configure when given
+'--with-zlib' (r31825)</para></item>
+          <item><para>make libsvn_ra depend on libsvn_delta
+unconditionally (r31852)</para></item>
+          <item><para>correctly set the peg revision for copy in
+JavaHL (r31994)</para></item>
+          <item><para>'svn mergeinfo' handles wc paths (r31023, -873,
+-874, -929, -930, -038)</para></item>
+          <item><para>fixed: crash when when svn_ra_open3() is passed
+a bogus URL (r31223)</para></item>
+          <item><para>fixed: JavaHL compilation on Windows
+(r31737)</para></item>
+          <item><para>fixed: crash in calling apr_pstrcat (affects
+TortoiseSVN) (r32080)</para></item>
+        </items>
+      </change>
+
+      <change from="1.4.6" to="1.5.0">
+        <items name="User-visible changes">
+          <item><para>Major new features:</para>
+          <unorderedlist>
+            <item><para>Merge Tracking [foundational] (issue
+#820)</para></item>
+            <item><para>Sparse checkouts (see new '--depth' option)
+(issue #695)</para></item>
+            <item><para>Interactive conflict resolution (r25670 et
+al)</para></item>
+            <item><para>svn:externals handles relative URLs (issue
+#1336) and peg URLs</para></item>
+            <item><para>Changelist support</para></item>
+            <item><para>WebDAV transparent write-through
+proxy</para></item>
+            <item><para>Better support for large FSFS deployments (via
+sharding &amp; partitioning)</para></item>
+            <item><para>Cyrus SASL support for ra_svn and svnserve
+(issue #1144)</para></item>
+          </unorderedlist></item>
+          <item><para>Minor new features and improvements:</para>
+          <unorderedlist>
+            <item><para>'svn resolve' (with '--accept' option) replaces
+"resolved" (issue #2784)</para></item>
+            <item><para>'svn move file1 file2 ... dir' now moves the
+files into dir (issue #747)</para></item>
+            <item><para>'svn mkdir' and 'svn copy' now take '--parents'
+option (issue #1776)</para></item>
+            <item><para>'svn delete' now takes '--keep-local' to not
+remove working copy files</para></item>
+            <item><para>'svn copy', 'move' now support peg revisions
+(issue #2546; also r26484)</para></item>
+            <item><para>'svn copy A B ; svn move B C' now the same as
+'svn copy A C' (issue #756)</para></item>
+            <item><para>'svn copy -rBASE' now works in a working copy
+(issue #1643)</para></item>
+            <item><para>'svn import' now takes '--force' (issue
+#2806)</para></item>
+            <item><para>'svn status -u' now shows of locally deleted
+directories (issue #2420)</para></item>
+            <item><para>'svn switch' now takes '--force' (issue
+#2392)</para></item>
+            <item><para>'svn switch' now takes '--ignore-externals'
+option (issue #2189)</para></item>
+            <item><para>'svn switch' now supports peg revisions (issue
+#2545)</para></item>
+            <item><para>'svn checkout' now takes '--force' option (issue
+#1328)</para></item>
+            <item><para>'svn proplist' and 'svn propget' now support peg
+revisions (issue #3070)</para></item>
+            <item><para>'svn propget' now takes '--xml' option (issue
+#2696)</para></item>
+            <item><para>'svn propedit' now support URLs (issue #2238,
+but see issue #2923)</para></item>
+            <item><para>'svn proplist --quiet' no longer prints extra
+info (issue #1547)</para></item>
+            <item><para>'svn diff --summarize' now takes '--xml' option
+(issue #2967)</para></item>
+            <item><para>'svn diff -x' now takes '-p' extension option
+(issue #2995)</para></item>
+            <item><para>'svn log' now takes '-c' option
+(r27933)</para></item>
+            <item><para>'svn log' now takes '-l' as short form of
+'--limit' (r25829)</para></item>
+            <item><para>'svn log --xml' now takes '--with-revprop'
+option (issue #2850)</para></item>
+            <item><para>'svn diff'/'svnlook diff' now show property
+actions better (issue #3019)</para></item>
+            <item><para>'svn merge' now has informative messages on
+reverse merges (issue #2848)</para></item>
+            <item><para>'svn merge FILE' now honors '--ignore-ancestry'
+(issue #2853, r25891)</para></item>
+            <item><para>'svn merge' handles multiple notifications for
+single items (issue #2828)</para></item>
+            <item><para>'svn merge' handles skipped path better (issue
+#2829)</para></item>
+            <item><para>'svn merge' handles merges from foreign
+repositories more completely</para></item>
+            <item><para>'update', 'checkout', 'switch' now handle
+obstructions gracefully (r22257)</para></item>
+            <item><para>'svn update' now takes '--force' (issue
+#2392)</para></item>
+            <item><para>'svn update' now sometimes copies or moves local
+files, for efficiency</para></item>
+            <item><para>'svnadmin lslocks' now accepts path within
+repository (issue #2965)</para></item>
+            <item><para>'svnadmin recover' now supports FSFS
+repositories (issue #2992)</para></item>
+            <item><para>'svnadmin verify' now has '-q' and '-r' options
+(r22103)</para></item>
+            <item><para>'svnadmin setrevprop' command added
+(r21736)</para></item>
+            <item><para>'svnadmin setuuid' command added
+(r28511)</para></item>
+            <item><para>'svnsync sync' now shows commit progress like
+'svn commit'</para></item>
+            <item><para>'svnsync' now takes '-q, --quiet' option
+(r26465)</para></item>
+            <item><para>'svnsync' now supports separate authn for
+source/target (issue #2717)</para></item>
+            <item><para>'svnsync copy-revprops' now supports revision
+ranges (r23498)</para></item>
+            <item><para>'svnsync copy-revprops' now supports "HEAD"
+revision alias (r23500)</para></item>
+            <item><para>'svnmucc' is new name for contrib tool formerly
+called 'mucc'</para></item>
+            <item><para>'svnmucc' now has propset and propdel
+subcommands (issue #2758)</para></item>
+            <item><para>'svnmucc' now has more authentication
+options</para></item>
+            <item><para>'svnmucc' now now takes '--non-interactive'
+option (r25977)</para></item>
+            <item><para>'svnmucc' now takes a global base revision, for
+extra safety (r23764)</para></item>
+            <item><para>'svnlook' now takes '--extensions' option (issue
+#2912)</para></item>
+            <item><para>'svnlook' now takes '-N' option (issue
+#2663)</para></item>
+            <item><para>'svnlook history' now takes '-l' / '--limit'
+option (r25843)</para></item>
+            <item><para>'svnserve' now takes '--config-file' option
+(r24119)</para></item>
+            <item><para>'mod_dav_svn' now uses Apache default mime-type
+for files (issue #2304)</para></item>
+            <item><para>new '--with-revprop' option on all commands that
+commit (issue #1976)</para></item>
+            <item><para>now accept "peg dates" (URL@{DATE}), behaving
+like peg revs (issue #2602)</para></item>
+            <item><para>easier to try out experimental ra_serf http://
+access module</para></item>
+            <item><para>select ra_neon vs ra_serf on a site-by-site
+basis in config (r25535)</para></item>
+            <item><para>client-side post-commit processing now more
+efficient (issue #2607)</para></item>
+            <item><para>windows binaries now use a custom crash handler
+(issue #1628)</para></item>
+            <item><para>add vim swap file patterns to default
+global-ignores (r24348)</para></item>
+            <item><para>add "*.pyc" and "*.pyo" patterns to default
+global-ignores (issue #2415)</para></item>
+            <item><para>add unix/libtool library patterns to default
+global-ignores (issue #2415)</para></item>
+            <item><para>naming scheme for conflict files is now
+configurable (issue #2474)</para></item>
+            <item><para>removed svn-ref.tex as it's extremely out of
+date (issue #2762)</para></item>
+            <item><para>improved cancellation response in many
+situations</para></item>
+            <item><para>support Neon up to 0.28</para></item>
+            <item><para>character set conversion now uses native API on
+Windows (r25650)</para></item>
+            <item><para>HTTP authn protocol now configurable (for Neon
+0.26 and higher) (r21531)</para></item>
+            <item><para>http:// (over Neon) supports HTTP redirection /
+relocation (issue #660)</para></item>
+            <item><para>support PKCS#11-provided (smartcard) SSL client
+certs with Neon (r29421)</para></item>
+            <item><para>authz now supports aliases
+(r21982)</para></item>
+            <item><para>authz token rules for authenticated-only,
+anonymous, and inverse (r23750)</para></item>
+            <item><para>mailer.py now supports properties in commit
+messages (r21684)</para></item>
+            <item><para>ra_serf now supports NTLM/SSPI authentication
+(issue #2900)</para></item>
+            <item><para>warn if try to turn off boolean property via
+propset/propedit (r25486)</para></item>
+            <item><para>display repository basename in XML and HTML
+index views (r25837, r25838)</para></item>
+            <item><para>config 'http-auth-type' can be overridden to
+force BASIC auth (r23900)</para></item>
+            <item><para>translation updates for all languages, as
+usual</para></item>
+            <item><para>Revamp mod_dav_svn logging; see
+tools/server-side/svn_dav_log_parse.py</para></item>
+            <item><para>misleading configure arg --enable-dso now
+--enable-runtime-module-search</para></item>
+          </unorderedlist></item>
+          <item><para>Client-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>'svn revert' of missing scheduled addition broke
+wc (issue #2425)</para></item>
+            <item><para>'svn export' should export svn:externals from
+local copies (issue #2429)</para></item>
+            <item><para>'svn status -uN' should show status of files
+(issue #2468)</para></item>
+            <item><para>'svn update' overwrote if local timestamp
+unchanged (issue #2746)</para></item>
+            <item><para>'svn update -N' errored when receiving a
+deletion (issue #3039)</para></item>
+            <item><para>'svn merge' would delete locally modified props
+(issue #2857)</para></item>
+            <item><para>'svn log --xml' could output invalid XML (issue
+#2866)</para></item>
+            <item><para>'svn copy' on URL with spaces made wrong WC file
+name (issue #2955)</para></item>
+            <item><para>'svn diff' was failing w/ large diffs on Windows
+(issue #1789)</para></item>
+            <item><para>'svn delete' no longer deletes locally-modified
+files (issue #1808)</para></item>
+            <item><para>'svn move' moved files to wrong directory on
+Windows (issue #1869)</para></item>
+            <item><para>'svn revert' mistakenly used leftover
+.svn-revert files (issue #2927)</para></item>
+            <item><para>'svn diff' output now shows relative paths
+(issue #2723)</para></item>
+            <item><para>'svn diff' wasn't ignoring all EOLs (issue
+#2920)</para></item>
+            <item><para>'svn cleanup' no longer fails on a missing
+.svn/tmp dir (r23370)</para></item>
+            <item><para>infinite loop in UTF conversion in non-C locale
+(issue #2577)</para></item>
+            <item><para>interrupting "svn status" could make svn crash
+(issue #2623)</para></item>
+            <item><para>commit-email.pl date header output now
+RFC2822-compliant (issue #2633)</para></item>
+            <item><para>authz write access to folder wasn't permitting
+locking (issue #2700)</para></item>
+            <item><para>stop complaining just because $HOME is
+unreadable (issue #2363)</para></item>
+            <item><para>do not display unescaped characters in error
+message (issue #2471)</para></item>
+            <item><para>propchange received on subdir merge causes
+conflict (issue #2969)</para></item>
+            <item><para>revert replaced-with-history files should
+restore checksum (issue #2928)</para></item>
+            <item><para>catch improper arguments to diff (issue
+#2996)</para></item>
+            <item><para>handle URLs like http://hostname (i.e. no path
+part) (issue #1851)</para></item>
+            <item><para>config autoprops honored regardless of case of
+entry (issue #2036)</para></item>
+            <item><para>"Cannot replace a directory from within" error
+now rarer (issue #2047)</para></item>
+            <item><para>handle _svn/.svn as part of a path (issue
+#3026)</para></item>
+            <item><para>make permissions changes on symlinks a no-op
+(issue #2581)</para></item>
+            <item><para>error usefully if asked to update a URL
+(r22296)</para></item>
+            <item><para>fixed infinite loop on Windows if fail to find
+repository root (r22483)</para></item>
+            <item><para>'svn info $REPO_ROOT' now supports pre-1.2
+svn:// servers (r26264)</para></item>
+            <item><para>be more resilient in the face of faulty
+.svn/entries files (r26482)</para></item>
+            <item><para>'svn diff -x --ignore-eol-style' failed to
+ignore all EOLs (r27094)</para></item>
+            <item><para>rare property dataloss bug now fixed (issue
+#2986, see also r29538)</para></item>
+            <item><para>fixed faulty status reporting for some missing
+directories (issue #2804)</para></item>
+            <item><para>'svn diff --summarize' showed wrong output paths
+(issue #2765)</para></item>
+            <item><para>propset and move interaction could cause
+property weirdness (r25833)</para></item>
+            <item><para>'svn propget &lt;propname&gt; .@HEAD' now
+works (issue #3012)</para></item>
+            <item><para>'svnsync' had bug with replaced+modified rev
+over serf (issue #2904)</para></item>
+            <item><para>'svnsync --config-dir' sometimes ignored, thus
+tunnel agent bug (r27056)</para></item>
+            <item><para>update/merge safely receives file on top of
+schedule-add file (r23506)</para></item>
+            <item><para>http:// (over Neon) reports progress while
+disk-spooling delta (r26271)</para></item>
+            <item><para>print "Out of memory" before dying from memory
+shortage (issue #2167)</para></item>
+            <item><para>warn when used on old checkout without a
+repository root entry (r25168)</para></item>
+            <item><para>merge to missing file target wrongly appeared to
+succeed (issue #2782)</para></item>
+            <item><para>'svn merge URL PATH -cX' could cause property
+corruption (issue #2781)</para></item>
+            <item><para>URL parsing now consistently checks for error
+earlier (issue #2207)</para></item>
+            <item><para>security hole: files could be created above cwd
+(r26047, CVE-2007-3846)</para></item>
+            <item><para>local property mods to replaced-with-history
+file could be lost (r26364)</para></item>
+            <item><para>revert of replaced-with-history path left
+copyfrom info (r23452)</para></item>
+            <item><para>character encoding translation could hang
+(r23492)</para></item>
+            <item><para>un-substituting keywords was buggy ($Id$ vs.
+$Id:$) (issue #2640)</para></item>
+            <item><para>ra_neon and ra_serf lost pre-revprop-change hook
+output (issue #443)</para></item>
+            <item><para>merge of non-empty subdir could be committed
+incorrectly (issue #1962)</para></item>
+            <item><para>many other minor bugfixes, optimizations, plugs
+of memory leaks, etc</para></item>
+          </unorderedlist></item>
+          <item><para>Server-side bugfixes:</para>
+          <unorderedlist>
+            <item><para>segfault in svnserve and svnversion commands
+fixed (issue #2757)</para></item>
+            <item><para>segfault when stopping httpd (if BDB repository)
+fixed (issue #2732)</para></item>
+            <item><para>'svnadmin dump' had a path ordering bug (issue
+#2641)</para></item>
+            <item><para>better FSFS support for NFS v3 and lower
+(r24470)</para></item>
+            <item><para>better FSFS support for some buggy NFS clients
+(r29448)</para></item>
+            <item><para>authentication and authz bugs w.r.t. anonymous
+access (issue #2712)</para></item>
+            <item><para>inconclusive authz result should deny, not allow
+(r23815)</para></item>
+            <item><para>better reporting of problems parsing authz files
+(r22329)</para></item>
+            <item><para>set svn:date revprop even if dumpstream does not
+(issue #2729)</para></item>
+            <item><para>http:// commit can now create empty files
+properly (r25471, r25474)</para></item>
+            <item><para>squelch not-a-directory errors in both FS
+backends (issue #2549)</para></item>
+            <item><para>segfault on update-report response without base
+revision (issue #3023)</para></item>
+            <item><para>'svnserve --root PATH' checks that PATH exists
+(r22580, r22701)</para></item>
+            <item><para>'svnlook propget -t TXN_NAME' reports errors
+better (r22772)</para></item>
+            <item><para>make location of mod_dav_svn activity database
+configurable (r24873)</para></item>
+            <item><para>select only paths that are proper children of
+requested path (r25231)</para></item>
+            <item><para>http:// commit error could leave empty
+transactions behind (r23594)</para></item>
+            <item><para>'svn switch --relocate' now works against
+unreadable repos root (r23848)</para></item>
+            <item><para>many other minor bugfixes too numerous to list
+here</para></item>
+          </unorderedlist></item>
+          <item><para>Contributed tools improvements and
+bugfixes:</para>
+          <unorderedlist>
+            <item><para>svn_load_dirs.pl:</para>
+            <unorderedlist>
+              <item><para>Support global-ignores list (issue
+#2470)</para></item>
+              <item><para>Allow "@" in filenames (r22203, Debian bug
+359145)</para></item>
+              <item><para>Add -no_auto_exe option (r26399)</para></item>
+            </unorderedlist></item>
+            <item><para>svnmerge.py:</para>
+            <unorderedlist>
+              <item><para>fixed: Always get end_rev from source instead
+of target (issue #2863)</para></item>
+              <item><para>fixed: 'init' now chooses a better default
+revision range (issue #2810)</para></item>
+              <item><para>fixed: Consider revs changing blocking status
+as reflected (issue #2814)</para></item>
+              <item><para>Performance inmprovement (issue
+#2812)</para></item>
+              <item><para>initialized revisions can be excluded (issue
+#2851)</para></item>
+            </unorderedlist></item>
+            <item><para>new 'svn-populate-node-origins-index' tool
+(issue #3024)</para></item>
+            <item><para>new 'svn-merge-vendor.py' to assist in merging
+vendor branches (r23030)</para></item>
+            <item><para>'svn2rss.py' is now called
+'svn2feed.py'</para></item>
+            <item><para>svn2cl: New release 0.9 (r24498)</para></item>
+            <item><para>commit-email.pl: various improvements (r22971,
+r22589)</para></item>
+            <item><para>commit-email.rb: various
+improvements</para></item>
+            <item><para>psvn.el: too many improvements and new features
+to list them all here</para></item>
+            <item><para>dsvn.el: improve XEmacs compatibility
+(r24337)</para></item>
+            <item><para>svn-tweak-author.py: make NEWAUTHOR argument
+optional (r24387)</para></item>
+            <item><para>And more stuff that we just didn't have time to
+list.  Enjoy.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>General:</para>
+          <unorderedlist>
+            <item><para>libsvn_ra_neon is new name for libsvn_ra_dav (to
+accommodate ra_serf)</para></item>
+            <item><para>many abort() calls removed, replaced with error
+returns</para></item>
+            <item><para>client and server now do capabilities exchange
+(r29358 et al)</para></item>
+            <item><para>gen_win.py: auto-detect the path to the JDK on
+Windows (r24333)</para></item>
+          </unorderedlist></item>
+          <item><para>API changes:</para>
+          <unorderedlist>
+            <item><para>many, many new APIs and types as part of the new
+features in 1.5.0</para></item>
+            <item><para>APIs to allow retrieving multiple revprops in
+one fetch (issue #2850)</para></item>
+            <item><para>basic progress reporting for ra_svn (issue
+#901)</para></item>
+            <item><para>new APIs for creating and using iterators
+(r26533)</para></item>
+            <item><para>svn_fs_node_origin_rev finds line of history
+origin (issue #3017, #3024)</para></item>
+            <item><para>svn_revnum_parse for parsing revision numbers
+(r26195)</para></item>
+            <item><para>svn_path_is_canonical for validating paths
+(r26481)</para></item>
+            <item><para>new API svn_fs_txn_root_base_revision()
+(r22610)</para></item>
+            <item><para>pass individual arguments rather than config
+objects (r25182, r25190)</para></item>
+            <item><para>clients can now extend HTTP User-Agent header
+(r28613)</para></item>
+            <item><para>SVN_ERR_RA_DAV_PATH_NOT_FOUND is deprecated and
+no longer raised</para></item>
+          </unorderedlist></item>
+          <item><para>Bindings:</para>
+          <unorderedlist>
+            <item><para>Many improvements to all bindings (Java, Perl,
+Python, and Ruby)</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.4.5" to="1.4.6">
+        <items name="User-visible changes">
+          <item><para>Client:</para>
+          <unorderedlist>
+            <item><para>fixed: unbounded memory use in "svn cat" over
+ra_svn (r26964, -8)</para></item>
+            <item><para>fixed: 'svn diff --summarize file' displays
+erroneous output (issue #2765)</para></item>
+            <item><para>fixed: 'svn status' wrong on
+previously-reverted deleted dir (issue #2804)</para></item>
+            <item><para>fixed: 'svn up' can delete unversioned
+symlinks (issue #1808)</para></item>
+            <item><para>fixed: use correct properties for locally
+replaced files (issue #2743)</para></item>
+            <item><para>fixed: 'svn info -R $REPO_ROOT' w/ pre-1.2
+svnserve broken (r26264)</para></item>
+            <item><para>fixed: svnsync ignores '--config-dir'
+(r27056)</para></item>
+            <item><para>datestamps can be localized
+(r26156)</para></item>
+            <item><para>fixed: text base not updated when merging a
+replaced file (issue #2698)</para></item>
+            <item><para>fixed: inverted 'switch --relocate' error
+message (r22355)</para></item>
+            <item><para>fixed: sporadically failing file and directory
+removal on Windows (r25520)</para></item>
+            <item><para>fixed: property file handling for
+schedule-delete files (r25833)</para></item>
+            <item><para>fixed: allow invalid svn:eol-style values
+(r28331)</para></item>
+            <item><para>fixed: 'svnadmin rmlocks' should error when no
+path provided (r28431)</para></item>
+            <item><para>support neon 0.26.4 (r26077)</para></item>
+          </unorderedlist></item>
+          <item><para>Server:</para>
+          <unorderedlist>
+            <item><para>fixed: authz granted if calculation
+inconclusive (r23815)</para></item>
+            <item><para>fixed: svndumpfilter crashes on Windows
+(r23494)</para></item>
+            <item><para>fixed: wrong pointer type used for memset
+(r27263)</para></item>
+            <item><para>fixed: invalid FSFS directory cache can
+corrupt repository (r27256)</para></item>
+            <item><para>fixed: dir props on FSFS filesystem root never
+conflict (issue #2608)</para></item>
+          </unorderedlist></item>
+          <item><para>Client and Server:</para>
+          <unorderedlist>
+            <item><para>fixed: "No newline at end of file" message
+translated (issue #2906)</para></item>
+            <item><para>use compressed delta encoding for 'svn blame'
+in svnserve (r26115)</para></item>
+            <item><para>translation updates for Simplified
+Chinese</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>svnserveautocheck.sh script is executable
+(r23942)</para></item>
+          <item><para>add RHEL5 RPM (r25593)</para></item>
+          <item><para>test suite passes with trunk servers
+(forwards-compatibility) (r25607)</para></item>
+          <item><para>javahl bindings:</para>
+          <unorderedlist>
+            <item><para>improve error reporting from native code
+(r25208)</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="1.4.4" to="1.4.5">
+        <items name="User-visible changes">
+          <item><para>fixed: file placement vulnerability (Win32
+clients only) [CVE-2007-3846]</para></item>
+        </items>
+      </change>
+
+      <change from="1.4.3" to="1.4.4">
+        <items name="User-visible changes">
+          <item><para>Client:</para>
+          <unorderedlist>
+            <item><para>fixed: 'svn up' of replaced file without
+history fails (issue #2618)</para></item>
+            <item><para>fixed: 'svn export' succeeds on non-existent
+URL (r23191, -3, -5, -200)</para></item>
+            <item><para>fixed: 'svn diff' fails writing large hunks to
+Win console (issue #1789)</para></item>
+            <item><para>fixed: 'svn merge' shows 'G' notifications for
+unchanged files (r24483)</para></item>
+            <item><para>fixed: svnsync cannot sync unreadable modified
+dir copies (issue #2705)</para></item>
+            <item><para>fixed: ra_dav litters empty transactions if
+initial setup fails (r23594)</para></item>
+            <item><para>fixed: inconsistent expansion of revision
+number keywords (issue #1743)</para></item>
+            <item><para>fixed: security flaw in 'svn prop*' commands
+[CVE-2007-2448] (r25095, -099, -104, -105, -10)</para></item>
+          </unorderedlist></item>
+          <item><para>Server:</para>
+          <unorderedlist>
+            <item><para>fixed: rare dirprop dataloss leading to BDB
+repo corruption (issue #2751)</para></item>
+            <item><para>fixed: race condition when changing FSFS
+revprops (r23439, r23440)</para></item>
+            <item><para>fixed: 'svnadmin load' invents svn:date if
+none exists (issue #2729)</para></item>
+            <item><para>fixed: svnserve can't commit locked file if
+root unwritable (issue #2700)</para></item>
+            <item><para>fixed: 'svnadmin dump' output invalid for
+non-ASCII paths (issue #2641)</para></item>
+          </unorderedlist></item>
+          <item><para>Client and Server:</para>
+          <unorderedlist>
+            <item><para>fixed: hang during character translation
+(r23491, r23492)</para></item>
+            <item><para>translation updates for Simplified Chinese,
+Japanese, and Norwegian</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Developer-visible changes">
+          <item><para>new "make svnserveautocheck" testing target
+(r23558)</para></item>
+          <item><para>fixed: ra_serf fails checkout if access to repos
+root is forbidden (r23846)</para></item>
+          <item><para>fixed: svn_client_cat2() doesn't accept WORKING
+as a revision (r23556)</para></item>
+          <item><para>javahl bindings:</para>
+          <unorderedlist>
+            <item><para>fixed: potential segfault in initialisation
+(r23383)</para></item>
+            <item><para>fixed: SVNClientSynchronized.logMessages()
+isn't synchronised (r23978)</para></item>
+            <item><para>fixed: SVNClient.info2() misreports itself as
+unlock in errors (r24219)</para></item>
+          </unorderedlist></item>
+          <item><para>SWIG/perl bindings:</para>
+          <unorderedlist>
+            <item><para>fixed: ra_do_{update,switch,status} don't work
+with Perl delta editors (r20667, r22311)</para></item>
+          </unorderedlist></item>
+          <item><para>SWIG/python bindings:</para>
+          <unorderedlist>
+            <item><para>fixed: memory leak whenever C APIs returned
+errors (r21453, r23468)</para></item>
+          </unorderedlist></item>
+          <item><para>SWIG/ruby bindings:</para>
+          <unorderedlist>
+            <item><para>fixed: typos in method
+Svn::Wc#merge_prop_diffs and docs (r23405, -6)</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The svn Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+        <para>The Apache modules, <command>mod_dav_svn.so</command>
+and <command>mod_authz_svn.so</command>, are installed in
+<command>${SB_INSTALL_PREFIX}/modules/[ver]</command> where
+<command>[ver]</command> indicates the Apache version. It is
+automatically added to the Apache <command>httpd.conf</command>
+configuration file, if the configuration file exists:</para>
+        <screen>
+&lt;IfModule !dav_svn_module&gt;
+  &lt;IfModule !dav_module&gt;
+    LoadModule dav_module modules/mod_dav.so
+  &lt;/IfModule&gt;
+  &lt;IfModule !dav_fs_module&gt;
+    LoadModule dav_fs_module modules/mod_dav_fs.so
+  &lt;/IfModule&gt;
+  &lt;IfModule !dav_lock_module&gt;
+    LoadModule dav_lock_module modules/mod_dav_lock.so
+  &lt;/IfModule&gt;
+
+  LoadModule dav_svn_module ${SB_INSTALL_PREFIX}/modules/[ver]/mod_dav_svn.so
+  LoadModule authz_svn_module ${SB_INSTALL_PREFIX}/modules/[ver]/mod_authz_svn.so
+
+  &lt;Location @REPOSITORY_LOCATION@&gt;
+    DAV svn
+    SVNPath @PATH_TO_SUBVERSION_REPOSITORY@
+  &lt;/Location&gt;
+&lt;/IfModule&gt;
+        </screen>
+
+        <para>The "<command>@REPOSITORY_LOCATION@</command>" text
+should be replaced with the basename of the URL path to the subversion
+repository and "<command>@PATH_TO_SUBVERSION_REPOSITORY@</command>"
+should be replaced with the absolution path to the subversion
+repository on disk.</para>
+      </note>
+
+      <platform name="HP-UX 11.x">
+        <para>The Berkeley DB filesystem library is unavailable on
+this platform due to mmap() limitations. Therefore, the default file
+system type will be "<command>fsfs</command>".</para>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2012 August 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add Perl bindings</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
