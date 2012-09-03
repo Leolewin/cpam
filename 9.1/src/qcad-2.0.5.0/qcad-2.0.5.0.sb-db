@@ -1,0 +1,309 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="qcad" version="2.0.5.0" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}-1-community.src</build-name>
+
+    <install-name>${SB_PROG_NAME}20</install-name>
+
+    <sources>
+      <source checksum="96b6a56027782aec953c9c4e64c5998c"
+        checksum-type="md5" size="4470033"
+        path="src/qcad-2.0.5.0-1-community.src.tar.gz"/>
+      <patch checksum="53558303e931d6e40cbca08e0f071539"
+        checksum-type="md5" size="99271"
+        path="src/qcad-2.0.5.0-1-community.src.tww.patch"/>
+      <patch checksum="65cd08d5e94f23099a0381808964a26f"
+        checksum-type="md5" size="1293"
+        path="src/qcad-2.0.5.0-1-community.src.gcc44.patch"/>
+      <source checksum="5f52201caa6cfb4f91319e4ba4b1be94"
+        checksum-type="md5" size="20635528"
+        path="src/manual_reference.pdf"
+        noop="1" var="DOC"/>
+      <source checksum="20d8fddbe0da978f996bdfaf9ae6bec1"
+        checksum-type="md5" size="1807333"
+        path="src/qcad-manual-en-2.0.4.0-1.html.zip"
+        noop="1" var="HTML_MANUAL"/>
+      <source checksum="e1df98084317b13bfc193fecba9d6790"
+        checksum-type="md5" size="11629961"
+        path="src/partlibrary-2.1.2.8-1.tar.gz"
+        noop="1" var="PARTS_LIBRARY"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"/>
+      <depend program="unzip" install-name="unzip60"
+        add-path="prepend" type="build">v&gt;=6.0</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v&gt;=2.0.1</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="libmng" var="LIBMNG"
+        install-name="libmng10">v&gt;=1.0.10</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="qt" var="LIBQT" install-name="libqt33"
+        add-path="prepend"
+        systype="*-hpux10*|*-linux*">v&gt;=3.3.8</depend>
+      <depend program="qt" var="LIBQT" install-name="libqt33"
+        module="gcc44" add-path="prepend"
+        systype="!*-linux*">v&gt;=3.3.8</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_docsubdir="doc"
+_libqt_datadir="${SB_VAR_LIBQT}/share"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  PLATFORM="aix-g++" ;;
+ia64*-hpux*)
+  PLATFORM="hpuxi-g++-32" ;;
+*-hpux*)
+  PLATFORM="hpux-g++" ;;
+*-irix*)
+  PLATFORM="irix-g++" ;;
+x86_64*-linux*)
+  PLATFORM="linux-g++-64" ;;
+*-linux*)
+  PLATFORM="linux-g++" ;;
+*-osf*)
+  PLATFORM="tru64-g++" ;;
+i?86*-solaris*)
+  PLATFORM="solarisx86-g++" ;;
+*-solaris*)
+  PLATFORM="solaris-g++" ;;
+esac
+
+_gccsubdir="gcc44"
+
+export QTDIR=${SB_VAR_LIBQT}
+export QMAKESPEC="${_libqt_datadir}/mkspecs/${PLATFORM}"
+export DOTQTDIR=${SB_BUILD_PREFIX}
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s!@datadir@!${_datadir}!; \
+s!@prefix@!${SB_INSTALL_PREFIX}!;" \
+qcadlib/src/engine/rs_system.cpp
+
+${SB_PATH_SED} -i -e "\
+s!@docsubdir@!${_docsubdir}!" \
+qcadlib/src/engine/rs_system.h
+
+${SB_PATH_SED} -i -e "\
+s!@qtdir@!${SB_VAR_LIBQT}!" \
+qcad/src/qc_applicationwindow.cpp
+
+case "${SB_SYSTYPE}" in
+*-hpux10*)
+  ${SB_PATH_SED} -i -e "\
+/^CONFIG/ {
+  s! thread!!;
+}" qcad/src/qcad.pro ;;
+esac
+
+for _pro in qcad/src/qcad.pro qcadactions/src/qcadactions.pro \
+qcadguiqt/src/qcadguiqt.pro qcadcmd/src/qcadcmd.pro \
+qcadlib/src/qcadlib.pro; do
+  case "${SB_SYSTYPE}" in
+  *-linux*)
+    cat >>${_pro} <<_EOT_
+QMAKE_INCDIR_QT = ${SB_VAR_LIBQT_INC}
+QMAKE_LIBDIR_QT = ${SB_VAR_LIBQT_LIB}
+QMAKE_LFLAGS += \$\$QMAKE_RPATH${SB_VAR_FCPACKAGE_LIB}:\
+${SB_VAR_JPEG_LIB}:${SB_VAR_LIBEXPAT_LIB}:${SB_VAR_LIBMNG_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_LIBTTF_LIB}:${SB_VAR_LIBZ_LIB}
+_EOT_
+    ;;
+  *)
+    cat >>${_pro} <<_EOT_
+QMAKE_INCDIR_QT = ${SB_VAR_LIBQT_INC}/${_gccsubdir}
+QMAKE_LIBDIR_QT = ${SB_VAR_LIBQT_LIB}/${_gccsubdir}
+QMAKE_LFLAGS += \$\$QMAKE_RPATH${SB_VAR_GCC_RT_LIB}:\
+${SB_VAR_FCPACKAGE_LIB}:${SB_VAR_JPEG_LIB}:${SB_VAR_LIBEXPAT_LIB}:\
+${SB_VAR_LIBMNG_LIB}:${SB_VAR_LIBPNG_LIB}:${SB_VAR_LIBTTF_LIB}:\
+${SB_VAR_LIBZ_LIB}
+_EOT_
+    ;;
+  esac
+
+  # path to uic
+  case "${SB_SYSTYPE}" in
+  *-hpux10*|*-linux*)
+    ;;
+  *)
+    cat >>${_pro} <<_EOT_
+QMAKE_UIC = ${SB_VAR_LIBQT}/bin/${_gccsubdir}/uic
+_EOT_
+    ;;
+  esac
+
+  # handle big TOC on AIX
+  case "${SB_SYSTYPE}" in
+  *-aix*)
+    cat >>${_pro} <<_EOT_
+QMAKE_LFLAGS += -Wl,-bbigtoc
+_EOT_
+    ;;
+  esac
+done
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+(cd scripts
+ # Some of the vital machinery for translations is missing
+ # from the community release :(
+ ${SHELL} build_qcad.sh notrans)
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/lib ${_datadir}/examples ${_datadir}/fonts \
+${_datadir}/library ${_datadir}/patterns ${_datadir}/qm \
+${_docdir}/html
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 qcad/qcad \
+${SB_INSTALL_PREFIX}/bin
+${SB_PATH_INSTALL} -m 755 -o root -g 0 \
+dxflib/lib/libdxf.a fparser/lib/libfparser.a \
+qcadactions/lib/libqcadactions.a qcadcmd/lib/libqcadcmd.a \
+qcadguiqt/lib/libqcadguiqt.a qcadlib/lib/libqcad.a \
+${SB_INSTALL_PREFIX}/lib
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 qcad/fonts/* \
+${_datadir}/fonts
+${SB_PATH_INSTALL} -m 644 -o root -g 0 qcad/patterns/* \
+${_datadir}/patterns
+
+# documentation
+${SB_PATH_INSTALL} -m 644 -o root -g 0 ${SB_SRC_DOC} \
+${_docdir}/manual.pdf
+(cd ${_docdir}
+unzip ${SB_SRC_HTML_MANUAL}
+mv ${SB_PROG_NAME}-manual-en-2.0.4.0-1.html/* html
+rm -rf ${SB_PROG_NAME}-manual-en-2.0.4.0-1.html)
+${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+
+# unpack parts library
+(cd ${_datadir}/library
+${SB_PATH_TAR} zxf ${SB_SRC_PARTS_LIBRARY}
+mv partlibrary-2.1.2.8-1/* .
+rm -rf partlibrary-2.1.2.8-1)
+${SB_PATH_CHOWN} -hR 0:0 ${_datadir}/library
+${SB_PATH_FIND} ${_datadir}/library -type f -exec chmod 644 {} \;
+${SB_PATH_FIND} ${_datadir}/library -type d -exec chmod 755 {} \;
+]]>
+    </install>
+
+    <notes>
+      <change from="2.0.3.3" to="2.0.4.0">
+        <item><para>Measuring polygonal areas</para></item>
+        <item><para>Splines (NURBS):</para>
+        <unorderedlist>
+          <item><para>B-Splines degree 2, 3</para></item>
+          <item><para>Open and closed B-Splines</para></item>
+        </unorderedlist></item>
+        <item><para>Drag'n'drop: keep selection</para></item>
+        <item><para>Professional version scripting:</para>
+        <unorderedlist>
+          <item><para>Pen, color, line width</para></item>
+          <item><para>Layer handling</para></item>
+          <item><para>Circles</para></item>
+          <item><para>Selection class</para></item>
+          <item><para>Vector class</para></item>
+          <item><para>View class</para></item>
+        </unorderedlist></item>
+        <item><para>Bug fix: Crash when using command prompt ('line'
+command)</para></item>
+        <item><para>Bug fix: Crash when deleting a block that is being
+edited</para></item>
+        <item><para>Bug fix: Corrupted large texts in Cyrillic /
+Unicode when saved to DXF</para></item>
+        <item><para>Bug fix: selecting layers: don't reactivate
+deleted entities</para></item>
+        <item><para>Bug fix: beveling: wrong distance when bevel
+length more than entity length</para></item>
+        <item><para>Bug fix: loading diametrical
+dimensions</para></item>
+        <item><para>Bug fix: mirroring blocks with arcs: incorrect arc
+angles</para></item>
+        <item><para>Bug fix: mirroring points that touch an end point
+of a mirror axis</para></item>
+        <item><para>Bug fix: inaccurate arc display for very large
+arcs</para></item>
+        <item><para>Bug fix: drawing lines with relative angles:
+length ignored</para></item>
+        <item><para>Bug fix: DXF: corrected saving of variable
+$VIEWCTR</para></item>
+        <item><para>Bug fix: in rare conditions selection of only one
+entity possible</para></item>
+        <item><para>Bug fix: Mac OS X: use Backspace instead of non
+existing Delete key</para></item>
+        <item><para>Bug fix: Slow preview when inserting blocks with
+hatches</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The parts library available from <ulink url="http://www.ribbonsoft.com/qcad_library.html">http://www.ribbonsoft.com/qcad_library.html</ulink>
+is available in <command>"${SB_INSTALL_PREFIX}/share/library"</command>. The added
+libraries are a collection of CAD files available from the library
+browser. The parts are typically drawings of small parts that are
+often used in drawings (such as screws or nuts). Documentation on the
+available parts is available online (<ulink url="http://www.ribbonsoft.com/library/index.html">http://www.ribbonsoft.com/library/index.html</ulink>).</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 27" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b</para></item>
+        <item><para>Update libmng dependency from 1.0.9 to
+1.0.10</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+1.4.4</para></item>
+        <item><para>Update unzip dependency from 5.52 to
+6.0</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
