@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="libxklavier" version="5.0" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}50</install-name>
+
+    <sources>
+      <source checksum="134c7ea177ff901123b909de77394780"
+        checksum-type="md5" size="357862"
+        path="src/libxklavier-5.0.tar.bz2"/>
+      <patch checksum="abd056a9b822e599e211aff9435a6423"
+        checksum-type="md5" size="1759"
+        path="src/libxklavier-5.0.tww.patch"/>
+      <patch checksum="94c2cedc5fee116164c915501e114a89"
+        checksum-type="md5" size="1572808"
+        path="src/libxklavier-5.0.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gtk-doc" install-name="gtkdoc116"
+        add-path="prepend" type="build">v&gt;=1.16</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="iso-codes" var="ISOCODES"
+        install-name="isocodes32">v&gt;=3.25</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # location of -lxkbfile
+  LDFLAGS="-L/usr/contrib/lib" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # location of -lxkbfile
+  LDFLAGS="-L/usr/contrib/lib" ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-xkb-base=/usr/lib/X11/xkb" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-msym -arch ev5 -O2 -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-xkb-base=/usr/lib/X11/xkb" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--with-xkb-base=/usr/openwin/lib/X11/xkb" ;;
+*-solaris2.8*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  ARGS="--with-xkb-base=/usr/openwin/lib/X11/xkb" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:${SB_VAR_ISOCODES_LIB}/pkgconfig" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV_LIB}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--docdir=${_docdir} --disable-dependency-tracking \
+--with-xkb-bin-base="${SB_INSTALL_PREFIX}/bin" \
+--with-xmodmap-base="${_datadir}/xmodmap" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libxklavier.pc
+]]>
+    </configure>
+
+    <licenses>
+      <license path="lgpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.9" to="4.0">
+        <item><para>Support for "extras" in xkeyboard-config, small
+bugfixes and build fixes</para></item>
+      </change>
+
+      <change from="3.8" to="3.9">
+        <item><para>Several small bugs fixed, including memleak and
+crash under NX</para></item>
+      </change>
+
+      <change from="3.7" to="3.8">
+        <item><para>Added "new device" signal - for plugged keyboard
+(no need in the "device removed yet"</para></item>
+      </change>
+
+      <change from="3.6" to="3.7">
+        <item><para>A couple of essential bugfixes. Now all translated
+strings are in UTF-8 (even in 8-bit locales).</para></item>
+      </change>
+
+      <change from="3.5" to="3.6">
+        <item><para>Added API for countries and languages</para></item>
+      </change>
+
+      <change from="3.4" to="3.5">
+        <item><para>Got rid of the fallback xml file (some code
+cleanup). Fixed a couple of bugs (one crasher)</para></item>
+      </change>
+
+      <change from="3.3" to="3.4">
+        <item><para>Updated translation scheme, based on
+xkeyboard-config 1.2</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>
