@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="mercurial" version="1.9.2" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}19</install-name>
+
+    <sources>
+      <source checksum="0bda8040e2626e70d3d1a0654b0b03f2"
+        checksum-type="md5" size="2972849"
+        path="src/mercurial-1.9.2.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+      <depend program="python" var="PYTHON" install-name="python26"
+        add-path="prepend">v&gt;=2.6.7</depend>
+      <depend program="docutils" var="DOCUTILS"
+        install-name="docutils08" module="2.6.7">v&gt;=0.8.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_pysubdir="python26"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+    </build>
+
+    <test auto-include="0">
+      <dependencies replace="0">
+        <depend program="bzip2" install-name="bzip210"
+          add-path="prepend">v&gt;=1.0.6</depend>
+        <depend program="gzip" install-name="gzip14"
+          add-path="prepend">v&gt;=1.4</depend>
+        <depend program="unzip" install-name="unzip60"
+          add-path="prepend">v&gt;=6.0</depend>
+        <depend program="zip" install-name="zip30"
+          add-path="prepend">v&gt;=3.0</depend>
+      </dependencies>
+<![CDATA[
+gmake PYTHON=${SB_VAR_PYTHON}/bin/python tests
+
+# Ignore test failures.
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install \
+--install-lib=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+PYTHONPATH=${SB_VAR_DOCUTILS}/lib/${_pysubdir} \
+gmake -C doc PYTHON=${SB_VAR_PYTHON}/bin/python \
+PREFIX=${SB_INSTALL_PREFIX} MANDIR=${SB_INSTALL_PREFIX}/man \
+INSTALL="${SB_PATH_INSTALL} -m 644" \
+install
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+  </program>
+</programs>
