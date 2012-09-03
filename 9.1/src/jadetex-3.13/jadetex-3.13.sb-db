@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="jadetex" version="3.13" revision="5"
+  systype="!*-aix4*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>tetex30p</install-name>
+
+    <sources>
+      <source checksum="634dfc172fbf66a6976e2c2c60e2d198"
+        checksum-type="md5" size="103137"
+        path="src/jadetex-3.13.tar.gz"/>
+      <patch checksum="663ebb30b0b6eaeccf6e009ca1c33284"
+        checksum-type="md5" size="17773"
+        path="src/jadetex-3.13.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="openjade" install-name="openjade13"
+        add-path="prepend">v&gt;=1.3.2</depend>
+      <depend program="tetex" var="TETEX" install-name="tetex30"
+        add-path="prepend">v&gt;=3.0</depend>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"
+        module="docbook-dsssl-1.79"/>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_dsssl_datadir="${SB_VAR_XMLCATALOG}/share/docbook/dsssl-1.79"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake jadetex.fmt pdfjadetex.fmt
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake test DOCBOOK_DSL="${_dsssl_datadir}/print/docbook.dsl"
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install binaries
+${SB_PATH_LN} -s etex ${SB_VAR_TETEX}/bin/jadetex
+${SB_PATH_LN} -s pdfetex ${SB_VAR_TETEX}/bin/pdfjadetex
+
+texhash
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_texmf_path=$(kpsewhich -expand-var '$TEXMFMAIN')
+
+rm -rf ${_texmf_path}/tex/jadetex
+rm ${_texmf_path}/web2c/jadetex.fmt \
+${_texmf_path}/web2c/pdfjadetex.fmt
+
+rm ${SB_VAR_TETEX}/bin/jadetex
+rm ${SB_VAR_TETEX}/bin/pdfjadetex
+]]>
+    </uninstall>
+
+    <changelog>
+      <change date="2009 May 22" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update from docbook-dsssl-1.78 to
+docbook-dsssl-1.79</para></item>
+        <item><para>Add docbook-dsssl-1.79 module dependency for
+xmlcatalog</para></item>
+      </change>
+
+      <change date="2009 January 14" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add Support for SLES 10</para></item>
+      </change>
+
+      <change date="2008  September 23" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add Support for HP-UX 11.31/IA</para></item>
+        <item><para>Add Support for AIX 6/1</para></item>
+      </change>
+
+      <change date="2006 February 21" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Create links for jadetex and
+pdfjadetex</para></item>
+        <item><para>Update install rule in Makefile to install all
+data files to jadetex directory</para></item>
+        <item><para>Run texhash after installation</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
