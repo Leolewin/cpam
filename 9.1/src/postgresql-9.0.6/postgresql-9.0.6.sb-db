@@ -1,0 +1,1905 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="postgresql" version="9.0.6" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>pgsql906</install-name>
+
+    <sources>
+      <source checksum="4ad7e4fc31ef8b8a75a3e4243933963f"
+        checksum-type="md5" size="14777282"
+        path="src/postgresql-9.0.6.tar.bz2"/>
+      <patch checksum="87dacc6b860a7ee43b637aaa512325f6"
+        checksum-type="md5" size="30834"
+        path="src/postgresql-9.0.6.tww.patch"/>
+      <patch checksum="eb5c5e53ec7b0fba4e9e095940c5295d"
+        checksum-type="md5" size="1161551"
+        path="src/postgresql-9.0.6.auto.patch"/>
+    </sources>
+
+    <module name="default">
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="flex" install-name="flex25" add-path="prepend"
+          type="build">v&gt;=2.5.35</depend>
+        <depend program="gawk" install-name="gawk31" add-path="prepend"
+          type="build">v&gt;=3.1.8</depend>
+        <depend program="openjade" install-name="openjade13"
+          add-path="prepend" type="build">v&gt;=1.3.2 r&gt;=16</depend>
+        <depend program="OpenSP" install-name="opensp15"
+          add-path="prepend" type="build">v&gt;=1.5.1 r&gt;=15</depend>
+        <depend program="python" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="tcl" var="TCL"
+          install-name="tcl85">v&gt;=8.5.10</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          systype="*-irix*">v&gt;=1.13.1</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10">v&gt;=1.0.0e</depend>
+        <depend program="libxslt" install-name="libxslt11"
+          add-path="prepend" type="build">v&gt;=1.1.26</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="docbook-utils" var="DOCBOOKUTILS"
+          install-name="docbookutils10" add-path="prepend"
+          type="build">v&gt;=1.0</depend>
+        <depend program="xmlcatalog" var="XMLCATALOG"
+          install-name="xmlcatalog11" module="docbook-dsssl-1.79"
+          type="build">v&gt;=1.1</depend>
+        <depend program="libedit" var="LIBEDIT"
+          install-name="libedit21">v&gt;=2.11</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="postgresql" module="64bit"
+          systype="*-aix*|*-hpux11.[123]*|*-irix*|*-solaris*">v==9.0.6</depend>
+        <depend program="postgresql"
+          module="libruntime">v==9.0.6</depend>
+        <depend program="postgresql"
+          module="DBD-Pg-5.12.2">v==9.0.6</depend>
+        <depend program="postgresql"
+          module="psycopg2-2.6.7">v==9.0.6</depend>
+        <depend program="postgresql"
+          module="psycopg2-2.7.2">v==9.0.6</depend>
+        <depend program="postgresql"
+          module="PyGreSQL-2.6.7">v==9.0.6</depend>
+        <depend program="postgresql"
+          module="PyGreSQL-2.7.2">v==9.0.6</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  LDFLAGS="-L${SB_VAR_LIBICONV_LIB}"
+
+  ARGS="--disable-thread-safety" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+esac
+
+${SHELL} ./configure TAR=${SB_PATH_TAR} CFLAGS="${CFLAGS:--O2}" \
+--with-includes="${SB_VAR_GETTEXT_INC} ${SB_VAR_LIBEDIT_INC} \
+${SB_VAR_LIBOPENSSL_INC} ${SB_VAR_LIBZ_INC} ${SB_VAR_TCL_INC} " \
+--with-libraries="${SB_VAR_GETTEXT_LIB} ${SB_VAR_LIBEDIT_LIB} \
+${SB_VAR_LIBOPENSSL_LIB} ${SB_VAR_LIBZ_LIB} ${SB_VAR_TCL_LIB} " \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}:\
+${SB_VAR_TCL_LIB}:${SB_VAR_LIBZ_LIB}:${SB_VAR_LIBEDIT_LIB}:\
+${SB_VAR_LIBOPENSSL_LIB}:${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+DOCBOOKSTYLE="${SB_VAR_XMLCATALOG}/share/docbook/dsssl-1.79" \
+TCLSH=${SB_VAR_TCL}/bin/tclsh8.5 PERL=${SB_VAR_PERL}/bin/perl \
+--with-CC="${CC:-gcc}" --with-perl=no --with-python=yes \
+--with-tcl=yes --with-tclconfig=${SB_VAR_TCL_LIB} \
+--with-openssl --with-zlib --enable-nls --with-readline \
+--with-libedit-preferred --datadir=${_datadir} \
+--docdir=${_docdir} --mandir="${SB_INSTALL_PREFIX}/man" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake
+gmake -C doc COLLATEINDEX=${SB_VAR_XMLCATALOG}/bin/collateindex.pl
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+gmake -C doc install COLLATEINDEX=${SB_VAR_XMLCATALOG}/bin/collateindex.pl
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 INSTALL ${_docdir}
+set -x
+# replace relative paths to shared libraries
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  (cd src/interfaces/ecpg/ecpglib
+   rm libecpg.sl libecpg.sl.6
+   gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" \
+   libpgtypes="-L${SB_INSTALL_PREFIX}/lib -lpgtypes" && gmake install)
+  (cd src/interfaces/ecpg/compatlib
+   rm libecpg_compat.sl.3
+   gmake libecpg="-L${SB_INSTALL_PREFIX}/lib -lecpg" \
+         libpgtypes="-L${SB_INSTALL_PREFIX}/lib -lpgtypes" \
+         libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/initdb
+   rm initdb
+   gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pg_dump
+   rm pg_dump pg_dumpall pg_restore
+   gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/pg_ctl
+   rm pg_ctl
+   gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/psql
+   rm psql
+   gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  (cd src/bin/scripts
+   rm createdb dropdb createlang droplang createuser dropuser \
+   clusterdb vacuumdb reindexdb
+   gmake libpq="-L${SB_INSTALL_PREFIX}/lib -lpq" && gmake install)
+  ;;
+esac
+
+# copy contrib directory
+${SB_PATH_TAR} cf - contrib |\
+(cd ${SB_INSTALL_PREFIX}; ${SB_PATH_TAR} xvf -)
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/man ${_docdir} \
+${SB_INSTALL_PREFIX}/contrib
+${SB_PATH_FIND} ${SB_INSTALL_PREFIX}/contrib -type d -exec \
+${SB_PATH_CHMOD} 755 {} \;
+${SB_PATH_FIND} ${SB_INSTALL_PREFIX}/contrib -type f -exec \
+${SB_PATH_CHMOD} 644 {} \;
+
+if [ "${_localstatedir+set}" = set ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/run
+fi
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_localstatedir+${_localstatedir}} ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="PyGreSQL-2.6.7">
+      <build-name>PyGreSQL-4.0</build-name>
+
+      <install-name>pgsql906r</install-name>
+
+      <sources>
+        <source checksum="1aca50e59ff4cc56abe9452a9a49c5ff"
+          checksum-type="md5" size="89528"
+          path="src/PyGreSQL-4.0.tgz"/>
+        <patch checksum="ae741ece5b2262a8e959b287caffcb0c"
+          checksum-type="md5" size="804"
+          path="src/PyGreSQL-4.0.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend var="PYTHONP" install-name="python26p"
+          set-var-only="1"/>
+        <depend program="postgresql" var="PGSQL" module="libruntime"
+          add-path="prepend">v==9.0.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux11.[123]*|*-irix*|*-solaris*">
+      <install-name>pgsql906r</install-name>
+
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="flex" install-name="flex25" add-path="prepend"
+          type="build">v&gt;=2.5.35</depend>
+        <depend program="gawk" install-name="gawk31" add-path="prepend"
+          type="build">v&gt;=3.1.8</depend>
+        <depend program="openjade" install-name="openjade13"
+          add-path="prepend" type="build">v&gt;=1.3.2 r&gt;=16</depend>
+        <depend program="OpenSP" install-name="opensp15"
+          add-path="prepend" type="build">v&gt;=1.5.1 r&gt;=15</depend>
+        <depend program="python" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="tcl" var="TCL" install-name="tcl85"
+          module="64bit">v&gt;=8.5.10</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018" module="64bit"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113" module="64bit"
+          systype="*-irix*">v&gt;=1.13.1</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10"
+          module="64bit">v&gt;=1.0.0e</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="docbook-utils" var="DOCBOOKUTILS"
+          install-name="docbookutils10" add-path="prepend"
+          type="build">v&gt;=1.0</depend>
+        <depend program="xmlcatalog" var="XMLCATALOG"
+          install-name="xmlcatalog11" module="docbook-dsssl-1.79"
+          type="build">v&gt;=1.1</depend>
+        <depend program="libedit" var="LIBEDIT"
+          install-name="libedit21" module="64bit">v&gt;=2.11</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _bindir=bin/ppc64
+  _incdir=include/ppc64
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _bindir=lib/hpux64
+  _incdir=include/hpux64
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _bindir=bin/pa20_64
+  _incdir=include/pa20_64
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _bindir=bin/mips4
+  _incdir=include/mips4
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _bindir=bin/amd64
+  _incdir=include/amd64
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _bindir=bin/sparcv9
+  _incdir=include/sparcv9
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-hpux11.00)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--build=hppa64-hp-hpux11.00 --enable-thread-safety" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  esac
+
+  ARGS="${ARGS} --enable-thread-safety --with-pam" ;;
+*-irix*)
+  # -O2 causes assertion failure in compiler for
+  # src/interfaces/ecpg/preproc/preproc.c
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O1 -OPT:Olimit=0"
+  LDFLAGS="-L${SB_VAR_LIBICONV}/${_libdir}"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--disable-thread-safety" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xarch=sse2"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+esac
+
+${SHELL} ./configure TAR=${SB_PATH_TAR} CFLAGS="${CFLAGS:--O2}" \
+--with-includes="${SB_VAR_GETTEXT_INC} ${SB_VAR_LIBEDIT_INC} \
+${SB_VAR_LIBOPENSSL_INC} ${SB_VAR_LIBZ_INC} " \
+--with-libraries="${SB_VAR_GETTEXT}/${_libdir} \
+${SB_VAR_LIBEDIT}/${_libdir} ${SB_VAR_LIBOPENSSL}/${_libdir} \
+${SB_VAR_LIBZ}/${_libdir}" \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX}/${_libdir}:\
+${SB_VAR_LIBZ}/${_libdir}:${SB_VAR_LIBEDIT}/${_libdir}:\
+${SB_VAR_LIBOPENSSL}/${_libdir}:${SB_VAR_GETTEXT}/${_libdir} \
+${LDFLAGS+${LDFLAGS}}" \
+DOCBOOKSTYLE="${SB_VAR_XMLCATALOG}/share/docbook/dsssl-1.79" \
+PERL=${SB_VAR_PERL}/bin/perl \
+--with-CC="${CC:-gcc}" --with-perl=no --with-python=no \
+--without-tcl --with-openssl --with-zlib --enable-nls \
+--with-readline --with-libedit-preferred --datadir=${_datadir} \
+--docdir=${_docdir} ${ARGS+${ARGS}} \
+--bindir="${SB_INSTALL_PREFIX}/${_bindir}" \
+--includedir="${SB_INSTALL_PREFIX}/${_incdir}" \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake -C src/bin/pg_config install
+
+gmake -C src/include install
+gmake -C src/interfaces/ecpg/include install
+gmake -C src/interfaces/libpq install-headers
+
+gmake -C src/interfaces/libpq install-lib
+gmake -C src/interfaces/ecpg/pgtypeslib install-lib
+gmake -C src/interfaces/ecpg/ecpglib install-lib
+gmake -C src/interfaces/ecpg/compatlib install-lib
+
+# replace relative paths to shared libraries
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  (cd src/interfaces/ecpg/ecpglib
+   rm libecpg.sl libecpg.sl.6
+   gmake libpq="-L${SB_INSTALL_PREFIX}/${_libdir} -lpq" \
+   libpgtypes="-L${SB_INSTALL_PREFIX}/${_libdir} -lpgtypes" && \
+   gmake install-lib)
+  (cd src/interfaces/ecpg/compatlib
+   rm libecpg_compat.sl.3
+   gmake libecpg="-L${SB_INSTALL_PREFIX}/${_libdir} -lecpg" \
+         libpgtypes="-L${SB_INSTALL_PREFIX}/${_libdir} -lpgtypes" \
+         libpq="-L${SB_INSTALL_PREFIX}/${_libdir} -lpq" && gmake install-lib)
+  ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <module name="PyGreSQL-2.7.2">
+      <build-name>PyGreSQL-4.0</build-name>
+
+      <install-name>pgsql906r</install-name>
+
+      <sources>
+        <source checksum="1aca50e59ff4cc56abe9452a9a49c5ff"
+          checksum-type="md5" size="89528"
+          path="src/PyGreSQL-4.0.tgz"/>
+        <patch checksum="ae741ece5b2262a8e959b287caffcb0c"
+          checksum-type="md5" size="804"
+          path="src/PyGreSQL-4.0.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend var="PYTHONP" install-name="python27p"
+          set-var-only="1"/>
+        <depend program="postgresql" var="PGSQL" module="libruntime"
+          add-path="prepend">v==9.0.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="libruntime">
+      <install-name>pgsql906r</install-name>
+
+      <dependencies>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="flex" install-name="flex25" add-path="prepend"
+          type="build">v&gt;=2.5.35</depend>
+        <depend program="gawk" install-name="gawk31" add-path="prepend"
+          type="build">v&gt;=3.1.8</depend>
+        <depend program="openjade" install-name="openjade13"
+          add-path="prepend" type="build">v&gt;=1.3.2 r&gt;=16</depend>
+        <depend program="OpenSP" install-name="opensp15"
+          add-path="prepend" type="build">v&gt;=1.5.1 r&gt;=15</depend>
+        <depend program="python" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="tcl" var="TCL"
+          install-name="tcl85">v&gt;=8.5.10</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          systype="*-irix*">v&gt;=1.13.1</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10">v&gt;=1.0.0e</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="docbook-utils" var="DOCBOOKUTILS"
+          install-name="docbookutils10" add-path="prepend"
+          type="build">v&gt;=1.0</depend>
+        <depend program="xmlcatalog" var="XMLCATALOG"
+          install-name="xmlcatalog11" module="docbook-dsssl-1.79"
+          type="build">v&gt;=1.1</depend>
+        <depend program="libedit" var="LIBEDIT"
+          install-name="libedit21">v&gt;=2.11</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O1 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  LDFLAGS="-L${SB_VAR_LIBICONV_LIB}"
+
+  ARGS="--disable-thread-safety" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-thread-safety" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-thread-safety --with-pam" ;;
+esac
+
+${SHELL} ./configure TAR=${SB_PATH_TAR} CFLAGS="${CFLAGS:--O2}" \
+--with-includes="${SB_VAR_GETTEXT_INC} ${SB_VAR_LIBEDIT_INC} \
+${SB_VAR_LIBOPENSSL_INC} ${SB_VAR_LIBZ_INC} " \
+--with-libraries="${SB_VAR_GETTEXT_LIB} ${SB_VAR_LIBEDIT_LIB} \
+${SB_VAR_LIBOPENSSL_LIB} ${SB_VAR_LIBZ_LIB} " \
+LDFLAGS="${CC_LD_RT}${SB_INSTALL_PREFIX}/lib:${SB_VAR_LIBZ_LIB}:\
+${SB_VAR_LIBEDIT_LIB}:${SB_VAR_LIBOPENSSL_LIB}:\
+${SB_VAR_GETTEXT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+DOCBOOKSTYLE="${SB_VAR_XMLCATALOG}/share/docbook/dsssl-1.79" \
+PERL=${SB_VAR_PERL}/bin/perl \
+--with-CC="${CC:-gcc}" --with-perl=no --with-python=no \
+--without-tcl --with-openssl --with-zlib --enable-nls \
+--with-readline --with-libedit-preferred --datadir=${_datadir} \
+--docdir=${_docdir} --mandir="${SB_INSTALL_PREFIX}/man" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake -C src/bin/pg_config install
+
+gmake -C src/include install
+gmake -C src/interfaces/ecpg/include install
+gmake -C src/interfaces/libpq install-headers
+
+gmake -C src/interfaces/libpq install-lib
+gmake -C src/interfaces/ecpg/pgtypeslib install-lib
+gmake -C src/interfaces/ecpg/ecpglib install-lib
+gmake -C src/interfaces/ecpg/compatlib install-lib
+
+# replace relative paths to shared libraries
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  (cd src/interfaces/ecpg/ecpglib
+   rm libecpg.sl libecpg.sl.6
+   gmake libpq="-L${SB_INSTALL_PREFIX_LIB} -lpq" \
+   libpgtypes="-L${SB_INSTALL_PREFIX_LIB} -lpgtypes" && gmake install-lib)
+  (cd src/interfaces/ecpg/compatlib
+   rm libecpg_compat.sl.3
+   gmake libecpg="-L${SB_INSTALL_PREFIX_LIB} -lecpg" \
+         libpgtypes="-L${SB_INSTALL_PREFIX_LIB} -lpgtypes" \
+         libpq="-L${SB_INSTALL_PREFIX_LIB} -lpq" && gmake install-lib)
+  ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+        <remove-db-entry program="postgresql"
+          module="DBD-Pg-5.12.2">v==9.0.6</remove-db-entry>
+        <remove-db-entry program="postgresql"
+          module="psycopg2-2.6.7">v==9.0.6</remove-db-entry>
+        <remove-db-entry program="postgresql"
+          module="psycopg2-2.7.2">v==9.0.6</remove-db-entry>
+        <remove-db-entry program="postgresql"
+          module="PyGreSQL-2.6.7">v==9.0.6</remove-db-entry>
+        <remove-db-entry program="postgresql"
+          module="PyGreSQL-2.7.2">v==9.0.6</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <module name="DBD-Pg-5.12.2">
+      <build-name>DBD-Pg-2.18.1</build-name>
+
+      <install-name>pgsql906r</install-name>
+
+      <sources>
+        <source checksum="1f4a837b3d79789ad6854443fce7a901"
+          checksum-type="md5" size="235387"
+          path="src/DBD-Pg-2.18.1.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="DBI" module="5.12.2">v&gt;=1.607</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          systype="*-irix*">v&gt;=1.13.1</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10">v&gt;=1.0.0e</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+        <depend program="postgresql" var="PGSQL"
+          module="libruntime">v==9.0.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+POSTGRES_HOME=${SB_VAR_PGSQL} ${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-irix*)
+  gmake LDLOADLIBS="-L${PGSQL_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_LIBOPENSSL_LIB} -L${SB_VAR_LIBICONV_LIB} -lpq \
+-lintl -lssl -lcrypto -liconv" ;; 
+ia64*-hpux*)
+  gmake LDLOADLIBS="-L${PGSQL_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_LIBOPENSSL_LIB} -lpq -lm" ;;
+*)
+  gmake ;;
+esac
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="psycopg2-2.6.7">
+      <build-name>psycopg2-2.4.2</build-name>
+
+      <install-name>pgsql906r</install-name>
+
+      <sources>
+        <source checksum="920c533806f112787b480806ea125406"
+          checksum-type="md5" size="666719"
+          path="src/psycopg2-2.4.2.tar.gz"/>
+        <patch checksum="0df1f1653bbaf92d35d948171a76ddc7"
+          checksum-type="md5" size="537"
+          path="src/psycopg2-2.4.2.tww.patch"/>
+        <patch checksum="5ef684a990f51eff85fda0b4632ef902"
+          checksum-type="md5" size="484"
+          path="src/psycopg2-2.4.2.sol10.patch"
+          systype="*-solaris2.1?"/>
+      </sources>
+
+      <dependencies>
+        <depend program="egenix-mx-base"
+          module="2.6.7">v&gt;=3.0.0</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend var="PYTHONP" install-name="python26p"
+          set-var-only="1"/>
+        <depend program="postgresql" var="PGSQL" module="libruntime"
+          add-path="prepend">v==9.0.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+cat >>setup.cfg <<_EOT_
+mx_include_dir="${SB_VAR_PYTHONP}/lib/python2.6/site-packages/mx/DateTime/mxDateTime"
+rpath=${SB_VAR_PGSQL_LIB}
+_EOT_
+
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/psycopg2
+
+rmdir ${_install_prefix} || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="psycopg2-2.7.2">
+      <build-name>psycopg2-2.4.2</build-name>
+
+      <install-name>pgsql906r</install-name>
+
+      <sources>
+        <source checksum="920c533806f112787b480806ea125406"
+          checksum-type="md5" size="666719"
+          path="src/psycopg2-2.4.2.tar.gz"/>
+        <patch checksum="0df1f1653bbaf92d35d948171a76ddc7"
+          checksum-type="md5" size="537"
+          path="src/psycopg2-2.4.2.tww.patch"/>
+        <patch checksum="5ef684a990f51eff85fda0b4632ef902"
+          checksum-type="md5" size="484"
+          path="src/psycopg2-2.4.2.sol10.patch"
+          systype="*-solaris*"/>
+      </sources>
+
+      <dependencies>
+        <depend program="egenix-mx-base"
+          module="2.7.2">v&gt;=3.1.3</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend var="PYTHONP" install-name="python27p"
+          set-var-only="1"/>
+        <depend program="postgresql" var="PGSQL" module="libruntime"
+          add-path="prepend">v==9.0.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+cat >>setup.cfg <<_EOT_
+mx_include_dir="${SB_VAR_PYTHONP}/lib/python2.7/site-packages/mx/DateTime/mxDateTime"
+rpath=${SB_VAR_PGSQL_LIB}
+_EOT_
+
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}/psycopg2
+
+rmdir ${_install_prefix} || :
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para skip="0">PostgreSQL Database Management System</para>
+        <para>(formerly known as Postgres, then as Postgres95)</para>
+        <para>Portions Copyright (c) 1996-2008, PostgreSQL Global
+Development Group</para>
+        <para>Portions Copyright (c) 1994, The Regents of the
+University of California</para>
+        <para>Permission to use, copy, modify, and distribute this 
+software and its documentation for any purpose, without fee, and
+without a written agreement is hereby granted, provided that the above
+copyright notice and this paragraph and the following two paragraphs
+appear in all copies.</para>
+        <para>IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE
+TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE
+OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF
+CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para>THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY
+WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE
+PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF
+CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,
+UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="9.0.5" to="9.0.6">
+        <item><para>Fix bugs in
+information_schema.referential_constraints view. This view was being
+insufficiently careful about matching the foreign-key constraint to
+the depended-on primary or unique key constraint. That could result in
+failure to show a foreign key constraint at all, or showing it
+multiple times, or claiming that it depends on a different constraint
+than the one it really does. Since the view definition is installed by
+initdb, merely upgrading will not fix the problem. If you need to fix
+this in an existing installation, you can (as a superuser) drop the
+information_schema schema then re-create it by sourcing
+"SHAREDIR/information_schema.sql". (Run pg_config --sharedir if you're
+uncertain where "SHAREDIR" is.) This must be repeated in each database
+to be fixed.</para></item>
+        <item><para>Fix possible crash during "UPDATE" or "DELETE"
+that joins to the output of a scalar-returning function. A crash could
+only occur if the target row had been concurrently updated, so this
+problem surfaced only intermittently.</para></item>
+        <item><para>Fix incorrect replay of WAL records for GIN index
+updates. This could result in transiently failing to find index
+entries after a crash, or on a hot-standby server. The problem would
+be repaired by the next "VACUUM" of the index, however.</para></item>
+        <item><para>Fix TOAST-related data corruption during CREATE
+TABLE dest AS SELECT * FROM src or INSERT INTO dest SELECT * FROM src.
+If a table has been modified by "ALTER TABLE ADD COLUMN", attempts to
+copy its data verbatim to another table could produce corrupt results
+in certain corner cases. The problem can only manifest in this precise
+form in 8.4 and later, but we patched earlier versions as well in case
+there are other code paths that could trigger the same
+bug.</para></item>
+        <item><para>Fix possible failures during hot standby
+startup</para></item>
+        <item><para>Start hot standby faster when initial snapshot is
+incomplete</para></item>
+        <item><para>Fix race condition during toast table access from
+stale syscache entries. The typical symptom was transient errors like
+"missing chunk number 0 for toast value NNNNN in pg_toast_2619", where
+the cited toast table would always belong to a system
+catalog.</para></item>
+        <item><para>Track dependencies of functions on items used in
+parameter default expressions. Previously, a referenced object could
+be dropped without having dropped or modified the function, leading to
+misbehavior when the function was used. Note that merely installing
+this update will not fix the missing dependency entries; to do that,
+you'd need to "CREATE OR REPLACE" each such function afterwards. If
+you have functions whose defaults depend on non-built-in objects,
+doing so is recommended.</para></item>
+        <item><para>Allow inlining of set-returning SQL functions with
+multiple OUT parameters</para></item>
+        <item><para>Don't trust deferred-unique indexes for join
+removal. A deferred uniqueness constraint might not hold
+intra-transaction, so assuming that it does could give incorrect query
+results.</para></item>
+        <item><para>Make DatumGetInetP() unpack inet datums that have
+a 1-byte header, and add a new macro, DatumGetInetPP(), that does not.
+This change affects no core code, but might prevent crashes in add-on
+code that expects DatumGetInetP() to produce an unpacked datum as per
+usual convention.</para></item>
+        <item><para>Improve locale support in money type's input and
+output. Aside from not supporting all standard lc_monetary formatting
+options, the input and output functions were inconsistent, meaning
+there were locales in which dumped money values could not be
+re-read.</para></item>
+        <item><para>Don't let transform_null_equals affect CASE foo
+WHEN NULL ... constructs. transform_null_equals is only supposed to
+affect foo = NULL expressions written directly by the user, not
+equality checks generated internally by this form of
+CASE.</para></item>
+        <item><para>Change foreign-key trigger creation order to
+better support self-referential foreign keys. For a cascading foreign
+key that references its own table, a row update will fire both the ON
+UPDATE trigger and the CHECK trigger as one event. The ON UPDATE
+trigger must execute first, else the CHECK will check a non-final
+state of the row and possibly throw an inappropriate error. However,
+the firing order of these triggers is determined by their names, which
+generally sort in creation order since the triggers have
+auto-generated names following the convention
+"RI_ConstraintTrigger_NNNN". A proper fix would require modifying that
+convention, which we will do in 9.2, but it seems risky to change it
+in existing releases. So this patch just changes the creation order of
+the triggers. Users encountering this type of error should drop and
+re-create the foreign key constraint to get its triggers into the
+right order.</para></item>
+        <item><para>Avoid floating-point underflow while tracking
+buffer allocation rate. While harmless in itself, on certain platforms
+this would result in annoying kernel log messages.</para></item>
+        <item><para>Preserve configuration file name and line number
+values when starting child processes under Windows. Formerly, these
+would not be displayed correctly in the pg_settings
+view.</para></item>
+        <item><para>Fix incorrect field alignment in ecpg's SQLDA
+area</para></item>
+        <item><para>Preserve blank lines within commands in psql's
+command history. The former behavior could cause problems if an empty
+line was removed from within a string literal, for
+example.</para></item>
+        <item><para>Fix pg_dump to dump user-defined casts between
+auto-generated types, such as table rowtypes</para></item>
+        <item><para>Assorted fixes for pg_upgrade. Handle exclusion
+constraints correctly, avoid failures on Windows, don't complain about
+mismatched toast table names in 8.4 databases.</para></item>
+        <item><para>Use the preferred version of xsubpp to build
+PL/Perl, not necessarily the operating system's main
+copy</para></item>
+        <item><para>Fix incorrect coding in "contrib/dict_int" and
+contrib/dict_xsyn". Some functions incorrectly assumed that memory
+returned by palloc() is guaranteed zeroed.</para></item>
+        <item><para>Fix assorted errors in "contrib/unaccent"'s
+configuration file parsing</para></item>
+        <item><para>Honor query cancel interrupts promptly in
+pgstatindex()</para></item>
+        <item><para>Fix incorrect quoting of log file name in Mac OS X
+start script</para></item>
+        <item><para>Ensure VPATH builds properly install all server
+header files</para></item>
+        <item><para>Shorten file names reported in verbose error
+messages. Regular builds have always reported just the name of the C
+file containing the error message call, but VPATH builds formerly
+reported an absolute path name.</para></item>
+        <item><para>Fix interpretation of Windows timezone names for
+Central America. Map "Central America Standard Time" to CST6, not
+CST6CDT, because DST is generally not observed anywhere in Central
+America.</para></item>
+        <item><para>Update time zone data files to tzdata release
+2011n for DST law changes in Brazil, Cuba, Fiji, Palestine, Russia,
+and Samoa; also historical corrections for Alaska and British East
+Africa.</para></item>
+      </change>
+
+      <change from="9.0.4" to="9.0.5">
+        <item><para>Fix catalog cache invalidation after a "VACUUM
+FULL" or "CLUSTER" on a system catalog. In some cases the relocation
+of a system catalog row to another place would not be recognized by
+concurrent server processes, allowing catalog corruption to occur if
+they then tried to update that row. The worst-case outcome could be as
+bad as complete loss of a table.</para></item>
+        <item><para>Fix incorrect order of operations during sinval
+reset processing, and ensure that TOAST OIDs are preserved in system
+catalogs. These mistakes could lead to transient failures after a
+"VACUUM FULL" or "CLUSTER" on a system catalog.</para></item>
+        <item><para>Fix bugs in indexing of in-doubt HOT-updated
+tuples. These bugs could result in index corruption after reindexing a
+system catalog. They are not believed to affect user
+indexes.</para></item>
+        <item><para>Fix multiple bugs in GiST index page split
+processing. The probability of occurrence was low, but these could
+lead to index corruption.</para></item>
+        <item><para>Fix possible buffer overrun in tsvector_concat().
+The function could underestimate the amount of memory needed for its
+result, leading to server crashes.</para></item>
+        <item><para>Fix crash in xml_recv when processing a
+"standalone" parameter</para></item>
+        <item><para>Make pg_options_to_table return NULL for an option
+with no value. Previously such cases would result in a server
+crash.</para></item>
+        <item><para>Avoid possibly accessing off the end of memory in
+"ANALYZE" and in SJIS-2004 encoding conversion. This fixes some
+very-low-probability server crash scenarios.</para></item>
+        <item><para>Protect pg_stat_reset_shared() against NULL
+input</para></item>
+        <item><para>Fix possible failure when a recovery conflict
+deadlock is detected within a sub-transaction</para></item>
+        <item><para>Avoid spurious conflicts while recycling btree
+index pages during hot standby</para></item>
+        <item><para>Shut down WAL receiver if it's still running at
+end of recovery. The postmaster formerly panicked in this situation,
+but it's actually a legitimate case.</para></item>
+        <item><para>Fix race condition in relcache init file
+invalidation. There was a window wherein a new backend process could
+read a stale init file but miss the inval messages that would tell it
+the data is stale. The result would be bizarre failures in catalog
+accesses, typically "could not read block 0 in file ..." later during
+startup.</para></item>
+        <item><para>Fix memory leak at end of a GiST index scan.
+Commands that perform many separate GiST index scans, such as
+verification of a new GiST-based exclusion constraint on a table
+already containing many rows, could transiently require large amounts
+of memory due to this leak.</para></item>
+        <item><para>Fix memory leak when encoding conversion has to be
+done on incoming command strings and "LISTEN" is active</para></item>
+        <item><para>Fix incorrect memory accounting (leading to
+possible memory bloat) in tuplestores supporting holdable cursors and
+plpgsql's RETURN NEXT command</para></item>
+        <item><para>Fix trigger WHEN conditions when both BEFORE and
+AFTER triggers exist. Evaluation of WHEN conditions for AFTER ROW
+UPDATE triggers could crash if there had been a BEFORE ROW trigger
+fired for the same update.</para></item>
+        <item><para>Fix performance problem when constructing a large,
+lossy bitmap</para></item>
+        <item><para>Fix join selectivity estimation for unique
+columns. This fixes an erroneous planner heuristic that could lead to
+poor estimates of the result size of a join.</para></item>
+        <item><para>Fix nested PlaceHolderVar expressions that appear
+only in sub-select target lists. This mistake could result in outputs
+of an outer join incorrectly appearing as NULL.</para></item>
+        <item><para>Allow the planner to assume that empty parent
+tables really are empty. Normally an empty table is assumed to have a
+certain minimum size for planning purposes; but this heuristic seems
+to do more harm than good for the parent table of an inheritance
+hierarchy, which often is permanently empty.</para></item>
+        <item><para>Allow nested EXISTS queries to be optimized
+properly</para></item>
+        <item><para>Fix array- and path-creating functions to ensure
+padding bytes are zeroes. This avoids some situations where the
+planner will think that semantically-equal constants are not equal,
+resulting in poor optimization.</para></item>
+        <item><para>Fix "EXPLAIN" to handle gating Result nodes within
+inner-indexscan subplans. The usual symptom of this oversight was
+"bogus varno" errors.</para></item>
+        <item><para>Fix btree preprocessing of "indexedcol" IS NULL
+conditions. Such a condition is unsatisfiable if combined with any
+other type of btree-indexable condition on the same index column. The
+case was handled incorrectly in 9.0.0 and later, leading to query
+output where there should be none.</para></item>
+        <item><para>Work around gcc 4.6.0 bug that breaks WAL replay.
+This could lead to loss of committed transactions after a server
+crash.</para></item>
+        <item><para>Fix dump bug for VALUES in a view (Tom
+Lane)</para></item>
+        <item><para>Disallow SELECT FOR UPDATE/SHARE on sequences.
+This operation doesn't work as expected and can lead to
+failures.</para></item>
+        <item><para>Fix "VACUUM" so that it always updates
+pg_class.reltuples/relpages. This fixes some scenarios where
+autovacuum could make increasingly poor decisions about when to vacuum
+tables.</para></item>
+        <item><para>Defend against integer overflow when computing
+size of a hash table.</para></item>
+        <item><para>Fix cases where "CLUSTER" might attempt to access
+already-removed TOAST data</para></item>
+        <item><para>Fix premature timeout failures during initial
+authentication transaction</para></item>
+        <item><para>Fix portability bugs in use of credentials control
+messages for "peer" authentication</para></item>
+        <item><para>Fix SSPI login when multiple roundtrips are
+required. The typical symptom of this problem was "The function
+requested is not supported" errors during SSPI login.</para></item>
+        <item><para>Fix failure when adding a new variable of a custom
+variable class to "postgresql.conf"</para></item>
+        <item><para>Throw an error if "pg_hba.conf" contains hostssl
+but SSL is disabled. This was concluded to be more user-friendly than
+the previous behavior of silently ignoring such lines.</para></item>
+        <item><para>Fix failure when "DROP OWNED BY" attempts to
+remove default privileges on sequences</para></item>
+        <item><para>Fix typo in pg_srand48 seed initialization. This
+led to failure to use all bits of the provided seed. This function is
+not used on most platforms (only those without srandom), and the
+potential security exposure from a less-random-than-expected seed
+seems minimal in any case.</para></item>
+        <item><para>Avoid integer overflow when the sum of LIMIT and
+OFFSET values exceeds 2^63</para></item>
+        <item><para>Add overflow checks to int4 and int8 versions of
+generate_series()</para></item>
+        <item><para>Fix trailing-zero removal in to_char(). In a
+format with FM and no digit positions after the decimal point, zeroes
+to the left of the decimal point could be removed
+incorrectly.</para></item>
+        <item><para>Fix pg_size_pretty() to avoid overflow for inputs
+close to 2^63</para></item>
+        <item><para>Weaken plpgsql's check for typmod matching in
+record values. An overly enthusiastic check could lead to discarding
+length modifiers that should have been kept.</para></item>
+        <item><para>Correctly handle quotes in locale names during
+initdb. The case can arise with some Windows locales, such as
+"People's Republic of China".</para></item>
+        <item><para>In pg_upgrade, avoid dumping orphaned temporary
+tables. This prevents situations wherein table OID assignments could
+get out of sync between old and new installations.</para></item>
+        <item><para>Fix pg_upgrade to preserve toast tables'
+relfrozenxids during an upgrade from 8.3. Failure to do this could
+lead to "pg_clog" files being removed too soon after the
+upgrade.</para></item>
+        <item><para>In pg_upgrade, fix the -l (log) option to work on
+Windows</para></item>
+        <item><para>In pg_ctl, support silent mode for service
+registrations on Windows</para></item>
+        <item><para>Fix psql's counting of script file line numbers
+during COPY from a different file</para></item>
+        <item><para>Fix pg_restore's direct-to-database mode for
+standard_conforming_strings. pg_restore could emit incorrect commands
+when restoring directly to a database server from an archive file that
+had been made with standard_conforming_strings set to
+on.</para></item>
+        <item><para>Be more user-friendly about unsupported cases for
+parallel pg_restore. This change ensures that such cases are detected
+and reported before any restore actions have been taken.</para></item>
+        <item><para>Fix write-past-buffer-end and memory leak in
+libpq's LDAP service lookup code</para></item>
+        <item><para>In libpq, avoid failures when using nonblocking
+I/O and an SSL connection</para></item>
+        <item><para>Improve libpq's handling of failures during
+connection startup. In particular, the response to a server report of
+fork() failure during SSL connection startup is now
+saner.</para></item>
+        <item><para>Improve libpq's error reporting for SSL
+failures</para></item>
+        <item><para>Fix PQsetvalue() to avoid possible crash when
+adding a new tuple to a PGresult originally obtained from a server
+query</para></item>
+        <item><para>Make ecpglib write double values with 15 digits
+precision</para></item>
+        <item><para>In ecpglib, be sure LC_NUMERIC setting is restored
+after an error</para></item>
+        <item><para>Apply upstream fix for blowfish signed-character
+bug (CVE-2011-2483). "contrib/pg_crypto"'s blowfish encryption code
+could give wrong results on platforms where char is signed (which is
+most), leading to encrypted passwords being weaker than they should
+be.</para></item>
+        <item><para>Fix memory leak in "contrib/seg"</para></item>
+        <item><para>Fix pgstatindex() to give consistent results for
+empty indexes</para></item>
+        <item><para>Allow building with perl 5.14</para></item>
+        <item><para>Fix assorted issues with build and install file
+paths containing spaces</para></item>
+        <item><para>Update time zone data files to tzdata release
+2011i for DST law changes in Canada, Egypt, Russia, Samoa, and South
+Sudan</para></item>
+      </change>
+
+      <change from="9.0.3" to="9.0.4">
+        <items name="Migration to Version 9.0.4">
+          <item><para>A dump/restore is not required for those running
+9.0.X.</para></item>
+          <item><para>However, if your installation was upgraded from
+a previous major release by running pg_upgrade, you should take action
+to prevent possible data loss due to a now-fixed bug in pg_upgrade.
+The recommended solution is to run "VACUUM FREEZE" on all TOAST
+tables. More information is available at
+http://wiki.postgresql.org/wiki/20110408pg_upgrade_fix.</para></item>
+        </items>
+
+        <items name="Changes">
+          <item><para>Fix pg_upgrade's handling of TOAST tables. The
+pg_class.relfrozenxid value for TOAST tables was not correctly copied
+into the new installation during pg_upgrade. This could later result
+in pg_clog files being discarded while they were still needed to
+validate tuples in the TOAST tables, leading to "could not access
+status of transaction" failures. This error poses a significant risk
+of data loss for installations that have been upgraded with
+pg_upgrade. This patch corrects the problem for future uses of
+pg_upgrade, but does not in itself cure the issue in installations
+that have been processed with a buggy version of
+pg_upgrade.</para></item>
+          <item><para>Suppress incorrect "PD_ALL_VISIBLE flag was
+incorrectly set" warning. "VACUUM" would sometimes issue this warning
+in cases that are actually valid.</para></item>
+          <item><para>Use better SQLSTATE error codes for hot standby
+conflict cases. All retryable conflict errors now have an error code
+that indicates that a retry is possible. Also, session closure due to
+the database being dropped on the master is now reported as
+ERRCODE_DATABASE_DROPPED, rather than ERRCODE_ADMIN_SHUTDOWN, so that
+connection poolers can handle the situation correctly.</para></item>
+          <item><para>Prevent intermittent hang in interactions of
+startup process with bgwriter process. This affected recovery in
+non-hot-standby cases.</para></item>
+          <item><para>Disallow including a composite type in itself.
+This prevents scenarios wherein the server could recurse infinitely
+while processing the composite type. While there are some possible
+uses for such a structure, they don't seem compelling enough to
+justify the effort required to make sure it always works
+safely.</para></item>
+          <item><para>Avoid potential deadlock during catalog cache
+initialization. In some cases the cache loading code would acquire
+share lock on a system index before locking the index's catalog. This
+could deadlock against processes trying to acquire exclusive locks in
+the other, more standard order.</para></item>
+          <item><para>Fix dangling-pointer problem in BEFORE ROW
+UPDATE trigger handling when there was a concurrent update to the
+target tuple. This bug has been observed to result in intermittent
+"cannot extract system attribute from virtual tuple" failures while
+trying to do UPDATE RETURNING ctid. There is a very small probability
+of more serious errors, such as generating incorrect index entries for
+the updated tuple.</para></item>
+          <item><para>Disallow "DROP TABLE" when there are pending
+deferred trigger events for the table. Formerly the "DROP" would go
+through, leading to "could not open relation with OID nnn" errors when
+the triggers were eventually fired.</para></item>
+          <item><para>Allow "replication" as a user name in
+"pg_hba.conf". "replication" is special in the database name column,
+but it was mistakenly also treated as special in the user name
+column.</para></item>
+          <item><para>Prevent crash triggered by constant-false WHERE
+conditions during GEQO optimization.</para></item>
+          <item><para>Improve planner's handling of semi-join and
+anti-join cases.</para></item>
+          <item><para>Fix handling of SELECT FOR UPDATE in a
+sub-SELECT. This bug typically led to "cannot extract system attribute
+from virtual tuple" errors.</para></item>
+          <item><para>Fix selectivity estimation for text search to
+account for NULLs.</para></item>
+          <item><para>Fix get_actual_variable_range() to support
+hypothetical indexes injected by an index adviser
+plugin.</para></item>
+          <item><para>Fix PL/Python memory leak involving array
+slices.</para></item>
+          <item><para>Allow libpq's SSL initialization to succeed when
+user's home directory is unavailable. If the SSL mode is such that a
+root certificate file is not required, there is no need to fail. This
+change restores the behavior to what it was in pre-9.0
+releases.</para></item>
+          <item><para>Fix libpq to return a useful error message for
+errors detected in conninfo_array_parse. A typo caused the library to
+return NULL, rather than the PGconn structure containing the error
+message, to the application.</para></item>
+          <item><para>Fix ecpg preprocessor's handling of float
+constants.</para></item>
+          <item><para>Fix parallel pg_restore to handle comments on
+POST_DATA items correctly.</para></item>
+          <item><para>Fix pg_restore to cope with long lines (over
+1KB) in TOC files.</para></item>
+          <item><para>Put in more safeguards against crashing due to
+division-by-zero with overly enthusiastic compiler
+optimization.</para></item>
+          <item><para>Support use of dlopen() in FreeBSD and OpenBSD
+on MIPS. There was a hard-wired assumption that this system function
+was not available on MIPS hardware on these systems. Use a
+compile-time test instead, since more recent versions have
+it.</para></item>
+          <item><para>Fix compilation failures on HP-UX.</para></item>
+          <item><para>Avoid crash when trying to write to the Windows
+console very early in process startup.</para></item>
+          <item><para>Support building with MinGW 64 bit compiler for
+Windows.</para></item>
+          <item><para>Fix version-incompatibility problem with libintl
+on Windows.</para></item>
+          <item><para>Fix usage of xcopy in Windows build scripts to
+work correctly under Windows 7. This affects the build scripts only,
+not installation or usage.</para></item>
+          <item><para>Fix path separator used by pg_regress on
+Cygwin.</para></item>
+          <item><para>Update time zone data files to tzdata release
+2011f for DST law changes in Chile, Cuba, Falkland Islands, Morocco,
+Samoa, and Turkey; also historical corrections for South Australia,
+Alaska, and Hawaii.</para></item>
+        </items>
+      </change>
+
+      <change from="9.0.2" to="9.0.3">
+        <item><para>Before exiting walreceiver, ensure all the
+received WAL is fsync'd to disk. Otherwise the standby server could
+replay some un-synced WAL, conceivably leading to data corruption if
+the system crashes just at that point.</para></item>
+        <item><para>Avoid excess fsync activity in
+walreceiver.</para></item>
+        <item><para>Make "ALTER TABLE" revalidate uniqueness and
+exclusion constraints when needed. This was broken in 9.0 by a change
+that was intended to suppress revalidation during "VACUUM FULL" and
+"CLUSTER", but unintentionally affected "ALTER TABLE" as
+well.</para></item>
+        <item><para>Fix EvalPlanQual for "UPDATE" of an inheritance
+tree in which the tables are not all alike. Any variation in the table
+row types (including dropped columns present in only some child
+tables) would confuse the EvalPlanQual code, leading to misbehavior or
+even crashes. Since EvalPlanQual is only executed during concurrent
+updates to the same row, the problem was only seen
+intermittently.</para></item>
+        <item><para>Avoid failures when "EXPLAIN" tries to display a
+simple-form CASE expression. If the CASE's test expression was a
+constant, the planner could simplify the CASE into a form that
+confused the expression-display code, resulting in "unexpected CASE
+WHEN clause" errors.</para></item>
+        <item><para>Fix assignment to an array slice that is before
+the existing range of subscripts. If there was a gap between the newly
+added subscripts and the first pre-existing subscript, the code
+miscalculated how many entries needed to be copied from the old
+array's null bitmap, potentially leading to data corruption or
+crash.</para></item>
+        <item><para>Avoid unexpected conversion overflow in planner
+for very distant date values. The date type supports a wider range of
+dates than can be represented by the timestamp types, but the planner
+assumed it could always convert a date to timestamp with
+impunity.</para></item>
+        <item><para>Fix PL/Python crash when an array contains null
+entries.</para></item>
+        <item><para>Remove ecpg's fixed length limit for constants
+defining an array dimension.</para></item>
+        <item><para>Fix erroneous parsing of tsquery values containing
+... &amp; !(subexpression) | .... Queries containing this combination
+of operators were not executed correctly. The same error existed in
+"contrib/intarray"'s query_int type and "contrib/ltree"'s ltxtquery
+type.</para></item>
+        <item><para>Fix buffer overrun in "contrib/intarray"'s input
+function for the query_int type (Apple) This bug is a security risk
+since the function's return address could be overwritten. Thanks to
+Apple Inc's security team for reporting this issue and supplying the
+fix. (CVE-2010-4015)</para></item>
+        <item><para>Fix bug in "contrib/seg"'s GiST picksplit
+algorithm. This could result in considerable inefficiency, though not
+actually incorrect answers, in a GiST index on a seg column. If you
+have such an index, consider "REINDEX"ing it after installing this
+update. (This is identical to the bug that was fixed in "contrib/cube"
+in the previous update.)</para></item>
+      </change>
+
+      <change from="9.0.1" to="9.0.2">
+        <item><para>Force the default wal_sync_method to be fdatasync
+on Linux. The default on Linux has actually been fdatasync for many
+years, but recent kernel changes caused PostgreSQL to choose
+open_datasync instead. This choice did not result in any performance
+improvement, and caused outright failures on certain filesystems,
+notably ext4 with the data=journal mount option.</para></item>
+        <item><para>Fix "too many KnownAssignedXids" error during Hot
+Standby replay.</para></item>
+        <item><para>Fix race condition in lock acquisition during Hot
+Standby.</para></item>
+        <item><para>Avoid unnecessary conflicts during Hot Standby.
+This fixes some cases where replay was considered to conflict with
+standby queries (causing delay of replay or possibly cancellation of
+the queries), but there was no real conflict.</para></item>
+        <item><para>Fix assorted bugs in WAL replay logic for GIN
+indexes. This could result in "bad buffer id: 0" failures or
+corruption of index contents during replication.</para></item>
+        <item><para>Fix recovery from base backup when the starting
+checkpoint WAL record is not in the same WAL segment as its redo
+point.</para></item>
+        <item><para>Fix corner-case bug when streaming replication is
+enabled immediately after creating the master database
+cluster.</para></item>
+        <item><para>Fix persistent slowdown of autovacuum workers when
+multiple workers remain active for a long time. The effective
+vacuum_cost_limit for an autovacuum worker could drop to nearly zero
+if it processed enough tables, causing it to run extremely
+slowly.</para></item>
+        <item><para>Fix long-term memory leak in autovacuum
+launcher.</para></item>
+        <item><para>Avoid failure when trying to report an impending
+transaction wraparound condition from outside a transaction. This
+oversight prevented recovery after transaction wraparound got too
+close, because database startup processing would fail.</para></item>
+        <item><para>Add support for detecting register-stack overrun
+on IA64. The IA64 architecture has two hardware stacks. Full
+prevention of stack-overrun failures requires checking
+both.</para></item>
+        <item><para>Add a check for stack overflow in copyObject().
+Certain code paths could crash due to stack overflow given a
+sufficiently complex query.</para></item>
+        <item><para>Fix detection of page splits in temporary GiST
+indexes. It is possible to have a "concurrent" page split in a
+temporary index, if for example there is an open cursor scanning the
+index when an insertion is done. GiST failed to detect this case and
+hence could deliver wrong results when execution of the cursor
+continued.</para></item>
+        <item><para>Fix error checking during early connection
+processing. The check for too many child processes was skipped in some
+cases, possibly leading to postmaster crash when attempting to add the
+new child process to fixed-size arrays.</para></item>
+        <item><para>Improve efficiency of window functions. Certain
+cases where a large number of tuples needed to be read in advance, but
+work_mem was large enough to allow them all to be held in memory, were
+unexpectedly slow. percent_rank(), cume_dist() and ntile() in
+particular were subject to this problem.</para></item>
+        <item><para>Avoid memory leakage while "ANALYZE"'ing complex
+index expressions.</para></item>
+        <item><para>Ensure an index that uses a whole-row Var still
+depends on its table. An index declared like create index i on t
+(foo(t.*)) would not automatically get dropped when its table was
+dropped.</para></item>
+        <item><para>Add missing support in "DROP OWNED BY" for
+removing foreign data wrapper/server privileges belonging to a
+user.</para></item>
+        <item><para>Do not "inline" a SQL function with multiple OUT
+parameters. This avoids a possible crash due to loss of information
+about the expected result rowtype.</para></item>
+        <item><para>Fix crash when inline-ing a set-returning function
+whose argument list contains a reference to an inline-able user
+function.</para></item>
+        <item><para>Behave correctly if ORDER BY, LIMIT, FOR UPDATE,
+or WITH is attached to the VALUES part of INSERT ...
+VALUES.</para></item>
+        <item><para>Make the OFF keyword unreserved. This prevents
+problems with using off as a variable name in PL/pgSQL. That worked
+before 9.0, but was now broken because PL/pgSQL now treats all core
+reserved words as reserved.</para></item>
+        <item><para>Fix constant-folding of COALESCE() expressions.
+The planner would sometimes attempt to evaluate sub-expressions that
+in fact could never be reached, possibly leading to unexpected
+errors.</para></item>
+        <item><para>Fix "could not find pathkey item to sort" planner
+failure with comparison of whole-row Vars.</para></item>
+        <item><para>Fix postmaster crash when connection acceptance
+(accept() or one of the calls made immediately after it) fails, and
+the postmaster was compiled with GSSAPI support.</para></item>
+        <item><para>Retry after receiving an invalid response packet
+from a RADIUS authentication server. This fixes a low-risk potential
+denial of service condition.</para></item>
+        <item><para>Fix missed unlink of temporary files when
+log_temp_files is active. If an error occurred while attempting to
+emit the log message, the unlink was not done, resulting in
+accumulation of temp files.</para></item>
+        <item><para>Add print functionality for InhRelation nodes.
+This avoids a failure when debug_print_parse is enabled and certain
+types of query are executed.</para></item>
+        <item><para>Fix incorrect calculation of distance from a point
+to a horizontal line segment. This bug affected several different
+geometric distance-measurement operators.</para></item>
+        <item><para>Fix incorrect calculation of transaction status in
+ecpg.</para></item>
+        <item><para>Fix errors in psql's Unicode-escape
+support.</para></item>
+        <item><para>Speed up parallel pg_restore when the archive
+contains many large objects (blobs).</para></item>
+        <item><para>Fix PL/pgSQL's handling of "simple" expressions to
+not fail in recursion or error-recovery cases.</para></item>
+        <item><para>Fix PL/pgSQL's error reporting for no-such-column
+cases. As of 9.0, it would sometimes report "missing FROM-clause entry
+for table foo" when "record foo has no field bar" would be more
+appropriate.</para></item>
+        <item><para>Fix PL/Python to honor typmod (i.e., length or
+precision restrictions) when assigning to tuple fields. This fixes a
+regression from 8.4.</para></item>
+        <item><para>Fix PL/Python's handling of set-returning
+functions. Attempts to call SPI functions within the iterator
+generating a set result would fail.</para></item>
+        <item><para>Fix bug in "contrib/cube"'s GiST picksplit
+algorithm. This could result in considerable inefficiency, though not
+actually incorrect answers, in a GiST index on a cube column. If you
+have such an index, consider "REINDEX"ing it after installing this
+update.</para></item>
+        <item><para>Don't emit "identifier will be truncated" notices
+in "contrib/dblink" except when creating new
+connections.</para></item>
+        <item><para>Fix potential coredump on missing public key in
+"contrib/pgcrypto".</para></item>
+        <item><para>Fix buffer overrun in
+"contrib/pg_upgrade".</para></item>
+        <item><para>Fix memory leak in "contrib/xml2"'s XPath query
+functions.</para></item>
+        <item><para>Update time zone data files to tzdata release
+2010o for DST law changes in Fiji and Samoa; also historical
+corrections for Hong Kong.</para></item>
+      </change>
+
+      <change from="9.0" to="9.0.1">
+        <item><para>Use a separate interpreter for each calling SQL
+userid in PL/Perl and PL/Tcl. This change prevents security problems
+that can be caused by subverting Perl or Tcl code that will be
+executed later in the same session under another SQL user identity
+(for example, within a SECURITY DEFINER function). Most scripting
+languages offer numerous ways that that might be done, such as
+redefining standard functions or operators called by the target
+function. Without this change, any SQL user with Perl or Tcl language
+usage rights can do essentially anything with the SQL privileges of
+the target function's owner. The cost of this change is that
+intentional communication among Perl and Tcl functions becomes more
+difficult. To provide an escape hatch, PL/PerlU and PL/TclU functions
+continue to use only one interpreter per session. This is not
+considered a security issue since all such functions execute at the
+trust level of a database superuser already. It is likely that
+third-party procedural languages that claim to offer trusted execution
+have similar security issues. We advise contacting the authors of any
+PL you are depending on for security-critical purposes. Our thanks to
+Tim Bunce for pointing out this issue (CVE-2010-3433).</para></item>
+        <item><para>Improve pg_get_expr() security fix so that the
+function can still be used on the output of a
+sub-select.</para></item>
+        <item><para>Fix incorrect placement of placeholder evaluation.
+This bug could result in query outputs being non-null when they should
+be null, in cases where the inner side of an outer join is a
+sub-select with non-strict expressions in its output
+list.</para></item>
+        <item><para>Fix join removal's handling of placeholder
+expressions.</para></item>
+        <item><para>Fix possible duplicate scans of UNION ALL member
+relations.</para></item>
+        <item><para>Prevent infinite loop in ProcessIncomingNotify()
+after unlistening.</para></item>
+        <item><para>Prevent show_session_authorization() from crashing
+within autovacuum processes.</para></item>
+        <item><para>Re-allow input of Julian dates prior to 0001-01-01
+AD. Input such as 'J100000'::date worked before 8.4, but was
+unintentionally broken by added error-checking.</para></item>
+        <item><para>Make psql recognize "DISCARD ALL" as a command
+that should not be encased in a transaction block in autocommit-off
+mode.</para></item>
+        <item><para>Update build infrastructure and documentation to
+reflect the source code repository's move from CVS to
+Git.</para></item>
+      </change>
+
+      <change from="8.x" to="9.0">
+        <items name="Overview">
+          <item><para>This release of PostgreSQL adds features that
+have been requested for years, such as easy-to-use replication, a mass
+permission-changing facility, and anonymous code blocks. While past
+major releases have been conservative in their scope, this release
+shows a bold new desire to provide facilities that new and existing
+users of PostgreSQL will embrace. This has all been done with few
+incompatibilities. Major enhancements include:</para>
+          <unorderedlist>
+            <item><para>Built-in replication based on log shipping.
+This advance consists of two features: Streaming Replication, allowing
+continuous archive (WAL) files to be streamed over a network
+connection to a standby server, and Hot Standby, allowing continuous
+archive standby servers to execute read-only queries. The net effect
+is to support a single master with multiple read-only slave
+servers.</para></item>
+            <item><para>Easier database object permissions management.
+"GRANT"/"REVOKE IN SCHEMA" supports mass permissions changes on
+existing objects, while "ALTER DEFAULT PRIVILEGES" allows control of
+privileges for objects created in the future. Large objects (BLOBs)
+now support permissions management as well.</para></item>
+            <item><para>Broadly enhanced stored procedure support. The
+"DO" statement supports ad-hoc or "anonymous" code blocks. Functions
+can now be called using named parameters. PL/pgSQL is now installed by
+default, and PL/Perl and PL/Python have been enhanced in several ways,
+including support for Python3.</para></item>
+            <item><para>Full support for 64-bit Windows.</para></item>
+            <item><para>More advanced reporting queries, including
+additional windowing options (PRECEDING and FOLLOWING) and the ability
+to control the order in which values are fed to aggregate
+functions.</para></item>
+            <item><para>New trigger features, including
+SQL-standard-compliant per-column triggers and conditional trigger
+execution.</para></item>
+            <item><para>Deferrable unique constraints. Mass updates to
+unique keys are now possible without trickery.</para></item>
+            <item><para>Exclusion constraints. These provide a
+generalized version of unique constraints, allowing enforcement of
+complex conditions.</para></item>
+            <item><para>New and enhanced security features, including
+RADIUS authentication, LDAP authentication improvements, and a new
+contrib module "passwordcheck" for testing password
+strength.</para></item>
+            <item><para>New high-performance implementation of the
+"LISTEN"/"NOTIFY" feature. Pending events are now stored in a
+memory-based queue rather than a table. Also, a "payload" string can
+be sent with each event, rather than transmitting just an event name
+as before.</para></item>
+            <item><para>New implementation of "VACUUM FULL". This
+command now rewrites the entire table and indexes, rather than moving
+individual rows to compact space. It is substantially faster in most
+cases, and no longer results in index bloat.</para></item>
+            <item><para>New contrib module "pg_upgrade" to support
+in-place upgrades from 8.3 or 8.4 to 9.0.</para></item>
+            <item><para>Multiple performance enhancements for specific
+types of queries, including elimination of unnecessary joins. This
+helps optimize some automatically-generated queries, such as those
+produced by object-relational mappers (ORMs).</para></item>
+            <item><para>"EXPLAIN" enhancements. The output is now
+available in JSON, XML, or YAML format, and includes buffer
+utilization and other data not previously available.</para></item>
+            <item><para>"hstore" improvements, including new functions
+and greater data capacity.</para></item>
+          </unorderedlist>
+          <para>The above items are explained in more detail
+in the sections below.</para></item>
+        </items>
+
+        <items name="Migration to Version 9.0">
+          <item><para>A dump/restore using pg_dump, or use of
+pg_upgrade, is required for those wishing to migrate data from any
+previous release.</para></item>
+          <item><para>Version 9.0 contains a number of changes that
+selectively break backwards compatibility in order to support new
+features and code quality improvements. In particular, users who make
+extensive use of PL/pgSQL, Point-In-Time Recovery (PITR), or Warm
+Standby should test their applications because of slight user-visible
+changes in those areas. Observe the following
+incompatibilities:</para>
+          <unorderedlist>
+            <item><para>Server Settings</para>
+            <unorderedlist>
+              <item><para>Remove server parameter add_missing_from,
+which was defaulted to off for many years.</para></item>
+              <item><para>Remove server parameter regex_flavor, which
+was defaulted to advanced for many years.</para></item>
+              <item><para>archive_mode now only affects
+archive_command; a new setting, wal_level, affects the contents of the
+write-ahead log.</para></item>
+              <item><para>log_temp_files now uses default file size
+units of kilobytes.</para></item>
+            </unorderedlist></item>
+            <item><para>Queries</para>
+            <unorderedlist>
+              <item><para>When querying a parent table, do not do any
+separate permission checks on child tables scanned as part of the
+query. The SQL standard specifies this behavior, and it is also much
+more convenient in practice than the former behavior of checking
+permissions on each child as well as the parent.</para></item>
+            </unorderedlist></item>
+            <item><para>Data Types</para>
+            <unorderedlist>
+              <item><para>bytea output now appears in hex format by
+default. The server parameter bytea_output can be used to select the
+traditional output format if needed for compatibility.</para></item>
+              <item><para>Array input now considers only plain ASCII
+whitespace characters to be potentially ignorable; it will never
+ignore non-ASCII characters, even if they are whitespace according to
+some locales. This avoids some corner cases where array values could
+be interpreted differently depending on the server's locale
+settings.</para></item>
+              <item><para>Improve standards compliance of SIMILAR TO
+patterns and SQL-style substring() patterns. This includes treating ?
+and {...} as pattern metacharacters, while they were simple literal
+characters before; that corresponds to new features added in SQL:2008.
+Also, ^ and $ are now treated as simple literal characters; formerly
+they were treated as metacharacters, as if the pattern were following
+POSIX rather than SQL rules. Also, in SQL-standard substring(), use of
+parentheses for nesting no longer interferes with capturing of a
+substring. Also, processing of bracket expressions (character classes)
+is now more standards-compliant.</para></item>
+              <item><para>Reject negative length values in 3-parameter
+substring() for bit strings, per the SQL standard.</para></item>
+              <item><para>Make date_trunc truncate rather than round
+when reducing precision of fractional seconds. The code always acted
+this way for integer-based dates/times. Now float-based dates/times
+behave similarly.</para></item>
+            </unorderedlist></item>
+            <item><para>Object Renaming</para>
+            <unorderedlist>
+              <item><para>Tighten enforcement of column name
+consistency during "RENAME" when a child table inherits the same
+column from multiple unrelated parents.</para></item>
+              <item><para>No longer automatically rename indexes and
+index columns when the underlying table columns are renamed.
+Administrators can still rename such indexes and columns manually.
+This change will require an update of the JDBC driver, and possibly
+other drivers, so that unique indexes are correctly recognized after a
+rename.</para></item>
+              <item><para>"CREATE OR REPLACE FUNCTION" can no longer
+change the declared names of function parameters. In order to avoid
+creating ambiguity in named-parameter calls, it is no longer allowed
+to change the aliases for input parameters in the declaration of an
+existing function (although names can still be assigned to previously
+unnamed parameters). You now have to "DROP" and recreate the function
+to do that.</para></item>
+            </unorderedlist></item>
+            <item><para>PL/pgSQL</para>
+            <unorderedlist>
+              <item><para>PL/pgSQL now throws an error if a variable
+name conflicts with a column name used in a query. The former behavior
+was to bind ambiguous names to PL/pgSQL variables in preference to
+query columns, which often resulted in surprising misbehavior.
+Throwing an error allows easy detection of ambiguous situations.
+Although it's recommended that functions encountering this type of
+error be modified to remove the conflict, the old behavior can be
+restored if necessary via the configuration parameter
+plpgsql.variable_conflict, or via the per-function option
+#variable_conflict.</para></item>
+              <item><para>PL/pgSQL no longer allows variable names
+that match certain SQL reserved words. This is a consequence of
+aligning the PL/pgSQL parser to match the core SQL parser more
+closely. If necessary, variable names can be double-quoted to avoid
+this restriction.</para></item>
+              <item><para>PL/pgSQL now requires columns of composite
+results to match the expected type modifier as well as base type. For
+example, if a column of the result type is declared as NUMERIC(30,2),
+it is no longer acceptable to return a NUMERIC of some other precision
+in that column. Previous versions neglected to check the type modifier
+and would thus allow result rows that didn't actually conform to the
+declared restrictions.</para></item>
+              <item><para>PL/pgSQL now treats selection into composite
+fields more consistently. Formerly, a statement like SELECT ... INTO
+rec.fld FROM ... was treated as a scalar assignment even if the record
+field "fld" was of composite type. Now it is treated as a record
+assignment, the same as when the INTO target is a regular variable of
+composite type. So the values to be assigned to the field's subfields
+should be written as separate columns of the "SELECT" list, not as a
+ROW(...) construct as in previous versions. If you need to do this in
+a way that will work in both 9.0 and previous releases, you can write
+something like rec.fld := ROW(...) FROM ....</para></item>
+              <item><para>Remove PL/pgSQL's RENAME declaration.
+Instead of RENAME, use ALIAS, which can now create an alias for any
+variable, not only dollar sign parameter names (such as $1) as
+before.</para></item>
+            </unorderedlist></item>
+            <item><para>Other Incompatibilities</para>
+            <unorderedlist>
+              <item><para>Deprecate use of =&gt; as an operator name.
+Future versions of PostgreSQL will probably reject this operator name
+entirely, in order to support the SQL-standard notation for named
+function parameters. For the moment, it is still allowed, but a
+warning is emitted when such an operator is defined.</para></item>
+              <item><para>Remove support for platforms that don't have
+a working 64-bit integer data type. It is believed all still-supported
+platforms have working 64-bit integer data types.</para></item>
+            </unorderedlist></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The DBD::Pg Perl module is available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+        <para>The PyGreSQL and psycopg2 Python modules are available
+in the following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
