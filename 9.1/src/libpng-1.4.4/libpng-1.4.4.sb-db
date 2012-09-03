@@ -1,0 +1,564 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="libpng" version="1.4.4" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="297b38f925e745061489b41b1f7c4bb1"
+        checksum-type="md5" size="829414"
+        path="src/libpng-1.4.4.tar.gz"/>
+      <patch checksum="d1cb2004c7c8b15bd71c179324dc7449"
+        checksum-type="md5" size="645"
+        path="src/libpng-1.4.4.CVE-2011-2501.patch"/>
+      <patch checksum="f39a8c16559e007e7dc5ed0db8c0ea90"
+        checksum-type="md5" size="866"
+        path="src/libpng-1.4.4.CVE-2011-2690.patch"/>
+      <patch checksum="e9c9c800cf7dcb7819e1cdd54f8ff0e5"
+        checksum-type="md5" size="902"
+        path="src/libpng-1.4.4.CVE-2011-2691.patch"/>
+      <patch checksum="afeca1d88124526a964958f0440a142b"
+        checksum-type="md5" size="613"
+        path="src/libpng-1.4.4.CVE-2011-2692.patch"/>
+      <patch checksum="229b9474a387d7f5b099e1b58d6fc8b7"
+        checksum-type="md5" size="9315"
+        path="src/libpng-1.4.4.tww.patch"/>
+      <patch checksum="a889782d65d355cc805d5eb9ffc4a0d8"
+        checksum-type="md5" size="1654749"
+        path="src/libpng-1.4.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+    </dependencies>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="libpng" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.4.4</depend>
+      </validate>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBZ_LIB}/pkgconfig" \
+--disable-dependency-tracking --libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libpng.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux11*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.[78])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBZ}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBZ}/${_libdir}/pkgconfig" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libpng.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-libLTLIBRARIES install-pkgconfigDATA
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>This code is released under the libpng license.</para>
+        <para>libpng versions 1.2.6, August 15, 2004, through 1.4.4,
+September 23, 2010, are Copyright (c) 2004, 2006-2010 Glenn
+Randers-Pehrson, and are distributed according to the same disclaimer
+and license as libpng-1.2.5 with the following individual added to the
+list of Contributing Authors</para>
+        <para>Cosmin Truta</para>
+        <para>libpng versions 1.0.7, July 1, 2000, through 1.2.5 -
+October 3, 2002, are Copyright (c) 2000-2002 Glenn Randers-Pehrson,
+and are distributed according to the same disclaimer and license as
+libpng-1.0.6 with the following individuals added to the list of
+Contributing Authors</para>
+        <para>Simon-Pierre Cadieux</para>
+        <para>Eric S. Raymond</para>
+        <para>Gilles Vollant</para>
+        <para>and with the following additions to the
+disclaimer:</para>
+        <para>There is no warranty against interference with your
+enjoyment of the library or against infringement.  There is no
+warranty that our efforts or the library will fulfill any of your
+particular purposes or needs.  This library is provided with all
+faults, and the entire risk of satisfactory quality, performance,
+accuracy, and effort is with the user.</para>
+        <para>libpng versions 0.97, January 1998, through 1.0.6, March
+20, 2000, are Copyright (c) 1998, 1999 Glenn Randers-Pehrson, and are
+distributed according to the same disclaimer and license as
+libpng-0.96, with the following individuals added to the list of
+Contributing Authors:</para>
+        <para>Tom Lane</para>
+        <para>Glenn Randers-Pehrson</para>
+        <para>Willem van Schaik</para>
+        <para>libpng versions 0.89, June 1996, through 0.96, May 1997,
+are Copyright (c) 1996, 1997 Andreas Dilger Distributed according to
+the same disclaimer and license as libpng-0.88, with the following
+individuals added to the list of Contributing Authors:</para>
+        <para>John Bowler</para>
+        <para>Kevin Bracey</para>
+        <para>Sam Bushell</para>
+        <para>Magnus Holmgren</para>
+        <para>Greg Roelofs</para>
+        <para>Tom Tanner</para>
+        <para>libpng versions 0.5, May 1995, through 0.88, January
+1996, are Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42,
+Inc.</para>
+        <para>For the purposes of this copyright and license,
+"Contributing Authors" is defined as the following set of
+individuals:</para>
+        <para>Andreas Dilger</para>
+        <para>Dave Martindale</para>
+        <para>Guy Eric Schalnat</para>
+        <para>Paul Schmidt</para>
+        <para>Tim Wegner</para>
+        <para>The PNG Reference Library is supplied "AS IS".  The
+Contributing Authors and Group 42, Inc. disclaim all warranties,
+expressed or implied, including, without limitation, the warranties of
+merchantability and of fitness for any purpose.  The Contributing
+Authors and Group 42, Inc. assume no liability for direct, indirect,
+incidental, special, exemplary, or consequential damages, which may
+result from the use of the PNG Reference Library, even if advised of
+the possibility of such damage.</para>
+        <para>Permission is hereby granted to use, copy, modify, and
+distribute this source code, or portions hereof, for any purpose,
+without fee, subject to the following restrictions:</para>
+        <orderedlist>
+          <item><para>The origin of this source code must not be
+misrepresented.</para></item>
+          <item><para>Altered versions must be plainly marked as such
+and must not be misrepresented as being the original
+source.</para></item>
+          <item><para>This Copyright notice may not be removed or
+altered from any source or altered source distribution.</para></item>
+        </orderedlist>
+
+        <para>The Contributing Authors and Group 42, Inc. specifically
+permit, without fee, and encourage the use of this source code as a
+component to supporting the PNG file format in commercial products.
+If you use this source code in a product, acknowledgment is not
+required but would be appreciated.</para>
+        <para>Libpng is OSI Certified Open Source Software.  OSI
+Certified Open Source is a certification mark of the Open Source
+Initiative.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="1.4.3" to="1.4.4">
+        <item><para>Removed extraneous new_push_process_row.c
+file.</para></item>
+        <item><para>Revised the "SEE ALSO" style of libpng.3,
+libpngpf.3, and png.5</para></item>
+        <item><para>Removed some newly-added TAB characters from
+pngpread.c.</para></item>
+        <item><para>Fixed some indentation in pngpread.c and
+pngrutil.c</para></item>
+        <item><para>Changed "extern PNG_EXPORT" to "PNG_EXPORT" in
+png.h</para></item>
+        <item><para>Changed "extern" to "PNG_EXTERN" in pngpriv.h
+(except for the 'extern "C" {')</para></item>
+        <item><para>Put "#ifndef PNG_EXTERN, #endif" around "#define
+PNG_EXTERN" in pngpriv.h</para></item>
+        <item><para>Added -DNO_PNG_SNPRINTF to CFLAGS in
+scripts/makefile.dj2</para></item>
+        <item><para>Moved the definition of png_snprintf() outside of
+the enclosing #ifdef blocks in pngconf.h</para></item>
+        <item><para>Made a special case "#define PNGAPI" in pngconf.h
+for WATCOM.</para></item>
+        <item><para>Removed reference to cbuilder5/* from Makefile.in
+and Makefile.am</para></item>
+        <item><para>Updated the read macros and functions from
+1.5.0beta38.</para></item>
+        <item><para>Updated projects/visualc71 so it can find
+scripts/pnglibconf.h</para></item>
+        <item><para>Removed unused png_mem_* defines from
+pngconf.h.</para></item>
+        <item><para>Correct use of _WINDOWS_ in
+pngconf.h</para></item>
+        <item><para>Don't try to use version-script with
+cygwin/mingw.</para></item>
+        <item><para>Revised contrib/gregbook to work under
+cygwin/mingw.</para></item>
+        <item><para>Add .dll.a to the list of extensions to be
+symlinked by Makefile.am</para></item>
+        <item><para>Updated CMakelists.txt to use CMAKE_INSTALL_LIBDIR
+variable; useful for installing libpng in /usr/lib64</para></item>
+        <item><para>Revised CMakeLists.txt to put the man pages in
+share/man/man* not man/man*</para></item>
+        <item><para>Revised CMakeLists.txt to make symlinks instead of
+copies when installing.</para></item>
+        <item><para>Moved "#include pngusr.h" ahead of
+PNG_USER_PRIVATEBUILD test in pngconf.h</para></item>
+        <item><para>Eliminated a deprecated reference to
+png_ptr-&gt;io_ptr in pngtest.c</para></item>
+        <item><para>Eliminated new unnecessary #if tests regarding the
+sCAL chunk from pngrutil.c</para></item>
+        <item><para>Updated the xcode project to work with
+libpng-1.4.x and added iOS targets for simulator and
+device</para></item>
+        <item><para>Revised autogen.sh to recognize and use $AUTOCONF,
+$AUTOMAKE, $AUTOHEADER, $AUTOPOINT, $ACLOCAL and
+$LIBTOOLIZE</para></item>
+        <item><para>Rebuilt configure scripts with automake-1.11.1
+instead of automake-1.11.</para></item>
+        <item><para>Removed unused mkinstalldirs file.</para></item>
+      </change>
+
+      <change from="1.4.2" to="1.4.3">
+        <item><para>Added missing quotation marks in the aix block of
+configure.ac</para></item>
+        <item><para>The new "vstudio" project was missing from the zip
+and 7z distributions.</para></item>
+        <item><para>Rewrote png_process_IDAT_data to consistently
+treat extra data as warnings and handle end conditions more
+cleanly.</para></item>
+        <item><para>Removed the now-redundant check for out-of-bounds
+new_row from example.c</para></item>
+        <item><para>Changed char *msg to PNG_CONST char *msg in
+pngrutil.c</para></item>
+        <item><para>Stop memory leak when reading a malformed sCAL
+chunk.</para></item>
+      </change>
+
+      <change from="1.4.1" to="1.4.2">
+        <item><para>This is a minor cleanup version.  A new "vstudio"
+project is supplied, to replace the "visualc6" and "visualc71"
+projects, which will be removed from libpng-1.5.0.</para></item>
+        <item><para>The "png_check_sig()" macro is restored, as an aid
+to migration from version 1.2.X.</para></item>
+        <item><para>The png_set_dither() function is restored, but
+renamed "png_set_quantize()" to reflect more accurately what it
+actually does.</para></item>
+      </change>
+
+      <change from="1.4.0" to="1.4.1">
+        <item><para>Revised Makefile.am and Makefile.in to remove
+references to Y2KINFO, KNOWNBUG, and libpng.la</para></item>
+        <item><para>Revised the makefiles to install the same files
+and symbolic except for libpng.la and libpng14.la.</para></item>
+        <item><para>Make png_set|get_compression_buffer_size()
+available even when PNG_WRITE_SUPPORTED is not enabled.</para></item>
+        <item><para>Revised Makefile.am and Makefile.in to simplify
+their maintenance.</para></item>
+        <item><para>Revised the makefiles to install a link to
+libpng14.so.14.1</para></item>
+        <item><para>Removed png_set_premultiply_alpha() from
+scripts/*.def</para></item>
+        <item><para>Revised png_decompress_chunk() to improve speed
+and memory usage when decoding large chunks, using a two-pass
+method</para></item>
+        <item><para>Added png_set|get_chunk_malloc_max()
+functions.</para></item>
+        <item><para>Relocated "int k" declaration in pngtest.c to
+minimize its scope.</para></item>
+        <item><para>Folded some long lines in the source
+files.</para></item>
+        <item><para>Added defineable PNG_USER_CHUNK_CACHE_MAX and
+PNG_USER_CHUNK_MALLOC_MAX</para></item>
+        <item><para>Eliminated use of png_ptr-&gt;irowbytes and reused
+the slot in png_ptr as
+png_ptr-&gt;png_user_chunk_malloc_max.</para></item>
+        <item><para>Return allocated "old_buffer" in
+png_push_save_buffer() before calling png_error(), to avoid a
+potential memory leak.</para></item>
+        <item><para>Removed the cbuilder5 project, which has not been
+updated to 1.4.0.</para></item>
+        <item><para>Complete rewrite of two-pass
+png_decompress_chunk()</para></item>
+        <item><para>Removed obsolete unused MMX-querying support from
+contrib/gregbook</para></item>
+        <item><para>Removed the AIX redefinition of jmpbuf in
+png.h</para></item>
+        <item><para>Define _ALL_SOURCE in configure.ac, makefile.aix,
+and CMakeLists.txt when using AIX compiler.</para></item>
+        <item><para>Removed unused gzio.c from contrib/pngminim gather
+and makefile scripts</para></item>
+      </change>
+
+      <change from="1.2.x" to="1.4.0">
+        <item><para>Libpng-1.4.0 was released by the PNG Development
+Group on January 3, 2010.  Important new features include support for
+the iTXt chunk and a function for limiting the amount of memory that a
+possibly malicious compressed chunk can consume.  Some long-deprecated
+functions and features have been removed.  A new private header file
+that is not visible to applications has been created, to improve our
+ability to maintain binary compatibility among future libpng
+versions.</para></item>
+        <item><para>Specifically,</para>
+        <orderedlist>
+          <item><para>Private libpng prototypes and macro definitions
+were moved from png.h and pngconf.h into a new pngpriv.h header file
+that is not visible to applications.</para></item>
+          <item><para>Some obsolete/deprecated macros and functions
+have been removed.</para>
+          <orderedlist type="lower-alpha">
+            <item><para>We eliminated the obsolete, unused pnggccrd.c
+and pngvcrd.c files and related makefiles.</para></item>
+            <item><para>We removed the typecasted NULL definitions
+such as</para>
+            <screen>
+#define png_voidp_NULL    (png_voidp)NULL
+            </screen>
+            <para>If you used these in your application, just
+use NULL instead.</para></item>
+            <item><para>We eliminated the PNG_1_0_X and PNG_1_2_X
+macros.</para></item>
+            <item><para>We eliminated the PNG_LEGACY_SUPPORTED
+macro.</para></item>
+            <item><para>We removed many WIN32_WCE
+#ifdefs.</para></item>
+            <item><para>We removed the functions
+png_read_init(info_ptr), png_write_init(info_ptr),
+png_info_init(info_ptr), png_read_destroy(), and png_write_destroy().
+They have been deprecated since libpng-0.95.</para></item>
+            <item><para>We removed the png_permit_empty_plte()
+function. It has been deprecated since libpng-1.0.9.  Use
+png_permit_mng_features() instead.</para></item>
+            <item><para>We removed the obsolete stub functions
+png_get_mmx_flagmask(), png_set_mmx_thresholds(), png_get_asm_flags(),
+png_get_mmx_bitdepth_threshold(), png_get_mmx_rowbytes_threshold(),
+png_set_asm_flags(), and png_mmx_supported()</para></item>
+            <item><para>We removed the obsolete png_check_sig(),
+png_memcpy_check(), and png_memset_check() functions.  Instead use
+!png_sig_cmp(), png_memcpy(), and png_memset(), respectively, i.e.,
+replace <command>png_check_sig(buf, 8)</command> with
+<command>png_sig_cmp(buf, 0, 8) == 0</command> replace
+<command>png_memcpy_check(png_ptr, dest, src, length)</command> with
+<command>png_memcpy(dest, src, length)</command> and replace
+<command>png_memset_check(png_ptr, dest, value, length)</command> with
+<command>png_memset(dest, value, length)</command></para></item>
+            <item><para>We removed support for global arrays to
+improve thread safety.</para></item>
+            <item><para>We removed support for numbered error messages
+by default, since we never got around to actually numbering the error
+messages. The function png_set_strip_error_numbers() was removed from
+the library by default.</para></item>
+            <item><para>The png_zalloc() and png_zfree() functions are
+no longer exported. The png_zalloc() function no longer zeroes out the
+memory that it allocates.</para></item>
+            <item><para>The function png_set_gray_1_2_4_to_8() was
+removed. It has been deprecated since libpng-1.0.18 and 1.2.9, when it
+was replaced with png_set_expand_gray_1_2_4_to_8() because the former
+function also expanded palette images.</para></item>
+          </orderedlist></item>
+          <item><para>Several function prototypes were
+changed.</para>
+          <orderedlist type="lower-alpha">
+            <item><para>We changed the prototype for png_malloc() from
+png_malloc(png_structp png_ptr, png_uint_32 size) to
+png_malloc(png_structp png_ptr, png_alloc_size_t size)</para></item>
+            <item><para>We changed the prototypes of
+png_get_compression_buffer_size() and
+png_set_compression_buffer_size() to work with png_size_t instead of
+png_uint_32.</para></item>
+          </orderedlist></item>
+          <item><para>We added some new features:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>We enabled iTXt chunk support by default.
+This changes the png_text structure by adding the itxt_length, lang,
+and lang_key members.</para></item>
+            <item><para>We added the functions
+png_set_benign_errors(), png_benign_error(), and
+png_chunk_benign_error().  With these, you can choose to treat certain
+normally fatal errors as nonfatal.</para></item>
+            <item><para>Support for setting the maximum amount of
+memory that the application will allocate for reading chunks was
+added, as a security measure. The functions png_set_chunk_cache_max()
+and png_get_chunk_cache_max() were added to the library.</para></item>
+            <item><para>We added the png_calloc() function and used it
+in place of of "png_malloc(); png_memset();" except in the case in
+png_read_png() where the array consists of pointers; in this case a
+"for" loop is used after the png_malloc() to set the pointers to NULL,
+to give robust. behavior in case the application runs out of memory
+part-way through the process.</para></item>
+            <item><para>We implemented support for I/O states by
+adding png_ptr member io_state and functions png_get_io_chunk_name()
+and png_get_io_state() in pngget.c</para></item>
+            <item><para>We added PNG_TRANSFORM_GRAY_TO_RGB to the
+available high-level input transforms.</para></item>
+          </orderedlist></item>
+          <item><para>Other changes</para>
+          <orderedlist type="lower-alpha">
+            <item><para>We changed the names of the png_struct and
+info_struct members "trans" and "trans_values" to "trans_alpha" and
+"trans_color", respectively.</para></item>
+            <item><para>Checking for and reporting of errors in the
+IHDR chunk is more thorough.</para></item>
+            <item><para>We removed the trailing '.' from the warning
+and error messages.</para></item>
+          </orderedlist></item>
+        </orderedlist></item>
+      </change>
+    </notes>
+  </program>
+</programs>
