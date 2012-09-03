@@ -1,0 +1,250 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="python-fchksum" version="1.7" revision="14">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="0d35b64eb2c99e6463025611cdc081a8"
+        checksum-type="md5" size="26678"
+        path="src/python-fchksum-1.7.tar.gz"/>
+      <patch checksum="71ddc8e3c27590a385ab69c30732c973"
+        checksum-type="md5" size="1728"
+        path="src/python-fchksum-1.7.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:"
+  CC_LD_RT_POST=":/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-freebsd*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-Wl,-R" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}}" ${SB_VAR_PYTHON}/bin/python \
+setup.py ${SB_VAR_LIBZ+--zlib-prefix=${SB_VAR_LIBZ}} \
+build_ext --inplace
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}}" ${SB_VAR_PYTHON}/bin/python \
+setup.py ${SB_VAR_LIBZ+--zlib-prefix=${SB_VAR_LIBZ}} \
+install --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm $_install_prefix/fchksum.so
+rm -f $_install_prefix/python_fchksum-${SB_PROG_VER}-py*.egg-info
+]]>
+    </uninstall>
+
+    <module name="2.7.2">
+      <install-name>python27p</install-name>
+
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/python2.7/site-packages"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}}" ${SB_VAR_PYTHON}/bin/python \
+setup.py ${SB_VAR_LIBZ+--zlib-prefix=${SB_VAR_LIBZ}} \
+build_ext --inplace
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}}" ${SB_VAR_PYTHON}/bin/python \
+setup.py ${SB_VAR_LIBZ+--zlib-prefix=${SB_VAR_LIBZ}} \
+install --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm $_install_prefix/fchksum.so
+rm -f $_install_prefix/python_fchksum-${SB_PROG_VER}-py*.egg-info
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <install-name>python26p</install-name>
+
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/python2.6/site-packages"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}}" ${SB_VAR_PYTHON}/bin/python \
+setup.py ${SB_VAR_LIBZ+--zlib-prefix=${SB_VAR_LIBZ}} \
+build_ext --inplace
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}}" ${SB_VAR_PYTHON}/bin/python \
+setup.py ${SB_VAR_LIBZ+--zlib-prefix=${SB_VAR_LIBZ}} \
+install --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm $_install_prefix/fchksum.so
+rm -f $_install_prefix/python_fchksum-${SB_PROG_VER}-py*.egg-info
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="1.6.1" to="1.7">
+        <item><para>Remove all stdio usage</para></item>
+        <item><para>Change version() return to 4</para></item>
+        <item><para>Add fcrc32d and fcksumd functions which return
+results in the form of 4 byte binary strings in order to avoid the
+signed int issue</para></item>
+        <item><para>Add ability for checksum functions to periodically
+callback to a specified function</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2011 September 18" revision="14"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace 2.7.1 module with a 2.7.2
+module</para></item>
+        <item><para>Replace 2.6.6 module with a 2.6.7
+module</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Remove 2.4.3, and 2.6.4 module</para></item>
+      </change>
+
+      <change date="2010 December 27" revision="13"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Replace 2.7 module with a 2.7.1
+module</para></item>
+        <item><para>Replace 2.6.5 module with a 2.6.6
+module</para></item>
+      </change>
+
+      <change date="2010 July 19" revision="12"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 2.7 module</para></item>
+      </change>
+
+      <change date="2010 May 20" revision="11"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 2.6.5 module</para></item>
+      </change>
+
+      <change date="2009 November 10" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 2.6.4 module</para></item>
+      </change>
+
+      <change date="2008 August 27" revision="9"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove the python egg info file during
+uninstall</para></item>
+      </change>
+
+      <change date="2008 June 21" revision="8"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add 2.5.2 module</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to 
+4.2.4</para></item>
+      </change>
+
+      <change date="2007 December 31" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update zlib dependency from 1.1.4 to
+1.2.3</para></item>
+      </change>
+
+      <change date="2007 June 3" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add module for Python 2.5.1</para></item>
+      </change>
+
+      <change date="2005 December 20" revision="5"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add module for Python 2.4.2</para></item>
+        <item><para>Don't use tww-static version of zlib for Tru64
+UNIX 4.0D as Python already has runtime path to zlib</para></item>
+      </change>
+
+      <change date="2005 November 14" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 January 30" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove module for Python 2.2.3</para></item>
+        <item><para>Add 2.3.5 module for Python 2.3.5</para></item>
+      </change>
+
+      <change date="2003 November 21" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for 2.1.2</para></item>
+      </change>
+
+      <change date="2003 November 3" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Python 2.3.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
