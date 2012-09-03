@@ -1,0 +1,302 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="OpenSP" version="1.5.1" revision="15">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>opensp15</install-name>
+
+    <sources>
+      <source checksum="f46fe0a04b76a4454ec27b7fcc84ec54"
+        checksum-type="md5" size="1418784"
+        path="src/OpenSP-1.5.1.tar.gz"/>
+      <patch checksum="e838bd6a3e995e2956d14ad9199cd078"
+        checksum-type="md5" size="1386"
+        path="src/OpenSP-1.5.1.litlen.patch"/>
+      <patch checksum="f821db5dceed4a1e36624e0e2c7e2abe"
+        checksum-type="md5" size="373"
+        path="src/OpenSP-1.5.1.gcc34.patch"/>
+      <patch checksum="3c49f5fadc7e7c8daa7c56845a267b37"
+        checksum-type="md5" size="604"
+        path="src/OpenSP-1.5.1.gcc41.patch"/>
+      <patch checksum="ab5369027cc58280b76b4889756effe2"
+        checksum-type="md5" size="1044"
+        path="src/OpenSP-1.5.1.gcc42.patch"/>
+      <patch checksum="ba4f6cb670667659428427493f03e984"
+        checksum-type="md5" size="243748"
+        path="src/OpenSP-1.5.1.tww.patch"/>
+      <patch checksum="1b12cd0cde4e128a1ec47532b08848d1"
+        checksum-type="md5" size="2105695"
+        path="src/OpenSP-1.5.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018" add-path="prepend"
+        type="build">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="!*-linux*" type="build">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="!*-linux*"/>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+if [ "${SB_VAR_XMLCATALOG+set}" = set ]; then
+  _sgml_catalog="${SB_VAR_XMLCATALOG}/catalog.sgml"
+  _catalog_search_path=${SB_VAR_XMLCATALOG}
+else
+  _sgml_catalog="/etc/sgml/catalog"
+  _catalog_search_path="/usr/share/sgml:/usr/share/xml"
+fi
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-multi-byte" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-multi-byte" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-multi-byte" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--enable-multi-byte" ;;
+*-linux*)
+  ARGS="--enable-multi-byte" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-multi-byte" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-multi-byte" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-multi-byte" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" MAKE=gmake \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" ac_cv_cxx_gnu_avoid_new_h=no \
+--enable-http --enable-static --enable-shared \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--disable-dependency-tracking \
+--enable-default-catalog=${_sgml_catalog} \
+--enable-default-search-path=${_catalog_search_path} \
+--disable-nls ${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdocdir=${_docdir} pkgdatadir=${_sysconfdir} \
+pkgincludedir="${SB_INSTALL_PREFIX}/include"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install pkgdocdir=${_docdir} pkgdatadir=${_sysconfdir} \
+pkgincludedir="${SB_INSTALL_PREFIX}/include"
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para>Copyright (c) 1994, 1995, 1996, 1997, 1998 James
+Clark</para>
+        <para>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:</para>
+        <para>The above copyright notice and this permission notice
+shall be included in all copies or substantial portions of the
+Software.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL JAMES CLARK BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</para>
+        <para>Except as contained in this notice, the name of James
+Clark shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization from James Clark.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="1.5" to="1.5.1">
+        <item><para>Enable run time selection of message format with
+SP_MESSAGE_FORMAT environment variable. Value is one of XML, NONE,
+TRADITIONAL</para></item>
+        <item><para>Add support for restricted files option to generic
+API</para></item>
+        <item><para>Add support for http redirection</para></item>
+        <item><para>Add support for specifying the user agent at run
+time with the SP_HTTP_USER_AGENT environment variable</para></item>
+        <item><para>Add support for specifying Accept: headers with
+the SP_HTTP_ACCEPT environment variable</para></item>
+        <item><para>Fix for Mac OS X/Darwin compilation</para></item>
+        <item><para>Build Infrastructure/Localisation
+enhancements</para></item>
+        <item><para>Enhancements to osx. Preserve case option,
+security fixes</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2010 December 21" revision="15"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for AIX 7.1</para></item>
+        <item><para>Update bison dependency from 2.3 to
+2.4</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+      </change>
+
+      <change date="2010 October 29" revision="14"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 January 15" revision="12"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2008 August 20" revision="12"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+        <item><para>Update gettext dependency from 0.14.1 to
+0.17</para></item>
+        <item><para>Update libiconv dependency from 1.9.6 to
+1.12</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to
+4.2.4</para></item>
+        <item><para>Add support for HP-UX 11.31/IA</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2007 April 30" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 September 25" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update bison dependency from 2.1 to
+2.3</para></item>
+      </change>
+
+      <change date="2006 May 12" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2005 December 31" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update SGML catalog filename to
+<command>catalog.sgml</command></para></item>
+      </change>
+
+      <change date="2005 November 18" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+        <item><para>Update to libtool-1.5-14</para></item>
+      </change>
+
+      <change date="2005 September 14" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 April 30" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+        <item><para>Upgrade bison dependency from 1.35 to
+2.0</para></item>
+        <item><para>Upgrade gettext dependency from 0.11.4 to
+0.14.1</para></item>
+        <item><para>Upgrade perl dependency from 5.8.2 to
+5.8.6</para></item>
+      </change>
+
+      <change date="2004 December 26" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch from linuxfromscratch.org to remove
+some annoying messages that can appear while running
+openjade</para></item>
+        <item><para>Upgrade gcc dependency from 3.3.2 to
+3.4.3</para></item>
+        <item><para>Disable multi-byte strings on AIX (needed for
+openjade)</para></item>
+        <item><para>Update to libtool-1.5-5</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 July 5" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update xmlcatalog dependency from 1.0 to
+1.1</para></item>
+        <item><para>Support HP-UX 10.20 by using GCC
+3.2.3</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
