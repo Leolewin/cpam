@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Test-Class" version="0.24" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="dc27881e002abb283b96e083e7eb49c4"
+        checksum-type="md5" size="46984"
+        path="src/Test-Class-0.24.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Build.PL
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+./Build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+./Build test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+./Build install
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Test/Class/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Test/Class/.packlist
+rmdir ${_installsitearch}/auto/Test/Class 2>/dev/null
+rmdir ${_installsitearch}/auto/Test 2>/dev/null
+
+:
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Class-ISA" module="5.12.2">v&gt;=0.36</depend>
+        <depend program="Devel-Symdump"
+          module="5.12.2">v&gt;=2.08</depend>
+        <depend program="Module-Build"
+          module="5.12.2">v&gt;=0.3800</depend>
+        <depend program="Test-Exception"
+          module="5.12.2">v&gt;=0.31</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2011 September 20" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove 5.8.6, 5.8.8, 5.10.1, 5.12.1
+modules</para></item>
+        <item><para>Add 5.12.2 module</para></item>
+      </change>
+
+      <change date="2009 May 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update IO dependency from 1.2301 to
+1.25</para></item>
+        <item><para>Update Module-Build dependency from 0.2609 to
+0.30</para></item>
+        <item><para>Add 5.8.8 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
