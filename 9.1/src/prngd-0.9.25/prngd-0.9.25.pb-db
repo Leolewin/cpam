@@ -1,0 +1,676 @@
+<?xml version="1.0"?>
+<packages>
+  <package name="prngd" version="0.9.25" revision="2">
+    <package-manager name="depot">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWWprngd</pkgname-base>
+
+      <version>0.9.25</version>
+      <revision>2</revision>
+
+      <init name="/sbin/init.d/TWWprngd"
+        path="pkg/init-hpux"
+        checksum="10dc49cc2038bafae858245ca3513122"
+        checksum-type="md5" size="681"/>
+      <init link-src="/sbin/rc2.d/S661TWWprngd"
+        link-dest="/sbin/init.d/TWWprngd"/>
+      <init link-src="/sbin/rc1.d/K269TWWprngd"
+        link-dest="/sbin/init.d/TWWprngd"/>
+
+      <config>/sbin/init.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <changelog>
+        <change date="2004 June 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Merge in changes from 0.9.28. Among the
+important fixes:</para>
+          <unorderedlist>
+            <item><para>On Solaris 8 prngd did hang in a tight loop.
+Due to "truss" output added in the bug report, the bug could be found:
+in collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+            <item><para>When failing to execl() a gatherer command,
+NULL pointers could be passed to snprintf() instead of empty strings
+if not all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+            <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+            <item><para>Modified serverloop.c wait_write() behaviour:
+on failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+            <item><para>When lots of processes query entropy at the
+same time, the "fairness" change introduced in 0.9.25 could lead to
+clients being only served with a delay. Reason: in serverloop.c the
+next client to serv is "i1" as determined from</para>
+            <screen>
+i1 = (prev_location + i) % max_query_old;
+            </screen>
+            <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+          </unorderedlist></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="inst">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWWprngd</pkgname-base>
+
+      <version>4</version>
+      <revision>2</revision>
+
+      <init name="/etc/init.d/TWWprngd"
+        path="pkg/init-irix"
+        checksum="921fcee8f2cb933e7fde72749ce00d3f"
+        checksum-type="md5" size="860"/>
+      <init link-src="/etc/rc2.d/S81TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+      <init link-src="/etc/rc0.d/K29TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+
+      <config>/etc/init.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <changelog>
+        <change date="2004 June 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Merge in changes from 0.9.28. Among the
+important fixes:</para>
+          <unorderedlist>
+            <item><para>On Solaris 8 prngd did hang in a tight loop.
+Due to "truss" output added in the bug report, the bug could be found:
+in collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+            <item><para>When failing to execl() a gatherer command,
+NULL pointers could be passed to snprintf() instead of empty strings
+if not all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+            <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+            <item><para>Modified serverloop.c wait_write() behaviour:
+on failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+            <item><para>When lots of processes query entropy at the
+same time, the "fairness" change introduced in 0.9.25 could lead to
+clients being only served with a delay. Reason: in serverloop.c the
+next client to serv is "i1" as determined from</para>
+            <screen>
+i1 = (prev_location + i) % max_query_old;
+            </screen>
+            <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+          </unorderedlist></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="lpp">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWW.prngd</pkgname-base>
+
+      <version>0.9.25</version>
+      <revision>4</revision>
+
+      <init name="/etc/rc.d/rc2.d/TWWprngd"
+        path="pkg/init-aix"
+        checksum="4b30fc0ac1b71bafca9ea016e30fe8b4"
+        checksum-type="md5" size="676"/>
+      <init link-src="/etc/rc.d/rc2.d/S80TWWprngd"
+        link-dest="TWWprngd"/>
+      <init link-src="/etc/rc.d/rc2.d/K18TWWprngd"
+        link-dest="TWWprngd"/>
+
+      <config>/etc/rc.d/rc2.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <changelog>
+        <change date="2005 March 31" revision="4"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Switch to System V-style init
+scripts</para></item>
+        </change>
+
+        <change date="2005 February 6" revision="3"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Add startup script</para></item>
+        </change>
+
+        <change date="2004 June 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Merge in changes from 0.9.28. Among the
+important fixes:</para>
+          <unorderedlist>
+            <item><para>On Solaris 8 prngd did hang in a tight loop.
+Due to "truss" output added in the bug report, the bug could be found:
+in collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+            <item><para>When failing to execl() a gatherer command,
+NULL pointers could be passed to snprintf() instead of empty strings
+if not all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+            <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+            <item><para>Modified serverloop.c wait_write() behaviour:
+on failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+            <item><para>When lots of processes query entropy at the
+same time, the "fairness" change introduced in 0.9.25 could lead to
+clients being only served with a delay. Reason: in serverloop.c the
+next client to serv is "i1" as determined from</para>
+            <screen>
+i1 = (prev_location + i) % max_query_old;
+            </screen>
+            <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+          </unorderedlist></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="pkgadd">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWWprngd</pkgname-base>
+
+      <version>0.9.25</version>
+      <revision>2</revision>
+
+      <compat>0.9.17,REV=2</compat>
+      <compat>0.9.17,REV=1</compat>
+      <compat>0.9.13,REV=1</compat>
+      <compat>0.9.11,REV=1</compat>
+
+      <init name="/etc/init.d/TWWprngd"
+        path="pkg/init-sol"
+        checksum="f176160ac0e54c7cbde3b87bb29be4e2"
+        checksum-type="md5" size="667"/>
+      <init link-src="/etc/rc2.d/S79TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+      <init link-src="/etc/rc1.d/K19TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+      <init link-src="/etc/rc0.d/K19TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+
+      <config>/etc/init.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <changelog>
+        <change date="2004 June 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Merge in changes from 0.9.28. Among the
+important fixes:</para>
+          <unorderedlist>
+            <item><para>On Solaris 8 prngd did hang in a tight loop.
+Due to "truss" output added in the bug report, the bug could be found:
+in collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+            <item><para>When failing to execl() a gatherer command,
+NULL pointers could be passed to snprintf() instead of empty strings
+if not all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+            <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+            <item><para>Modified serverloop.c wait_write() behaviour:
+on failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+            <item><para>When lots of processes query entropy at the
+same time, the "fairness" change introduced in 0.9.25 could lead to
+clients being only served with a delay. Reason: in serverloop.c the
+next client to serv is "i1" as determined from</para>
+            <screen>
+i1 = (prev_location + i) % max_query_old;
+            </screen>
+            <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+          </unorderedlist></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="rpm4">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWWprngd</pkgname-base>
+
+      <version>0.9.25</version>
+      <revision>4</revision>
+
+      <init systype="*-aix*"
+        name="/etc/rc.d/rc2.d/TWWprngd"
+        path="pkg/init-aix"
+        checksum="4b30fc0ac1b71bafca9ea016e30fe8b4"
+        checksum-type="md5" size="676"/>
+      <init systype="*-aix*"
+        link-src="/etc/rc.d/rc2.d/S80TWWprngd"
+        link-dest="TWWprngd"/>
+      <init systype="*-aix*"
+        link-src="/etc/rc.d/rc2.d/K18TWWprngd"
+        link-dest="TWWprngd"/>
+      <init systype="*-hpux*"
+        name="/sbin/init.d/TWWprngd"
+        path="pkg/init-hpux"
+        checksum="10dc49cc2038bafae858245ca3513122"
+        checksum-type="md5" size="681"/>
+      <init systype="*-hpux*"
+        link-src="/sbin/rc2.d/S661TWWprngd"
+        link-dest="/sbin/init.d/TWWprngd"/>
+      <init systype="*-hpux*"
+        link-src="/sbin/rc1.d/K269TWWprngd"
+        link-dest="/sbin/init.d/TWWprngd"/>
+      <init systype="*-irix*"
+        name="/etc/init.d/TWWprngd"
+        path="pkg/init-irix"
+        checksum="921fcee8f2cb933e7fde72749ce00d3f"
+        checksum-type="md5" size="860"/>
+      <init systype="*-irix*"
+        link-src="/etc/rc2.d/S81TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+      <init systype="*-irix*"
+        link-src="/etc/rc0.d/K29TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+      <init systype="*-osf*"
+        name="/sbin/init.d/TWWprngd"
+        path="pkg/init-osf"
+        checksum="734df7c2c58756cfacfe06e4085bf85f"
+        checksum-type="md5" size="737"/>
+      <init systype="*-osf*"
+        link-src="/sbin/rc3.d/S81TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+      <init systype="*-osf*"
+        link-src="/sbin/rc0.d/K23TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+      <init systype="*-solaris*"
+        name="/etc/init.d/TWWprngd"
+        path="pkg/init-sol"
+        checksum="f176160ac0e54c7cbde3b87bb29be4e2"
+        checksum-type="md5" size="667"/>
+      <init systype="*-solaris*"
+        link-src="/etc/rc2.d/S79TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+      <init systype="*-solaris*"
+        link-src="/etc/rc1.d/K19TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+      <init systype="*-solaris*"
+        link-src="/etc/rc0.d/K19TWWprngd"
+        link-dest="/etc/init.d/TWWprngd"/>
+
+      <config systype="*-aix*">/etc/rc.d/rc2.d/TWWprngd</config>
+      <config systype="*-hpux*">/sbin/init.d/TWWprngd</config>
+      <config systype="*-irix*">/etc/init.d/TWWprngd</config>
+      <config systype="*-osf*">/sbin/init.d/TWWprngd</config>
+      <config systype="*-solaris*">/etc/init.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <changelog>
+        <change date="2005 March 31" revision="4"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Switch to System V-style init
+scripts on AIX</para></item>
+        </change>
+
+        <change date="2005 February 6" revision="3"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Add startup script for AIX</para></item>
+        </change>
+
+        <change date="2004 June 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Merge in changes from 0.9.28. Among the
+important fixes:</para>
+          <unorderedlist>
+            <item><para>On Solaris 8 prngd did hang in a tight loop.
+Due to "truss" output added in the bug report, the bug could be found:
+in collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+            <item><para>When failing to execl() a gatherer command,
+NULL pointers could be passed to snprintf() instead of empty strings
+if not all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+            <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+            <item><para>Modified serverloop.c wait_write() behaviour:
+on failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+            <item><para>When lots of processes query entropy at the
+same time, the "fairness" change introduced in 0.9.25 could lead to
+clients being only served with a delay. Reason: in serverloop.c the
+next client to serv is "i1" as determined from</para>
+            <screen>
+i1 = (prev_location + i) % max_query_old;
+            </screen>
+            <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+          </unorderedlist></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <package-manager name="setld">
+      <category>System Environment/Daemons</category>
+      <title>PRNGD Random Generator Daemon</title>
+      <vendor>Lutz Jaenicke</vendor>
+
+      <description attribution="The OpenPKG Project">
+PRNGD is the Pseudo Random Number Generator Daemon. It offers an EGD
+compatible interface to obtain random data and is intented to be used
+as an entropy source to feed other software, especially software based
+on OpenSSL. Like EGD it calls system programs to collect entropy.
+Unlike EGD it does not generate a pool of random bits that can be
+called from other software. Rather more it feeds the bits gathered
+into the OpenSSL PRNG from which the "random bits" are obtained when
+requested. This way, PRNGD is never drained and can * never block
+(unlike EGD), so it is also suitable to seed inetd-started programs.
+It also features a seed-save file, so that it is immediately usable
+after system start.
+      </description>
+
+      <install-name>prngd</install-name>
+
+      <pkgname-base>TWWPRNGD</pkgname-base>
+
+      <version>0.9.25</version>
+      <revision>2</revision>
+
+      <init name="/sbin/init.d/TWWprngd"
+        path="pkg/init-osf"
+        checksum="734df7c2c58756cfacfe06e4085bf85f"
+        checksum-type="md5" size="737"/>
+      <init link-src="/sbin/rc3.d/S81TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+      <init link-src="/sbin/rc0.d/K23TWWprngd"
+        link-dest="../init.d/TWWprngd"/>
+
+      <config>/sbin/init.d/TWWprngd</config>
+      <config>etc/prngd.conf</config>
+
+      <changelog>
+        <change date="2004 June 15" revision="2"
+        author="Albert Chin-A-Young" email="china@thewrittenword.com">
+          <item><para>Merge in changes from 0.9.28. Among the
+important fixes:</para>
+          <unorderedlist>
+            <item><para>On Solaris 8 prngd did hang in a tight loop.
+Due to "truss" output added in the bug report, the bug could be found:
+in collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+            <item><para>When failing to execl() a gatherer command,
+NULL pointers could be passed to snprintf() instead of empty strings
+if not all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+            <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+            <item><para>Modified serverloop.c wait_write() behaviour:
+on failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+            <item><para>When lots of processes query entropy at the
+same time, the "fairness" change introduced in 0.9.25 could lead to
+clients being only served with a delay. Reason: in serverloop.c the
+next client to serv is "i1" as determined from</para>
+            <screen>
+i1 = (prev_location + i) % max_query_old;
+            </screen>
+            <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+          </unorderedlist></item>
+        </change>
+      </changelog>
+    </package-manager>
+
+    <changelog>
+      <change date="2005 February 6" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add startup script</para></item>
+      </change>
+
+      <change date="2004 June 15" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Merge in changes from 0.9.28. Among the important
+fixes:</para>
+        <unorderedlist>
+          <item><para>On Solaris 8 prngd did hang in a tight loop. Due
+to "truss" output added in the bug report, the bug could be found: in
+collect_children() the return value of waitpid() and errno were not
+correctly correlated: errno must only be evaluated when waitpid()
+returns -1 but is meaningless when waitpid() returns 0.</para></item>
+          <item><para>When failing to execl() a gatherer command, NULL
+pointers could be passed to snprintf() instead of empty strings if not
+all command line arguments were used. (Note: as only the forked
+process failing to start the gatherer would die with a segmentation
+violation, the log message would be lost and a core dump might result.
+It would not affect the operation of the main daemon.)</para></item>
+          <item><para>Avoid sending nonsense (unitialized buffer) to
+syslog when using ("prngd -k").</para></item>
+          <item><para>Modified serverloop.c wait_write() behaviour: on
+failure enforce <command>egd_query[i].state =
+to_be_error_closed</command>. Later this setting could be changed back
+to wait_command in case of <command>egd_query[i].yet_processed ==
+egd_query[i].to_process</command>. This only made the lock possible,
+otherwise the connections would have been force closed, as actually
+intended.</para></item>
+          <item><para>When lots of processes query entropy at the same
+time, the "fairness" change introduced in 0.9.25 could lead to clients
+being only served with a delay. Reason: in serverloop.c the next
+client to serv is "i1" as determined from</para>
+          <screen>
+i1 = (prev_location + i) % max_query_old;
+          </screen>
+          <para>The client that actually was served however was "i"
+instead of "i1". If the connection of "i" was not yet ready for
+"write" state set after getting the entropy, it might block. This
+problem has not been reported by any other user, though it might also
+have occured at other sites. Depending on the internal sorting of
+sockets by fd/slot (number increasing in the sequence of accepted
+connections, closed connections are removed from the list),
+connections might appear locked. The entropy served was not provided
+in the sequence intended. The entropy bytes returned via internal
+buffer however were consistent with the connection served
+(<command>buffer[i]</command>) was filled correctly for
+<command>connection[i]</command>. The problem therefore has no impact
+on the quality of seeding.</para></item>
+        </unorderedlist></item>
+      </change>
+    </changelog>
+  </package>
+</packages>
