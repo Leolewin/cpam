@@ -1,0 +1,209 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="SciPy" version="0.9.0" revision="2"
+  systype="*-hpux*|*-irix*|*-linux*|*-solaris*">
+    <build-name>scipy-${SB_PROG_VER}</build-name>
+
+    <install-name>scipy09</install-name>
+
+    <sources>
+      <source checksum="ebfef6e8e82d15c875a4ee6a46d4e1cd"
+        checksum-type="md5" size="6084552"
+        path="src/scipy-0.9.0.tar.gz"/>
+      <patch checksum="c2210b1126e03dfd8bad17fe3c3070bf"
+        checksum-type="md5" size="856"
+        path="src/scipy-0.9.0.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="atlas" var="LIBATLAS"
+        install-name="libatlas36"
+        module="gcc44-shared">v&gt;=3.6.0 r&gt;=3</depend>
+      <depend program="fftw" var="LIBFFTW"
+        install-name="libfftw33">v&gt;=3.3</depend>
+      <depend var="GCC_RT" install-name="gcc44r"/>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+LIBPATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+SHLIB_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+PYTHONPATH=${_numpy_lib_prefix} ${SB_VAR_PYTHON}/bin/python setup.py \
+config_fc --fcompiler=gnu95 build build_ext \
+-R"${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}:${SB_VAR_LIBFFTW_LIB}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+LIBPATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+SHLIB_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+PYTHONPATH=${_numpy_lib_prefix} ${SB_VAR_PYTHON}/bin/python setup.py \
+config_fc --fcompiler=gnu95 install --install-lib=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX} || :
+]]>
+    </uninstall>
+
+    <module name="default">
+      <validate>
+        <depend program="SciPy" module="2.6.7">v==0.9.0</depend>
+        <depend program="SciPy" module="2.7.2">v==0.9.0</depend>
+      </validate>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="numpy" var="NUMPY"
+          module="2.7.2">v&gt;=1.6.1</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX}/lib/${_pysubdir}"
+_numpy_lib_prefix=${SB_VAR_NUMPY_LIB}/${_pysubdir}
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+LIBPATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+SHLIB_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+PYTHONPATH=${_numpy_lib_prefix} ${SB_VAR_PYTHON}/bin/python setup.py \
+config_fc --fcompiler=gnu95 build build_ext \
+-R"${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}:${SB_VAR_LIBFFTW_LIB}"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+LIBPATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+SHLIB_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+PYTHONPATH=${_numpy_lib_prefix} ${SB_VAR_PYTHON}/bin/python setup.py \
+config_fc --fcompiler=gnu95 install --install-lib=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX} || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies replace="0">
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="numpy" var="NUMPY"
+          module="2.6.7">v&gt;=1.6.1</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX}/lib/${_pysubdir}"
+_numpy_lib_prefix=${SB_VAR_NUMPY_LIB}/${_pysubdir}
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+LIBPATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+SHLIB_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+PYTHONPATH=${_numpy_lib_prefix} ${SB_VAR_PYTHON}/bin/python setup.py \
+config_fc --fcompiler=gnu95 build build_ext \
+-R"${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}:${SB_VAR_LIBFFTW_LIB}"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+LD_LIBRARY_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+LIBPATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+SHLIB_PATH="${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}" \
+PYTHONPATH=${_numpy_lib_prefix} ${SB_VAR_PYTHON}/bin/python setup.py \
+config_fc --fcompiler=gnu95 install --install-lib=${_install_prefix} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rmdir ${SB_INSTALL_PREFIX}/lib || :
+rmdir ${SB_INSTALL_PREFIX} || :
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The SciPy Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
