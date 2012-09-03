@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="xterm" version="237" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}23</install-name>
+
+    <sources>
+      <source checksum="6d5f9e124fd3e09487f47c66da8c7345"
+        checksum-type="md5" size="860424"
+        path="src/xterm-237.tgz"/>
+      <patch checksum="7ac71a74dd71d97f64fcbb8ce23c1b6e"
+        checksum-type="md5" size="358"
+        path="src/xterm-237.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ncurses" var="NCURSES"
+        type="build">v==5.7</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  ARGS="--enable-hp-fkeys --disable-input-method" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -Ae +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  ARGS="--enable-hp-fkeys --disable-input-method" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  ARGS="--enable-hp-fkeys --disable-input-method" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  ARGS="--with-utempter" ;;
+*-linux*)
+  ARGS="--with-utempter" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  ARGS="--disable-input-method" ;;
+*-solaris2.8*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  ARGS="--disable-input-method" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  ARGS="--disable-input-method" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-logging \
+--enable-wide-chars --enable-256-color --disable-freetype \
+--enable-exec-xterm --enable-luit \
+--with-icondir="${_datadir}/pixmaps" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# compile terminfo files
+if [ "${SB_VAR_NCURSES+set}" = "set" ]; then
+  TERMINFO=${SB_INSTALL_PREFIX}/lib/terminfo \
+  ${SB_VAR_NCURSES}/bin/gnutic terminfo
+else
+  TERMINFO=${SB_INSTALL_PREFIX}/lib/terminfo \
+  /usr/bin/tic terminfo
+fi
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 terminfo \
+${SB_INSTALL_PREFIX}/lib/xterm.terminfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 termcap \
+${SB_INSTALL_PREFIX}/lib/xterm.termcap
+
+# Modify permissions for utmp/wtmp support
+case "${SB_SYSTYPE}" in
+*-aix*|*-irix*|*-osf*)
+  ${SB_PATH_CHMOD} 4555 ${SB_INSTALL_PREFIX}/bin/xterm ;;
+esac
+]]>
+    </install>
+
+    <notes>
+      <note type="compilation">
+        <para>Utmp and Wtmp support has been enabled for xterm. On
+HP-UX, IRIX, Redhat Linux, and Tru64 UNIX, xterm is suid root to
+enable writing to the utmp and wtmp files on HP-UX, IRIX, and Tru64
+UNIX.</para>
+      </note>
+
+      <note type="usage">
+        <para>Color support is available "out of the box" for all
+platforms.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 16" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Remove support for AIX 4, HP-UX 10, RHEL 3, SLES,
+Solaris 6 and 7</para></item>
+      </change>
+
+      <change date="2010 October 28" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
