@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="help2man" version="1.38.2" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}138</install-name>
+
+    <sources>
+      <source checksum="426671c6fe79e5ef2233303367eab5a6"
+        checksum-type="md5" size="136509"
+        path="src/help2man-1.38.2.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" var="PERL">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SHELL} ./configure PERL=${SB_VAR_PERL}/bin/perl --disable-nls \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 help2man.texi \
+${_docdir}/texinfo
+
+rmdir ${SB_INSTALL_PREFIX}/lib
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.37" to="1.38">
+        <item><para>Support ENVIRONMENT and FILES
+sections</para></item>
+        <item><para>Move all translated text into .po files (previously
+.h2m include files were handled seperately)</para></item>
+        <item><para>Submit package to the Translation Project
+(translationproject.org)</para></item>
+        <item><para>Add Vietnamese translation</para></item>
+        <item><para>Add some comments for translators</para></item>
+      </change>
+
+      <change from="1.36" to="1.37">
+        <item><para>Update GPL to v3</para></item>
+        <item><para>Add --version-string option</para></item>
+        <item><para>Add --no-discard-stderr option</para></item>
+        <item><para>Add line breaks into bug reporting
+section</para></item>
+        <item><para>Add Brazilian Portuguese and German
+translations</para></item>
+        <item><para>Select a reasonable configure default for
+--enable-nls</para></item>
+        <item><para>Revise preload mechanism to not require preloadable
+libintl</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>
