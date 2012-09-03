@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="puppet" version="2.6.4" revision="1"
+  systype="*-aix5.[23]*|*-aix[67]*|ia64*-hpux11.31|hppa*-hpux11*|*-linux*|*-solaris2.[89]|*-solaris2.1?">
+    <install-name>puppet26</install-name>
+
+    <dependencies>
+      <depend program="ruby" var="RUBY"
+        install-name="ruby18">v&gt;=1.8.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir=${SB_INSTALL_PREFIX}/share
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>puppet-2.6.4</build-name>
+
+      <sources>
+        <source checksum="c0b86f40c8000dae2f0f7f2f91579c2a"
+          checksum-type="md5" size="1500339"
+          path="src/puppet-2.6.4.tar.gz"/>
+        <patch checksum="674f13dc49c75702b744c2af6692d46d"
+          checksum-type="md5" size="3096"
+          path="src/puppet-2.6.4.tww.patch"/>
+        <patch checksum="7af5f5979b48ba205c414506e305eb96"
+          checksum-type="md5" size="32945"
+          path="src/aix.patch"
+          systype="*-aix*"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="puppet" module="facter">v==2.6.4</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir=${SB_INSTALL_PREFIX}/share
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+:
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/sbin
+
+# Install the files
+RUBYLIB="${SB_INSTALL_PREFIX}/lib" \
+${SB_VAR_RUBY}/bin/ruby ./install.rb \
+--bindir="${SB_INSTALL_PREFIX}/bin" \
+--sbindir="${SB_INSTALL_PREFIX}/sbin" \
+--sitelibdir="${SB_INSTALL_PREFIX}/lib" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--tests
+
+# Ensure that the "binaries" can find the "libs"
+${SB_PATH_SED} -i -e "\
+2 {
+i\
+
+i\
+\$:.push(\"${SB_INSTALL_PREFIX}/lib\")
+i\
+
+}" ${SB_INSTALL_PREFIX}/bin/filebucket ${SB_INSTALL_PREFIX}/bin/pi \
+${SB_INSTALL_PREFIX}/bin/pup* ${SB_INSTALL_PREFIX}/sbin/pup* \
+${SB_INSTALL_PREFIX}/bin/ralsh
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_localstatedir}/log ${_localstatedir}/run \
+${_localstatedir}/state
+
+# Change default sysconfdir, localstatedir
+${SB_PATH_SED} -i -e "\
+s!/etc/puppet!${_sysconfdir}!;s!/var/lib/puppet!${_localstatedir}!;\
+s!/var/run/puppet!${_localstatedir}/run!;" \
+${SB_INSTALL_PREFIX}/lib/puppet/defaults.rb \
+${SB_INSTALL_PREFIX}/lib/puppet/reference/configuration.rb \
+${SB_INSTALL_PREFIX}/lib/puppet/util/run_mode.rb
+
+# Install examples, etc.
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_FIND} examples ext | cpio -pduv ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/doc
+
+# Create etc and var dirs and touch conf files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_localstatedir} \
+${_sysconfdir} ${_sysconfdir}/manifests ${_sysconfdir}/options \
+${_sysconfdir}/ssl ${_localstatedir}/lib ${_localstatedir}/rrd
+
+for _file in autosign.conf fileserver.conf manifests/site.pp \
+namespaceauth.conf options/puppetd options/puppetmasterd \
+puppet.conf ssl/private tagmail.conf; do
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+  ${_sysconfdir}/${_file}
+done
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${_sysconfdir} ${_localstatedir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="facter">
+      <build-name>facter-1.5.8</build-name>
+
+      <sources>
+        <source checksum="4dd4daebc59fa985b8aa7eb247ac4030"
+          checksum-type="md5" size="71295"
+          path="src/facter-1.5.8.tar.gz"/>
+        <patch checksum="015bcd9e06f6a5aa7cf730c027a228ba"
+          checksum-type="md5" size="297"
+          path="src/facter-1.5.8.tww.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir=${SB_INSTALL_PREFIX}/share
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+:
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -d -m 755 -o root -g 0 ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/lib/facter
+
+RUBYLIB="${SB_INSTALL_PREFIX}/lib" \
+${SB_VAR_RUBY}/bin/ruby ./install.rb \
+--bindir="${SB_INSTALL_PREFIX}/bin" \
+--sbindir="${SB_INSTALL_PREFIX}/sbin" \
+--sitelibdir="${SB_INSTALL_PREFIX}/lib" \
+--mandir="${SB_INSTALL_PREFIX}/man"
+
+${SB_PATH_SED} -i -e "\
+1 s!/usr/bin/env ruby!${SB_VAR_RUBY}/bin/ruby!
+2 {
+i\
+
+i\
+\$:.push(\"${SB_INSTALL_PREFIX}/lib\")
+i\
+
+}" ${SB_INSTALL_PREFIX}/bin/facter
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/bin/facter ${SB_INSTALL_PREFIX}/lib/facter.rb
+rm -rf ${SB_INSTALL_PREFIX}/lib/facter
+]]>
+      </uninstall>
+    </module>
+
+    <module name="dashboard">
+      <build-name>puppetlabs-puppet-dashboard-071acf4</build-name>
+
+      <sources>
+        <source checksum="27470fc9e66dc37f15959950c8bb9926"
+          checksum-type="md5" size="5178653"
+          path="src/puppet-dashboard-1.0.4.tgz"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="puppet" module="facter">v==2.6.4</depend>
+        <depend program="puppet">v==2.6.4</depend>
+        <depend program="rails" var="RAILS">v==2.3.4</depend>
+        <depend program="rubygems" var="GEMS"
+          module="1.8.7">v==1.3.4</depend>
+        <depend program="mysql" module="mysql-ruby">v==5.0.81</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir=${SB_INSTALL_PREFIX}/share
+
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+:
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -d -m 755 -o root -g 0 ${_datadir} \
+${_sysconfdir}/puppet-dashboard \
+${_localstatedir}/puppet-dashboard
+
+${SB_PATH_FIND} app bin config db ext lib public \
+script spec vendor | cpio -pdmuv ${_datadir}
+${SB_PATH_INSTALL} -o root -g 0 -m 644 Rakefile ${_datadir}
+${SB_PATH_CHOWN} -R root:0 ${_datadir}
+
+rm -rf ${_datadir}/vendor/rails
+
+${SB_PATH_INSTALL} -o root -g 0 -m 644 \
+/dev/null ${_sysconfdir}/puppet-dashboard/database.yml
+${SB_PATH_LN} -s ${_sysconfdir}/puppet-dashboard/database.yml \
+${_datadir}/config/database.yml
+${SB_PATH_LN} -s ${_localstatedir}/puppet-dashboard \
+${_datadir}/tmp
+
+for _file in $(${SB_PATH_EGREP} -lr '#!/usr/bin/env ruby' ${_datadir}); do
+  ${SB_PATH_SED} -i -e "1 c\
+#!${SB_VAR_RUBY}/bin/ruby
+; 2 {i\
+ENV['GEM_PATH'] = '${SB_VAR_GEMS}/lib/gems:${SB_VAR_RAILS}/lib/gems'
+i\
+\$:.push(\"${SB_INSTALL_PREFIX}/lib\")
+}" ${_file};
+done
+
+${SB_PATH_INSTALL} -o root -g 0 -m 644 VERSION ${_datadir}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_datadir} ${_sysconfdir}/puppet-dashboard
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <note type="configuration">
+        <para>The master puppet daemon, puppetmasterd, requires
+a user and group "puppet". This may be changed by modifying the
+<command>/etc${SB_INSTALL_PREFIX}/puppet.conf</command> configuration
+file with a custom user/group directive in the
+<command>[master]</command> section.</para>
+        <para>The <command>/etc${SB_INSTALL_PREFIX}/puppetmasterd</command> and
+<command>/etc${SB_INSTALL_PREFIX}/puppetd</command> files specify additional
+command-line options for the puppetmasterd and puppetd daemons. These
+files are sourced by the master and client init scripts. To pass
+additional options to puppetmasterd:</para>
+        <screen>
+PUPPETMASTERD_OPTIONS="&lt;option_1&gt; &lt;option_2&gt; ... &lt;option_n&gt;"
+        </screen>
+
+        <para>To pass additional options to puppetd:</para>
+        <screen>
+PUPPETD_OPTIONS="&lt;option_1&gt; &lt;option_2&gt; ... &lt;option_n&gt;"
+        </screen>
+
+        <para>If "<command>puppet</command>" does not resolve to the
+server running puppetmasterd, PUPPETD_OPTIONS must contain at least
+"<command>--server=&lt;puppetmasterd server&gt;gt;</command>" so
+puppetd can locate the puppetmasterd server.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
