@@ -1,0 +1,146 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="rcs" version="5.7" revision="11">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="4c8e896f2d2446fa593c6f1601a4fb75"
+        checksum-type="md5" size="282413"
+        path="src/rcs-5.7.tar.gz"/>
+    </sources>
+
+    <dependencies>
+      <depend program="diffutils" var="DIFF"
+        install-name="diffutils32">v&gt;=3.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+DIFF=${SB_VAR_DIFF}/bin/gnudiff CC=cc ./configure \
+--with-diffutils=yes --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_read_only_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 -xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 -m32 \
+-xarch=sparcvis" ;;
+esac
+
+gmake CC="${CC:=gcc}" CFLAGS="${CFLAGS:=-O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"}
+]]>
+    </build>
+
+    <changelog>
+      <change date="2012 January 28" revision="11"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL 3 and SLED.</para></item>
+        <item><para>Remove support for Solaris 2.6 and 7.</para></item>
+        <item><para>Update diffutils dependency from 3.0 to
+3.2.</para></item>
+      </change>
+
+      <change date="2011 February 26" revision="10"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Upgrade diffutils dependency from 2.8.1 to
+3.0</para></item>
+        <item><para>Remove support for AIX 4</para></item>
+        <item><para>Consolidate compiler flags for AIX 5 with
+AIX 6</para></item>
+        <item><para>Change HP-UX compiler flags from +Onofltacc to
++Ofltacc</para></item>
+        <item><para>For HP-UX 11.00 and 11.11, do no use -Ae and
+use +Olit=all instead of +ESlit in compiler flags</para></item>
+        <item><para>Add "-woff 1009 -use_read_only_const -G0
+-rdata_shared -DEBUG:optimize_space=ON" to IRIX compiler
+flags</para></item>
+        <item><para>Add optimization flags for RHEL 3</para></item>
+        <item><para>For Solaris 2.6 and 2.7 compiler flags, use
+"-xtarget=ultra2 -xarch=v8plusa" instead of
+"-xtarget=generic"</para></item>
+        <item><para>For Solaris 2.9 and 2.10 compiler flags, use
+"-xtarget=ultra2 -m32 -xarch=sparcvis" instead of "-xtarget=generic
+-xarch=vis"</para></item>
+      </change>
+
+      <change date="2010 November 11" revision="9"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 August 12" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2007 May 2" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 June 30" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2005 April 4" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 November 30" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 June 17" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+      </change>
+
+      <change date="2003 December 15" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Correct path to GNU diff3 binary</para></item>
+      </change>
+
+      <change date="2003 April 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
