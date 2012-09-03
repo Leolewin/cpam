@@ -1,0 +1,1370 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="ant" version="1.8.2" revision="2"
+  systype="*-aix5.[23]*|*-aix[67]*|*-hpux11.[123]*|*-linux*|*-solaris2.[89]|*-solaris2.1?">
+    <build-name>apache-${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}18</install-name>
+
+    <sources>
+      <source checksum="0d9e108afcd15b820150b8085c96d2b1"
+        checksum-type="md5" size="5894278"
+        path="src/apache-ant-1.8.2-src.tar.bz2"/>
+      <patch checksum="07213c0f44055a502316a5b73c7be0c1"
+        checksum-type="md5" size="11689"
+        path="src/apache-ant-1.8.2.tww.patch"/>
+      <patch checksum="49b1e0a16b48a6db4cefb81c8b3f1d00"
+        checksum-type="md5" size="451"
+        path="src/apache-ant-1.8.2.remove-jai.patch"/>
+      <patch checksum="aba956f87c6a8f6746aae6336e8fe22e"
+        checksum-type="md5" size="472"
+        path="src/apache-ant-1.8.2.remove-netrexx.patch"/>
+      <source checksum="01cc9a2a454dd33dcd8c856ec89af090"
+        checksum-type="md5" size="1816180"
+        path="src/antlr-2.7.7.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <patch checksum="52a22616837ccdb349d21ad1f136c933"
+        checksum-type="md5" size="1731"
+        path="src/antlr-2.7.7.tww.patch"
+        destdir="antlr-2.7.7"/>
+      <patch checksum="c5a45c763edd59074b9cae7dd568382e"
+        checksum-type="md5" size="26523"
+        path="src/antlr-2.7.7.auto.patch"
+        destdir="antlr-2.7.7"/>
+      <source checksum="6cca1b1b84ff6eb6340ddeb4d73b9335"
+        checksum-type="md5" size="584571"
+        path="src/bcel-5.2-src.zip"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="699b883d5d83f473d56bc5a66f7f9264"
+        checksum-type="md5" size="4120118"
+        path="src/bcel-5.2.zip"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="1fea538f71f7eeae13c54a9e03469eae"
+        checksum-type="md5" size="1594318"
+        path="src/junit4.8.2.zip"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="5e360abc01931d237612bd6a02870216"
+        checksum-type="md5" size="232413"
+        path="src/bsf-bin-2.4.0.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="e5de09672af9b386c30a311654d8541a"
+        checksum-type="md5" size="817240"
+        path="src/commons-logging-1.1.1-bin.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="577e90cc40328c287acc921dae344c12"
+        checksum-type="md5" size="614579"
+        path="src/commons-net-1.4.1.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="6f7690c6ba9750e3cbb8ebd10078a79a"
+        checksum-type="md5" size="345304"
+        path="src/jakarta-oro-2.0.8.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="e55a9e5a44eb55fa588d1020544226f1"
+        checksum-type="md5" size="379593"
+        path="src/jaf-1_1_1.zip"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="21296bdf2e55f2449ab4471b02503a5b"
+        checksum-type="md5" size="2489151"
+        path="src/javamail-1_4_1.zip"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="4e979c0dda766ba1dd719905ca975c7b"
+        checksum-type="md5" size="302836"
+        path="src/jdepend-2.9.zip"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="d8f957ca3da037cb37e76d13e0e18bd6"
+        checksum-type="md5" size="35303"
+        path="src/jzlib.jar"
+        noop="1" var="JZLIB"/>
+      <source checksum="16343735dd7d26fa2d403d2dd4852fb0"
+        checksum-type="md5" size="210429"
+        path="src/jsch.jar"
+        noop="1" var="JSCH"/>
+      <source checksum="10f04abe4d68d5a89e8eb167e4e45e1a"
+        checksum-type="md5" size="2099264"
+        path="src/apache-log4j-1.2.15.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="b941b8f4de297827f3211c2cb34af199"
+        checksum-type="md5" size="170142"
+        path="src/jakarta-regexp-1.5.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+      <source checksum="46d52acdb67ba60f0156043f30108766"
+        checksum-type="md5" size="262701"
+        path="src/xml-commons-resolver-1.2.tar.gz"
+        destdir="apache-ant-1.8.2"/>
+    </sources>
+
+    <dependencies>
+      <depend program="python" var="PYTHON" install-name="python26"
+        type="build">v&gt;=2.6.7</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_docsubdir="doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+_sysconfsubdir="etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export JAVA_HOME=/usr/java5 ;;
+*-hpux*)
+  export JAVA_HOME=/opt/java1.5 ;;
+*-linux*)
+  export JAVA_HOME=/opt/java1.5 ;;
+*-solaris*)
+  export JAVA_HOME=/opt/java1.5 ;;
+esac
+
+export ANT_HOME=${SB_INSTALL_PREFIX}
+PATH="${JAVA_HOME}/bin:${PATH}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!{dist.dir}/docs!{dist.dir}/${_docsubdir}!; \
+s!{dist.dir}/etc!{dist.dir}/${_sysconfsubdir}!;" build.xml
+
+${SB_PATH_SED} -i -e "\
+s!@prefix@!${SB_INSTALL_PREFIX}!;" src/script/ant
+
+# Make sure that junit is found
+rm -f lib/optional/junit.jar
+ln -s ${SB_BUILD_PREFIX}/junit4.8.2/junit-4.8.2.jar \
+lib/optional/junit.jar
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+CLASSPATH="${SB_BUILD_PREFIX}/jakarta-regexp-1.5/jakarta-regexp-1.5.jar:\
+${SB_BUILD_PREFIX}/antlr-2.7.7/antlr.jar:\
+${SB_BUILD_PREFIX}/bcel-5.2/bcel-5.2.jar:\
+${SB_BUILD_PREFIX}/jaf-1.1.1/activation.jar:\
+${SB_BUILD_PREFIX}/javamail-1.4.1/mail.jar:\
+${SB_BUILD_PREFIX}/jdepend-2.9/lib/jdepend-2.9.jar:\
+${SB_SRC_JZLIB}:${SB_SRC_JSCH}:\
+${SB_BUILD_PREFIX}/junit4.8.2/junit-4.8.2.jar:\
+${SB_BUILD_PREFIX}/commons-logging-1.1.1/commons-logging-1.1.1.jar:\
+${SB_BUILD_PREFIX}/commons-net-1.4.1/commons-net-1.4.1.jar:\
+${SB_BUILD_PREFIX}/apache-log4j-1.2.15/log4j-1.2.15.jar:\
+${SB_BUILD_PREFIX}/jakarta-oro-2.0.8/jakarta-oro-2.0.8.jar:\
+${SB_BUILD_PREFIX}/bsf-2.4.0/lib/bsf.jar:\
+${SB_BUILD_PREFIX}/xml-commons-resolver-1.2/resolver.jar" \
+./bootstrap.sh
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+CLASSPATH="${SB_BUILD_PREFIX}/jakarta-regexp-1.5/jakarta-regexp-1.5.jar:\
+${SB_BUILD_PREFIX}/antlr-2.7.7/antlr.jar:\
+${SB_BUILD_PREFIX}/bcel-5.2/bcel-5.2.jar:\
+${SB_BUILD_PREFIX}/jaf-1.1.1/activation.jar:\
+${SB_BUILD_PREFIX}/javamail-1.4.1/mail.jar:\
+${SB_BUILD_PREFIX}/jdepend-2.9/lib/jdepend-2.9.jar:\
+${SB_SRC_JZLIB}:${SB_SRC_JSCH}:\
+${SB_BUILD_PREFIX}/junit4.8.2/junit-4.8.2.jar:\
+${SB_BUILD_PREFIX}/commons-logging-1.1.1/commons-logging-1.1.1.jar:\
+${SB_BUILD_PREFIX}/commons-net-1.4.1/commons-net-1.4.1.jar:\
+${SB_BUILD_PREFIX}/apache-log4j-1.2.15/log4j-1.2.15.jar:\
+${SB_BUILD_PREFIX}/jakarta-oro-2.0.8/jakarta-oro-2.0.8.jar:\
+${SB_BUILD_PREFIX}/bsf-2.4.0/lib/bsf.jar:\
+${SB_BUILD_PREFIX}/xml-commons-resolver-1.2/resolver.jar" \
+./build.sh -Ddist.dir=${SB_INSTALL_PREFIX} dist
+
+# fix path to config file
+${SB_PATH_SED} -i -e "\
+s!/etc/ant.conf!${_sysconfdir}/ant.conf!;" ${SB_INSTALL_PREFIX}/bin/ant
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/ant.conf
+
+${SB_PATH_SED} -i -e "\
+s!/usr/bin/perl!${SB_VAR_PERL}/bin/perl!; \
+s!/usr/bin/python!${SB_VAR_PYTHON}/bin/python!;" \
+${SB_INSTALL_PREFIX}/contrib/*.pl \
+${SB_INSTALL_PREFIX}/contrib/*.py
+]]>
+    </install>
+
+    <licenses>
+      <license path="apache-2.0.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.8.1" to="1.8.2">
+        <items name="Changes that could break older environments">
+          <item><para>Prior to Ant 1.8.0 the &lt;copy&gt; task and
+several other tasks wouldoverwrite read-only destination files.
+Starting with 1.8.0 theywould only do so under special circumstances.
+Ant 1.8.2 nowconsistently won't replace a read-only file by default.
+The same istrue for a number of other tasks.The &lt;copy&gt;,
+&lt;move&gt; and &lt;echo&gt; tasks now have a new force attributeand
+&lt;concat&gt; has a new forceReadonly attribute that can be used
+tomake the task overwrite read-only destinations.Bugzilla Report
+49261.</para></item>
+          <item><para>Removed ant-nodeps.jar; it is now merged into
+ant.jar.</para></item>
+          <item><para>DOMElementWriter#encode used to employ special
+code before encodingampersands so that &amp;#123; remained &amp;#123;
+rather than being turnedinto &amp;amp;#123;.  This is no longer the
+case, ampersands will nowbe encoded unconditionally.Also
+DOMElementWriter#encodeData will treat CDATA sections containing
+aliteral "]]&gt;" sequence different now - it will split the
+CDATAsection between the second "]" and "&gt;" and create two
+sections.This affects &lt;echoxml&gt; task as well as the XML logger
+or JUnitformatter where ampersands will now always get encoded.In
+addition DOMElementWriter will now replace the characters \t, \rand \n
+in attribute values by entity references.Bugzilla Report
+49404.</para></item>
+          <item><para>The list elements returned by
+ProjectHelper#getExtensionStack arenow String arrays of length 3
+rather than 2 in order to support theonMissingExtensionPoint
+attribute.Bugzilla Report 49473.   </para></item>
+          <item><para>When using &lt;property file="..."
+prefix="..."/&gt; properties definedinside the same file will only get
+used in expansions if the ${}reference uses the same prefix.  This is
+different from Ant 1.8.1but is the same behavior Ant 1.8.0 and earlier
+exhibited.A new attribute prefixValues can be used to re-enable the
+behaviorof Ant 1.8.1.Bugzilla Report 49373.</para></item>
+          <item><para>The files and directories used by Git, Mercurial
+and Bazaar tostore their information are now excluded by the
+defaultexcludes.Bugzilla Report 49624.</para></item>
+          <item><para>The &lt;junit&gt; task no longer generates
+TestListener events - whichhave been introduced in ant 1.7.0 - by
+default.  The task has a newattribute enableTestListenerEvents and a
+new "magic" propertyant.junit.enabletestlistenerevents has been added
+that can be usedto reinstate the old behavior.</para></item>
+        </items>
+
+        <items name="Fixed bugs">
+          <item><para>hostinfo now prefers addresses with a hostname
+over addresses without a hostname, provided the addresses have the
+same scope.For local lookup, no IP address will be put in NAME /
+DOMAIN anymore.For remote lookup, if a host name was provided and only
+an IP address is found, the IP address will no longer overwrite the
+host name provided to thetask.Bugzilla Report 49513</para></item>
+          <item><para>mmap-based file copy problems under JDK 1.4 on
+Linux.Bugzilla Report 49430.</para></item>
+          <item><para>The Sun JVM tries to mmap the entire file during
+a copy. For large files this is not feasible. We now explicitly
+request to copy at most 16 MiB per request.Bugzilla Report
+49326.</para></item>
+          <item><para>DemuxInputStream.read() should return unsigned
+valuesBugzilla Report 49279.</para></item>
+          <item><para>The MIME mailer ignored the port parameter when
+using SSL.Bugzilla Report 49267.</para></item>
+          <item><para>&lt;xslt&gt; ignored the classpath when using
+the default TraX processor.Bugzilla Report 49271.</para></item>
+          <item><para>&lt;checksum&gt;'s totalproperty only worked
+reliably if the same filename didn't occur inside more than one
+directory.Bugzilla Report 36748.</para></item>
+          <item><para>&lt;ftp&gt; could fail to download files from
+remote subdirectories undercertain circumstances.Bugzilla Report
+49296.</para></item>
+          <item><para>&lt;junit&gt; will now produce better
+diagnostics when it fails to deletea temporary file.Bugzilla Report
+49419.</para></item>
+          <item><para>Ant would often scan directories even though
+there were known toonly hold excluded files when evaluating filesets.
+This neverresulted in wrong results but degraded performance of the
+scanitself.Bugzilla Report 49420.</para></item>
+          <item><para>&lt;javac&gt; failed for long command lines on
+OS/2.Bugzilla Report 49425.</para></item>
+          <item><para>&lt;junitreport&gt; did not handle encodings
+well for stdout/stderr.Bugzilla Report 49418.</para></item>
+          <item><para>&lt;junit&gt; could issue a warning about
+multiple versions of Ant on theCLASSPATH if two CLASSPATH entries
+differed in case on acase-insensitive file system.Bugzilla Report
+49041.</para></item>
+          <item><para>The &lt;restrict&gt; resource collection was
+checking every resource even ifwe actually just want the first one,
+like in the example of use ofresourcelist in the documentation
+(getting the first available resourcefrom a mirror
+list).</para></item>
+          <item><para>A race condition could lead to build failures if
+multiple &lt;mkdir&gt;tasks were trying to create the same
+directory.Bugzilla Report 49572.</para></item>
+          <item><para>the toString() method of the Resources class -
+and thus any${toString:} expansion of a reference to a
+&lt;resources&gt; element -didn't iterate over its nested elements if
+it hadn't done so priorto the toString invocation already.Bugzilla
+Report 49588.</para></item>
+          <item><para>&lt;apply&gt; in parallel mode didn't work
+together with a nested&lt;redirector&gt; if maxparallel was &lt;= 0
+(the default) or no sourcefiles matched.Bugzilla Report
+49594.</para></item>
+          <item><para>&lt;jar filesetmanifest="merge"&gt; didn't work
+for manifests added via&lt;zipfileset&gt;s that used the prefix or
+fullpath attributes.Bugzilla Report 49605.</para></item>
+          <item><para>&lt;tempfile createfile="true"&gt; would cause
+an error unless the prefixattribute has been specified.Bugzilla Report
+49755.</para></item>
+          <item><para>If forked, after finished &lt;java&gt; was still
+reading the input streamfor a bunch of characters, then stealing them
+from a following &lt;input&gt;.Bugzilla Report 49119.</para></item>
+          <item><para>Ant could be leaking threads for each forked
+process (started by&lt;exec&gt;, &lt;apply&gt;, &lt;java&gt; or
+similar tasks) that didn't receive inputfrom a resource or string
+explicitly.Bugzilla Report 49587.</para></item>
+          <item><para>Project#setDefault threw an exception when null
+was passed in asargument, even though the Javadoc says null is a valid
+value.Bugzilla Report 49803.</para></item>
+          <item><para>runant.py would swallow the first argument if
+CLASSPATH wasn't set.Bugzilla Report 49963.</para></item>
+          <item><para>&lt;taskdef&gt; failed to load resources from
+jar files contained in adirectory that has a "!" in its name.Bugzilla
+Report 50007.</para></item>
+          <item><para>ant.bat exit strategy improvements and
+issuesmake the exit codes work in environments where 4NT or MKS are
+installedBugzilla Report 41039.</para></item>
+          <item><para>&lt;signjar&gt; would fail if used via its Java
+API and the File passedinto the setJar method was not "normalized"
+(i.e. contained ".."segments).Bugzilla Report 50081.</para></item>
+          <item><para>&lt;delete&gt; ignored &lt;fileset&gt;'s
+errorOnMissingDir attributeBugzilla Report 50124.</para></item>
+          <item><para>&lt;symlink&gt; failed to close files when
+reading a list of symboliclinks from a properties file.Bugzilla Report
+50136.</para></item>
+          <item><para>&lt;parallel&gt; could allow tasks to start
+executing even if a taskscheduled to run before them timed
+out.Bugzilla Report 49527.</para></item>
+          <item><para>If a &lt;junit&gt; batch with multiple tests
+times out Ant logs a messageabout a test named
+Batch-With-Multiple-Tests since 1.8.0 but thelogic that determined the
+Java package of this pseudo-test has beenwrong.Bugzilla Report
+45227.</para></item>
+          <item><para>&lt;propertyfile&gt; didn't preserve the
+original linefeed style whenupdating a file.Bugzilla Report
+50049.</para></item>
+          <item><para>&lt;zip&gt;'s whenEmpty behavior never consulted
+the non-filesetresources so the task could fail even though resources
+have beenprovided using non-fileset resource collections.Bugzilla
+Issue 50115.</para></item>
+          <item><para>ftp chmod could throw a NPE. Bugzilla report
+50217.</para></item>
+          <item><para>The project help (-p option in the command line)
+will now print the dependencies of the targets in debug mode (-d on
+the command line)</para></item>
+        </items>
+
+        <items name="Other changes">
+          <item><para>&lt;concat&gt;'s force attribute has been
+deprecated in favor of a newoverwrite attribute that is consistent
+with &lt;copy&gt;'s attributenames.</para></item>
+          <item><para>You can now specify a list of methods to run in
+a JUnit test case.Bugzilla Report 34748.</para></item>
+          <item><para>properties in files read because of the
+-propertyfile command lineoption will now get resolved against other
+properties that aredefined before the project starts executing (those
+from the same orearlier -propertfiles or defined via the -D
+option).Bugzilla Report 18732.</para></item>
+          <item><para>&lt;pathelement&gt;s can now contain wildcards
+in order to use wildcardCLASSPATH entries introduced with Java6.The
+wildcards are not expanded or even evaluated by Ant and will beused
+literally.  The resulting path may be unusable as a CLASSPATHfor Java
+versions prior to Java6 and likely doesn't mean anythingwhen used in
+any other way than a CLASSPATH for a forked Java VM. Bugzilla Report
+46842.</para></item>
+          <item><para>A new attribute allows targets to deal with
+nonexistent extensionpoints, i.e. they can extend an extension-point
+if it has beendefined or silently work as plain targets if it hasn't.
+This isuseful for targets that get included/imported in
+differentscenarios where a given extension-point may or may not
+exist.Bugzilla Report 49473.</para></item>
+          <item><para>Ant now logs a warning message if it fails to
+change the filemodification time in for example when using
+&lt;touch&gt; or preservingtimestamps in various tasks.Bugzilla Report
+49485.</para></item>
+          <item><para>ProjectHelpers can now be installed dynamically
+via the &lt;projecthelper&gt;Ant task.</para></item>
+          <item><para>&lt;import&gt; is now able to switch to the
+proper ProjectHelper to parsethe imported resource. This means that
+several kinds of different buildfiles can import each
+other.</para></item>
+          <item><para>&lt;copy tofile=""&gt; now also works for
+non-filesystem resources.Bugzilla Report 49756.</para></item>
+          <item><para>The &lt;linecontainsregexp&gt; filter now
+supports a casesensitiveattribute.</para></item>
+          <item><para>The &lt;containsregexp&gt; selector now supports
+casesensitive, multilineand singleline attributes.Bugzilla Report
+49764.</para></item>
+          <item><para>A new &lt;cutdirsmapper&gt; can be used like
+wget's --cut-dirs option tostrip leading directories from file
+names.</para></item>
+          <item><para>&lt;javah&gt; now supports the GNU project's
+gcjh compiler.Bugzilla Report 50149.</para></item>
+          <item><para>&lt;checksum&gt; supports additional views of a
+file's path as elementsfor a custom pattern.Bugzilla Report
+50114.</para></item>
+          <item><para>JUnit XMLResultAggregator logs the stack trace
+of caught IO exceptionsin verbose runs.Bugzilla Report
+48836.</para></item>
+          <item><para>StringUtils.parseHumanSizes() should turn parse
+failures intoBuildExceptions.Bugzilla Report 48835.</para></item>
+          <item><para>New task &lt;bindtargets&gt; to make a list of
+targets bound to somespecified extension point.</para></item>
+          <item><para>Initial support for OpenJDK7 has been
+added.</para></item>
+          <item><para>Ant now uses java.net.CookieStore rather
+thanjava.util.ServiceLocator to detect whether the environment is
+aJava 1.6 system.  This means releases of gcj/gij at the time ofthis
+release of Ant are detected as Java 1.5 and not 1.6.Bugzilla Report
+50256.</para></item>
+          <item><para>It is now possible to write a compiler adapter
+for &lt;javac&gt; thatcompiles sources with extensions other than
+.java (but that stillcompile to .class files).Bugzilla Report
+48829.</para></item>
+          <item><para>The performance of VectorSet#add(Object) has
+been improved whichshould also benefit any operation that scans
+directories in Ant.Bugzilla Report 50200.</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.0" to="1.8.1">
+        <items name="Changes that could break older environments">
+          <item><para>ant-trax.jar is no longer produced since TrAX is
+included in JDK 1.4+.</para></item>
+          <item><para>Ant no longer ships with Apache Xerces-J or the
+XML APIs but relieson the Java runtime to provide a parser and
+matching API versions.</para></item>
+          <item><para>The stylebook ant task and the ant-stylebook.jar
+are removed.  </para></item>
+        </items>
+
+        <items name="Fixed bugs">
+          <item><para>Tasks that iterate over task or type
+definitions, references ortargets now iterate over copies instead of
+the live maps to avoidConcurrentModificationExceptions if another
+thread changes themaps.Bugzilla Report 48310.</para></item>
+          <item><para>The filesmatch condition threw a
+NullPointerException whencomparing text files and the second file
+contained fewer lines thanthe first one.Bugzilla Report
+48715.</para></item>
+          <item><para>Regression: The &lt;ear&gt; task would allow
+multipleMETA-INF/application.xml files to be added.Bugzilla Report
+6836.</para></item>
+          <item><para>VectorSet#remove(Object) would fail if the size
+of the vectorequaled its capacity.</para></item>
+          <item><para>Regression : ant -diagnostics was returning with
+exit code 1. Bugzilla Report 48782</para></item>
+          <item><para>Fix for exec task sometimes inserts extraneous
+newlinesBugzilla Report 48746</para></item>
+          <item><para>SymlinkTest#testSymbolicLinkUtilsMethods failing
+on MacOSBugzilla Report 48785.</para></item>
+          <item><para>If &lt;concat&gt;'s first resourcecollection
+child is a &lt;resources&gt;,any subsequently added child
+resourcecollection joins the first.Bugzilla Report
+48816.</para></item>
+          <item><para>&lt;get&gt; with an invalid URL could trigger an
+NPE in some JVMs.Bugzilla Report 48833</para></item>
+          <item><para>Broken Pipe issue under Ubuntu LinuxBugzilla
+Report 48789</para></item>
+          <item><para>Properties wrongly read from file or not update
+during readBugzilla Report 48768</para></item>
+          <item><para>AntClassLoader in Ant 1.8.0 has been
+considerably slower than in1.7.1Bugzilla Report 48853</para></item>
+          <item><para>ANT_CMD_LINE_ARGS are rippling through lower
+level Ant usage Bugzilla Report 48876</para></item>
+          <item><para>email : IO error sending mail with plain
+mimetypeBugzilla Report 48932    </para></item>
+          <item><para>the complete-ant-cmd.pl script failed to create
+a proper cache oftarget if "ant -p" failed.Bugzilla Report
+48980</para></item>
+          <item><para>&lt;rmic&gt;'s sourcebase attribute was
+broken.Bugzilla Report 48970</para></item>
+          <item><para>&lt;copy&gt;'s failonerror didn't work as
+expected when copying a singleelement resource collection to a
+file.Bugzilla Report 49070</para></item>
+          <item><para>&lt;get&gt; no longer followed redirects if the
+redirect URL was relativeand not an absolute URL.Bugzilla Report
+48972</para></item>
+          <item><para>fixed a performance degradation in the code that
+expands propertyreferences.Bugzilla Reports 48961 and
+49079</para></item>
+          <item><para>&lt;jar filesetmanifest="merge"&gt; was broken
+on Windows.Bugzilla Report 49090</para></item>
+          <item><para>&lt;symlink&gt; delete failed if the link
+attribute was a relative pathto a link inside the current directory
+without a leading ".".Bugzilla Report 49137</para></item>
+          <item><para>&lt;telnet&gt; and &lt;rexec&gt; failed to find
+the expected strings whenwaiting for responses and thus always
+failed.Bugzilla Report 49173</para></item>
+        </items>
+
+        <items name="Other changes">
+          <item><para>Project provides new get methods that return
+copies instead of thelive maps of task and type definitions,
+references and targets.</para></item>
+          <item><para>Ant is now more lenient with ZIP extra fields
+and will be able toread archives that it failed to read in earlier
+versions.Bugzilla Report 48781.</para></item>
+          <item><para>The &lt;zip&gt; family of tasks has been sped up
+for bigger archives.Bugzilla Report 48755.</para></item>
+          <item><para>Add removeKeepExtension option to NetRexxC
+task.Bugzilla Report 48788.</para></item>
+          <item><para>Add prefix attribute to loadproperties
+task.</para></item>
+          <item><para>Add resource attribute to length
+task.</para></item>
+          <item><para>PropertyResource will effectively proxy another
+Resource if ${name}evaluates to a Resource object.</para></item>
+          <item><para>Added forcestring attribute to equals condition
+to force evaluationof Object args as strings; previously only
+API-level usage of theequals condition allowed Object args, but Ant
+1.8.x+ propertyevaluation may yield values of any type.</para></item>
+          <item><para>BuildFileTest.assertPropertyUnset() fails with a
+slightly more meaningful error messageBugzilla Report
+48834</para></item>
+          <item><para>&lt;junit&gt; will now throw an exception if a
+test name is empty.  Thisused to manifest itself in unrelated errors
+likeBugzilla Report 43586.</para></item>
+          <item><para>A change that made &lt;exec&gt; more reliable on
+Windows (Bugzilla Report5003) strongly impacts the performance for
+commands that executequickly, like attrib.  Basically no single
+execution of a commandcould take less than a second on Windows.A few
+timeouts have been tweaked to allow these commands to finishmore
+quickly but still they will take longer than they did with
+Ant1.7.1.Bugzilla Report 48734.</para></item>
+          <item><para>Added SimpleBigProjectLogger, intermediate
+between NoBannerLogger andBigProjectLogger.</para></item>
+          <item><para>&lt;mappedresources&gt; supports new attributes
+enablemultiplemappingsand cache.</para></item>
+          <item><para>Added the augment task to manipulate existing
+references via Ant's basicintrospection mechanisms.</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.0RC1" to="1.8.0">
+        <items name="Changes that could break older environments">
+          <item><para>the appendtolines filter has been renamed to
+suffixlines.</para></item>
+        </items>
+
+        <items name="Fixed bugs">
+          <item><para>stack traces were not reported at all by
+&lt;junit/&gt;when filtertrace="on", which is the
+default.</para></item>
+          <item><para>ant.bat can now also process the -noclasspath
+switch when it is the first switch on a command line.Bugzilla Report
+48186.</para></item>
+          <item><para>&lt;fixcrlf&gt; now tries to delete the created
+temporary files earlier.Bugzilla Report 48506.</para></item>
+          <item><para>the implementation of &lt;zip&gt; had been
+changed in a way that brokethe jarjar links task and protentially
+other third-party subclassesas well.Bugzilla Report 48541.*
+&lt;scp&gt; task didn't report build file location when a remote
+operation failedBugzilla Report 48578.  </para></item>
+          <item><para>&lt;propertyfile&gt; would add the same comment
+and a date line each timeit updated an existing property file.Bugzilla
+Report 48558.</para></item>
+          <item><para>&lt;sound&gt; didn't work properly in recent
+Java VMs.Bugzilla Report 48637.</para></item>
+        </items>
+      </change>
+
+      <change from="1.7.1" to="1.8.0RC1">
+        <items name="Changes that could break older environments">
+          <item><para>if and unless attributes (on &lt;target&gt; as
+well as various tasks and otherelements) have long permitted
+${property} interpolation. Now, if the resultevaluates to "true" or
+"false" (or "yes", "no", "on", "off"), that booleanvalue will be used;
+otherwise the traditional behavior of treating the valueas a property
+name (defined ~ true, undefined ~ false) is used. Existingscripts
+could be broken if they perversely defined a property named "false"and
+expected if="false" to be true, or used if="true" expecting this to
+betriggered only if a property named "true" were
+defined.</para></item>
+          <item><para>Ant now requires Java 1.4 or
+later.</para></item>
+          <item><para>Improved handling of InterruptException (lets
+suppose someone/thingis trying to kill the thread when we receive
+anInterruptException), when an InterruptException is received, we
+donot wait anymore in a while loop till the end time has
+beenreached.Bugzilla Report 42924.</para></item>
+          <item><para>Refactor PropertyHelper and introspection APIs
+to make extensionmore granular and support setting task/type attribute
+values toobjects decoded by custom PropertyEvaluator delegates. Also
+add&lt;propertyhelper&gt; task for registering delegates and/or
+replacingthe registered PropertyHelper instance.Bugzilla Report
+42736.</para></item>
+          <item><para>Added a restricted form of typedef called
+&lt;componentdef&gt;. Thisallows definition of elements that can only
+be within tasks ortypes. This method is now used to define conditions,
+selectors,comparators and filterreaders. This means that tasks may now
+havenested conditions just by implementing the Condition
+interface,rather than extending ConditionBase. It also means that the
+use ofnamespaces for some of the selectors introduced in Ant 1.7.0 is
+nolonger necessary.  Implementing this means that the
+DynamicElementwork-around introduced in Ant 1.7.0 has been
+removed.Bugzilla Report 40511.</para></item>
+          <item><para>In the &lt;touch&gt; task when a &lt;mapper&gt;
+is used, the millis anddatetime attributes now override the time of
+the source resource ifprovisioned.Bugzilla Report 43235.</para></item>
+          <item><para>Remove fall-back mechanism for references that
+are not resolvedduring normal runtime execution.</para></item>
+          <item><para>FileUtils.createTempFile now actually creates
+the file.The TempFile task still does not create the file by default,
+can beinstructed to do so however using a new parameter.Bugzilla
+Report 33969.</para></item>
+          <item><para>A lock in Project ensured that a BuildListener's
+messageLoggedmethod was only ever executed by a single thread at a
+time, whileall other methods could be invoked by multiple
+threadssimultaniously (while within &lt;parallel&gt;, for example).
+This lockis no longer in place, messageLogged should be made
+thread-safenow.</para></item>
+          <item><para>&lt;sql&gt;'s onError="stop" no longer fails the
+build if an erroroccurs,  this is the main difference between stop and
+error andmatches what the documentation implied.Bugzilla Report
+24668.</para></item>
+          <item><para>Ant's configuration introspection mechanisms
+have been modified to preferResource and FileProvider attributes to
+plain java.io.File attributes;however the configuration-from-String
+behavior remains equivalent, renderinga FileResource.</para></item>
+          <item><para>CBZip2InputStream will now throw an IOException
+ifpassed in a null or empty InputStream to read from.Bugzilla Reports
+32200.</para></item>
+          <item><para>&lt;unzip&gt; will now fail when trying to
+extract certain brokenarchives that would have been silently ignored
+in earlier version.Bugzilla Report 35000.</para></item>
+          <item><para>Ant's &lt;zip&gt; family of tasks tries to
+preserve the existing Unixpermissions when updating archives or
+copying entries from onearchive to another.Since not all archiving
+tools support storing Unix permissions inthe same way that is used by
+Ant, sometimes the permissions read byAnt seem to be 0, which means
+nobody is allowed to do anything tothe file or directory.If Ant now
+encounters a permission set of 0 it will assume thatthis is not the
+intended value and instead apply its own defaultvalues.  Ant used to
+create entries with 0 permissions itself.The &lt;zip&gt; family of
+tasks has a new attribute preserve0permissionsthat can be set to
+restore the old behavior.Bugzilla Report 42122.</para></item>
+          <item><para>If a batch containing multiple JUnit tests
+running inside a forkedJava VM caused the VM to crash (or caused a
+timeout), theformatters would receive an error message for the last
+test in thebatch.Ant will now pass in a test with the name
+"Batch-With-Multiple-Tests"instead - this is supposed to show more
+clearly that the last testmay not have started at all.Bugzilla Report
+45227.</para></item>
+          <item><para>If the number of minutes a build takes is bigger
+then 1000 Ant willno longer print a thousands separator in the
+"elapsed time"message.  It used to be the thousands separator of the
+currentlocale.Bugzilla Report 44659.</para></item>
+          <item><para>&lt;symlink action="delete"&gt; used to fail if
+the link was broken (i.e.pointing to a file or directory that no
+longer existed).  It will nowsilently try to remove the link.Bugzilla
+Report 41285.</para></item>
+          <item><para>&lt;delete file="..."&gt; used to log a warning
+and not delete brokensymbolic links.  &lt;delete dir="..."/&gt; didn't
+even log a warning.The task will now try to delete them in both
+cases.Bugzilla Report 41285.</para></item>
+          <item><para>if the dir attribute of a &lt;fileset&gt; points
+to a symbolic link andfollowsymlinks is set to false, the fileset will
+no longer bescanned and always seem empty.Bugzilla Report
+45741.</para></item>
+          <item><para>the .NET tasks that have been deprecated since
+Ant 1.7.0 have beenremoved, please use the stand-alone Antlib you can
+find
+athttp://ant.apache.org/antlibs/dotnet/index.htmlinstead.</para></item>
+          <item><para>the logic of closing streams connected to forked
+processes (readthe input and output of &lt;exec&gt; and friends) has
+been changed todeal with cases where child processes of the forked
+processes livelonger than their parents and keep Ant from exiting.It
+is unlikely but possible that the changed logic breaks streamhandling
+on certain Java VMs.Bugzilla issue 5003.</para></item>
+          <item><para>&lt;checksum&gt;'s totalproperty was platform
+dependent because it reliedon java.io.File#compareTo.  It has now been
+made platformindependent, which means that totalPropery values
+obtained onWindows (and other systems where the sort order of File is
+not casesensitive) can be different from the values obtained with
+earlierversions of Ant.Bugzilla Report 36748.</para></item>
+          <item><para>globmapper didn't work properly if the "to" or
+"from" patternsdidn't contain a "*".  In particular it implicitly
+added a * to theend of the pattern(s).  This is no longer the case.
+If you reliedon this behavior you will now need to explicitly specify
+thetrailing "*".Bugzilla Report 46506.</para></item>
+          <item><para>&lt;copy&gt; silently ignored missing resources
+even withfailOnError="true".  If your build tries to copy
+non-existantresources and you relied on this behavior you must now
+explicitlyset failOnError to false.Bugzilla Report
+47362.</para></item>
+          <item><para>Ant now prefers the java.runtime.version system
+property overjava.vm.version for the Created-By Manifest
+attribute.Bugzilla Report 47632.</para></item>
+          <item><para>The &lt;image&gt; task now supports a nested
+mapper.  In order toimplement this, the Java API of the task had to
+change so anycustom subclass overriding the processFile method will
+need toadapt (by overriding the new two-arg processFile
+method).Bugzilla Report 23243.</para></item>
+          <item><para>A new property syntax can be used to set
+attributes fromreferences: ${ant.ref:some-reference}</para>
+          <para>In most cases this will yield the exact same result
+as ${toString:some-reference} - only when an attribute setter method
+accepts an object type other than string and the project's reference
+is an Object of matching type the new syntax will pass in that
+object.</para>
+          <para>If your build file already contains properties whose
+name starts with "ant.ref:" there is a potential for collision.  If
+your property has been set, normal property expansion will take
+precedence over the new syntax.  If the property has not been set and
+a reference with the postfix of your property name exists (i.e. in a
+very unlikely event) then the new syntax would yield a different
+result (an expanded property) than Ant 1.7.1 did.</para></item>
+          <item><para>A ProjectHelper implementation can now provide
+the default build filename it is expecting, and can specify if they
+can support a specific buildfile. So Ant is now capable of supporting
+several ProjectHelperimplementations, deciding on which to use
+depending of the input build file.</para></item>
+          <item><para>Mapper-aware selectors (depends, different,
+present) now accept typedef'dFileNameMappers.</para></item>
+        </items>
+
+        <items name="Fixed bugs">
+          <item><para>The default logger was failing to print complete
+stack traces forexceptions other than BuildException when inside
+&lt;ant&gt; or&lt;antcall&gt;, thus omitting often important
+diagnosticinformation.Bugzilla 43398 (continued).</para></item>
+          <item><para>Better handling of package-info.class.Bugzilla
+Report 43114.</para></item>
+          <item><para>RPM task needed an inserted space between the
+define and the value.Bugzilla Report 46659.</para></item>
+          <item><para>Got rid of deadlock between in, out and err in
+the Redirector. Bugzilla Report 44544.</para></item>
+          <item><para>Caused by AssertionError no longer
+filtered.Bugzilla Report 45631.</para></item>
+          <item><para>&lt;zip&gt; would sometimes recreate JARs
+unnecessarily.Bugzilla Report 45902.</para></item>
+          <item><para>&lt;symlink&gt; task couldn't overwrite existing
+symlinks that pointed tononexistent filesBugzilla Report
+38199.</para></item>
+          <item><para>&lt;symlink&gt; task couldn't overwrite files
+that were in the way of the symlink.Bugzilla Report 43426.*
+&lt;symlink&gt; task failonerror="false" does not stop build from
+failingwhen 'ln' command returns non-zero.Bugzilla Report 43624
+</para></item>
+          <item><para>&lt;touch&gt; task couldn't differentiate
+between "no resourcesspecified" and "no resources matched."Bugzilla
+Report 43799.</para></item>
+          <item><para>ManifestClassPath failed when a relative path
+would traverse thefile system root.Bugzilla Report
+44499.</para></item>
+          <item><para>&lt;globmapper&gt; had an indexoutofbounds when
+the prefix and postfixoverlapped.Bugzilla Report 44731.*
+&lt;typedef&gt; and &lt;taskdef&gt; failed to accept file names with
+#characters in them.Bugzilla Report 45190</para></item>
+          <item><para>A deadlock could occur if a BuildListener tried
+to access an Ant propertywithin messageLogged while a different thread
+also accessed one.Bugzilla Report 45194</para></item>
+          <item><para>Handle null result of system getProperty() in
+CommandlineJava.Similar to Bugzilla Report 42334.</para></item>
+          <item><para>Length task did not process nonexistent
+Resources even though these mightconceivably still carry file length
+information.Bugzilla Report 45271.</para></item>
+          <item><para>&lt;javac&gt;'s includeJavaRuntime="false"
+should work for gcj now.  Notethat you may need to set
+includeAntRuntime to false in order tohave full control.Bugzilla
+Report 34638.</para></item>
+          <item><para>&lt;sql&gt; would fail if the executed statment
+didn't return a resultset with some JDBC driver that dissalow
+Statement.getResultSet tobe called in such a situation.Bugzilla Report
+36265 </para></item>
+          <item><para>if the executed statement in &lt;sql&gt;
+returned a result set and anupdate count, the count would be
+lost.</para></item>
+          <item><para>if an executed statement in &lt;sql&gt; mixes
+update count and result setparts, some result sets wouldn't get
+printed.Bugzilla Report 32168.</para></item>
+          <item><para>XmlLogger could lose messages if
+&lt;parallel&gt; is used.Bugzilla Report 25734.</para></item>
+          <item><para>&lt;scp&gt; creates remoteToDir if it doesn't
+exist.Bugzilla Report 42781</para></item>
+          <item><para>CBZip2OutputStream threw an exception if it was
+closed prior towriting anything.Bugzilla Reports 32200,
+45836</para></item>
+          <item><para>The IPlanetDeploymentTool didn't use the
+configured DTD locations.Bugzilla Report 31876.</para></item>
+          <item><para>The ant shell script printed a warning under
+Cygwin if JAVA_HOMEwas not set.Bugzilla Report 45245.</para></item>
+          <item><para>&lt;filterset&gt; sometimes incorrectly flagged
+infinite recursions offilter tokensBugzilla Report 44226.* failures
+were treated as errors in forked JUnit tests when JUnit 4was
+used.Bugzilla Report 43892.</para></item>
+          <item><para>&lt;jar&gt; and &lt;manifest&gt; disallowed
+manifest attributes whose namecontained the character '8'.Bugzilla
+Report 45675.</para></item>
+          <item><para>BigProjectLogger would set the project's basedir
+to the currentworking directory.Bugzilla Report 45607.</para></item>
+          <item><para>only &lt;formatter&gt;s that logged to a file
+were notified if forked VMcrashed or a timeout occured in
+&lt;junit&gt;.Bugzilla Report 37312.</para></item>
+          <item><para>ant -v -version would print the version
+information twice.Bugzilla Report 45695.</para></item>
+          <item><para>when nested into builds that have been invoked
+by &lt;ant&gt; tasks&lt;subant&gt; might set the wrong basedir on the
+called projects.Bugzilla Report 30569.</para></item>
+          <item><para>If the message of the failed assertion of a
+forked JUnit testcontained line feeds some excess output ended up in
+Ant's log.Bugzilla Report 45411.</para></item>
+          <item><para>&lt;symlink action="delete"&gt; failed to delete
+a link that pointed toa parent directory.Bugzilla Report
+45743.</para></item>
+          <item><para>&lt;symlink action="delete"&gt; failed if ant
+lacked permission to renamethe link's target.Bugzilla Report
+41525.</para></item>
+          <item><para>when checking whether a jar is signed,
+&lt;signjar&gt; ignored thesigfile attribute.Bugzilla Report
+44805.</para></item>
+          <item><para>When using JavaMail all &lt;mail&gt; tasks used
+the same mail hostregardless of their configuration.Bugzilla Report
+37970.</para></item>
+          <item><para>&lt;signjar&gt; and &lt;issigned&gt; didn't
+handle aliases with characters otherthan numbers, letters, hyphen or
+underscore properly.Bugzilla Report 45820.</para></item>
+          <item><para>&lt;filterset&gt; could miss multi-character
+begin tokens in some cases.Bugzilla Report 45094.</para></item>
+          <item><para>&lt;depend&gt; didn't close JARs that were part
+of the classpath.Bugzilla Report 45955.</para></item>
+          <item><para>in some cases &lt;depend&gt; would delete class
+files even if it didn'tfind the corresponding source files.Bugzilla
+Report 45916.</para></item>
+          <item><para>&lt;javadoc&gt; failed if the nested
+&lt;bottom&gt; or &lt;head&gt; contained linebreaks.Bugzilla Report
+43342.</para></item>
+          <item><para>encoding="auto" has been broken in &lt;mail&gt;
+since Ant 1.7.0 and onlyworked if JavaMail was available.Bugzilla
+Report 42389.</para></item>
+          <item><para>MailLogger could cause a
+NullPointerException.Bugzilla Report 44009.</para></item>
+          <item><para>&lt;junit&gt; didn't recognize failed assertions
+as failures if theycaused subclasses of AssertionError to be thrown
+(likeorg.junit.ComparisonFailure that is thrown when
+assertEqualsfails).Bugzilla Report 45028.</para></item>
+          <item><para>the Unix "ant" wrapper script failed to protect
+wildcards incommand line arguments in some cases.Bugzilla Report
+31601.</para></item>
+          <item><para>&lt;cvstagdiff&gt; crippled file names and could
+miss some entries ifmultiple modules have been specified.Bugzilla
+Report 35301.</para></item>
+          <item><para>Tasks with a "public void add(SomeType)" method
+failed to work asTaskContainers at the same time.Bugzilla Report
+41647.</para></item>
+          <item><para>Tasks that implementes DynamicElemen or
+DynamicElementNS failed towork as TaskContainers at the same
+time.Bugzilla Report 41647.</para></item>
+          <item><para>combining SSL and authentication in &lt;mail&gt;
+and MailLogger failed insome setups.Bugzilla Report
+46063.</para></item>
+          <item><para>if an error occurs while logging the
+buildFinished event, theoriginal error is now logged to
+System.err.Bugzilla Report 25086.</para></item>
+          <item><para>&lt;copy&gt; failed with a NullPointerException
+when copying a resourcewithout a name.  It will now fail with a
+meaningful error message.Bugzilla Report 39960.</para></item>
+          <item><para>&lt;xslt&gt; now uses the configured classpath
+to load the factory (whenusing TraX) before falling back to Ant's own
+classpath.Bugzilla Report 46172.</para></item>
+          <item><para>&lt;dependset&gt; complained about files being
+modified in the future ifthey had been just very recently (within
+Ant's assumed granularityof the file system).Bugzilla Report
+43665.</para></item>
+          <item><para>&lt;sshexec&gt; didn't store the ouput in
+outputproperty if the remotecommand failed.Bugzilla Report
+46340.</para></item>
+          <item><para>DirectoryScanner's slow-scanning algorithm that
+is used when youask for excluded or not-included files and/or
+directories couldmiss some files and directories in the presence of
+recursiveexclude patterns.</para></item>
+          <item><para>&lt;sort&gt; resource collection kept only one
+of entries deemed equal bythe chosen Comparator.Bugzilla Report
+46527.</para></item>
+          <item><para>the ZipFile class used by &lt;unzip&gt; and
+others could leave thearchive open (making it undeletable on Windows
+as long as the javaVM was running) for files with an unexpected
+internal structure.Bugzilla Report 46559.</para></item>
+          <item><para>The zip package now supports the extra fields
+invented by InfoZIPin order to store Unicode file names and
+comments.</para></item>
+          <item><para>The zip package detects the encoding bit set by
+more modernarchivers when they write UTF-8 filenames and optionally
+sets itwhen writing zips or jars.Bugzilla Report 45548</para></item>
+          <item><para>&lt;sync&gt; could run into a
+NullPointerException when faced with brokensymbolic links.Bugzilla
+Report 46747.</para></item>
+          <item><para>The ant shell script should now support
+MSYS/MinGW as well.Bugzilla Report 46936.</para></item>
+          <item><para>&lt;signjar&gt; has a new force attribute that
+allows re-signing of jarsthat are already signed.Bugzilla Report
+46891.</para></item>
+          <item><para>&lt;sshexec&gt; now again honors failonerror in
+the face of connectionerrors.Bugzilla Report 46829.</para></item>
+          <item><para>The &lt;replacetokens&gt; filter threw an
+exception if the stream tofilter ended with a begin token.Bugzilla
+Report 47306.</para></item>
+          <item><para>&lt;scriptmapper&gt;, &lt;scriptfilter&gt; and
+&lt;scriptcondition&gt; didn't supportthe setbeans attribute.Bugzilla
+Report 47336.</para></item>
+          <item><para>&lt;loadproperties&gt;' encoding attribute
+didn't work.Bugzilla Report 47382.</para></item>
+          <item><para>Ant created tar archives could contain random
+bytes at the endwhich confused some untar implementations.Bugzilla
+Report 47421.</para></item>
+          <item><para>various places where unchecked PrintWriters
+could hide exceptionshave been revisited to now check the error status
+or not use aPrintWriter at all.Bugzilla Report 43537.</para></item>
+          <item><para>filesetmanifest="mergewithoutmain" in
+&lt;jar&gt; didn't treat inlinemanifests as expected.Bugzilla Report
+29731.</para></item>
+          <item><para>&lt;record&gt; didn't work properly with nested
+builds.Bugzilla Report 41368. </para></item>
+          <item><para>&lt;jar&gt; with filesetmanifest different from
+skip didn't work if theupdate attribute has been set to true.Bugzilla
+Report 30751.</para></item>
+          <item><para>The default stylesheets for &lt;junitreport&gt;
+failed to properly escapeXML content in exception stack
+traces.Bugzilla Report 39492.</para></item>
+          <item><para>AntClassLoader didn't set the proper CodeSource
+for loaded classes.Bugzilla Report 20174.</para></item>
+          <item><para>AntClassLoader.getResourceAsStream would return
+streams toresources it didn't return with getResource and to classes
+itfailed to load.Bugzilla Report 44103.</para></item>
+          <item><para>Logging exceptions without a message would cause
+aNullPointerException.Bugzilla Report 47623.</para></item>
+          <item><para>WeblogicDeploymentTool could fail on platforms
+with a fileseparator other than "/".Bugzilla Report
+35649.</para></item>
+          <item><para>The update attribute of the modified selector
+was ignored.Bugzilla Report 32597.</para></item>
+          <item><para>&lt;manifest&gt; and &lt;jar&gt; can now merge
+Class-Path attributes frommultiple sources and optionally flatten them
+into a singleattribute.The default behaviour still is to keep multiple
+Class-Pathattributes if they have been specified and to only include
+theattributes of the last merged manifest.Bugzilla Report
+39655.</para></item>
+          <item><para>&lt;delete&gt; didn't work correctly with a
+&lt;modified&gt; selector becauseit was scanning the same filesets
+more than once.Bugzilla Report 43574.</para></item>
+          <item><para>when using custom filterreaders with the
+&lt;filterreader classname=""&gt;syntax Ant could leak memory.The
+problem didn't occur when using &lt;typedef&gt; or
+&lt;componentdef&gt; todefine the filterreader which is the
+recommended approach.Bugzilla Report 45439.</para></item>
+          <item><para>Ant didn't set the proper "magic" value for tar
+entries containinglong file names in GNU longfile mode.Bugzilla Report
+47653.</para></item>
+          <item><para>The tar task failed to recognize that the
+archive had to be(re-)created in some cases where the sources are
+filesystem basedresources but not filesets.Bugzilla Report 48035.
+</para></item>
+          <item><para>&lt;sshexec&gt;'s outputproperty was prefixed by
+the executed commandwhen the command attribute has been used, breaking
+backwardscompatibility to Ant 1.7.0.Bugzilla Report
+48040.</para></item>
+          <item><para>different task instances of the same
+&lt;scriptdef&gt;ed tasks couldoverwrite each others attributes/nested
+elements.Bugzilla Report 41602.</para></item>
+          <item><para>The Hashvalue algortihm implementation of the
+modified task couldfail to read the file(s) completely.Bugzilla Report
+48313.</para></item>
+        </items>
+
+        <items name="Other changes">
+          <item><para>The get task now also follows redirects from
+http to httpsBugzilla Report 47433</para></item>
+          <item><para>A HostInfo task was added performing information
+on hosts, including info on the host ant is running on. Bugzilla
+Reports 45861 and 31164.</para></item>
+          <item><para>There is now a FileProvider interface for
+resources that act as a sourceof filenames. This should be used by
+tasks that require resourcesto provide filenames, rather than require
+that all resourcesare instances or subclasses of FileResource.Bugzilla
+Report 43348* There is now a URLProvider interface for resources that
+act as asource of URLs. This should be used by tasks that require
+resourcesto provide URLs, rather than require that all resources
+areinstances or subclasses of URLResource.* Fixcrlf now gives better
+error messages on bad directory attributes.Bugzilla Report 43936* a
+new property ant.project.default-target holds the value of thecurrent
+&lt;project&gt;'s default attribute.</para></item>
+          <item><para>a new property ant.project.invoked-targets holds
+a comma separatedlist of the targets that have been specified on the
+command line(the IDE, an &lt;ant&gt; task ...) when invoking the
+current project.</para></item>
+          <item><para>The &lt;type&gt; resource selector has had an
+"any" type added for betterconfigurability.</para></item>
+          <item><para>Ant should detect the OS as both a Mac and a
+Unix system whenrunning on OpenJDK.Bugzilla Report
+44889.</para></item>
+          <item><para>new protected getConnection and getStatement
+methods allowsubclasses of SQLExec more control - or access to the
+cachedinstances when overriding other methods like
+runStatements.Bugzilla Report 27178.</para></item>
+          <item><para>&lt;sql&gt; has a new failOnConnectionError
+attribute that can be used tokeep a build going even if the task
+failed to connect to thedatabase.Bugzilla Report 36712.</para></item>
+          <item><para>A new attribute strictDelimiterMatching can be
+used to ignore caseor whitespace differences when &lt;sql&gt; searches
+for delimiters.This is useful if you execute a SQL script that has
+contains "GO"and "go" as delimiters.Bugzilla Report
+26459.</para></item>
+          <item><para>A new showWarnings attribute of &lt;sql&gt;
+allows warnings to be logged.Bugzilla Report 41836.</para></item>
+          <item><para>A new treatWarningsAsErrors attribute of
+&lt;sql&gt; can be used to faila build if a warning occurs.Bugzilla
+Report 41836.</para></item>
+          <item><para>Ant now supports scoped properties (see Local
+task).Bugzilla Report 23942.</para></item>
+          <item><para>&lt;sql&gt;'s CSV output can be controlled via
+the new attributescsvColumnSeparator and csvQuoteCharacter.Bugzilla
+Report 35627.</para></item>
+          <item><para>&lt;ftp&gt;'s logging has been improved.Bugzilla
+Reports 30932, 31743.</para></item>
+          <item><para>It is now possible to disable &lt;ftp&gt;'s
+remote verification.Bugzilla Report 35471.</para></item>
+          <item><para>&lt;sshexec&gt; now supports input in a way
+similar to &lt;exec&gt;Bugzilla Report 39197.</para></item>
+          <item><para>&lt;scp&gt; can now preserve the file
+modification time when downloadingfiles.Bugzilla Report
+33939.</para></item>
+          <item><para>the new task sshsession can run multiple tasks
+in the presence ofan SSH session providing (local and remote)
+tunnels.Bugzilla Report 43083.</para></item>
+          <item><para>ZipOutputStream has been sped up for certain
+usage scenarios thatare not used by Ant's family of zip tasks.Bugzilla
+Report 45396.</para></item>
+          <item><para>t;echo&gt; supports an "output" Resource
+attribute as an alternative to "file".</para></item>
+          <item><para>t;sql&gt; "output" attribute now supports any
+Resource in addition to a file.</para></item>
+          <item><para>&lt;scp&gt; no longer requires a passphrase when
+using key basedauthentication.Bugzilla Report 33718.</para></item>
+          <item><para>a new failOnEmptyArchive attribute on
+&lt;unzip&gt; and &lt;untar&gt; can nowmake the task fail the build if
+it tries to extract an emptyarchive.</para></item>
+          <item><para>&lt;unzip&gt; and &lt;untar&gt; have a new
+attribute stripAbsolutePathSpec.When set to true, Ant will remove any
+leading path separator fromthe archived entry's name before extracting
+it (making the name arelative file name).Bugzilla Report
+28911.</para></item>
+          <item><para>&lt;unzip&gt; will now detect that it was asked
+to extract a file that isnot an archive earlier if the file is
+big.Bugzilla Report 45463.</para></item>
+          <item><para>New file and resource selectors
+&lt;readable/&gt; and &lt;writable/&gt; havebeen added that select
+file which the current process can read orwrite.Bugzilla Report
+45081.</para></item>
+          <item><para>The filename file selector has a new attribute
+regex that allowsfiles to be selected by matching their names against
+a regularexpression.Bugzilla Report 45284</para></item>
+          <item><para>The name resource selector has a new attribute
+regex that allowsresources to be selected by matching their names
+against a regularexpression.Bugzilla Report 45284</para></item>
+          <item><para>Enhanced performance of
+Project.fireMessageLoggedEvent and DirectoryScanner Bugzilla Reports
+45651 and 45665</para></item>
+          <item><para>The package list location for offline links can
+now be specified asan URL.Bugzilla Report 28881</para></item>
+          <item><para>&lt;echoxml&gt; now supports XML
+namespaces.Bugzilla Report 36804.</para></item>
+          <item><para>A new listener for &lt;junit&gt; has been added
+that tries to invoke thetearDown method of a TestCase if that TestCase
+was run in a forkedVM and the VM crashed or a timeout occured.  See
+the &lt;junit&gt; task'smanual page for details.Bugzilla Report
+37241.</para></item>
+          <item><para>The Jar task now supports the addition of a jar
+index file in update mode.Previously the absence of the index was not
+enough to trigger the rebuild;some other update was necessary.Bugzilla
+report 45098.</para></item>
+          <item><para>&lt;ant&gt; has a new attribute
+"useNativeBasedir" that makes the childbuild use the same basedir it
+would have used if invoked from thecommand line.  No matter what other
+attributes/properties have beenset.Bugzilla Report
+45711.</para></item>
+          <item><para>&lt;patch&gt; has a new optional failOnError
+attribute.Bugzilla Report 44772.</para></item>
+          <item><para>Antlib descriptors will now be parsed by the
+configuredProjectHelper if the implementation overrides the
+newcanParseAntlibDescriptor and parseAntlibDescriptor methods.  If
+theconfigured helper doesn't override the methods, a new instance
+ofProjectHelper2 will be used just like in Ant 1.7.1.Bugzilla Report
+42208.</para></item>
+          <item><para>It is now possible to explicitly set the
+executable used by&lt;signjar&gt;.Bugzilla Report 39189.</para></item>
+          <item><para>&lt;compositemapper&gt;'s order of results is
+now predictable.Bugzilla Report 44873</para></item>
+          <item><para>a new &lt;firstmatchmapper&gt; has been added,
+which works similar to&lt;compositemapper&gt; but only returns the
+results of the first nestedmapper that matches.Bugzilla Report
+44873</para></item>
+          <item><para>&lt;get&gt; has a new maxtime attribute that
+terminates downloads thatare taking too long.Bugzilla Report
+45181.</para></item>
+          <item><para>&lt;ftp&gt; now supports selectors for remote
+directories as well.Bugzilla Report 44726.</para></item>
+          <item><para>In some cases Ant fails to rename files if the
+source or targetfile has just recently been closed on Windows.  It
+will now try todelete the offending file once again after giving the
+Java VM timeto really close the file.Bugzilla Report
+45960.</para></item>
+          <item><para>two new properties can be used to set the
+MIME-Type and charsetused by MailLogger.Bugzilla Report
+27211.</para></item>
+          <item><para>a new attribute of &lt;mail&gt; allows the task
+to succeed if it canreach at least one given recipient.Bugzilla Report
+36446.</para></item>
+          <item><para>two new properties allow MailLogger to send a
+fixed text instead ofthe log file.Bugzilla Report 38029.</para></item>
+          <item><para>&lt;cvsversion&gt; is supposed to support CVSNT
+now.Bugzilla Report 31409.</para></item>
+          <item><para>&lt;cvs&gt;' port attribute should now work for
+all clients that use theenvironment variable CVS_PSERVER_PORT instead
+of the "official"CVS_CLIENT_PORT.Bugzilla Report 30124.</para></item>
+          <item><para>&lt;cvsversion&gt; now works for local
+repositories as well.</para></item>
+          <item><para>&lt;cvstagdiff&gt; has an option to ignore
+removed files now.Bugzilla Report 26257.</para></item>
+          <item><para>&lt;cvs&gt; and friends now support modules with
+spaces in their namesvia nested &lt;module&gt; elements.</para></item>
+          <item><para>A new attribute "ignoreEmpty" controls how
+&lt;concat&gt; deals whenthere are no resources to concatenate.  If it
+is set to false, thedestination file will be created regardless, which
+reinstates thebehavior of Ant 1.7.0.Bugzilla Report
+46010.</para></item>
+          <item><para>If the new remote attribute is set to true,
+&lt;cvschangelog&gt; can nowwork against a remote repository without
+any working copy.Bugzilla Report 27419.</para></item>
+          <item><para>start and end tags can now be used instead of
+dates in&lt;cvschangelog&gt;.Bugzilla Report 27419.</para></item>
+          <item><para>MailLogger and &lt;mail&gt; can now optionally
+enable support forSTARTTLS.Bugzilla Report 46063.</para></item>
+          <item><para>&lt;import&gt; has new attributes "as" and
+"prefixSeparator" that can beused to control the prefix prepended to
+the imported targets'names.</para></item>
+          <item><para>a new task &lt;include&gt; provides an
+alternative to &lt;import&gt; thatshould be preferred when you don't
+want to override any targets.</para></item>
+          <item><para>delete has a new attribute
+removeNotFollowedSymlink.  If set totrue, symbolic links not followed
+(because followSymlinks was falseor the number of symlinks was too
+big) will be removed.Bugzilla Report 36658.</para></item>
+          <item><para>the os and osfamily attributes of &lt;chown&gt;,
+&lt;chgrp&gt;, &lt;chmod&gt; and&lt;attrib&gt; can now be used to run
+the commands on operating systemsother than their "native"
+environment, i.e. non-Unix or non-Windowsoperating systems
+respectively.Bugzilla Report 7624.</para></item>
+          <item><para>a new resource collection
+&lt;mappedresources&gt; generalizes the prefixand fullpath attributes
+of &lt;zipfileset&gt; to arbitrary mappers thatcan be applied to
+arbitrary resource collections.Bugzilla Report 4240.</para></item>
+          <item><para>&lt;tarfileset&gt; and &lt;zipfileset&gt; have a
+new attributeerrorOnMissingArchive that allows "optional" filesets
+that don'tbreak the build if the archive doesn't exist.Bugzilla Report
+46091.</para></item>
+          <item><para>&lt;javadoc&gt; has new attributes that
+correspond to the-docfilessubdirs and -excludedocfilessubdir command
+line arguments.Bugzilla Report 34455.</para></item>
+          <item><para>&lt;xslt&gt; now fails early if a specified
+stylesheet doesn't exist.Bugzilla Report 34525.</para></item>
+          <item><para>&lt;xslt&gt; now has an option to supress
+transformer warnings.  Thisoption only has an effect for processors
+that support this feature;the "trax" processor included with Ant does
+support it.Bugzilla Report 18897.</para></item>
+          <item><para>&lt;xslt&gt; has two new attributes failOnError
+andfailOnTransformationError that can be used to not make the
+buildprocess proceed if an error occurs.Bugzilla Report
+36260.</para></item>
+          <item><para>&lt;xslt&gt; has a new attribute
+failOnNoResources that can be used to make the build fail/continue if
+the collection of resources totransform is empty.Bugzilla Report
+46274.</para></item>
+          <item><para>It is now possible to define system properties
+that should be setduring xslt's transformation.  This can be used to
+enable XIncludeprocessing in Xerces, for example.Bugzilla Report
+36653.</para></item>
+          <item><para>a new resource collection &lt;archives&gt; can
+be used to specifycollections of ZIP and TAR archives as sources.  It
+extracts them onthe fly.  This is a generalization of the
+&lt;zipgroupfileset&gt; foundas nested element of &lt;zip&gt; and
+friends.Bugzilla Report 46257.</para></item>
+          <item><para>&lt;dependset&gt; has a new verbose attribute
+that makes the task listall deleted targets and give a hint as to why
+it deleted them.Bugzilla Report 13681.</para></item>
+          <item><para>&lt;replaceregexp&gt; now supports arbitrary
+filesystem based resourcecollections.Bugzilla Report
+46341.</para></item>
+          <item><para>&lt;replace&gt; now supports arbitrary
+filesystem based resourcecollections.Bugzilla Report
+24062.</para></item>
+          <item><para>token and value of &lt;replace&gt;'s nested
+&lt;replacefilter&gt; can now alsobe specified as nested elements to
+allow multiline content moreeasily.Bugzilla Report
+39568.</para></item>
+          <item><para>&lt;replace&gt; and &lt;replaceregexp&gt; can
+now optionally preserve the filetimestamp even if the file is
+modified.Bugzilla Report 39002.</para></item>
+          <item><para>The &lt;replace&gt; child-elements
+&lt;replacetoken&gt; and &lt;replacevalue&gt; havea new attribute that
+controls whether properties in nested text getexpanded.Bugzilla Report
+11585.</para></item>
+          <item><para>&lt;replace&gt; has a new attribute
+failOnNoReplacements that makes thebuild fail if the task didn't do
+anything.Bugzilla Report 21064.</para></item>
+          <item><para>&lt;sync&gt;'s &lt;preserveInTarget&gt; has a
+new attribute that controlswhether empty directories should be
+kept.Bugzilla Report 43159.</para></item>
+          <item><para>ant -diagnostics now checks that it can read as
+much from thetemporary directory as it has written.  This may help
+detecting afull filesystem.Bugzilla Report 32676.</para></item>
+          <item><para>&lt;pathconvert&gt; has a new preserveduplicates
+attribute--historicallythese were eliminated in the interest of
+behaving in the mannerof a "path."</para></item>
+          <item><para>&lt;javac&gt;'s source and target attributes are
+no longer ignored whenusing gcj.Bugzilla Issue 46617.</para></item>
+          <item><para>ant -diagnostics now outputs information about
+the default XSLTprocessor.Bugzilla Issue 46612.</para></item>
+          <item><para>the ZIP library will now ignore ZIP extra fields
+that don't specifya size.Bugzilla Report 42940.</para></item>
+          <item><para>CBZip2OutputStream now has a finish method
+separate from close.Bugzilla Report 42713.</para></item>
+          <item><para>the &lt;zip&gt; and &lt;unzip&gt; family of
+tasks has new options to deal withfile name and comment encoding.
+Please see the zip tasks'documentation for details.</para></item>
+          <item><para>&lt;input ...&gt;&lt;handler type="secure"
+/&gt;&lt;/input&gt; now uses previouslyundocumented SecureInputHandler
+shipped with Ant 1.7.1.</para></item>
+          <item><para>Command line arguments for &lt;exec&gt; and
+similar tasks can now haveoptional prefix and suffix
+attributes.Bugzilla Report 47365</para></item>
+          <item><para>&lt;apply&gt;'s srcfile and targetfile child
+elements can now haveoptional prefix and suffix attributes.Bugzilla
+Report 45625</para></item>
+          <item><para>&lt;jar&gt; has a new attribute to enable
+indexing of META-INFdirectories which is disabled for backwards
+compatibility reasons.Bugzilla Report 47457</para></item>
+          <item><para>&lt;apt&gt;'s executable attribute can be used
+to specify a differentexecutable.Bugzilla Report 46230.</para></item>
+          <item><para>&lt;rmic&gt;'s new executable attribute can be
+used to specify adifferent executable.Bugzilla Report
+42132.</para></item>
+          <item><para>&lt;javac&gt;, &lt;rmic&gt;, &lt;javah&gt; and
+&lt;native2ascii&gt; now provide a nestedelement to specify a
+classpath that will be used when loading thetask's (compiler) adapter
+class.Bugzilla Report 11143.</para></item>
+          <item><para>&lt;javac&gt;, &lt;rmic&gt;, &lt;javah&gt; and
+&lt;native2ascii&gt; now provide a nestedelement to specify the task's
+(compiler) adapter as an instance ofa class that has been defined via
+typedef/componentdef.  Thisallows more control over the classpath and
+allows adapters to bedefined in Antlibs easily.</para></item>
+          <item><para>A new subclass
+org.apache.tools.ant.loader.AntClassLoader5 ofAntClassLoader has been
+added which overrides getResourceswhich became non-final in
+ClassLoader with Java5+ sothis method now behaves as expected.The new
+subclass will be used by Ant internally if it is availableand Ant is
+running on Java5 or more recent.Bugzilla Report 46752.</para></item>
+          <item><para>a new attributes can chose a different request
+method than GET forthe http condition.Bugzilla Report
+30244</para></item>
+          <item><para>&lt;splash&gt; now supports a configurable
+display text and a regularexpression based way to determine progress
+based on logged messages.Bugzilla Report 39957.</para></item>
+          <item><para>the number of retries on error in &lt;get&gt; is
+now configurable.  &lt;get&gt;can be told to not download files that
+already exist locally.Bugzilla Report 40058.</para></item>
+          <item><para>Ant now builds against commons-net 2.0 as
+well.Bugzilla Report 47669.</para></item>
+          <item><para>A new nested element connectionProperty of
+&lt;sql&gt; allows setting ofarbitrary JDBC connection
+properties.Bugzilla Report 33452.</para></item>
+          <item><para>A new islastmodified condition can check the
+last modified date ofresources.</para></item>
+          <item><para>&lt;rmic&gt; has a new destDir attribute that
+allows generated files tobe written to a different location than the
+original classes.Bugzilla Report 20699.</para></item>
+          <item><para>&lt;rmic&gt; has a new listfiles attribute
+similar to the existing one of&lt;javac&gt;.Bugzilla Report
+24359.</para></item>
+          <item><para>It is now possible to suppress the "FAILED"
+lines sent to Ant'slogging system via &lt;junit&gt;'s new
+logFailedTests attribute.Bugzilla Report 35073.</para></item>
+          <item><para>&lt;propertyfile&gt; now can delete
+entries.</para></item>
+          <item><para>The &lt;resources&gt; resource collection can
+now optionally cache itscontents.</para></item>
+          <item><para>A new &lt;resourceexists&gt; condition can check
+whether resources exists.</para></item>
+          <item><para>&lt;sql&gt; has two new attributes errorproperty
+and warningproperty thatcan be set if an error/warning occurs.Bugzilla
+Report 38807.</para></item>
+          <item><para>&lt;sql&gt; has a new attribute rowcountproperty
+that can be used to seta property to the number of rows affected by a
+task execution.Bugzilla Report 40923.</para></item>
+          <item><para>when Ant copies files without filtering, it will
+now use NIOchannels.Bugzilla Report 30094.</para></item>
+          <item><para>&lt;get&gt; has a new attribute that can be used
+to disable caching onHTTP connections at the HttpUrlConnection
+level.Bugzilla Report 41891.</para></item>
+          <item><para>&lt;tar&gt; and &lt;zip&gt; (and tasks derived
+from &lt;zip&gt;) will now create theparent directory of the
+destination archive if it doesn't exist.Bugzilla Report
+45377.</para></item>
+          <item><para>A new filterreader &lt;sortfilter&gt; that sorts
+input lines has beenadded.Bugzilla Report 40504.</para></item>
+          <item><para>A new token filter &lt;uniqfilter&gt; that
+suppresses tokens that matchtheir ancestor token has been
+added.</para></item>
+          <item><para>&lt;rootfileset&gt;s nested into
+&lt;classfileset&gt;s can now use a dirattribute different from the
+&lt;classfileset&gt;.Bugzilla Report 37763.</para></item>
+          <item><para>t;path&gt; can now optionally cache its
+contents.</para></item>
+          <item><para>&lt;property&gt; can now specify values as
+nested text.Bugzilla Report 32917.</para></item>
+          <item><para>a new parentFirst attribute on
+&lt;javaresource&gt; allows resources tobe loaded from the specified
+classpath rather than the systemclassloader.Bugzilla Report 41369.*
+&lt;property location="from" basedir="to" relative="true"/&gt; can
+nowcalculate relative paths.</para></item>
+          <item><para>The &lt;name&gt; selector supports a new
+handleDirSep attribute thatmakes it ignore differences between / and \
+separators.Bugzilla Report 47858.</para></item>
+          <item><para>&lt;get&gt; now supports resource collections
+(as long as the resourcescontained provide URLs) and can get multiple
+resources in a singletask.</para></item>
+          <item><para>&lt;import&gt; can now import non-File resources
+if they provide an URL- as the &lt;url&gt; and &lt;javaresource&gt;
+resources do.Bugzilla Report 29251* &lt;import&gt; can now import
+multiple resources specified as resourcecollections.Bugzilla Report
+22269.</para></item>
+          <item><para>a new &lt;resourcelist&gt; type is similar to
+&lt;filelist&gt; but can read thelist of resources from non-file
+resources and may return resourcesthat are not files.</para></item>
+          <item><para>a new filterreader appendtolines complements
+prefixlines.</para></item>
+          <item><para>a new top level element extension-point allows
+build files to beextended with custom targets more
+easily.</para></item>
+        </items>
+      </change>
+
+      <note type="configuration">
+        <para>The default configuration file is
+"<command>${SB_INSTALL_PREFIX}/etc/ant.conf</command>".</para>
+      </note>
+
+      <note type="usage">
+        <para>Ant requires JVM version 1.4 or higher.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 26" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
