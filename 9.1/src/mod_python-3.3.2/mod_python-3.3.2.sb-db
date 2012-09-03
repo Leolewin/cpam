@@ -1,0 +1,479 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="mod_python" version="3.3.2" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>modpython33</install-name>
+
+    <sources>
+      <source checksum="f4cfc719d92a6dc327459685e1841bb1"
+        checksum-type="md5" size="314807"
+        path="src/mod_python-3.3.2.tgz"/>
+      <patch checksum="3bcdf9228752da6bde90a82b6b3b1d44"
+        checksum-type="md5" size="10113"
+        path="src/mod_python-3.3.2.tww.patch"/>
+      <patch checksum="ab6f63ab556a2abc6f20e5634b37c631"
+        checksum-type="md5" size="192073"
+        path="src/mod_python-3.3.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="flex" install-name="flex25"
+        add-path="prepend">v&gt;=2.5.35</depend>
+      <depend program="gzip" install-name="gzip14"
+        add-path="prepend">v&gt;=1.4</depend>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+      <depend program="python" var="PYTHON"
+        install-name="python26">v&gt;=2.6.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 2129 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_PYTHON}/lib/python2.6/config \
+${LDFLAGS+${LDFLAGS}}" --with-apxs=${SB_VAR_HTTPD}/bin/apxs \
+--with-python=${SB_VAR_PYTHON}/bin/python \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  ln -s mod_python.sl src/mod_python.so ;;
+esac
+]]>
+    </build>
+
+    <module name="default">
+      <validate>
+        <depend program="mod_python" module="2.2.21">v==3.3.2</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 2129 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_PYTHON}/lib/python2.6/config \
+${LDFLAGS+${LDFLAGS}}" --with-apxs=${SB_VAR_HTTPD}/bin/apxs \
+--with-python=${SB_VAR_PYTHON}/bin/python \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  ln -s mod_python.sl src/mod_python.so ;;
+esac
+]]>
+      </build>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.2.21">
+      <dependencies replace="0">
+        <depend program="httpd" var="HTTPD">v==2.2.21</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 2129 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_PYTHON}/lib/python2.6/config \
+${LDFLAGS+${LDFLAGS}}" --with-apxs=${SB_VAR_HTTPD}/bin/apxs \
+--with-python=${SB_VAR_PYTHON}/bin/python \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  ln -s mod_python.sl src/mod_python.so ;;
+esac
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install \
+LIBEXECDIR="${SB_INSTALL_PREFIX}/modules/${SB_MODULE_NAME}"
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX_LIB}/include.paths.d
+cat >${SB_INSTALL_PREFIX_LIB}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${SB_INSTALL_PREFIX_LIB}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <licenses>
+      <license path="apache-2.0.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.2.8" to="3.2.10">
+        <items name="New Features">
+          <item><para>Added support for Apache 2.2</para></item>
+          <item><para>New req.is_https() and req.ssl_var_lookup()
+methods. These communicate direct with the Apache mod_ssl module,
+allowing it to be determined if the connection is using SSL/TLS and
+what the values of internal ssl variables are.</para></item>
+          <item><para>New req.server.get_options() method. This
+returns the subset of Python options set at global scope within the
+Apache configuration. That is, outside of the context of any
+VirtualHost, Location, Directory or Files directives.</para></item>
+          <item><para>The directory used for mutex locks can now be
+specified at at compile time using ./configure --with-mutex-dir value
+or at run time with PythonOption mod_python.mutex_directory
+value</para></item>
+          <item><para>The number of mutex locks can now be specified
+at run time with PythonOption mod_python.mutex_locks
+value</para></item>
+          <item><para>Fixed three memory leaks that were found in
+_apachemodule.parse_qsl, req.readlines and
+util.cfgtree_walk</para></item>
+        </items>
+
+        <items name="Improvements">
+          <item><para>Third party C modules that use the simplified
+API for the Global Interpreter Lock (GIL), as described in PEP 311,
+can now be used. The only requirement is that such modules can only be
+used in the context of the "main_interpreter".</para></item>
+          <item><para>DbmSession unit test no longer uses the default
+directory for the dbm file, so the test will not interfer with the
+user's current apache instance</para></item>
+          <item><para>Added additional debugging and logging output
+for where mod_python cannot initialise itself properly due to Python
+or mod_python version mismatches or missing Python module code
+files</para></item>
+        </items>
+
+        <items name="Bug Fixes">
+          <item><para>Fixed configure problem when using bash
+3.1.x</para></item>
+          <item><para>Fixed DbmSession to create db file with mode
+0640</para></item>
+          <item><para>Fixed request.sendfile() bug for symlinked files
+on Win32</para></item>
+        </items>
+      </change>
+
+      <change from="3.1.3" to="3.2.8">
+        <items name="New Features">
+          <item><para>New apache.register_cleanup()
+method</para></item>
+          <item><para>New apache.exists_config_define()
+method</para></item>
+          <item><para>New file-based session manager
+class</para></item>
+          <item><para>Session cookie name can be
+specified</para></item>
+          <item><para>The maximum number of mutexes mod_python uses
+for session locking can now be specifed at compile time using
+configure --with-max-locks</para></item>
+          <item><para>New a version attribute in mod_python
+module</para></item>
+          <item><para>New test handler testhandler.py has been
+added</para></item>
+        </items>
+
+        <items name="Improvements">
+          <item><para>Autoreload of a module using
+apache.import_module() now works if modification time for the module
+is different from the file. Previously, the module was only reloaded
+if the the modification time of the file was more recent. This allows
+for a more graceful reload if a file with an older modification time
+needs to be restored from backup.</para></item>
+          <item><para>Fixed the publisher traversal security
+issue</para></item>
+          <item><para>Objects hierarchy a la CherryPy can now be
+published</para></item>
+          <item><para>mod_python.c now logs reason for a 500
+error</para></item>
+          <item><para>Calls to PyErr_Print in mod_python.c are now
+followed by fflush()</para></item>
+          <item><para>Using an empty value with PythonOption will
+unset a PythonOption key</para></item>
+          <item><para>req.path_info is now a read/write
+member</para></item>
+          <item><para>Improvements to FieldStorage allow uploading of
+large files. Uploaded files are now streamed to disk, not to
+memory.</para></item>
+          <item><para>Path to flex is now discovered at configuration
+time or can be specifed using configure
+--with-flex=/path/to/flex</para></item>
+          <item><para>sys.argv is now initialized to ["mod_python"] so
+that modules like numarray and pychart can work properly</para></item>
+        </items>
+
+        <items name="Bug Fixes">
+          <item><para>Fixed memory leak which resulted from circular
+references starting from the request object</para></item>
+          <item><para>Fixed memory leak resulting from multiple
+PythonOption directives</para></item>
+          <item><para>Fixed Multiple/redundant interpreter creation
+problem</para></item>
+          <item><para>Cookie attributes with attribute names prefixed
+with $ are now ignored</para></item>
+          <item><para>Bug in setting up of config_dir from Handler
+directives fixed</para></item>
+          <item><para>mod_python.publisher will now support modules
+with the same name but in different directories</para></item>
+          <item><para>Fixed continual reloading of modules
+problem</para></item>
+          <item><para>Fixed big marshalled cookies error</para></item>
+          <item><para>Fixed mod_python.publisher extension
+handling</para></item>
+          <item><para>mod_python.publisher default index file
+traversal</para></item>
+          <item><para>mod_python.publisher loading wrong module and
+giving no warning/error</para></item>
+          <item><para>apply_fs_data() now works with "new style"
+objects</para></item>
+          <item><para>File descriptor fd closed after ap_send_fd() in
+req_sendfile()</para></item>
+          <item><para>Bug in mem_cleanup in MemorySession
+fixed</para></item>
+          <item><para>Fixed bug in _apache._global_lock() which could
+cause a segfault if the lock index parameter is greater number of
+mutexes created at mod_python startup</para></item>
+          <item><para>Fixed bug where local_ip and local_host in
+connection object were returning remote_ip and remote_host
+instead</para></item>
+          <item><para>Fixed install_dso Makefile rule so it only
+installs the dso, not the python files</para></item>
+          <item><para>Potential deadlock in psp cache handling
+fixed</para></item>
+          <item><para>Fixed bug where sessions are used outside
+&lt;Directory&gt; directive</para></item>
+          <item><para>Fixed req.sendfile() problem where
+sendfile(filename) sends the incorrect number of bytes when filename
+is a symlink</para></item>
+          <item><para>Fixed problem where util.FieldStorage was not
+correctly checking the mime types of POSTed entities</para></item>
+          <item><para>Fixed conn.local_addr and conn.remote_addr for a
+better IPv6 support</para></item>
+          <item><para>Fixed psp_parser.l to properly escape
+backslash-n, backslash-t and backslash-r character
+sequences</para></item>
+          <item><para>Fixed segfault bug when accessing some request
+object members (allowed_methods, allowed_xmethods, content_languages)
+and some server object members (names, wild_names)</para></item>
+          <item><para>Fixed request.add_handler() segfault bug when
+adding a handler to an empty handler list</para></item>
+          <item><para>Fixed PythonAutoReload directive so that
+AutoReload can be turned off</para></item>
+          <item><para>Fixed connection object read() bug on
+FreeBSD</para></item>
+          <item><para>Fixed potential buffer corruption bug in
+connection object read()</para></item>
+        </items>
+      </change>
+
+      <note type="installation">
+        <para>The Apache module, <command>mod_python.so</command>, is
+installed to the following directories depending on the Apache
+version:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/modules/2.2.21          # 2.2.21
+        </screen>
+
+        <para>The postinstall script automatically updates the Apache
+configuration file to load the mod_python module.</para>
+        <para>The postinstall script adds the following entry to the
+httpd configuration file:</para>
+        <screen>
+LoadModule python_module ${SB_INSTALL_PREFIX}/modules/2.2.21/mod_python.so
+        </screen>
+
+        <para>The default Python library path,
+<command>${SB_INSTALL_PREFIX}/lib</command>, is automatically added to
+the list of Python module paths by adding it to the library search
+path configuration file,
+<command>${SB_INSTALL_BASE}/python26/etc/include.paths</command>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 31" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update gzip dependency from 1.3.12 to
+1.4</para></item>
+        <item><para>Update httpd dependency from 2.2.14 to
+2.2.21</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
