@@ -1,0 +1,95 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="libnet" version="1.1.2.1" revision="2"
+  systype="*-hpux11*|*-solaris*|*-linux*">
+    <build-name>${SB_PROG_NAME}</build-name>
+
+    <install-name>${SB_PROG_NAME}11</install-name>
+
+    <sources>
+      <source checksum="be845c41170d72c7db524f3411b50256"
+        checksum-type="md5" size="1021236"
+        path="src/libnet-1.1.2.1.tar.gz"/>
+      <patch checksum="aaa1512903dc70db6b1c3f601ebb1025"
+        checksum-type="md5" size="39608"
+        path="src/libnet.tww.patch"/>
+      <patch checksum="9a1af433434cc2150bdf6b755c8476a1"
+        checksum-type="md5" size="1083781"
+        path="src/libnet.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libnet.pc
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+
+gmake install htmldir="${_docdir}/html"
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/BUGS doc/CONTRIB \
+doc/DESIGN_NOTES doc/MIGRATION doc/PACKET_BUILDING doc/PORTED \
+doc/RAWSOCKET_NON_SEQUITUR doc/TODO doc/libnet.doxygen.conf \
+${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2009 August 11" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for HP-UX 11.31</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
