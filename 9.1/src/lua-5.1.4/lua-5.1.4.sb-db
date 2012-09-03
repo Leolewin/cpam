@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="lua" version="5.1.4" revision="7">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}51</install-name>
+
+    <sources>
+      <source checksum="d0870f2de55d59c1c8419f36e8fac150"
+        checksum-type="md5" size="216679"
+        path="src/lua-5.1.4.tar.gz"/>
+      <patch checksum="9fae91e8ec9200b189c8f83b6d6f36fd"
+        checksum-type="md5" size="5801"
+        path="src/lua-5.1.4.patch-lua-5.1.4-3"/>
+      <patch checksum="3712b48f13867e96be7909d761e48928"
+        checksum-type="md5" size="91604"
+        path="src/lua-5.1.4.tww.patch"/>
+      <patch checksum="015a6483ee183fc251f1a3c2b9f42d8d"
+        checksum-type="md5" size="709"
+        path="src/lua-5.1.4.strtod.patch"/>
+      <patch checksum="651bb29c6acac05596b589f07f61494a"
+        checksum-type="md5" size="9918"
+        path="src/lua-5.1.4.incpaths.patch"/>
+      <patch checksum="fcfd8c4485bd4d10409f9f5a57eec268"
+        checksum-type="md5" size="1001643"
+        path="src/lua-5.1.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="readline" var="READLINE"
+        install-name="libreadline62">v&gt;=6.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -ma -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-hpux*)
+  # +Onolimit causes test suite failure
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -arch ev5 -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[78])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_READLINE+${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+--enable-static --enable-shared --disable-dependency-tracking \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" lua.pc
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# default include.paths configuration file
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir} \
+${_sysconfdir}/include.paths.d
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/include.paths
+]]>
+    </install>
+
+    <changelog>
+      <change date="2011 September 26" revision="7"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for include.paths.d</para></item>
+        <item><para>Work around buggy IRIX strtod</para></item>
+      </change>
+
+      <change date="2011 September 13" revision="6"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for RHEL3, Solaris 2.6 and HPUX
+10.20</para></item>
+        <item><para>Update readline dependency from 6.1 to
+6.2</para></item>
+      </change>
+
+      <change date="2011 April 4" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for AIX 7.1</para></item>
+        <item><para>Remove support for AIX 4</para></item>
+        <item><para>Update readline dependency from 5.2 to
+6.1</para></item>
+        <item><para>Add patch 3 from <ulink url="http://www.lua.org/ftp/patch-lua-5.1.4-3">http://www.lua.org/ftp/patch-lua-5.1.4-3</ulink></para></item>
+      </change>
+
+      <change date="2010 October 30" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 February 12" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Correctly export external symbols</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
