@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="pgtop" version="3.6.2" revision="3"
+  systype="*-linux*|*-solaris*">
+    <build-name>pg_top-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}36</install-name>
+
+    <sources>
+      <source checksum="f1d7a895c4afc50a1ec05682c1f8344c"
+        checksum-type="md5" size="220985"
+        path="src/pg_top-3.6.2.tar.bz2"/>
+      <patch checksum="18b396936e3f4cbebef432ed10d90e92"
+        checksum-type="md5" size="2664"
+        path="src/pg_top-3.6.2.tww.patch"/>
+      <patch checksum="4b03e61410e2aaa555a356ccccff047e"
+        checksum-type="md5" size="294382"
+        path="src/pg_top-3.6.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="postgresql" var="PGSQL"
+        module="libruntime">v==9.0.6</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_PGSQL_LIB} ${LDFLAGS+${LDFLAGS}}" \
+--disable-color --with-postgresql=${SB_VAR_PGSQL} ${ARGS+${ARGS}} \
+--disable-dependency-tracking --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <licenses>
+      <license>
+        <para skip="0">Copyright (c) 2005, William LeFebvre</para>
+        <para>Copyright (c) 2007-2008, Mark Wong</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <unorderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this</para></item>
+          <item><para>list of conditions and the following disclaimer.
+Redistributions in binary</para></item>
+          <item><para>form must reproduce the above copyright notice,
+this list of conditions and</para></item>
+          <item><para>the following disclaimer in the documentation
+and/or other materials provided</para></item>
+          <item><para>with the distribution. Neither the name of Mark
+Wong nor the names</para></item>
+          <item><para>of its contributors may be used to endorse or
+promote products derived from</para></item>
+          <item><para>this software without specific prior written
+permission.</para></item>
+        </unorderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <changelog>
+      <change date="2012 March 19" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade postgresql dependency from 8.3.7 to
+9.0.6</para></item>
+      </change>
+
+      <change date="2010 November 11" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
