@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="bibtex" version="3.71" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>bibtex37</install-name>
+
+    <sources>
+      <source checksum="a97b9251d435397245b902bd48c11549"
+        checksum-type="md5" size="182878"
+        path="src/bt371src.zip"
+        destdir="bibtex-3.71"/>
+      <source checksum="3ca8f3aa24828982d605641d89b4b4a2"
+        checksum-type="md5" size="43881"
+        path="src/bt371csf.zip"
+        destdir="bibtex-3.71"/>
+      <patch checksum="628e85d54363cc12461a34e0fbdc0165"
+        checksum-type="md5" size="6255"
+        path="src/bibtex-3.71.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend var="TETEXP" install-name="tetex30p"
+        set-var-only="1"/>
+      <depend program="libiconv" install-name="libiconv113"
+        add-path="prepend" type="build">v&gt;=1.13.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${INSTALL_PREFIX}/share"
+_docdir="${INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+# ^M in the files causes solaris cc to fail
+${SB_PATH_SED} -i 's!\r!!g' *.c *.h
+
+for _bst in dk-bib natbib context misc jurabib adrconv norbib base \
+ams plbib germbib revtex4; do
+  if [ -d "${SB_VAR_TETEXP}/texmf/bibtex/bst/${_bst}" ]; then
+    _bst_input_path="${_bst_input_path+${_bst_input_path}:}${SB_VAR_TETEXP}/texmf/bibtex/bst/${_bst}"
+  fi
+done
+ 
+for _bib in ams plbib base; do
+  if [ -d "${SB_VAR_TETEXP}/texmf/bibtex/bib/${_bib}" ]; then
+    _bib_input_path="${_bib_input_path+${_bib_input_path}:}${SB_VAR_TETEXP}/texmf/bibtex/bib/${_bib}"
+  fi
+done
+ 
+gmake -f unix.mak bibtex-exe \
+BIB_INPUT_PATH=${_bib_input_path} \
+BST_INPUT_PATH=${_bst_input_path} \
+CSF_INPUT_PATH=${_datadir} MAKE=gmake CC="${CC-gcc}" \
+CFLAGS="${CFLAGS--O2}" LD="${CC-gcc}" LDFLAGS="${CFLAGS--O2} \
+${LDFLAGS+${LDFLAGS}}"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -d -m 755 -o root -g 0 ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/bin ${_datadir} ${_docdir}
+
+# install as bibtex8 so as not to conflict with bibtex from tetex
+${SB_PATH_INSTALL} -m 755 -o root -g 0 bibtex \
+${SB_INSTALL_PREFIX}/bin/bibtex8
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 *.csf ${_datadir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 00readme.txt ${_docdir}
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 31" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2010 November 2" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
