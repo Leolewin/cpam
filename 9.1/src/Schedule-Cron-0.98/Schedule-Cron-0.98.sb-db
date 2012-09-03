@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Schedule-Cron" version="0.98" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="e5c91e75f400641896bd88f166b55a6f"
+        checksum-type="md5" size="25167"
+        path="src/Schedule-Cron-0.98.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Build.PL
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+./Build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+./Build test
+
+: ignore test failures
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+./Build install uninst=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Schedule/Cron/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Schedule/Cron/.packlist
+rmdir ${_installsitearch}/auto/Schedule/Cron 2>/dev/null
+rmdir ${_installsitearch}/auto/Schedule 2>/dev/null
+
+:
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Time-modules"
+          module="5.12.2">v&gt;=2006.0814</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
