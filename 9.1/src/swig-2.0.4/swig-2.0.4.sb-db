@@ -1,0 +1,343 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="swig" version="2.0.4" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}20</install-name>
+
+    <sources>
+      <source checksum="4319c503ee3a13d2a53be9d828c3adc0"
+        checksum-type="md5" size="5148567"
+        path="src/swig-2.0.4.tar.gz"/>
+      <patch checksum="f6f2f8a5323519187caa0a28a96ef867"
+        checksum-type="md5" size="2698"
+        path="src/swig-2.0.4.tww.patch"/>
+      <patch checksum="29805ed4ac13d7bee287cb7c51dc9b07"
+        checksum-type="md5" size="81200"
+        path="src/swig-2.0.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend install-name="ocaml31p" add-path="prepend"
+        systype="*-aix*|hppa*-hpux*|*-linux*|*-osf*|*-solaris*"/>
+      <depend program="findlib"
+        systype="*-aix*|hppa*-hpux*|*-linux*|*-osf*|*-solaris*"
+        type="build">v&gt;=1.2.4</depend>
+      <depend program="guile" install-name="guile18"
+        add-path="prepend" type="build">v&gt;=1.8.6</depend>
+      <depend program="pcre" var="LIBPCRE" install-name="libpcre811"
+        add-path="prepend">v&gt;=8.11</depend>
+      <depend program="ocaml" var="OCAML" install-name="ocaml31"
+        add-path="prepend"
+        systype="*-aix*|hppa*-hpux*|*-linux*|*-osf*|*-solaris*"
+        type="build">v&gt;=3.11.0</depend>
+      <depend program="ruby" install-name="ruby18" add-path="prepend"
+        systype="*-aix*|hppa*-hpux*|*-linux*|*-osf*|*-solaris"
+        type="build">v&gt;=1.8.7</depend>
+      <depend program="tcl" var="TCL" install-name="tcl85"
+        add-path="prepend" type="build">v&gt;=8.5.10</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+      <depend program="python" add-path="prepend"
+        type="build">v==2.6.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=com"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64-redhat-linux*)
+
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -model ansi -ieee -msym -readonly_strings \
+-timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --without-pike --without-chicken \
+--without-php4 ${SB_VAR_OCAML+--with-ocaml} \
+${SB_VAR_TCL+--with-tclconfig="${SB_VAR_TCL}/lib"} \
+--without-mzscheme --without-csharp --without-java \
+--disable-dependency-tracking --without-maximum-compile-warnings \
+--with-swiglibdir=${_datadir} ${ARGS+${ARGS}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test auto-include="0">
+<![CDATA[
+gmake check
+
+: ignore failures
+]]>
+    </test>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+
+      <license>
+        <para>SWIG is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version. See the LICENSE-GPL
+file for the full terms of the GNU General Public license version
+3.</para>
+        <para>Portions of SWIG are also licensed under the terms of
+the licenses in the file LICENSE-UNIVERSITIES. You must observe the
+terms of these licenses, as well as the terms of the GNU General
+Public License, when you distribute SWIG.</para>
+        <para>The SWIG library and examples, under the Lib and
+Examples top level directories, are distributed under the following
+terms:</para>
+        <para>You may copy, modify, distribute, and make derivative
+works based on this software, in source code or object code form,
+without restriction. If you distribute the software to others, you may
+do so according to the terms of your choice. This software is offered
+as is, without warranty of any kind.</para>
+        <para>See the COPYRIGHT file for a list of contributors to
+SWIG and their copyright notices.</para>
+      </license>
+
+      <license>
+        <para>Copyright (c) 1995-1998</para>
+        <para>The University of Utah and the Regents of the University
+of California All Rights Reserved</para>
+        <para>Permission is hereby granted, without written agreement
+and without license or royalty fees, to use, copy, modify, and
+distribute this software and its documentation for any purpose,
+provided that (1) The above copyright notice and the following two
+paragraphs appear in all copies of the source code and (2)
+redistributions including binaries reproduces these notices in the
+supporting documentation.   Substantial modifications to this software
+may be copyrighted by their authors and need not follow the licensing
+terms described here, provided that the new terms are clearly
+indicated in all files where they apply.</para>
+        <para>IN NO EVENT SHALL THE AUTHOR, THE UNIVERSITY OF
+CALIFORNIA, THE UNIVERSITY OF UTAH OR DISTRIBUTORS OF THIS SOFTWARE BE
+LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+DOCUMENTATION, EVEN IF THE AUTHORS OR ANY OF THE ABOVE PARTIES HAVE
+BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+        <para>THE AUTHOR, THE UNIVERSITY OF CALIFORNIA, AND THE
+UNIVERSITY OF UTAH SPECIFICALLY DISCLAIM ANY WARRANTIES,INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS
+IS" BASIS, AND THE AUTHORS AND DISTRIBUTORS HAVE NO OBLIGATION TO
+PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+MODIFICATIONS.</para>
+      </license>
+
+      <license>
+        <para>This software includes contributions that are Copyright
+(c) 1998-2005 University of Chicago.</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <para>Redistributions of source code must retain the above
+copyright notice, this list of conditions and the following
+disclaimer.  Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.  Neither the name of the University of Chicago nor the
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written
+permission.</para>
+        <para>THIS SOFTWARE IS PROVIDED BY THE UNIVERSITY OF CHICAGO
+AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE UNIVERSITY OF CHICAGO OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+      </license>
+
+      <license>
+        <para>This software includes contributions that are Copyright
+(c) 2005-2006 Arizona Board of Regents (University of Arizona).</para>
+        <para>All Rights Reserved</para>
+        <para>Permission is hereby granted, without written agreement
+and without license or royalty fees, to use, copy, modify, and
+distribute this software and its documentation for any purpose,
+provided that (1) The above copyright notice and the following
+paragraph appear in all copies of the source code and (2)
+redistributions including binaries reproduces these notices in the
+supporting documentation.   Substantial modifications to this software
+may be copyrighted by their authors and need not follow the licensing
+terms described here, provided that the new terms are clearly
+indicated in all files where they apply.</para>
+        <para>THIS SOFTWARE IS PROVIDED BY THE UNIVERSITY OF ARIZONA
+AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE UNIVERSITY OF ARIZONA OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="2.0.3" to="2.0.4">
+        <item><para>This is mainly a Python oriented release including
+support for Python built-in types for superior performance with the
+new -builtin option.</para>
+        <para>The -builtin option is especially suitable for
+performance-critical libraries and applications that call wrapped
+methods repeatedly. See the python-specific chapter of the SWIG manual
+for more info.</para></item>
+        <item><para>Python 3.2 support has also been added and various
+Python bugs have been fixed.</para></item>
+        <item><para>Octave 3.4 support has also been
+added.</para></item>
+        <item><para>There are also the usual minor generic
+improvements, as well as bug fixes and enhancements for D, Guile, Lua,
+Octave, Perl and Tcl.</para></item>
+      </change>
+
+      <change from="2.0.2" to="2.0.3">
+        <item><para>A bug fix release including a couple of fixes for
+regressions in the 2.0 series.</para></item>
+      </change>
+
+      <change from="2.0.1" to="2.0.2">
+        <item><para>Support for the D language has been
+added.</para></item>
+        <item><para>Various bug fixes and minor
+enhancements.</para></item>
+        <item><para>Bug fixes particular to the Clisp, C#, Go,
+MzScheme, Ocaml, PHP, R, Ruby target languages.</para></item>
+      </change>
+
+      <change from="2.0.0" to="2.0.1">
+        <item><para>Support for the Go language has been
+added.</para></item>
+        <item><para>New regular expression (regex) encoder for
+renaming symbols based on the Perl Compatible Regular Expressions
+(PCRE) library.</para></item>
+        <item><para>Numerous fixes in reporting file and line numbers
+in error and warning messages.</para></item>
+        <item><para>Various bug fixes and improvements in the C#, Lua,
+Perl, PHP, Ruby and Python language modules.</para></item>
+      </change>
+
+      <change from="1.3.40" to="2.0.0">
+        <item><para>License changes, see LICENSE file and <ulink url="http://www.swig.org/legal.html">http://www.swig.org/legal.html</ulink>.</para></item>
+        <item><para>Much better nested class/struct
+support.</para></item>
+        <item><para>Much improved template partial specialization and
+explicit specialization handling.</para></item>
+        <item><para>Namespace support improved with the 'nspace'
+feature where namespaces can be automatically translated into Java
+packages or C# namespaces.</para></item>
+        <item><para>Improved typemap and symbol table
+debugging.</para></item>
+        <item><para>Numerous subtle typemap matching rule changes when
+using the default (SWIGTYPE) type. These now work much like C++ class
+template partial specialization matching.</para></item>
+        <item><para>Other small enhancements for typemaps. Typemap
+fragments are also now official and documented.</para></item>
+        <item><para>Warning and error display
+refinements.</para></item>
+        <item><para>Wrapping of shared_ptr is improved and documented
+now.</para></item>
+        <item><para>Numerous C++ unary scope operator (::)
+fixes.</para></item>
+        <item><para>Better support for boolean
+expressions.</para></item>
+        <item><para>Various bug fixes and improvements in the
+Allegrocl, C#, Java, Lua, Octave, PHP, Python, R, Ruby and XML
+modules.</para></item>
+      </change>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST710.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>
