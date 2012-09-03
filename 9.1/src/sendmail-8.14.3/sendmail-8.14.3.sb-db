@@ -1,0 +1,739 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="sendmail" version="8.14.3" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}8143</install-name>
+
+    <sources>
+      <source checksum="a5ee5d26e1f546a2da5fb9a513bd6bce"
+        checksum-type="md5" size="2069209"
+        path="src/sendmail.8.14.3.tar.gz"/>
+      <patch checksum="a4164ce6c03edb030d733cfdfbb1d88a"
+        checksum-type="md5" size="3779"
+        path="src/sendmail-8.14.3.CVE-2009-4565.patch"/>
+      <patch checksum="ceb61238fed6ff301dcc0c6eece1fa49"
+        checksum-type="md5" size="7568"
+        path="src/sendmail-8.14.3.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend group="smmsp"/>
+
+      <depend program="db" var="LIBDB"
+        install-name="libdb47">v&gt;=4.7.25</depend>
+      <depend program="cyrus-sasl" var="LIBSASL"
+        install-name="libsasl21">v&gt;=2.1.25</depend>
+      <depend program="groff" install-name="groff121"
+        add-path="prepend" type="build">v&gt;=1.21</depend>
+      <depend program="m4" var="M4"
+        install-name="m414">v&gt;=1.4.15</depend>
+      <depend program="openldap" var="OPENLDAP">v==2.4.26</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="prngd" var="PRNGD"
+        systype="*-hpux11.00|*-hpux11.11|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DEGD')
+define(\`confLIBS', \`-lpthread')
+_EOT_
+ ;;
+ia64*-hpux11.3*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`confENVDEF', \`-DHASUNSETENV')
+_EOT_
+  ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  ;;
+*-hpux10*|*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DEGD')
+_EOT_
+  ;;
+*-hpux11.2*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`confENVDEF', \`-DHASUNSETENV')
+_EOT_
+  ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DEGD')
+define(\`confLIBS', \`-lpthread')
+_EOT_
+  ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_LIBS', \`-lresolv')
+_EOT_
+  ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_LIBS', \`-lresolv')
+_EOT_
+  ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DEGD')
+define(\`confLIBS', \`-lpthread')
+_EOT_
+  ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_LIBS', \`-lresolv')
+_EOT_
+  ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_LIBS', \`-lresolv')
+define(\`confCCOPTS_SO', \`-KPIC')
+_EOT_
+  ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R"
+
+  cat >devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_LIBS', \`-lresolv')
+_EOT_
+  ;;
+esac
+
+cat >>devtools/Site/site.config.m4 <<_EOT_
+PREPENDDEF(\`confMAPDEF', \`-DNEWDB')
+PREPENDDEF(\`confENVDEF', \`-D_DIR_SENDMAILCF=\"${_sysconfdir}/\" -D_PATH_SENDMAILCF=\"${_sysconfdir}/sendmail.cf\" -D_PATH_SENDMAILPID=\"${_localstatedir}/run/sendmail.pid\" -DSERVICE_SWITCH_FILE=\"${_sysconfdir}/service.switch\" -DCMDDIR=\"${_localstatedir}/sm.bin\" -D_PATH_MY_SENDMAIL=\"${SB_INSTALL_PREFIX}/sbin/sendmail\" -D_FFR_SMTP_SSL')
+PREPENDDEF(\`confLIBS', \`-ldb')
+APPENDDEF(\`confMAPDEF', \`-DLDAPMAP')
+APPENDDEF(\`confLIBS', \`-lldap -llber')
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DSTARTTLS')
+APPENDDEF(\`conf_sendmail_LIBS', \`-lssl -lcrypto')
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DSASL=2')
+APPENDDEF(\`conf_sendmail_LIBS', \`-lsasl2')
+define(\`confINCDIRS', \`-I${SB_VAR_LIBDB_INC} \
+-I${SB_VAR_LIBOPENSSL_INC} -I${SB_VAR_LIBSASL_INC} \
+-I${SB_VAR_OPENLDAP_INC}')
+define(\`confLIBDIRS', \`-L${SB_VAR_LIBDB_LIB} \
+-L${SB_VAR_LIBOPENSSL_LIB} -L${SB_VAR_LIBSASL_LIB} \
+-L${SB_VAR_OPENLDAP_LIB} ${CC_LD_RT}${SB_VAR_LIBDB_LIB}:\
+${SB_VAR_LIBOPENSSL_LIB}:${SB_VAR_LIBSASL_LIB}:\
+${SB_VAR_OPENLDAP_LIB} ${LDFLAGS+${LDFLAGS}}')
+define(\`confCC', \`${CC:-gcc} ${CFLAGS:--O2}')
+define(\`confOPTIMIZE', \`')
+define(\`confEBINDIR', \`${SB_INSTALL_PREFIX}/libexec')
+define(\`confINCLUDEDIR', \`${SB_INSTALL_PREFIX}/include')
+define(\`confLIBDIR', \`${SB_INSTALL_PREFIX}/lib')
+define(\`confMANROOT', \`${SB_INSTALL_PREFIX}/man/cat')
+define(\`confMANROOTMAN', \`${SB_INSTALL_PREFIX}/man/man')
+define(\`confMBINDIR', \`${SB_INSTALL_PREFIX}/sbin')
+define(\`confSBINDIR', \`${SB_INSTALL_PREFIX}/sbin')
+define(\`confUBINDIR', \`${SB_INSTALL_PREFIX}/bin')
+define(\`confSHAREDLIBDIR', \`${SB_INSTALL_PREFIX}/lib')
+define(\`confHFDIR', \`${_sysconfdir}')
+define(\`confSTDIR', \`${_localstatedir}')
+define(\`confMSP_QUEUE_DIR', \`${_localstatedir}/clientmqueue')
+define(\`confINSTALL_RAWMAN', \`')
+_EOT_
+
+# libmilter not supported HP-UX 10.20, IRIX (cf. libmilter/README)
+case "${SB_SYSTYPE}" in
+*-irix*) ;;
+*)
+  cat >>devtools/Site/site.config.m4 <<_EOT_
+APPENDDEF(\`conf_sendmail_ENVDEF', \`-DMILTER')
+APPENDDEF(\`conf_libmilter_ENVDEF', \`-D_FFR_MILTER_ROOT_UNSAFE ')
+_EOT_
+  ;;
+esac
+
+# reset MAILDIR
+${SB_PATH_SED} -i -e "\
+s!MAILDIR=.*!MAILDIR=${_sysconfdir}!" cf/cf/Makefile
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+M4=${SB_VAR_M4}/bin/gm4 sh Build -S
+
+case "${SB_SYSTYPE}" in
+*-irix*) ;;
+*)
+  (cd libmilter; M4=${SB_VAR_M4}/bin/gm4 ./Build -S) ;;
+esac
+
+# Disable SGR escape sequences so ul(1) doesn't fail
+export GROFF_NO_SGR=set
+
+(cd doc/op && gmake ROFF_CMD=groff PIC_CMD=gpic EQN_CMD=geqn op.txt)
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  OSTYPE=aix5 ;;
+*-osf*)
+  OSTYPE=osf1 ;;
+*-hpux11*)
+  OSTYPE=hpux11 ;;
+*-irix*)
+  OSTYPE=irix6 ;;
+*-linux*)
+  OSTYPE=linux ;;
+*-solaris2.[89]|*-solaris2.1?)
+  OSTYPE=solaris8 ;;
+esac
+
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/libexec \
+${SB_INSTALL_PREFIX}/man/cat1 ${SB_INSTALL_PREFIX}/man/man1 \
+${SB_INSTALL_PREFIX}/man/cat5 ${SB_INSTALL_PREFIX}/man/man5 \
+${SB_INSTALL_PREFIX}/man/cat8 ${SB_INSTALL_PREFIX}/man/man8 \
+${SB_INSTALL_PREFIX}/sbin ${SB_INSTALL_PREFIX}/share ${_sysconfdir}
+${SB_PATH_INSTALL} -o root -g smmsp -m 755 -d ${_sysconfdir}/ssl
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_sysconfdir}/certs
+${SB_PATH_INSTALL} -o root -g smmsp -m 2751 -d ${_localstatedir}
+${SB_PATH_INSTALL} -o smmsp -g smmsp -m 2770 -d \
+${_localstatedir}/clientmqueue
+${SB_PATH_INSTALL} -o root -g 0 -m 700 -d ${_localstatedir}/mqueue
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_localstatedir}/run
+${SB_PATH_INSTALL} -o root -g smmsp -m 2775 -d ${_localstatedir}/run/msp
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_localstatedir}/run/mta
+
+sh Build install
+
+# remove preformatted man pages
+for mandir in 1 5 8; do
+  rm ${SB_INSTALL_PREFIX}/man/cat${mandir}/*
+  rmdir ${SB_INSTALL_PREFIX}/man/cat${mandir}
+done
+
+# install documentation
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/op/op.me doc/op/op.ps \
+doc/op/op.txt ${SB_INSTALL_PREFIX}/doc
+
+# install M4 macro files
+tar cf - cf | (cd ${SB_INSTALL_PREFIX}/share; tar xf - )
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/share/cf
+
+# install libmilter, libsm, and libsmutil
+case "${SB_SYSTYPE}" in
+*-hpux10*|*-irix*) ;;
+*)
+  (cd libmilter; ./Build install) ;;
+esac
+${SB_PATH_INSTALL} -o root -g 0 -m 644 obj*/libsm/libsm.a \
+obj*/libsmutil/libsmutil.a ${SB_INSTALL_PREFIX}/lib
+
+# placeholder config file
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/Makefile
+${SB_PATH_INSTALL} -m 644 -o root -g smmsp /dev/null \
+${_sysconfdir}/access
+${SB_PATH_INSTALL} -m 644 -o root -g smmsp /dev/null \
+${_sysconfdir}/aliases
+${SB_PATH_INSTALL} -m 644 -o root -g smmsp /dev/null \
+${_sysconfdir}/relay-domains
+${SB_PATH_INSTALL} -m 444 -o root -g smmsp /dev/null \
+${_sysconfdir}/sendmail.cf
+${SB_PATH_INSTALL} -m 644 -o root -g smmsp /dev/null \
+${_sysconfdir}/sendmail.mc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/service.switch
+${SB_PATH_INSTALL} -m 444 -o root -g smmsp /dev/null \
+${_sysconfdir}/submit.cf
+${SB_PATH_INSTALL} -m 644 -o root -g smmsp /dev/null \
+${_sysconfdir}/submit.mc
+${SB_PATH_INSTALL} -m 644 -o root -g smmsp /dev/null \
+${_sysconfdir}/msp-authinfo
+
+cat >${_sysconfdir}/Makefile <<_EOT_
+SHELL = /bin/sh
+
+MAKEMAP = ${SB_INSTALL_PREFIX}/sbin/makemap
+SENDMAIL = ${SB_INSTALL_PREFIX}/sbin/sendmail
+M4 = ${SB_VAR_M4}/bin/gm4
+
+# user/group sendmail runs as
+USER = root
+GROUP = smmsp
+
+CF_DIR = ${_sysconfdir}
+
+all: sendmail.cf submit.cf aliases.db access.db
+
+clean:
+	rm -f sendmail.cf submit.cf aliases.db access.db
+
+sendmail.cf: sendmail.mc
+	@rm -f \$(CF_DIR)/sendmail.cf
+	@echo "Updating sendmail.cf ..."
+	@\$(M4) \$(CF_DIR)/sendmail.mc >\$(CF_DIR)/sendmail.cf
+	@chown \$(USER):\$(GROUP) \$(CF_DIR)/sendmail.cf
+	@chmod 444 \$(CF_DIR)/sendmail.cf
+
+submit.cf: submit.mc
+	@rm -f \$(CF_DIR)/submit.cf
+	@echo "Updating submit.cf ..."
+	@\$(M4) \$(CF_DIR)/submit.mc >\$(CF_DIR)/submit.cf
+	@chown \$(USER):\$(GROUP) \$(CF_DIR)/submit.cf
+	@chmod 444 \$(CF_DIR)/submit.cf
+
+aliases.db: aliases sendmail.cf
+	@rm -f \$(CF_DIR)/aliases.db
+	@echo "Updating aliases.db ..."
+	@\$(SENDMAIL) -bi
+	@chown \$(USER):\$(GROUP) \$(CF_DIR)/aliases.db
+	@chmod 644 \$(CF_DIR)/aliases.db
+
+access.db: access
+	@rm -f \$(CF_DIR)/access.db
+	@echo "Updating access.db ..."
+	@\$(MAKEMAP) hash \$(CF_DIR)/access <\$(CF_DIR)/access
+	@chown \$(USER):\$(GROUP) \$(CF_DIR)/access.db
+	@chmod 644 \$(CF_DIR)/access.db
+_EOT_
+
+cat >${_sysconfdir}/aliases <<_EOT_
+postmaster:	root
+MAILER-DAEMON:	root
+_EOT_
+
+cat >${_sysconfdir}/service.switch <<_EOT_
+passwd		files
+hosts		files dns
+aliases		files
+_EOT_
+
+cat >${_sysconfdir}/sendmail.mc <<_EOT_
+include(\`${SB_INSTALL_PREFIX}/share/cf/m4/cf.m4')dnl
+dnl
+OSTYPE(\`${OSTYPE}')dnl
+dnl
+EXPOSED_USER(\`root')
+dnl
+define(\`ALIAS_FILE', \`${_sysconfdir}/aliases')
+define(\`HELP_FILE', \`${_sysconfdir}/helpfile')
+define(\`QUEUE_DIR', \`${_localstatedir}/mqueue')
+define(\`STATUS_FILE', \`${_localstatedir}/statistics')
+_EOT_
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  cat >>${_sysconfdir}/sendmail.mc <<_EOT_
+define(\`confRAND_FILE',
+  \`egd:/var${SB_VAR_PRNGD}/pool')
+_EOT_
+fi
+
+cat >>${_sysconfdir}/sendmail.mc <<_EOT_
+define(\`confCR_FILE',
+  \`-o ${_sysconfdir}/relay-domains')
+define(\`confPID_FILE',
+  \`${_localstatedir}/run/mta/sendmail.pid')
+define(\`confCONTROL_SOCKET_NAME',
+  \`${_localstatedir}/run/mta/smcontrol')
+define(\`confSERVICE_SWITCH_FILE',
+  \`${_sysconfdir}/service.switch')
+define(\`confDONT_BLAME_SENDMAIL',
+  \`GroupReadableSASLDBFile,GroupWritableSASLDBFile,GroupReadableKeyFile')
+define(\`confCACERT_PATH',
+  \`${_sysconfdir}/certs')
+define(\`confCACERT',
+  \`${_sysconfdir}/ssl/server.crt')
+define(\`confSERVER_CERT',
+  \`${_sysconfdir}/ssl/server.crt')
+define(\`confSERVER_KEY',
+  \`${_sysconfdir}/ssl/server.key')
+define(\`confCLIENT_CERT',
+  \`${_sysconfdir}/ssl/client.cert')
+define(\`confCLIENT_KEY',
+  \`${_sysconfdir}/ssl/client.key')
+dnl
+dnl (From the RedHat Enterprise Linux sendmail.mc file):
+dnl   The following causes sendmail to additionally listen to port 465,
+dnl   but starting immediately in TLS mode upon connecting. Port 25 or
+dnl   587 followed by STARTTLS is preferred, but roaming clients using
+dnl   Outlook Express can't do STARTTLS on ports other than 25. Mozilla
+dnl   Mail can ONLY use STARTTLS and doesn't support the deprecated
+dnl   smtps; Evolution <1.1.1 uses smtps when SSL is enabled-- STARTTLS
+dnl   support is available in version 1.1.1.
+dnl
+dnl   For this to work your OpenSSL certificates must be configured.
+dnl
+dnl DAEMON_OPTIONS(\`Port=smtps, Name=TLSMTA, M=s')dnl
+dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+_EOT_
+
+cat >${_sysconfdir}/submit.mc <<_EOT_
+include(\`${SB_INSTALL_PREFIX}/share/cf/m4/cf.m4')dnl
+dnl
+OSTYPE(\`${OSTYPE}')dnl
+dnl
+define(\`ALIAS_FILE',
+  \`${_sysconfdir}/aliases')
+define(\`HELP_FILE',
+  \`${_sysconfdir}/helpfile')
+define(\`MSP_QUEUE_DIR',
+  \`${_localstatedir}/clientmqueue')
+_EOT_
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  cat >>${_sysconfdir}/submit.mc <<_EOT_
+define(\`confRAND_FILE',
+  \`egd:/var${SB_VAR_PRNGD}/pool')
+_EOT_
+fi
+
+cat >>${_sysconfdir}/submit.mc <<_EOT_
+define(\`confPID_FILE',
+  \`${_localstatedir}/run/msp/sendmail.pid')
+define(\`confCONTROL_SOCKET_NAME',
+  \`${_localstatedir}/run/msp/smcontrol')
+define(\`confSERVICE_SWITCH_FILE',
+  \`${_sysconfdir}/service.switch')
+define(\`confAUTH_MECHANISMS',
+  \`DIGEST-MD5 CRAM-MD5 PLAIN LOGIN')
+define(\`confDONT_BLAME_SENDMAIL',
+  \`GroupReadableSASLDBFile,GroupWritableSASLDBFile,GroupReadableKeyFile')
+define(\`confCACERT_PATH',
+  \`${_sysconfdir}/certs')
+define(\`confCACERT',
+  \`${_sysconfdir}/ssl/server.crt')
+define(\`confSERVER_CERT',
+  \`${_sysconfdir}/ssl/server.crt')
+define(\`confSERVER_KEY',
+  \`${_sysconfdir}/ssl/server.key')
+define(\`confCLIENT_CERT',
+  \`${_sysconfdir}/ssl/client.cert')
+define(\`confCLIENT_KEY',
+  \`${_sysconfdir}/ssl/client.key')
+dnl
+MASQUERADE_AS(\`DOMAINNAME')
+FEATURE(\`masquerade_envelope')
+FEATURE(\`allmasquerade')
+dnl
+FEATURE(\`msp', \`[127.0.0.1]', \`MSA')
+dnl
+dnl FEATURE(\`authinfo',
+dnl  \`DATABASE_MAP_TYPE ${_sysconfdir}/msp-authinfo')
+_EOT_
+
+# fix time stamps
+${SB_PATH_TOUCH} -d '1 minute ago' ${_sysconfdir}/sendmail.cf \
+${_sysconfdir}/submit.cf
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${_sysconfdir} ${_localstatedir}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license>
+        <para>The following license terms and conditions apply, unless
+a different license is obtained from Sendmail, Inc., 6425 Christie
+Ave, Fourth Floor, Emeryville, CA 94608, USA, or by electronic mail at
+license@sendmail.com.</para>
+        <para>License Terms:</para>
+        <para>Use, Modification and Redistribution (including
+distribution of any modified or derived work) in source and binary
+forms is permitted only if each of the following conditions is
+met:</para>
+        <orderedlist>
+          <item><para>Redistributions qualify as "freeware" or "Open
+Source Software" under one of the following terms:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>Redistributions are made at no charge beyond
+the reasonable cost of materials and delivery.</para></item>
+            <item><para>Redistributions are accompanied by a copy of
+the Source Code or by an irrevocable offer to provide a copy of the
+Source Code for up to three years at the cost of materials and
+delivery.  Such redistributions must allow further use, modification,
+and redistribution of the Source Code under substantially the same
+terms as this license.  For the purposes of redistribution "Source
+Code" means the complete compilable and linkable source code of
+sendmail including all modifications.</para></item>
+          </orderedlist></item>
+          <item><para>Redistributions of source code must retain the
+copyright notices as they appear in each source code file, these
+license terms, and the disclaimer/limitation of liability set forth as
+paragraph 6 below.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the Copyright Notice, these license terms, and the
+*-aix4*)
+  OSTYPE=aix4 ;;
+disclaimer/limitation of liability set forth as paragraph 6 below, in
+the documentation and/or other materials provided with the
+distribution.  For the purposes of binary distribution the "Copyright
+Notice" refers to the following language: "Copyright (c) 1998-2004
+Sendmail, Inc.  All rights reserved."</para></item>
+          <item><para>Neither the name of Sendmail, Inc. nor the
+University of California nor the names of their contributors may be
+used to endorse or promote products derived from this software without
+specific prior written permission.  The name "sendmail" is a trademark
+of Sendmail, Inc.</para></item>
+          <item><para>All redistributions must comply with the
+conditions imposed by the University of California on certain embedded
+code, whose copyright notice and conditions for redistribution are as
+follows:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>Copyright (c) 1988, 1993 The Regents of the
+University of California.  All rights reserved.</para></item>
+            <item><para>Redistribution and use in source and binary
+forms, with or without modification, are permitted provided that the
+following conditions are met:</para>
+            <orderedlist type="lower-roman">
+              <item><para>Redistributions of source code must retain
+the above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+              <item><para>Redistributions in binary form must
+reproduce the above copyright notice, this list of conditions and the
+following disclaimer in the documentation and/or other materials
+provided with the distribution.</para></item>
+              <item><para>Neither the name of the University nor the
+names of its contributors may be used to endorse or promote products
+derived from this software without specific prior written
+permission.</para></item>
+            </orderedlist></item>
+          </orderedlist></item>
+          <item><para>Disclaimer/Limitation of Liability: THIS
+SOFTWARE IS PROVIDED BY SENDMAIL, INC. AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL SENDMAIL, INC., THE REGENTS
+OF THE UNIVERSITY OF CALIFORNIA OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.</para></item>
+        </orderedlist>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="8.14.2" to="8.14.3">
+        <item><para>During ruleset processing the generation of a key
+for a map lookup and the parsing of the default value was broken for
+some macros, e.g., $|, which caused the BlankSub character to be
+inserted into the workspace and thus failures, e.g., rules that should
+have matched did not.</para></item>
+        <item><para>8.14.2 caused a regression: it accessed (macro)
+storage which was freed before.</para></item>
+        <item><para>Improve pathname length checks for persistent host
+status.</para></item>
+        <item><para>Reword misleading SMTP reply text for
+FEATURE(`badmx').</para></item>
+        <item><para>The read timeout was fixed to be Timeout.datablock
+if STARTTLS was activated. This may cause problems if that value is
+lowered from its default.</para></item>
+        <item><para>CONFIG: Using LOCAL_TLS_CLIENT caused the
+tls_client ruleset to operate incorrectly.</para></item>
+        <item><para>LIBMILTER: Omitting some protocol steps via the
+xxfi_negotiate() callback did not work properly. The patchlevel of
+libmilter has been set to 1 so a milter can determine whether
+libmilter contains this fix.</para></item>
+        <item><para>MAKEMAP: If a delimiter is specified (-t) use that
+also when dumping a map.</para></item>
+        <items name="Portability">
+          <item><para>Add support for Darwin 9.x (Mac OS X
+10.5).</para></item>
+          <item><para>Support shared libraries in Darwin 8 and
+9.</para></item>
+          <item><para>Add support for SCO OpenServer 6</para></item>
+        </items>
+
+        <item><para>DEVTOOLS: Clarify that confSHAREDLIBDIR requires a
+trailing path.</para></item>
+        <item><para>Added Files: devtools/OS/Darwin.9.x,
+devtools/OS/OSR.i386</para></item>
+      </change>
+
+      <note type="build">
+        <para>Sendmail has been configured with SSL/TLS, SASL, and
+LDAP support. Configuration will be necessary for each to work. The
+default directory for the SSL/CERT files is
+<command>/etc${SB_INSTALL_PREFIX}/ssl</command> and
+<command>/etc${SB_INSTALL_PREFIX}/certs</command>. An alternate path can be set
+with the following variables in <command>sendmail.mc</command> and
+<command>submit.mc</command>: <command>confCACERT_PATH</command>,
+<command>confCACERT</command>, <command>confSERVER_CERT</command>,
+<command>confSERVER_KEY</command>, <command>confCLIENT_CERT</command>,
+<command>confCLIENT_KEY</command>. The
+<command>${SB_INSTALL_PREFIX}/share/cf/README</command> file contains
+additional instructions are configuring these options.</para>
+      </note>
+
+      <note type="installation">
+        <para>Because sendmail is installed by default from the OS
+vendor, the
+startup script must be disabled in order for this version of sendmail
+to work. Nothing is done in the postinstall script to disable the
+vendor sendmail startup script. Due to possible upgrades to the
+OS-provided sendmail installation by the vendor, patches applied after
+installing this version of sendmail could re-enable the
+vendor-installed sendmail. Care will need to be taken when patching
+systems. By default, the sendmail startup script will not start
+sendmail when <command>sendmail.cf</command> is empty.</para>
+        <para>A special group is required for sendmail to operate in
+submission mode, "<command>smmsp</command>". Unlike previous versions
+of sendmail, a separate configuration file is read depending on the
+mode in which sendmail is run (daemon mode or submission mode). This
+group must exist prior to installation of the sendmail package.
+Various files in <command>/etc${SB_INSTALL_PREFIX}</command>,
+<command>/var${SB_INSTALL_PREFIX}</command>, and
+<command>${SB_INSTALL_PREFIX}/sbin</command> are owned by this group.
+Sendmail is very pedantic about permissions on these files. Change
+with care. If problems arise when sendmail starts, the log level can
+be increased with the <command>confLOG_LEVEL</command> variable in
+<command>/etc${SB_INSTALL_PREFIX}/sendmail.mc</command>. The default value is
+<command>9</command> and <command>14</command> should provide enough
+verbosity to diagnose a problem.</para>
+      </note>
+
+      <note type="configuration">
+        <para>Configuration files for sendmail are usually found in
+the <command>/etc/mail</command> directory. To remain consistent with
+the location of configuration files in the TWW hierarchy,
+<command>/etc${SB_INSTALL_PREFIX}</command> contains all configuration files. The
+<command>/var${SB_INSTALL_PREFIX}</command> directory contains the queue directory
+of old messages and the PID of the sendmail processes.</para>
+        <para>A "<command>Makefile</command>" has been created in
+<command>/etc${SB_INSTALL_PREFIX}</command> to aid in building the sendmail
+configuration files. The configuration files built include:
+<command>sendmail.cf</command>, <command>submit.cf</command>,
+<command>aliases.db</command>, <command>access.db</command>. The
+<command>sendmail.cf</command> file is built from
+<command>sendmail.mc</command>, the <command>submit.cf</command> file
+from <command>submit.mc</command>, the <command>aliases.db</command>
+file from <command>aliases</command>, and the
+<command>access.db</command> file from
+<command>access</command>.</para>
+        <para>Simple <command>sendmail.mc</command> and
+<command>submit.mc</command> files are installed and should be
+modified with the aide of
+<command>${SB_INSTALL_PREFIX}/share/cf/README</command>. The
+"<command>DOMAINNAME</command>" variable in the following line of
+<command>submit.mc</command>:</para>
+        <screen>
+MASQUERADE_AS(`DOMAINNAME')
+        </screen>
+
+        <para>should be changed to match your DNS domain name. The
+<command>masquerade_envelope</command> and
+<command>allmasquerade</command> features are enabled, by default, to
+masquerade all mail from the DNS domain name specified. Likewise, a
+minimal <command>aliases</command> file is available.</para>
+        <para>The default path to the PID file when "sendmail" is
+running in daemon mode (MTA) is
+<command>/var${SB_INSTALL_PREFIX}/run/mta/sendmail.pid</command>. When sendmail is
+running in submission mode (MSP), the PID file is
+<command>/var${SB_INSTALL_PREFIX}/run/msp/sendmail.pid</command>. This can be
+changed by modifing the "<command>confPID_FILE</command>" variable
+in the <command>sendmail.mc</command> and <command>submit.mc</command>
+files, respectively. The startup script must also be modified so
+sendmail can be properly shut down.</para>
+        <para>The default locking method is
+<command>fcntl(2)</command>.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 19" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update groff dependency from 1.19.2 to
+1.21</para></item>
+        <item><para>Update m4 dependency from 1.4.12 to
+1.4.15</para></item>
+        <item><para>Update cyrus-sasl dependency from 2.1.22 to
+2.1.25</para></item>
+        <item><para>Update openldap dependency from 2.4.12 to
+2.4.26</para></item>
+        <item><para>Update openssl dependency from 0.9.8h to
+1.0.0e</para></item>
+        <item><para>Remove support for HP-UX 10.20, AIX 4.3, SLES 10,
+RHEL 3, Solaris 6 and 7</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2010 March 24" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2009-4565 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4565">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4565</ulink>).
+sendmail does not properly handle a '\0' character in a Common Name
+(CN) field of an X.509 certificate, which (1) allows man-in-the-middle
+attackers to spoof arbitrary SSL-based SMTP servers via a crafted
+server certificate issued by a legitimate Certification Authority, and
+(2) allows remote attackers to bypass intended access restrictions via
+a crafted client certificate issued by a legitimate Certification
+Authority, a related issue to
+<command>CVE-2009-2408</command>.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
