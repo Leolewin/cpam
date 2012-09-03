@@ -1,0 +1,232 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="enscript" version="1.6.4" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}16</install-name>
+
+    <sources>
+      <source checksum="b5174b59e4a050fb462af5dbf28ebba3"
+        checksum-type="md5" size="1036734"
+        path="src/enscript-1.6.4.tar.gz"/>
+      <patch checksum="a5d245629f3da922c6989cc925c54315"
+        checksum-type="md5" size="693"
+        path="src/enscript-1.6.4.CVE-2004-1185.patch"/>
+      <patch checksum="e212f692b5899e701f869c2ead6446d3"
+        checksum-type="md5" size="483"
+        path="src/enscript-1.6.4.CVE-2004-1186.patch"/>
+      <patch checksum="859b1c819ddb7cfeda7db2382e35ba56"
+        checksum-type="md5" size="474"
+        path="src/enscript-1.6.4.double-free.patch"/>
+      <patch checksum="3d468894220c521343c035deef2d3086"
+        checksum-type="md5" size="2680"
+        path="src/enscript-1.6.4.CVE-2008-3863_4306.patch"/>
+      <patch checksum="17fe4ffeedb87981c1a14fa0aff27210"
+        checksum-type="md5" size="64421"
+        path="src/enscript-1.6.4.tww.patch"/>
+      <patch checksum="d8bfae0f1cade92fec6b4930dc27e303"
+        checksum-type="md5" size="1329044"
+        path="src/enscript-1.6.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -Ae +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  SPOOLER=lpr ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" INSTALL="./install-sh -c" \
+CFLAGS="${CFLAGS:=-O2}" PERL=${SB_VAR_PERL}/bin/perl \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--sysconfdir=${_sysconfdir} --disable-dependency-tracking \
+--mandir=${SB_INSTALL_PREFIX}/man \
+--infodir=${SB_INSTALL_PREFIX}/info \
+--with-spooler=${SPOOLER:-lp} \
+--with-media=Letter \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+
+CFLAGS="${CFLAGS:=-O2}" PERL=${SB_VAR_PERL}/bin/perl \
+INSTALL="./install-sh -c" gmake configure
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+case "${SB_SYSTYPE}" in
+  *-osf*) QUEUE_PARAM=-P ;;
+  *) QUEUE_PARAM=-d ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s/QueueParam: -P/QueueParam: ${QUEUE_PARAM}/" ${_sysconfdir}/enscript.cfg
+]]>
+    </install>
+
+    <notes>
+      <change from="1.6.1" to="1.6.4">
+        <items name="Changes in the highlighting / pretty printing">
+          <item><para>The "States*" config file options have changed.
+The new options are:</para>
+          <screen>
+StatesBinary            specify an absolute path for "states"
+StatesColor             use colors in the highlighting outputs?
+StatesConfigFile        config file name (enscript.st)
+StatesHighlightStyle    highlighting style
+StatesPath              path from which the states is looking up the
+                        state definition files (.st)
+          </screen></item>
+          <item><para>Support for user defined local highlighting
+definitions and styles.</para></item>
+          <item><para>new option "--style=STYLE" to specify the
+highlighting style</para></item>
+          <item><para>Verbose highlighting for the C, C++, and
+Objective-C languages. In the verbose highlighting, some mathematical
+constructs (&amp;&amp;, ||, !=, etc.) are replaced with the
+corresponding mathematical symbols (logical and, logical or, not
+equal, etc.).  The mode can be enabled with option
+"--style=emacs_verbose". renamed "--pretty-print" and
+"--help-pretty-print" options to "--highlight" and
+"--help-highlight"</para></item>
+        </items>
+
+        <items name="states">
+          <item><para>Support for state inheritance.</para></item>
+        </items>
+
+        <items name="new highlighting rules">
+          <item><para>bash, csh, ksh, tcsh, zsh: Unix
+shells</para></item>
+          <item><para>m4: m4 macro preprocessor</para></item>
+          <item><para>skill: Cadence Design Systems lispy
+language</para></item>
+          <item><para>vrml: Virtual Reality Modeling Language
+(VRML97)</para></item>
+          <item><para>rfc: fix broken page breaks in RFCs and in
+Internet Drafts</para></item>
+          <item><para>inf: GUI INF Script language</para></item>
+          <item><para>matlab: Matlab files</para></item>
+          <item><para>outline: Emacs' outline text</para></item>
+          <item><para>tex: TeX/LaTeX source files.</para></item>
+          <item><para>diffs: side diff files</para></item>
+          <item><para>fortran_pp: fortran 77 with
+preprocessor</para></item>
+          <item><para>wmlscript: WMLScript language</para></item>
+          <item><para>new output language "ansi" to print color
+outputs on color xterm, etc.</para></item>
+        </items>
+
+        <items name="new encodings">
+          <item><para>88599  ISO-8859-9 (ISO Latin5)</para></item>
+          <item><para>885910 ISO-8859-10 (ISO Latin6)</para></item>
+        </items>
+
+        <items name="new options">
+          <item><para>-3, -4, -5, -6, -7, -8, -9 select 3-9
+columns</para></item>
+          <item><para>--nup-columnwise - layout pages in the N-up
+printing columnwise</para></item>
+          <item><para>--swap-even-page-margins - swap left and right
+side margins for even numbered pages</para></item>
+          <item><para>--extended-return-values - encode more status
+information in the return value of the program</para></item>
+          <item><para>--footer=STRING - specify the page
+footer string</para></item>
+        </items>
+
+        <items name="misc">
+          <item><para>It is possible to specify the font encoding in
+the ^@font{} escape.  But, it allows only "ps" or the enscript's
+global input encoding values.  For example,
+^@font{Symbol@7:ps}b^@font{default} prints the beta
+symbol</para></item>
+          <item><para>New escape ^@bgcolor{} to change the text
+background color.</para></item>
+          <item><para>New fancy headers "squeeze" and
+"enscript-color".</para></item>
+          <item><para>Minor fixes in the 88593 and 88594
+encodings.</para></item>
+          <item><para>New highlighting style "msvc".</para></item>
+          <item><para>Support for the matrix printers.  Try "enscript
+-fMatrix10" ;-)</para></item>
+          <item><para>Fixed some buffer overrun bugs.  Now all buffer
+space for unknown items (filenames, user-supplied tokens, etc.) is
+allocated dynamically.</para></item>
+          <item><para>Removed the "--list-options" option.  It was an
+old debugging option.  I can remember when I have used or updated
+it.</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 26" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for AIX 4.3.</para></item>
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL 3 and SLED.</para></item>
+        <item><para>Remove support for Solaris 2.6 and 7.</para></item>
+        <item><para>For HPUX compiler flags use +Ofltacc instead of
++Onofltacc.</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1.</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1.</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2.</para></item>
+      </change>
+
+      <change date="2010 November 8" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
