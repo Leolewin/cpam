@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="automake" version="1.4" revision="5">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}-p6</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="24872b81b95d78d05834c39af2cfcf05"
+        checksum-type="md5" size="375060"
+        path="src/automake-1.4-p6.tar.gz"/>
+      <patch checksum="3f3b64938799f7649d54f3f27d5663e3"
+        checksum-type="md5" size="1689"
+        path="src/automake-1.4-p6.CVE-2009-4029.patch"/>
+      <patch checksum="f44f9a6873e8efe31f74e8aa88e307cb"
+        checksum-type="md5" size="1521"
+        path="src/automake-1.4-p6.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="autoconf" install-name="autoconf"
+        add-path="prepend">v&gt;=2.13</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+PERL=${SB_VAR_PERL}/bin/perl ./configure --datadir=${_datadir} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake m4datadir="${_datadir}/aclocal" \
+pkgdatadir="${_datadir}/automake" \
+pkgvdatadir="${_datadir}/automake"
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install m4datadir="${_datadir}/aclocal" \
+pkgdatadir="${_datadir}/automake" \
+pkgvdatadir="${_datadir}/automake"
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 automake.texi \
+version.texi ${_docdir}
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <changelog>
+      <change date="2010 December 9" revision="5"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Upgrade perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2009 December 9" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Apply patch for CVE-2009-4029 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4029">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-4029</ulink>).
+The (1) dist or (2) distcheck rules in GNU Automake, when producing a
+distribution tarball for a package that uses Automake, assign insecure
+permissions (777) to directories in the build tree, which introduces a
+race condition that allows local users to modify the contents of
+package files, introduce Trojan horse programs, or conduct other
+attacks before the build is complete.</para></item>
+      </change>
+
+      <change date="2009 June 17" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+
+      <change date="2005 May 4" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade perl dependency from 5.8.2 to
+5.8.6</para></item>
+        <item><para>Update to patchlevel 6</para></item>
+      </change>
+
+      <change date="2004 January 10" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
