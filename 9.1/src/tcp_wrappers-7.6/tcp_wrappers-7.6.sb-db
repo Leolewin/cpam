@@ -1,0 +1,216 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="tcp_wrappers" version="7.6" revision="11">
+    <build-name>${SB_PROG_NAME}_${SB_PROG_VER}</build-name>
+
+    <install-name>tcpwrap</install-name>
+
+    <sources>
+      <source checksum="e6fa25f71226d090f34de3f6b122fb5a"
+        checksum-type="md5" size="99438"
+        path="src/tcp_wrappers_7.6.tar.gz"/>
+      <patch checksum="24b80944cdce41bf62b8777c804024c8"
+        checksum-type="md5" size="7609"
+        path="src/tcp_wrappers_7.6.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=com"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH BUGS="" \
+  HOSTS_DENY="/etc${SB_INSTALL_PREFIX}/hosts.deny" \
+  HOSTS_ALLOW="/etc${SB_INSTALL_PREFIX}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" aix ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae +O2 +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  gmake REAL_DAEMON_DIR=/usr/lbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" hpux11 ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Onofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+
+  gmake REAL_DAEMON_DIR=/usr/lbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" hpux11 ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+
+  gmake REAL_DAEMON_DIR=/usr/etc \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" irix6 ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" linux ;;
+*-linux*)
+  CFLAGS="-O2"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" linux ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="/etc${SB_INSTALL_PREFIX}/hosts.deny" \
+  HOSTS_ALLOW="/etc${SB_INSTALL_PREFIX}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" osf ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" sunos5 ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" sunos5 ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v7"
+
+  gmake REAL_DAEMON_DIR=/usr/sbin \
+  STYLE=-DPROCESS_OPTIONS FACILITY=LOG_AUTH \
+  HOSTS_DENY="${_sysconfdir}/hosts.deny" \
+  HOSTS_ALLOW="${_sysconfdir}/hosts.allow" \
+  CC=${CC:-gcc} OPT="${CFLAGS}" sunos5 ;;
+esac
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/include \
+${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/man/man3 ${SB_INSTALL_PREFIX}/man/man5 \
+${SB_INSTALL_PREFIX}/man/man8
+
+for bin in tcpd tcpdchk tcpdmatch try-from safe_finger; do
+  ${SB_PATH_INSTALL} -m 111 -o root -g 0 ${bin} ${SB_INSTALL_PREFIX}/bin
+done
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 tcpd.h ${SB_INSTALL_PREFIX}/include
+${SB_PATH_INSTALL} -m 644 -o root -g 0 libwrap.a ${SB_INSTALL_PREFIX}/lib
+${SB_PATH_INSTALL} -m 644 -o root -g 0 *.3 ${SB_INSTALL_PREFIX}/man/man3
+${SB_PATH_INSTALL} -m 644 -o root -g 0 *.5 ${SB_INSTALL_PREFIX}/man/man5
+${SB_PATH_INSTALL} -m 644 -o root -g 0 *.8 ${SB_INSTALL_PREFIX}/man/man8
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/hosts.allow
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/hosts.deny
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <notes>
+      <note type="compilation">
+        <para>The default location for the
+<command>hosts.allow</command> and <command>hosts.deny</command> files
+is <command>/etc${SB_INSTALL_PREFIX}</command>.</para>
+        <para>The <command>PROCESS_OPTIONS</command> option was
+enabled during compilation. See
+<command>hosts_options(5)</command>.</para>
+        <para>The default logging facility is
+``<command>auth</command>''.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2011 March 24" revision="11"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2009 January 17" revision="10"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2007 July 8" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31/IA</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2007 May 15" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 May 16" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 March 3" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Build with -xarch=v8 on Solaris 8+ and -xarch=v7
+on earlier versions</para></item>
+        <item><para>Update platform CFLAGS</para></item>
+      </change>
+
+      <change date="2005 September 16" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 May 9" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove malloc prototype from
+scaffold.c</para></item>
+      </change>
+
+      <change date="2005 April 22" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+      </change>
+
+      <change date="2004 July 25" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove private setenv function from Redhat Linux
+build</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
