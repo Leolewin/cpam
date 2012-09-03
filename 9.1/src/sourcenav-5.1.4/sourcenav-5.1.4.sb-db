@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="sourcenav" version="5.1.4" revision="9">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}51</install-name>
+
+    <sources>
+      <source checksum="a0d03e062851adf1364a6adba0350219"
+        checksum-type="md5" size="11101823"
+        path="src/sourcenav-5.1.4.tar.gz"/>
+      <patch checksum="f9abe8e4cb70f3fa188cf566f2decca4"
+        checksum-type="md5" size="3391"
+        path="src/sourcenav-5.1.4.gcc41.patch"/>
+      <patch checksum="1944025feee588c52837ef218a34e885"
+        checksum-type="md5" size="15324"
+        path="src/sourcenav-5.1.4.tww.patch"/>
+      <patch checksum="f71fef2a608b19f34219ba391b251132"
+        checksum-type="md5" size="199390"
+        path="src/sourcenav-5.1.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath";;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 \
+-OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-Wl,-msym -O2 -std -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ${SHELL} ./configure \
+--datadir=${_datadir} --sysconfdir="${_sysconfdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install LIB_DIR=${SB_INSTALL_PREFIX_LIB} \
+LIB_INSTALL_DIR=${SB_INSTALL_PREFIX_LIB}
+
+# remove tcl/tk/tix binaries
+(cd ${SB_INSTALL_PREFIX}/bin
+rm tclsh8.3 tixindex tixwish4.1.8.1 wish8.3)
+
+# remove readme files
+(cd ${SB_INSTALL_PREFIX}
+rm COPYING INSTALL.TXT README.TXT)
+
+# remove man pages
+rm -rf ${SB_INSTALL_PREFIX}/man
+
+# remove include files
+rm -rf ${SB_INSTALL_PREFIX}/include
+
+# fix permission
+(cd ${SB_INSTALL_PREFIX}
+${SB_PATH_FIND} . -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}/share)
+
+# Move lib dir, a bit icky, but --libdir to configure only changes the
+# installed location of some of the libraries.
+
+if [ "${SB_INSTALL_PREFIX_LIB}" != "${SB_INSTALL_PREFIX}/lib" ]; then
+  mv ${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX_LIB}
+  ${SB_PATH_SED} -i -e "\
+s!${SB_INSTALL_PREFIX}/lib!${SB_INSTALL_PREFIX_LIB}!" \
+  ${SB_INSTALL_PREFIX_LIB}/*Config.sh
+fi
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 26" revision="9"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update flex dependency from 2.5.4a to
+2.5.35</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2010 November 11" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 October 21" revision="7"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for HP-UX 11.31</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2007 May 2" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 September 25" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update bison dependency from 2.1 to
+2.3</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2005 November 29" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 June 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+        <item><para>Update bison dependency from 1.35 to
+2.0</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
