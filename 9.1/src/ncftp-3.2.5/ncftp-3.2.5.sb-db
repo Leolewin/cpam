@@ -1,0 +1,303 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="ncftp" version="3.2.5" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}32</install-name>
+
+    <sources>
+      <source checksum="b05c7a6d5269c04891f02f43d4312b30"
+        checksum-type="md5" size="454682"
+        path="src/ncftp-3.2.5-src.tar.bz2"/>
+      <patch checksum="f533cf3965f23e980f13fd20512af6c4"
+        checksum-type="md5" size="7239"
+        path="src/ncftp-3.2.5.tww.patch"/>
+      <patch checksum="57033e15e953cfd98723eacf20cd5670"
+        checksum-type="md5" size="488789"
+        path="src/ncftp-3.2.5.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ncurses" var="NCURSES">v==5.7</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --mandir="${SB_INSTALL_PREFIX}/man" \
+--sysconfdir=${_sysconfdir} --disable-ccdv --disable-precomp \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.firewall
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.firewall.fixed
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.prefs_v3
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null \
+${_sysconfdir}/ncftp.prefs_v3.fixed
+
+cat >${_sysconfdir}/ncftp.prefs_v3 <<_EOT_
+confirm-close=no
+yes-i-know-about-NcFTPd=yes
+_EOT_
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/html
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/FIREWALLS_AND_PROXIES.txt \
+doc/CHANGELOG.txt doc/LICENSE.txt ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/html/* ${_docdir}/html
+
+gmake install
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para align="center">The Clarified Artistic License</para>
+        <para align="center">Preamble</para>
+        <para>The intent of this document is to state the conditions
+under which a Package may be copied, such that the Copyright Holder
+maintains some semblance of artistic control over the development of
+the package, while giving the users of the package the right to use
+and distribute the Package in a more-or-less customary fashion, plus
+the right to make reasonable modifications.</para>
+        <para>Definitions:</para>
+        <para>"Package" refers to the collection of files distributed
+by the Copyright Holder, and derivatives of that collection of files
+created through textual modification.</para>
+        <para>"Standard Version" refers to such a Package if it has
+not been modified, or has been modified in accordance with the wishes
+of the Copyright Holder as specified below.</para>
+        <para>"Copyright Holder" is whoever is named in the copyright
+or copyrights for the package.</para>
+        <para>"You" is you, if you're thinking about copying or
+distributing this Package.</para>
+        <para>"Distribution fee" is a fee you charge for providing a
+copy of this Package to another party.</para>
+        <para>"Freely Available" means that no fee is charged for the
+right to use the item, though there may be fees involved in handling
+the item.  It also means that recipients of the item may redistribute
+it under the same conditions they received it.</para>
+        <orderedlist>
+          <item><para>You may make and give away verbatim copies of
+the source form of the Standard Version of this Package without
+restriction, provided that you duplicate all of the original copyright
+notices and associated disclaimers.</para></item>
+          <item><para>You may apply bug fixes, portability fixes and
+other modifications derived from the Public Domain, or those made
+Freely Available, or from the Copyright Holder.  A Package modified in
+such a way shall still be considered the Standard
+Version.</para></item>
+          <item><para>You may otherwise modify your copy of this
+Package in any way, provided that you insert a prominent notice in
+each changed file stating how and when you changed that file, and
+provided that you do at least ONE of the following:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>place your modifications in the Public Domain or
+otherwise make them Freely Available, such as by posting said
+modifications to Usenet or an equivalent medium, or placing the
+modifications on a major network archive site allowing unrestricted
+access to them, or by allowing the Copyright Holder to include your
+modifications in the Standard Version of the Package.</para></item>
+            <item><para>use the modified Package only within your
+corporation or organization.</para></item>
+            <item><para>rename any non-standard executables so the names
+do not conflict with standard executables, which must also be
+provided, and provide a separate manual page for each non-standard
+executable that clearly documents how it differs from the Standard
+Version.</para></item>
+            <item><para>make other distribution arrangements with the
+Copyright Holder.</para></item>
+            <item><para>permit and encourage anyone who receives a copy
+of the modified Package permission to make your modifications Freely
+Available in some specific way.</para></item>
+          </orderedlist></item>
+          <item><para>You may distribute the programs of this Package in
+object code or executable form, provided that you do at least ONE of
+the following:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>distribute a Standard Version of the executables
+and library files, together with instructions (in the manual page or
+equivalent) on where to get the Standard Version.</para></item>
+            <item><para>accompany the distribution with the
+machine-readable source of the Package with your
+modifications.</para></item>
+            <item><para>give non-standard executables non-standard
+names, and clearly document the differences in manual pages (or
+equivalent), together with instructions on where to get the Standard
+Version.</para></item>
+            <item><para>make other distribution arrangements with the
+Copyright Holder.</para></item>
+            <item><para>offer the machine-readable source of the
+Package, with your modifications, by mail order.</para></item>
+          </orderedlist></item>
+          <item><para>You may charge a distribution fee for any
+distribution of this Package. If you offer support for this Package,
+you may charge any fee you choose for that support.  You may not
+charge a license fee for the right to use this Package itself.  You
+may distribute this Package in aggregate with other (possibly
+commercial and possibly nonfree) programs as part of a larger
+(possibly commercial and possibly nonfree) software distribution, and
+charge license fees for other parts of that software distribution,
+provided that you do not advertise this Package as a product of your
+own. If the Package includes an interpreter, You may embed this
+Package's interpreter within an executable of yours (by linking); this
+shall be construed as a mere form of aggregation, provided that the
+complete Standard Version of the interpreter is so
+embedded.</para></item>
+          <item><para>The scripts and library files supplied as input
+to or produced as output from the programs of this Package do not
+automatically fall under the copyright of this Package, but belong to
+whoever generated them, and may be sold commercially, and may be
+aggregated with this Package.  If such scripts or library files are
+aggregated with this Package via the so-called "undump" or "unexec"
+methods of producing a binary executable image, then distribution of
+such an image shall neither be construed as a distribution of this
+Package nor shall it fall under the restrictions of Paragraphs 3 and
+4, provided that you do not represent such an executable image as a
+Standard Version of this Package.</para></item>
+          <item><para>C subroutines (or comparably compiled
+subroutines in other languages) supplied by you and linked into this
+Package in order to emulate subroutines and variables of the language
+defined by this Package shall not be considered part of this Package,
+but are the equivalent of input as in Paragraph 6, provided these
+subroutines do not change the language in any way that would cause it
+to fail the regression tests for the language.</para></item>
+          <item><para>Aggregation of the Standard Version of the
+Package with a commercial distribution is always permitted provided
+that the use of this Package is embedded; that is, when no overt
+attempt is made to make this Package's interfaces visible to the end
+user of the commercial distribution. Such use shall not be construed
+as a distribution of this Package.</para></item>
+          <item><para>The name of the Copyright Holder may not be used
+to endorse or promote products derived from this software without
+specific prior written permission.</para></item>
+          <item><para>THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE.</para></item>
+        </orderedlist>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="3.2.4.1" to="3.2.5">
+        <item><para>Fixed a problem on Mac OS X Snow Leopard for
+universal binary support. </para></item>
+        <item><para>ncftpls now prefers that you omit the leading dash
+when you use the -x option.  For example, if you wanted to try "ls
+-lrt", then try doing "ncftpls -x lrt" rather than "ncftpls -x
+-lrt".</para></item>
+        <item><para>If a server's MLSx output returns both the
+"UNIX.mode" and the "perm" parameters, UNIX.mode will take
+precedence.</para></item>
+        <item><para>confirm-close is now off by default.</para></item>
+      </change>
+
+      <change from="3.2.4" to="3.2.4.1">
+        <item><para>Fixed a bug in Ncftpget/put/ls which could ignore
+the username (-u) and password (-p) command line
+parameters.</para></item>
+      </change>
+
+      <change from="3.2.3" to="3.2.4">
+        <item><para>Ncftpget and ncftpput can now read
+$HOME/.ncftp/bookmarks and take a bookmark name in place of a
+hostname.  If the hostname specified is not fully qualified (i.e. does
+not contain a period), then bookmarks will be queried; if no bookmarks
+match, then a local hostname is assumed.  Bookmarks are also queried
+for the config file option, -f, when the file specified by -f does not
+exist.</para></item>
+        <item><para>Compatibility fixes for FreeBSD 8.</para></item>
+        <item><para>Support for local validation of DNSSEC when
+combined with libraries available from the DNSSEC Tools
+project.</para></item>
+        <item><para>Microsoft disabled recursive directory listings
+altogether when fixing KB975254.  When entire directories are
+downloaded, instead of using "LIST -R" for one efficient listing of
+all files, the directories are manually traversed with one directory
+listing for each subdirectory.  This will improve reliability of
+recursive downloads, except for the case when their are circular
+symbolic links (which is why "LIST -R" had been favored, which the
+server can easily handle).</para></item>
+        <item><para>Compatibility fixes for Mac OS X for building from
+source code</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>NcFTP configuration files reside in
+<command>${SB_INSTALL_PREFIX}/etc</command> as <command>ncftp.firewall</command>,
+<command>ncftp.firewall.fixed</command>, <command>prefs_v3</command>,
+and <command>prefs_v3.fixed</command>. The
+<command>ncftp.firewall</command> and <command>prefs_v3</command>
+configuration files contains defaults that can be reconfigured by the
+user. The <command>ncftp.firewall.fixed</command> and
+<command>prefs_v3.fixed</command> configuration files contains
+defaults the user cannot reconfigure.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
