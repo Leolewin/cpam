@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Crypt-SSLeay" version="0.58" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="fbf3d12e58462cee00ea63239c0b13c7"
+        checksum-type="md5" size="123845"
+        path="src/Crypt-SSLeay-0.58.tar.gz"/>
+      <patch checksum="a3d07808e1b6258775b4d6c9f1c56051"
+        checksum-type="md5" size="649"
+        path="src/Crypt-SSLeay-0.58.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL --lib=${SB_VAR_LIBOPENSSL} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Crypt/SSLeay/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Crypt/SSLeay/.packlist
+rmdir ${_installsitearch}/auto/Crypt/SSLeay
+rmdir ${_installsitearch}/auto/Crypt 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Crypt::SSLeay|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10">v&gt;=1.0.0e</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
