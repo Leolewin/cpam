@@ -1,0 +1,381 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="distribute" version="0.6.21" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}06</install-name>
+
+    <sources>
+      <source checksum="c8cfcfd42ec9ab900fb3960a3308eef2"
+        checksum-type="md5" size="399934"
+        path="src/distribute-0.6.21.tar.gz"/>
+      <patch checksum="f554d898e9dd78bc26216c9ac920a5e2"
+        checksum-type="md5" size="3393"
+        path="src/distribute-0.6.21.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py build
+
+# strip "#!python"
+${SB_PATH_SED} -i -e "1d" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name easy_install.py) \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name distribute_setup.py)
+
+# Change /usr/bin/python
+${SB_PATH_SED} -i -e "1c#!${_pybin}" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name test_resources.py)
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py test 
+
+# Ignore test failures
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-purelib=${_libdir} --install-lib=${_libdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+_pyver=$(${_pybin} -c 'import sys; print (sys.version[:3])')
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_libdir}!;" ${SB_INSTALL_PREFIX}/bin/easy_install${_pyver}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/*.txt README.txt ${_docdir}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+    </install>
+
+    <module name="default">
+      <validate>
+        <depend program="distribute" module="2.6.7">v==0.6.21</depend>
+        <depend program="distribute" module="2.7.2">v==0.6.21</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py build
+
+# strip "#!python"
+${SB_PATH_SED} -i -e "1d" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name easy_install.py) \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name distribute_setup.py)
+
+# Change /usr/bin/python
+${SB_PATH_SED} -i -e "1c#!${_pybin}" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name test_resources.py)
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py test 
+
+# Ignore test failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-purelib=${_libdir} --install-lib=${_libdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+_pyver=$(${_pybin} -c 'import sys; print (sys.version[:3])')
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_libdir}!;" ${SB_INSTALL_PREFIX}/bin/easy_install${_pyver}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/*.txt README.txt ${_docdir}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="3.2.2">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python32"
+          add-path="prepend">v&gt;=3.2.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python32"
+
+_pybin=${SB_VAR_PYTHON}/bin/python3
+_libdir="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py build
+
+# strip "#!python"
+${SB_PATH_SED} -i -e "1d" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name easy_install.py) \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name distribute_setup.py)
+
+# Change /usr/bin/python
+${SB_PATH_SED} -i -e "1c#!${_pybin}" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name test_resources.py)
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py test 
+
+# Ignore test failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-purelib=${_libdir} --install-lib=${_libdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+_pyver=$(${_pybin} -c 'import sys; print (sys.version[:3])')
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_libdir}!;" ${SB_INSTALL_PREFIX}/bin/easy_install${_pyver}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/*.txt README.txt ${_docdir}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_libdir}
+rm ${SB_INSTALL_PREFIX}/bin/easy_install3.2
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_libdir="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py build
+
+# strip "#!python"
+${SB_PATH_SED} -i -e "1d" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name easy_install.py) \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name distribute_setup.py)
+
+# Change /usr/bin/python
+${SB_PATH_SED} -i -e "1c#!${_pybin}" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name test_resources.py)
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py test 
+
+# Ignore test failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-purelib=${_libdir} --install-lib=${_libdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+_pyver=$(${_pybin} -c 'import sys; print (sys.version[:3])')
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_libdir}!;" ${SB_INSTALL_PREFIX}/bin/easy_install${_pyver}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/*.txt README.txt ${_docdir}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_libdir}
+rm ${SB_INSTALL_PREFIX}/bin/easy_install2.7
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_libdir="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py build
+
+# strip "#!python"
+${SB_PATH_SED} -i -e "1d" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name easy_install.py) \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name distribute_setup.py)
+
+# Change /usr/bin/python
+${SB_PATH_SED} -i -e "1c#!${_pybin}" \
+$(${SB_PATH_FIND} ${SB_BUILD_PREFIX} -name test_resources.py)
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py test 
+
+# Ignore test failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+: ${_pybin=${SB_VAR_PYTHON}/bin/python}
+${_pybin} setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-purelib=${_libdir} --install-lib=${_libdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+_pyver=$(${_pybin} -c 'import sys; print (sys.version[:3])')
+${SB_PATH_SED} -i -e "\
+s!@libdir@!${_libdir}!;" ${SB_INSTALL_PREFIX}/bin/easy_install${_pyver}
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/*.txt README.txt ${_docdir}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_libdir}/include.paths.d
+cat >${_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_libdir}
+rm ${SB_INSTALL_PREFIX}/bin/easy_install2.6
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The distribute Python module is available in the
+following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 March 20" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 3.2.2 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
