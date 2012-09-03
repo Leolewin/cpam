@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Spreadsheet-ParseExcel" version="0.59" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="7ed6487d09135a9ee6ae9c290dad3a5e"
+        checksum-type="md5" size="188131"
+        path="src/Spreadsheet-ParseExcel-0.59.tar.gz"/>
+      <patch checksum="60e48046b29060dff67add3160fb84aa"
+        checksum-type="md5" size="3024"
+        path="src/Spreadsheet-ParseExcel-0.59.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Spreadsheet/ParseExcel/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Spreadsheet/ParseExcel/.packlist
+rmdir ${_installsitearch}/auto/Spreadsheet/ParseExcel
+rmdir ${_installsitearch}/auto/Spreadsheet 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Spreadsheet::ParseExcel|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Crypt-RC4" module="5.12.2">v&gt;=2.02</depend>
+        <depend program="Digest-Perl-MD5"
+          module="5.12.2">v&gt;=1.8</depend>
+        <depend program="OLE-Storage_Lite"
+          module="5.12.2">v&gt;=0.18</depend>
+        <depend program="Spreadsheet-WriteExcel"
+          module="5.12.2">v&gt;=2.25</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
