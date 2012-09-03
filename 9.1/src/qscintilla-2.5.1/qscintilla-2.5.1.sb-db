@@ -1,0 +1,354 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="qscintilla" version="2.5.1" revision="1">
+    <build-name>QScintilla-gpl-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}25</install-name>
+
+    <sources>
+      <source checksum="dd7edef5ff674d307057a3c12dbd8fce"
+        checksum-type="md5" size="2638790"
+        path="src/QScintilla-gpl-2.5.1.tar.gz"/>
+      <patch checksum="e7870de93d58ced01b3c5c6f5e33bc4f"
+        checksum-type="md5" size="3694"
+        path="src/QScintilla-gpl-2.5.1.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir=${SB_INSTALL_PREFIX}/share
+
+_gcc_subdir="gcc44"
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*|*-osf*|*-solaris2.8)
+  _libdir="${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}" ;;
+*)
+  _libdir=${SB_INSTALL_PREFIX_LIB} ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="qt" var="LIBQT" install-name="libqt47"
+          module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v&gt;=4.7.3</depend>
+        <depend program="qt" var="LIBQT" install-name="libqt47"
+          systype="hppa*-hpux*|*-osf*|*-solaris2.8">v&gt;=4.7.4</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="perl" var="PERL"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="qscintilla" module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v==2.5.1</depend>
+        <depend program="qscintilla"
+          module="python-2.6.7">v==2.5.1</depend>
+        <depend program="qscintilla"
+          module="python-2.7.2">v==2.5.1</depend>
+      </validate>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  PLATFORM="aix-xlc" ;;
+ia64*-hpux*)
+  PLATFORM="hpuxi-acc-32" ;;
+*-hpux*)
+  PLATFORM="hpux-g++" ;;
+*-irix*)
+  PLATFORM="irix-cc" ;;
+x86_64-redhat-linuxe4)
+  PLATFORM="linux-g++-64" ;;
+x86_64*-linux*)
+  PLATFORM="rhel5-g++-64" ;;
+i?86*-linuxe4)
+  PLATFORM="linux-g++" ;;
+i?86*-linux*)
+  PLATFORM="rhel5-g++" ;;
+*-osf*)
+  PLATFORM="tru64-g++" ;;
+i?86*-solaris*)
+  PLATFORM="solarisx86-cc59" ;;
+*-solaris2.8)
+  PLATFORM="solaris-g++" ;;
+*-solaris*)
+  PLATFORM="solaris-cc59" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+(cd Qt4
+ ${_qtdir:-${SB_VAR_LIBQT}}/bin/qmake -spec ${PLATFORM} \
+ -o Makefile qscintilla.pro)
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C Qt4
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd Qt4
+ cat >>qscintilla.pro <<_EOT_
+DESTDIR = ${_libdir}
+_EOT_
+
+ ${_qtdir:-${SB_VAR_LIBQT}}/bin/qmake -spec ${PLATFORM} \
+ -o Makefile qscintilla.pro
+
+ gmake all
+
+ ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+ ${SB_INSTALL_PREFIX}/include/Qsci ${_datadir}/translations
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 Qsci/qsci* \
+ ${SB_INSTALL_PREFIX}/include/Qsci
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 qscintilla*.qm \
+ ${_datadir}/translations)
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX_LIB}
+]]>
+      </install>
+    </module>
+
+    <module name="python-2.6.7">
+      <install-name>libqt47</install-name>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="qt" var="PYQT" install-name="libqt47"
+          module="PyQt-2.6.7">v&gt;=4.7.4</depend>
+        <depend program="qscintilla" var="QSCINTILLA" module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v==2.5.1</depend>
+        <depend program="qscintilla" var="QSCINTILLA"
+          systype="hppa*-hpux*|*-osf*|*-solaris2.8">v==2.5.1</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+_pysubdir="python26"
+
+_install_prefix="${SB_VAR_PYQT_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+(cd Python
+ PYTHONPATH=${_install_prefix} \
+ python configure.py \
+ --protected-is-public \
+ -d "${_install_prefix}/PyQt4" \
+ -n ${SB_VAR_QSCINTILLA_INC} \
+ -o ${SB_VAR_QSCINTILLA_LIB}/${_gccsubdir} \
+ -p 4 -v ${_install_prefix}/share)
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_SED} -i -e "\
+s|^LINK = g++|LINK = ${SB_VAR_PYTHON}/lib/python2.6/config/ld_so_aix \
+g++ -Wl,-bI:${SB_VAR_PYTHON}/lib/python2.6/config/python.exp|;" \
+  Python/Makefile ;;
+esac
+
+# The above --protected-is-public hack doesn't appear to be sufficient
+${SB_PATH_SED} -i -e \
+'s|^CXXFLAGS.*|& -Dprotected=public|' Python/Makefile
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C Python
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -C Python install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/PyQt4/Qsci.*
+rm -rf ${_install_prefix}/share/Qsci
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44"
+    systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="qt" var="LIBQT" install-name="libqt47"
+          module="gcc44">v&gt;=4.7.4</depend>
+        <depend program="qt" install-name="libqt47" module="gcc44"
+          append="bin/gcc44" add-path="prepend">v&gt;=4.7.4</depend>
+        <depend program="perl" var="PERL"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  PLATFORM="aix-g++" ;;
+ia64*-hpux*)
+  PLATFORM="hpuxi-g++-32" ;;
+*-hpux*)
+  PLATFORM="hpux-g++" ;;
+*-irix*)
+  PLATFORM="irix-g++" ;;
+x86_64-redhat-linuxe4)
+  PLATFORM="linux-g++-64" ;;
+x86_64*-linux*)
+  PLATFORM="rhel5-g++-64" ;;
+i?86*-linuxe4)
+  PLATFORM="linux-g++" ;;
+i?86*-linux*)
+  PLATFORM="rhel5-g++" ;;
+*-osf*)
+  PLATFORM="tru64-g++" ;;
+i?86*-solaris*)
+  PLATFORM="solarisx86-g++" ;;
+*-solaris*)
+  PLATFORM="solaris-g++" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+(cd Qt4
+ ${SB_PATH_SED} -i -e "\
+s!^DESTDIR =.*!DESTDIR = ${SB_BUILD_PREFIX}/qt/lib!" qscintilla.pro
+
+ qmake -spec ${PLATFORM} -o Makefile qscintilla.pro
+
+ ${SB_PATH_SED} -i -e "\
+/LFLAGS/ s!-Wl\(.*${SB_VAR_LIBQT_LIB}/${_gcc_subdir}\)!\
+-Wl\1:${SB_VAR_GCC_RT_LIB} -L${SB_VAR_GCC_RT_LIB}!;" Makefile)
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C Qt4
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd Qt4
+ cat >>qscintilla.pro <<_EOT_
+DESTDIR = ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}
+_EOT_
+
+ qmake -spec ${PLATFORM} -o Makefile qscintilla.pro
+
+ ${SB_PATH_SED} -i -e "\
+/LFLAGS/ s!-Wl\(.*${SB_VAR_LIBQT_LIB}/${_gcc_subdir}\)!\
+-Wl\1:${SB_VAR_GCC_RT_LIB} -L${SB_VAR_GCC_RT_LIB}!;" Makefile
+
+ gmake all)
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gcc_subdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="python-2.7.2">
+      <install-name>libqt47</install-name>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="qt" var="PYQT" install-name="libqt47"
+          module="PyQt-2.7.2">v&gt;=4.7.4</depend>
+        <depend program="qscintilla" var="QSCINTILLA" module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v==2.5.1</depend>
+        <depend program="qscintilla" var="QSCINTILLA"
+          systype="hppa*-hpux*|*-osf*|*-solaris2.8">v==2.5.1</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+_pysubdir="python27"
+
+_install_prefix="${SB_VAR_PYQT_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+(cd Python
+ PYTHONPATH=${_install_prefix} \
+ python configure.py \
+ --protected-is-public \
+ -d "${_install_prefix}/PyQt4" \
+ -n ${SB_VAR_QSCINTILLA_INC} \
+ -o ${SB_VAR_QSCINTILLA_LIB}/${_gccsubdir} \
+ -p 4 -v ${_install_prefix}/share)
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_SED} -i -e "\
+s|^LINK = g++|LINK = ${SB_VAR_PYTHON}/lib/python2.7/config/ld_so_aix \
+g++ -Wl,-bI:${SB_VAR_PYTHON}/lib/python2.7/config/python.exp|;" \
+  Python/Makefile ;;
+esac
+
+# The above --protected-is-public hack doesn't appear to be sufficient
+${SB_PATH_SED} -i -e \
+'s|^CXXFLAGS.*|& -Dprotected=public|' Python/Makefile
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C Python
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -C Python install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${_install_prefix}/PyQt4/Qsci.*
+rm -rf ${_install_prefix}/share/Qsci
+]]>
+      </uninstall>
+    </module>
+  </program>
+</programs>
