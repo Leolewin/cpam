@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="CPAN-Meta-YAML" version="0.004" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="120025b9fd39b9dbfeb6ffc5f4a2dd8d"
+        checksum-type="md5" size="29590"
+        path="src/CPAN-Meta-YAML-0.004.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/CPAN/Meta/YAML/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/CPAN/Meta/YAML/.packlist
+rmdir ${_installsitearch}/auto/CPAN/Meta/YAML
+rmdir ${_installsitearch}/auto/CPAN/Meta 2>/dev/null
+rmdir ${_installsitearch}/auto/CPAN 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<CPAN::Meta::YAML|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
