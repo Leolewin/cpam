@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="scribus" version="1.3.3.13" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}133</install-name>
+
+    <sources>
+      <source checksum="e698b0d118c7f037e57163cba302d96e"
+        checksum-type="md5" size="14923426"
+        path="src/scribus-1.3.3.13.tar.bz2"/>
+      <patch checksum="3387ccf58b76a90e2426342d1f47b29e"
+        checksum-type="md5" size="36045"
+        path="src/scribus-1.3.3.13.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="cups" var="CUPS"
+        add-path="prepend">v==1.4.8</depend>
+      <depend program="cmake" install-name="cmake28"
+        add-path="prepend" type="build">v&gt;=2.8.5</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="python" var="PYTHON" install-name="python26"
+        add-path="prepend">v&gt;=2.6.7</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf24"
+        add-path="prepend">v&gt;=2.4.6</depend>
+      <depend program="gcc" var="GCC" install-name="gcc44"
+        add-path="prepend" systype="*-osf*">v&gt;=4.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="ghostscript" install-name="ghostscript90"
+        add-path="prepend">v&gt;=9.01</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="jpeg" var="LIBJPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="lcms" var="LIBLCMS"
+        install-name="liblcms11">v&gt;=1.19</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="qt" var="LIBQT" install-name="libqt33"
+        add-path="prepend">v&gt;=3.3.8</depend>
+      <depend program="qt" var="LIBQT" install-name="libqt33"
+        module="gcc44" add-path="prepend"
+        systype="*-osf*">v&gt;=3.3.8</depend>
+      <depend program="tiff" var="LIBTIFF"
+        install-name="libtiff39">v&gt;=3.9.5</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="*-osf*"/>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+export DOTQTDIR=${SB_BUILD_PREFIX}
+export QTDIR=${SB_VAR_LIBQT}
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc -qrtti \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib -Wl,-bmaxdata:0x80000000"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -D_HPUX_SOURCE -z +O2 +Onofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -mt -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -D_HPUX_SOURCE -mt -z +O2 +Onofltacc \
++Olit=all +DAportable +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -mt -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -D_HPUX_SOURCE -mt -z +O2 +Onofltacc \
++Olit=all +Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+rm -rf CMakeCache.txt CMakeFiles Makefile \
+cmake_install.cmake CMakeOutput.log CMakeTmp
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}${SB_VAR_GCC+/gcc44}/pkgconfig:\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:${SB_VAR_LIBLCMS_LIB}/pkgconfig:\
+${SB_VAR_LIBJPEG_LIB}/pkgconfig:${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBXML_LIB}/pkgconfig:${SB_VAR_LIBTIFF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig:\
+${SB_VAR_LIBQT_LIB}${SB_VAR_GCC+/gcc44}/pkgconfig\
+${SB_VAR_CUPS+:${SB_VAR_CUPS_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+CMAKE_INCLUDE_PATH="${SB_VAR_LIBCAIRO_INC}:${SB_VAR_FCPACKAGE_INC}:\
+${SB_VAR_LIBTTF_INC}:${SB_VAR_LIBTTF_INC}/freetype2:\
+${SB_VAR_GETTEXT_INC}:${SB_VAR_LIBLCMS_INC}:${SB_VAR_LIBJPEG_INC}:\
+${SB_VAR_LIBPNG_INC}:${SB_VAR_LIBXML_INC}:${SB_VAR_LIBTIFF_INC}:\
+${SB_VAR_LIBZ_INC}:${SB_VAR_PYTHON_INC}:\
+${SB_VAR_LIBQT_INC}${SB_VAR_GCC+/gcc44}\
+${SB_VAR_CUPS+:${SB_VAR_CUPS_INC}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_INC}}" \
+CMAKE_LIBRARY_PATH="${SB_VAR_LIBCAIRO_LIB}:${SB_VAR_FCPACKAGE_LIB}:\
+${SB_VAR_LIBTTF_LIB}:${SB_VAR_GETTEXT_LIB}:\
+${SB_VAR_LIBLCMS_LIB}:${SB_VAR_LIBJPEG_LIB}:${SB_VAR_LIBPNG_LIB}:\
+${SB_VAR_LIBXML_LIB}:${SB_VAR_LIBTIFF_LIB}:${SB_VAR_LIBZ_LIB}:\
+${SB_VAR_PYTHON_LIB}/python2.6/config:\
+${SB_VAR_LIBQT_LIB}${SB_VAR_GCC+/gcc44}\
+${SB_VAR_CUPS+:${SB_VAR_CUPS_LIB}}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}" \
+CMAKE_INSTALL_RPATH="${SB_VAR_LIBCAIRO_LIB};${SB_VAR_FCPACKAGE_LIB};\
+${SB_VAR_LIBTTF_LIB};${SB_VAR_GETTEXT_LIB};${SB_VAR_LIBLCMS_LIB};\
+${SB_VAR_LIBJPEG_LIB};${SB_VAR_LIBPNG_LIB};${SB_VAR_LIBXML_LIB};\
+${SB_VAR_LIBTIFF_LIB};${SB_VAR_LIBZ_LIB};\
+${SB_VAR_PYTHON_LIB}/python2.6/config;\
+${SB_VAR_LIBQT_LIB}${SB_VAR_GCC+/gcc44}\
+${SB_VAR_CUPS+;${SB_VAR_CUPS_LIB}}\
+${SB_VAR_LIBICONV+;${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_GCC_RT+;${SB_VAR_GCC_RT_LIB}};${SB_INSTALL_PREFIX}/lib" \
+cmake ${ARGS+${ARGS}} \
+. ${LDFLAGS+-DCMAKE_EXE_LINKER_FLAGS:STRING="${LDFLAGS}"} \
+-DWANT_CAIRO=1 -DCMAKE_INSTALL_PREFIX:PATH=${SB_INSTALL_PREFIX} \
+-DSHAREDIR="${_datadir}/" -DDOCDIR="${_docdir}/" \
+-DMANDIR="${SB_INSTALL_PREFIX}/man/" \
+-DLIBDIR="${SB_INSTALL_PREFIX_LIB}/"
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake VERBOSE=1
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install VERBOSE=1
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 19" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update cups dependency from 1.3.9 to
+1.4.8</para></item>
+        <item><para>Update cmake dependency from 2.4.8 to
+2.8.5</para></item>
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update ghostscript dependency from 8.63 to
+9.01</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b</para></item>
+        <item><para>Update lcms dependency from 1.17 to
+1.19</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+1.4.4</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update tiff dependency from 3.8.2 to
+3.9.5</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
