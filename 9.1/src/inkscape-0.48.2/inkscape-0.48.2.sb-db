@@ -1,0 +1,194 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="inkscape" version="0.48.2" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}048</install-name>
+
+    <sources>
+      <source checksum="f60b98013bd1121b2cc301f3485076ba"
+        checksum-type="md5" size="19583331"
+        path="src/inkscape-0.48.2.tar.bz2"/>
+      <patch checksum="de9e5786d74bd22e35687f531bd8ebfd"
+        checksum-type="md5" size="53826"
+        path="src/inkscape-0.48.2.tww.patch"/>
+      <patch checksum="8290c64548aaea83b70769521ccf54de"
+        checksum-type="md5" size="422931"
+        path="src/inkscape-0.48.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ImageMagick" var="IMAGEMAGICK"
+        install-name="imagemagick66">v&gt;=6.6.6</depend>
+      <depend program="aspell" var="ASPELL"
+        install-name="aspell06">v&gt;=0.60.6.1</depend>
+      <depend program="intltool" install-name="intltool041"
+        add-path="prepend" type="build">v==0.41.1</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="atkmm" var="LIBATKMM"
+        install-name="libatkmm222">v&gt;=2.22.5</depend>
+      <depend program="boost" var="LIBBOOST"
+        install-name="libboost147">v&gt;=1.47.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="cairomm" var="LIBCAIROMM"
+        install-name="libcairomm110">v&gt;=1.10.0</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gc" var="LIBGC"
+        install-name="libgc72">v&gt;=7.2</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="glibmm" var="LIBGLIBMM"
+        install-name="libglibmm224">v&gt;=2.24.2</depend>
+      <depend program="gnome-vfsmm" var="LIBGNOMEVFSMM"
+        install-name="libgnomevfsmm226">v&gt;=2.26.0</depend>
+      <depend program="gsl" var="LIBGSL"
+        install-name="libgsl111">v&gt;=1.11</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="gtkmm" var="LIBGTKMM"
+        install-name="libgtkmm222">v&gt;=2.22.0</depend>
+      <depend program="lcms" var="LIBLCMS"
+        install-name="liblcms11">v&gt;=1.19</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libsigc++" var="LIBSIGCXX"
+        install-name="libsigc++22">v&gt;=2.2.10</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11">v&gt;=1.1.26</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="pangomm" var="LIBPANGOMM"
+        install-name="libpangomm228">v&gt;=2.28.2</depend>
+      <depend program="poppler" var="LIBPOPPLER"
+        install-name="libpoppler016">v&gt;=0.16.7</depend>
+      <depend program="popt" var="LIBPOPT"
+        install-name="libpopt116">v&gt;=1.16</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v==1.2.5</depend>
+      <depend program="gcc" add-path="prepend"
+        systype="!*-linuxe[56]">v==4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="!*-linuxe[56]"/>
+      <depend program="gnome" var="LIBGNOMEVFS"
+        module="gnome-vfs">v==2.32</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+_gcc_subdir="gcc44"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O1 -mcpu=powerpc"
+  CXXFLAGS="-O1 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-bbigtoc -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-irix*)
+  CFLAGS="-O2 -mips4"
+  CXXFLAGS="-O2 -mips4"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # to resolve linker bug finding -lgen with huge command-line
+  LDFLAGS="-L/usr/lib32" ;;
+i?86-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _aspell_lib=${SB_VAR_ASPELL_LIB} ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  _aspell_lib=${SB_VAR_ASPELL_LIB} ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+#CXXFLAGS="-I${SB_VAR_LIBPNG_INC} -I${SB_VAR_LIBZ_INC} \
+#-I${SB_VAR_GETTEXT_INC} ${CXXFLAGS:--O2}" \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_ASPELL_INC} -I${SB_VAR_LIBPNG_INC} \
+-I${SB_VAR_LIBZ_INC} -I${SB_VAR_LIBGC_INC} \
+-I${SB_VAR_GETTEXT_INC} -I${SB_VAR_LIBLCMS_INC} \
+-I${SB_VAR_LIBBOOST_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+-L${_aspell_lib:-${SB_VAR_ASPELL_LIB}/${_gcc_subdir}} \
+-L${SB_VAR_LIBPNG_LIB} -L${SB_VAR_LIBZ_LIB} \
+-L${SB_VAR_LIBGC_LIB} -L${SB_VAR_GETTEXT_LIB} \
+-L${SB_VAR_LIBLCMS_LIB} -L${SB_VAR_LIBBOOST_LIB} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${_aspell_lib:-${SB_VAR_ASPELL_LIB}/${_gcc_subdir}}:\
+${SB_VAR_LIBLCMS_LIB}:${SB_VAR_LIBGC_LIB}:\
+${SB_VAR_LIBBOOST_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_IMAGEMAGICK_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBATKMM_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIROMM_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBGLIBMM_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBGNOMEVFS_LIB}/pkgconfig:\
+${SB_VAR_LIBGNOMEVFSMM_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBGSL_LIB}/pkgconfig:${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBGTKMM_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBLCMS_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGOMM_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBPOPPLER_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBPOPT_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGCXX_LIB}/${SB_VAR_GCC_RT+${_gcc_subdir}/}pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig:${SB_VAR_LIBZ_LIB}/pkgconfig" \
+--disable-dependency-tracking --without-perl --without-python \
+--with-xft --enable-lcms --with-gnome-vfs --enable-poppler-cairo \
+${ARGS+${ARGS}} --datadir=${_datadir} --datarootdir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+  </program>
+</programs>
