@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="swatch" version="3.2.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}32</install-name>
+
+    <sources>
+      <source checksum="1162f1024cf07fc750ed4960d61ac4e8"
+        checksum-type="md5" size="31199"
+        path="src/swatch-3.2.3.tar.gz"/>
+      <patch checksum="6183bf5e38c302df016770586c31a629"
+        checksum-type="md5" size="669"
+        path="src/swatch-3.2.3.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="Date-Calc" module="5.12.2">v&gt;=6.3</depend>
+      <depend program="File-Tail"
+        module="5.12.2">v&gt;=0.99.3</depend>
+      <depend program="TimeDate" module="5.12.2">v&gt;=1.20</depend>
+      <depend program="coreutils"
+        install-name="coreutils811">v&gt;=8.11</depend>
+      <depend program="perl" var="PERL">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB="${SB_INSTALL_PREFIX_LIB}" \
+INSTALLSITEARCH="${SB_INSTALL_PREFIX_LIB}" \
+INSTALLSITELIB="${SB_INSTALL_PREFIX_LIB}" \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+rm -rf ${SB_INSTALL_PREFIX_LIB}/auto/swatch
+rm ${SB_INSTALL_PREFIX_LIB}/perllocal.pod
+
+# set search path to locate perl libraries
+${SB_PATH_SED} -i -e "\
+/^use Swatch::Actions/ {
+i\\
+use lib '${SB_INSTALL_PREFIX_LIB}';
+}" ${SB_INSTALL_PREFIX}/bin/swatch
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_datadir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 examples/* ${_datadir}
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <note type="usage">
+        <para>Unlike previous releases, the Perl File::Tail module is
+no longer used unless <command>--use-cpan-file-tail</command> is
+specified. The default is now the system tail program. Because the
+tail options require the GNU tail program, the default tail program is
+"gtail". The <command>--tail-program-name</command> and
+<command>--tail-args</command> options can be used to override the
+defaults.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
