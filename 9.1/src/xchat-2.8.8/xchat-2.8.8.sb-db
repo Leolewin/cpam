@@ -1,0 +1,259 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="xchat" version="2.8.8" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}28</install-name>
+
+    <sources>
+      <source checksum="6775c44f38e84d06c06c336b32c4a452"
+        checksum-type="md5" size="1509993"
+        path="src/xchat-2.8.8.tar.bz2"/>
+      <patch checksum="0e95bc76feef71d6cfb10dffdf69fd86"
+        checksum-type="md5" size="9337"
+        path="src/xchat-2.8.8.tww.patch"/>
+      <patch checksum="07747d73be376df68451ea34c463ba3d"
+        checksum-type="md5" size="20871"
+        path="src/xchat-2.8.8.include_config_h.patch"/>
+      <patch checksum="91e68d59f44d87987524fcf500e16a22"
+        checksum-type="md5" size="2429659"
+        path="src/xchat-2.8.8.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="dbus" var="DBUS" install-name="dbus12"
+        add-path="prepend">v&gt;=1.2.26</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+        add-path="prepend">v&gt;=2.22.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="gtkspell" var="LIBGTKSPELL"
+        install-name="libgtkspell20">v&gt;=2.0.16</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_FCPACKAGE+-I${SB_VAR_FCPACKAGE_INC}}" \
+LDFLAGS="${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} \
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_LIBPANGO+-L${SB_VAR_LIBPANGO_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_DBUS+${SB_VAR_DBUS_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTKSPELL+${SB_VAR_LIBGTKSPELL_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBOPENSSL+${SB_VAR_LIBOPENSSL_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+ac_cv_path_GCONFTOOL=no --datarootdir=${_datadir} \
+--datadir=${_datadir} --disable-plugin \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--enable-dbus --disable-textfe --disable-tcl --disable-perl \
+--disable-python --enable-gtkfe --disable-python --disable-plugin \
+--enable-openssl${SB_VAR_LIBOPENSSL+=${SB_VAR_LIBOPENSSL}} \
+--enable-spell=gtkspell --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake xchatlibdir="${SB_INSTALL_PREFIX}/lib" \
+xchatsharedir=${_datadir}
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install xchatlibdir="${SB_INSTALL_PREFIX}/lib" \
+xchatsharedir=${_datadir}
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 src/pixmaps/*.png \
+${_datadir}/pixmaps
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license">
+        <para>This program is released under the GPL with the
+additional exemption that compiling, linking, and/or using OpenSSL is
+allowed. You may provide binary packages linked to the OpenSSL
+libraries, provided that all other requirements of the GPL are
+met.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="2.8.6" to="2.8.8">
+        <item><para>Made balloon time adjustable via /set
+input_balloon_time.</para></item>
+        <item><para>Fixed a crash in the /SET command if a boolean
+value was loaded from config file that isn't set to 0 or
+1.</para></item>
+        <item><para>Added -on and -off parameters to the /SET command.
+This can be used to set bits, for example gui_tweaks. - Made scrolling
+backwards for the search window act better.</para></item>
+        <item><para>[2045483] Made ESC key close the search
+window.</para></item>
+        <item><para>Improved the reconnect logic. If a network is
+already open but disconnected, it'll now get re-used if you use the
+Network List and connect to that same network.</para></item>
+        <item><para>Improved scrollback reloading speed
+significantly.</para></item>
+        <item><para>[2957047] Handle CTCPs when IDmsg is used
+correctly.</para></item>
+        <item><para>[2987626] Allow /GHOST's password arg to be
+optional.</para></item>
+        <item><para>Added networks: 7-indonesia, ChattingAway,
+GeekShed, TURLINet.</para></item>
+        <item><para>When switching tabs, make the treeview only scroll
+if the selected item isn't visible
+[treeview-less-jumping.diff].</para></item>
+        <item><para>Selecting an item in the nickmenu will now copy it
+to clipboard.</para></item>
+        <item><para>New icons for notification area (systray): file
+offer, message and highlight.</para></item>
+        <item><para>Defined a comparison routine for contexts in
+Python.</para></item>
+        <item><para>For the auto-join command, added an 'x' filler for
+empty keys. This works around a bug in ircd-seven.</para></item>
+        <item><para>When a single channel MODE changes, xchat will no
+longer re-issue a MODE request for the titlebar display, but figure
+the new modes intelligently.</para></item>
+        <item><para>Various text event changes:</para>
+        <orderedlist>
+          <item><para>Added "Private Action", "Private Action to
+Dialog", "SSL Message".</para></item>
+          <item><para>Added "Identified text" parameter all the
+'action' events.</para></item>
+          <item><para>Added a $3 parameter to "Server
+Text".</para></item>
+        </orderedlist></item>
+        <items name="Perl">
+          <item><para>Fixed a bug that resulted in timer hooks being
+leaked because "return REMOVE" from a timer callback was not unhooking
+like it was supposed to</para></item>
+          <item><para>Reverted the unintentional change to how the
+server argument of print() and command() is interepreted when it is
+undef</para></item>
+          <item><para>Add hook_fd to the 'hooks' export
+tag</para></item>
+          <item><para>Fixed a leak in XS_Xchat_get_list(Vincent
+Pit)</para></item>
+          <item><para>Change Xchat::register so that scripts calling
+it without a name or version will still show up in the plugins and
+scripts window.</para></item>
+          <item><para>Added calls to PERL_SYS_INIT3 and PERL_SYS_TERM
+which are required on some platforms</para></item>
+          <item><para>Added some additional guards to prevents bits of
+scripts from spilling into each other</para></item>
+          <item><para>Added "modes", "win_ptr" and "xchatdirfs" to the
+list of keys that are returned by context_info()</para></item>
+          <item><para>Changed the information displayed in the
+"Plugins &amp; Scripts" for scripts that do not call register() to
+show up as "" for the name and description and "unknown" for the
+version</para></item>
+          <item><para>/reloadall will now reload scripts in the same
+order they were loaded</para></item>
+          <item><para>Make xchat_send_modes available as
+Xchat::send_modes</para></item>
+          <item><para>Add support for getting the network list using
+Xchat::get_list( "networks" )</para></item>
+          <item><para>Xchat::strip_code will now strip off ANSI escape
+codes as well</para></item>
+        </items>
+      </change>
+    </notes>
+  </program>
+</programs>
