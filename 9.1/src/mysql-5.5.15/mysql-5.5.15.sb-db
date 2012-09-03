@@ -1,0 +1,1696 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="mysql" version="5.5.15" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}5515</install-name>
+
+    <sources>
+      <source checksum="306b5549c7bd72e8e705a890db0da82b"
+        checksum-type="md5" size="23774015"
+        path="src/mysql-5.5.15.tar.gz"/>
+      <patch checksum="4df994220965da5833a52f5a03503592"
+        checksum-type="md5" size="41808"
+        path="src/mysql-5.5.15.tww.patch"/>
+      <patch checksum="e93cdb43ec110c0d4c73c5b24e890354"
+        checksum-type="md5" size="911395"
+        path="src/mysql-5.5.15.gnulib.patch"/>
+      <patch checksum="b222345cb5e0d0ef40849d1a9a021573"
+        checksum-type="md5" size="2969"
+        path="src/mysql-5.5.15.tww-gnulib.patch"/>
+      <patch checksum="53a4f4c571a3412cc08bb2d7025050e3"
+        checksum-type="md5" size="677886"
+        path="src/mysql-5.5.15.auto.patch"/>
+      <patch checksum="0e2f48eee3c608632a8110fd828e929d"
+        checksum-type="md5" size="28717"
+        path="src/irix_extra_syms.patch"
+        systype="*-irix*"/>
+      <patch checksum="f1184813118fe5c170ff6a1d025b6a84"
+        checksum-type="md5" size="2255"
+        path="src/bug_25285.patch"
+        arg="-p1" systype="*-irix*"/>
+      <patch checksum="f66abf701cacc13a0e1c3ab44c88ae00"
+        checksum-type="md5" size="1052"
+        path="src/osf_extra_syms.patch"
+        systype="*-osf*"/>
+      <patch checksum="88ebb1dff8a31df67958a9c1c51a1e3f"
+        checksum-type="md5" size="297"
+        path="src/aix_extra_syms.patch"
+        systype="*-aix*"/>
+      <patch checksum="fb3ed680e33e86c016f1b0b07764dad1"
+        checksum-type="md5" size="13697"
+        path="src/hpux1100.patch"
+        systype="*-hpux11.00"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <module name="default">
+      <dependencies>
+        <depend user="mysql"/>
+
+        <depend group="mysql"/>
+
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="cmake" install-name="cmake28"
+          add-path="prepend" type="build">v&gt;=2.8.5</depend>
+        <depend program="tcp_wrappers" var="TCPWRAP"
+          install-name="tcpwrap">v&gt;=7.6</depend>
+        <depend program="ncurses" var="NCURSES"
+          install-name="ncurses57">v&gt;=5.7</depend>
+        <depend program="readline" var="READLINE"
+          install-name="libreadline62">v&gt;=6.2</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="mysql" module="libruntime">v==5.5.15</depend>
+        <depend program="mysql" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==5.5.15</depend>
+        <depend program="mysql"
+          module="DBD-mysql-5.12.2">v==5.5.15</depend>
+        <depend program="mysql"
+          module="Class-DBI-mysql-5.12.2">v==5.5.15</depend>
+        <depend program="mysql" module="Time-Piece-MySQL-5.12.2"
+          systype="*-irix*|*-linux*|*-solaris*">v==5.5.15</depend>
+        <depend program="mysql"
+          module="MySQL-python-2.6.7">v==5.5.15</depend>
+        <depend program="mysql"
+          module="MySQL-python-2.7.2">v==5.5.15</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  #ARGS="--with-named-thread-libs=-lthread"
+  ARGS="-DHAVE_BZERO:INTERNAL=0" ;;
+ia64*-hpux*)
+  CPPFLAGS="-D_REENTRANT"
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.00*)
+  CPPFLAGS="-D_REENTRANT -DHPUX"
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # Do not export GnuLib symbols
+  LDFLAGS="-Wl,-h,gl_sockets_cleanup,-h,gl_sockets_startup,\
+-h,asnprintf,-h,gai_strerror,-h,freeaddrinfo,-h,getaddrinfo,\
+-h,getnameinfo,-h,inet_ntop,-h,printf_fetchargs,\
+-h,printf_parse,-h,rpl_snprintf,-h,vasnprintf" ;;
+*-hpux11.11*)
+  CPPFLAGS="-D_REENTRANT -DHPUX"
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CPPFLAGS="-D_REENTRANT"
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0 -diag_error 1035"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+
+  CC_LD_RT="-Wl,-rpath,"
+
+  # Well, this is ugly. MySQL tries to emulate libtool's convenience
+  # libraries, but doesn't unpack archives if there is no
+  # --whole-archive equivalent flag. It does not even use
+  # --whole-archive when it is available, instead it "uses" the symbols
+  # it wants to export. This causes issues on irix where symbols from
+  # object files are exported by the DSO automatically but symbols from
+  # archives and other DSO's are not. We add the
+  # -Wl,-hidden_symbol,_no_symbol_like_this_one to change this default
+  # behavior, and export symbols that come from these "convenience"
+  # archives.
+
+  LDFLAGS="-Wl,-hidden_symbol,_no_symbol_like_this_one" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings \
+-D_REENTRANT -nodtk"
+  CXX=cxx CXXFLAGS="-O2 -ieee -arch ev5 -model ansi \
+ -timplicit_local -msym -readonly_strings -D_REENTRANT"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2  -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+# Cmake ignores CPPFLAGS, so define it once here and then copy
+# it into CFLAGS and CXXFLAGS:
+CPPFLAGS="${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses} \
+${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+${CPPFLAGS+${CPPFLAGS}}"
+
+# CMake Defines:
+#   Cmake complains about manually specifying the various -DCURSES_*
+#   forms, because it thinks they are unused... but if we don't specify
+#   them manually, Cmake makes a (wrong) guess at the values and ends
+#   up using the system library path at link-time which is almost
+#   certainly incompatible with the RPATH versions used at runtime.
+# RPATHS in LDFLAGS:
+#   Cmake doesn't honour RPATH settings for uninstalled binaries, so
+#   when it runs them from the build tree, they cannot find the
+#   libraries they were linked with.  To workaround that, we specify
+#   all of the RPATH directories again in LDFLAGS.
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2} ${CPPFLAGS}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2} \
+${CPPFLAGS}" LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}\
+ ${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB} ${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB} ${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB} ${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+cmake . \
+-DCMAKE_VERBOSE_MAKEFILE=ON \
+-DCMAKE_INSTALL_PREFIX="${SB_INSTALL_PREFIX}" \
+-DCMAKE_LIBRARY_PATH="${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_LIB}}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_LIB}}\
+${SB_VAR_TCPWRAP+;${SB_VAR_TCPWRAP_LIB}}" \
+-DCMAKE_INSTALL_RPATH="${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_GCC_RT+;${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_LIB}}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_LIB}}" \
+-DCMAKE_INCLUDE_PATH="${SB_INSTALL_PREFIX}/include\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_INC}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_INC};${SB_VAR_NCURSES_INC}/ncurses}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_INC}}\
+${SB_VAR_TCPWRAP+;${SB_VAR_TCPWRAP_INC}}" \
+${SB_VAR_LIBZ+-DWITH_ZLIB=system \
+-DZLIB_INCLUDE_DIR:PATH=${SB_VAR_LIBZ_INC}} \
+-DINSTALL_INFODIR:STRING=info -DINSTALL_MANDIR:STRING=man \
+-DINSTALL_SCRIPTDIR:STRING=bin -DINSTALL_DOCDIR:STRING=${_docdir} \
+-DINSTALL_DOCREADMEDIR:STRING=${_docdir} \
+-DINSTALL_SHAREDIR:STRING=${_datadir} \
+-DINSTALL_SUPPORTFILESDIR:STRING=${_datadir} \
+${_localstatedir+-DINSTALL_MYSQLDATADIR:STRING=${_localstatedir} \
+-DMYSQL_DATADIR:PATH=${_localstatedir} \
+-DMYSQL_UNIX_ADDR=${_localstatedir}/run/mysql.sock} \
+$(test "${_localstatedir+set}" = set || echo -DWITHOUT_SERVER:BOOL=ON) \
+-DSYSCONFDIR:PATH=${_sysconfdir} \
+-DWITH_SSL=bundled \
+${SB_VAR_TCPWRAP+-DWITH_LIBWRAP:BOOL=ON} \
+${ARGS+${ARGS}} -DENABLED_PROFILING:BOOL=OFF \
+-DENABLED_LOCAL_INFILE:BOOL=ON \
+-DWITH_LIBEDIT:BOOL=OFF \
+-DWITH_READLINE:BOOL=ON \
+-DWITH_EXTRA_CHARSETS:STRING=all \
+-DENABLE_DTRACE:BOOL=OFF \
+-DWITH_DEBUG:BOOL=OFF
+
+# fix up -config script
+${SB_PATH_SED} -i -e "\
+s!-L\${pkglibdir} !-L\${pkglibdir} ${CC_LD_RT}\${pkglibdir} !" \
+scripts/mysql_config.sh
+
+chmod +x gnulib/configure gnulib/config.guess gnulib/config.sub \
+gnulib/install-sh gnulib/depcomp gnulib/missing
+
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00)
+   (cd gnulib
+    ./configure CC=cc CFLAGS="${CFLAGS} +Z") ;;
+ esac)
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00*)
+   gmake -C gnulib ;;
+ esac)
+
+gmake
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+export MTR_MAX_TEST_FAIL=0
+gmake test-force
+
+: Ignore failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# remove test directory
+rm -fr ${SB_INSTALL_PREFIX}/mysql-test
+rm -fr ${SB_INSTALL_PREFIX}/sql-bench
+rm -fr ${SB_INSTALL_PREFIX}/data
+
+# remove mysql_config
+rm ${SB_INSTALL_PREFIX}/bin/mysql_config
+ 
+# Use our perl
+for _script in mysqld_multi mysqlaccess mysql_zap \
+mysql_find_rows mysql_setpermission mysql_fix_extensions \
+mysqlhotcopy mysql_convert_table_format mysqldumpslow; do 
+  ${SB_PATH_SED} -i -e "\
+s|/usr/bin/perl|${SB_VAR_PERL}/bin/perl|" \
+ ${SB_INSTALL_PREFIX}/bin/${_script}
+done
+
+if [ "${_localstatedir+set}" = set ]; then
+  _mysql_user=mysql
+  _mysql_group=mysql
+
+  ${SB_PATH_INSTALL} -m 755 -o ${_mysql_user} -g ${_mysql_group} \
+    -d ${_localstatedir} ${_localstatedir}/mysql
+
+  # directory for pid file
+  ${SB_PATH_INSTALL} -m 755 -o ${_mysql_user} -g ${_mysql_group} \
+    -d ${_localstatedir}/run
+
+  # directory for log files
+  ${SB_PATH_INSTALL} -m 755 -o ${_mysql_user} -g ${_mysql_group} \
+    -d ${_localstatedir}/log
+  ${SB_PATH_INSTALL} -m 755 -o ${_mysql_user} -g ${_mysql_group} \
+    -d ${_localstatedir}/log/innodb
+
+  # directory for InnoDB data files
+  ${SB_PATH_INSTALL} -m 755 -o ${_mysql_user} -g ${_mysql_group} \
+    -d ${_localstatedir}/innodb
+
+  # config file
+  ${SB_PATH_INSTALL} -m 755 -o ${_mysql_user} -g ${_mysql_group} \
+    -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o ${_mysql_user} -g ${_mysql_group} \
+    /dev/null ${_sysconfdir}/my.cnf
+  cat >${_sysconfdir}/my.cnf <<_EOT_
+[client]
+port                      = 3306
+socket                    = ${_localstatedir}/run/mysql.sock
+
+[mysqld_safe]
+err-log                   = ${_localstatedir}/log/mysql.err
+socket                    = ${_localstatedir}/run/mysql.sock
+
+[mysqld]
+port                      = 3306
+user                      = mysql
+pid-file                  = ${_localstatedir}/run/mysqld.pid
+socket                    = ${_localstatedir}/run/mysql.sock
+log                       = ${_localstatedir}/log/mysql.log
+basedir                   = ${SB_INSTALL_PREFIX}
+datadir                   = ${_localstatedir}
+language                  = ${_datadir}/english
+character-sets-dir        = ${_datadir}/charsets
+
+innodb_data_home_dir      = ${_localstatedir}/innodb
+innodb_log_group_home_dir = ${_localstatedir}/log/innodb
+_EOT_
+else
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/my.cnf
+fi
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Class-DBI-mysql-5.12.2">
+      <build-name>Class-DBI-mysql-1.00</build-name>
+
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <sources>
+        <source checksum="3bee2423ba61348a54201f4aca25e79b"
+          checksum-type="md5" size="6411"
+          path="src/Class-DBI-mysql-1.00.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="Class-DBI"
+          module="5.12.2">v&gt;=3.0.17</depend>
+        <depend program="mysql"
+          module="DBD-mysql-5.12.2">v==5.5.15</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="mysql" module="libruntime"
+          add-path="prepend">v==5.5.15</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+PERLLIB="${SB_INSTALL_PREFIX_LIB}/perl5122" \
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX} \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test auto-include="0">
+<![CDATA[
+PERLLIB=${_perl_libdir} gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_installsitearch="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+while read _file; do
+  rm ${_file}
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done < ${_installsitearch}/auto/Class/DBI/mysql/.packlist
+
+rm ${_installsitearch}/auto/Class/DBI/mysql/.packlist
+rmdir ${_installsitearch}/auto/Class/DBI/mysql
+rmdir ${_installsitearch}/auto/Class/DBI 2>/dev/null
+rmdir ${_installsitearch}/auto/Class 2>/dev/null
+rmdir ${_installsitearch}/auto 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Class::DBI::mysql|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+[ ! -s ${_installsitearch}/perllocal.pod ] && \
+rm ${_installsitearch}/perllocal.pod
+
+rmdir ${_installsitearch}/Bundle 2>/dev/null
+rmdir ${_installsitearch}/Class 2>/dev/null
+rmdir ${_installsitearch} 2>/dev/null || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="MySQL-python-2.7.2">
+      <build-name>MySQL-python-1.2.3</build-name>
+
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <sources>
+        <source checksum="215eddb6d853f6f4be5b4afc4154292f"
+          checksum-type="md5" size="70305"
+          path="src/MySQL-python-1.2.3.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="distribute" var="DISTRIBUTE"
+          module="2.7.2">v&gt;=0.6.21</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="mysql" var="MYSQL" module="libruntime"
+          add-path="prepend">v==5.5.15</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+rpath=${SB_VAR_MYSQL_LIB}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+PYTHONPATH="${SB_VAR_DISTRIBUTE}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+PYTHONPATH="${SB_VAR_DISTRIBUTE}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="DBD-mysql-5.12.2">
+      <build-name>DBD-mysql-4.020</build-name>
+
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <sources>
+        <source checksum="a2bf8808bbd45298e84dde06afbd58e9"
+          checksum-type="md5" size="137736"
+          path="src/DBD-mysql-4.020.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="DBI" module="5.12.2">v&gt;=1.616</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="mysql" module="libruntime"
+          add-path="prepend">v==5.5.15</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX} \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_perl_libdir}/include.paths.d
+cat >${_perl_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_perl_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_installsitearch="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done < ${_installsitearch}/auto/DBD/mysql/.packlist
+
+rm ${_installsitearch}/auto/DBD/mysql/.packlist
+rmdir ${_installsitearch}/auto/DBD/mysql
+rmdir ${_installsitearch}/auto/DBD 2>/dev/null
+rmdir ${_installsitearch}/auto 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<DBD::mysql|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+[ ! -s ${_installsitearch}/perllocal.pod ] && \
+rm ${_installsitearch}/perllocal.pod
+
+rmdir ${_installsitearch}/Bundle 2>/dev/null
+rmdir ${_installsitearch}/DBD 2>/dev/null
+rmdir ${_installsitearch} 2>/dev/null || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Time-Piece-MySQL-5.12.2"
+    systype="*-irix*|*-linux*|*-solaris*">
+      <build-name>Time-Piece-MySQL-0.06</build-name>
+
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <sources>
+        <source checksum="be66a577f8790c16947d8e3e5a0e65a2"
+          checksum-type="md5" size="3870"
+          path="src/Time-Piece-MySQL-0.06.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="mysql" module="libruntime">v==5.5.15</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+PERLLIB="${SB_INSTALL_PREFIX_LIB}/perl5122" \
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX} \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+# ignore test failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_installsitearch="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+while read _file; do
+  rm ${_file}
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done < ${_installsitearch}/auto/Time/Piece/MySQL/.packlist
+
+rm ${_installsitearch}/auto/Time/Piece/MySQL/.packlist
+rmdir ${_installsitearch}/auto/Time/Piece/MySQL
+rmdir ${_installsitearch}/auto/Time/Piece 2>/dev/null
+rmdir ${_installsitearch}/auto/Time 2>/dev/null
+rmdir ${_installsitearch}/auto 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Time::Piece::MySQL|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+[ ! -s ${_installsitearch}/perllocal.pod ] && \
+rm ${_installsitearch}/perllocal.pod
+
+rmdir ${_installsitearch}/Bundle 2>/dev/null
+rmdir ${_installsitearch}/Time 2>/dev/null
+rmdir ${_installsitearch} 2>/dev/null || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <dependencies>
+        <depend user="mysql"/>
+
+        <depend group="mysql"/>
+
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="cmake" install-name="cmake28"
+          add-path="prepend" type="build">v&gt;=2.8.5</depend>
+        <depend program="tcp_wrappers" var="TCPWRAP"
+          install-name="tcpwrap">v&gt;=7.6</depend>
+        <depend program="ncurses" var="NCURSES"
+          install-name="ncurses57" module="64bit">v&gt;=5.7</depend>
+        <depend program="readline" var="READLINE"
+          install-name="libreadline62"
+          module="64bit">v&gt;=6.2</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="perl" add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_BASE}/mysql5515"
+_sysconfdir="/etc${SB_INSTALL_BASE}/mysql5515"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _bindir=bin/ppc64
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _bindir=bin/hpux64
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _bindir=bin/pa20_64
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _bindir=bin/mips4
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _bindir=bin/amd64
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _bindir=bin/sparcv9
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  ARGS="-DHAVE_BZERO:INTERNAL=0" ;;
+ia64*-hpux11*)
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O1 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch -D_REENTRANT"
+  CPPFLAGS="-D_REENTRANT"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch -D_REENTRANT"
+  CPPFLAGS="-D_REENTRANT"
+  CC_LD_RT="-Wl,+s,+b,"
+
+# Do not export GnuLib symbols
+  LDFLAGS="-Wl,-h,gl_sockets_cleanup,-h,gl_sockets_startup,\
+-h,asnprintf,-h,gai_strerror,-h,freeaddrinfo,-h,getaddrinfo,\
+-h,getnameinfo,-h,inet_ntop,-h,printf_fetchargs,\
+-h,printf_parse,-h,rpl_snprintf,-h,vasnprintf" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch -D_REENTRANT"
+  CPPFLAGS="-D_REENTRANT"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-64 -mips4 -Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-O2 -OPT:Olimit=0 -diag_error 1035"
+  CXX=CC CXXFLAGS="-64 -mips4 \
+-Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134 -woff 1429 -O2 -OPT:Olimit=0"
+  LDFLAGS="-64 -mips4"
+  CC_LD_RT="-Wl,-rpath,"
+
+  LDFLAGS="-64 -mips4 -Wl,-hidden_symbol,_no_symbol_like_this_one" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+  LDFLAGS="-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v9"
+  LDFLAGS="-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m64 -xarch=sparc"
+  LDFLAGS="-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+CPPFLAGS="${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses} \
+${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+${CPPFLAGS+${CPPFLAGS}}"
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2} ${CPPFLAGS}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2} ${CPPFLAGS}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}\
+ ${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE}/${_libdir} \
+${CC_LD_RT}${SB_VAR_READLINE}/${_libdir}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ}/${_libdir} \
+${CC_LD_RT}${SB_VAR_LIBZ}/${_libdir}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES}/${_libdir} \
+${CC_LD_RT}${SB_VAR_LIBZ}/${_libdir}} \
+${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP}/${_libdir}} \
+${LDFLAGS+${LDFLAGS}}" \
+cmake . \
+-DCMAKE_VERBOSE_MAKEFILE=ON \
+-DCMAKE_INSTALL_PREFIX="${SB_INSTALL_PREFIX}" \
+-DCMAKE_LIBRARY_PATH="${SB_INSTALL_PREFIX}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ}/${_libdir}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES}/${_libdir}}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE}/${_libdir}}\
+${SB_VAR_TCPWRAP+;${SB_VAR_TCPWRAP}/${_libdir}}" \
+-DCMAKE_INSTALL_RPATH="${SB_INSTALL_PREFIX}/${_libdir}\
+${SB_VAR_GCC_RT+;${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ}/${_libdir}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES}/${_libdir}}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE}/${_libdir}}" \
+-DCMAKE_INCLUDE_PATH="${SB_INSTALL_PREFIX}/include\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_INC}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_INC};${SB_VAR_NCURSES_INC}/ncurses}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_INC}}\
+${SB_VAR_TCPWRAP+;${SB_VAR_TCPWRAP_INC}}" \
+${SB_VAR_LIBZ+-DWITH_ZLIB=system \
+-DZLIB_INCLUDE_DIR:PATH=${SB_VAR_LIBZ_INC}} \
+-DINSTALL_INFODIR:STRING=info -DINSTALL_MANDIR:STRING=man \
+-DINSTALL_SCRIPTDIR:STRING=bin -DINSTALL_DOCDIR:STRING=${_docdir} \
+-DINSTALL_DOCREADMEDIR:STRING=${_docdir} \
+-DINSTALL_SHAREDIR:STRING=${_datadir} \
+-DINSTALL_SUPPORTFILESDIR:STRING=${_datadir} \
+-DINSTALL_BINDIR:STRING=${_bindir} \
+-DINSTALL_LIBDIR:STRING=${_libdir} \
+-DINSTALL_PLUGINDIR:STRING=${_libdir}/plugin \
+${_localstatedir+-DINSTALL_MYSQLDATADIR:STRING=${_localstatedir} \
+-DMYSQL_DATADIR:PATH=${_localstatedir} \
+-DMYSQL_UNIX_ADDR=${_localstatedir}/run/mysql.sock} \
+$(test "${_localstatedir+set}" = set || echo -DWITHOUT_SERVER:BOOL=ON) \
+${_sysconfdir+-DSYSCONFDIR:PATH=${_sysconfdir}} \
+-DWITH_SSL=bundled \
+${SB_VAR_TCPWRAP+-DWITH_LIBWRAP:BOOL=ON} \
+${ARGS+${ARGS}} -DENABLED_PROFILING:BOOL=OFF \
+-DENABLED_LOCAL_INFILE:BOOL=ON \
+-DWITH_LIBEDIT:BOOL=OFF \
+-DWITH_READLINE:BOOL=ON \
+-DWITH_EXTRA_CHARSETS:STRING=all \
+-DENABLE_DTRACE:BOOL=OFF \
+-DWITH_DEBUG:BOOL=OFF
+
+# fix up -config script
+${SB_PATH_SED} -i -e "\
+s!-L\${pkglibdir} !-L\${pkglibdir} ${CC_LD_RT}\${pkglibdir} !" \
+scripts/mysql_config.sh
+
+chmod +x gnulib/configure gnulib/config.guess gnulib/config.sub \
+gnulib/install-sh gnulib/depcomp gnulib/missing
+
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00)
+   (cd gnulib
+    ./configure CC=cc CFLAGS="${CFLAGS} +Z") ;;
+ esac)
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00*)
+   gmake -C gnulib ;;
+ esac)
+
+gmake
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+export MTR_MAX_TEST_FAIL=0
+gmake test-force
+
+# Ignore failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C libmysql install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="MySQL-python-2.6.7">
+      <build-name>MySQL-python-1.2.3</build-name>
+
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <sources>
+        <source checksum="215eddb6d853f6f4be5b4afc4154292f"
+          checksum-type="md5" size="70305"
+          path="src/MySQL-python-1.2.3.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="distribute" var="DISTRIBUTE"
+          module="2.6.7">v&gt;=0.6.21</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="mysql" var="MYSQL" module="libruntime"
+          add-path="prepend">v==5.5.15</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cat >setup.cfg <<_EOT_
+[build_ext]
+rpath=${SB_VAR_MYSQL_LIB}
+_EOT_
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+PYTHONPATH="${SB_VAR_DISTRIBUTE}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+PYTHONPATH="${SB_VAR_DISTRIBUTE}/lib/${_pysubdir}" \
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--root / --single-version-externally-managed \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="libruntime">
+      <install-name>${SB_PROG_NAME}5515r</install-name>
+
+      <dependencies>
+        <depend user="mysql"/>
+
+        <depend group="mysql"/>
+
+        <depend program="mysql">v==5.5.15</depend>
+        <depend program="bison" install-name="bison24"
+          add-path="prepend" type="build">v&gt;=2.4.3</depend>
+        <depend program="cmake" install-name="cmake28"
+          add-path="prepend" type="build">v&gt;=2.8.5</depend>
+        <depend program="tcp_wrappers" var="TCPWRAP"
+          install-name="tcpwrap">v&gt;=7.6</depend>
+        <depend program="ncurses" var="NCURSES"
+          install-name="ncurses57">v&gt;=5.7</depend>
+        <depend program="readline" var="READLINE"
+          install-name="libreadline62">v&gt;=6.2</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="perl" var="PERL"
+          add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+_datadir="${SB_INSTALL_BASE}/mysql5515/share"
+_localstatedir="/var${SB_INSTALL_BASE}/mysql5515"
+_sysconfdir="/etc${SB_INSTALL_BASE}/mysql5515"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  #ARGS="--with-named-thread-libs=-lthread"
+  ARGS="-DHAVE_BZERO:INTERNAL=0" ;;
+ia64*-hpux*)
+  CPPFLAGS="-D_REENTRANT"
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.00)
+  CPPFLAGS="-D_REENTRANT -DHPUX"
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # Do not export GnuLib symbols
+  LDFLAGS="-Wl,-h,gl_sockets_cleanup,-h,gl_sockets_startup,\
+-h,asnprintf,-h,gai_strerror,-h,freeaddrinfo,-h,getaddrinfo,\
+-h,getnameinfo,-h,inet_ntop,-h,printf_fetchargs,\
+-h,printf_parse,-h,rpl_snprintf,-h,vasnprintf" ;;
+*-hpux11.11)
+  CPPFLAGS="-D_REENTRANT -DHPUX"
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch -D_REENTRANT -DHPUX"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CPPFLAGS="-D_REENTRANT"
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch -D_REENTRANT"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0 -diag_error 1035"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+
+  CC_LD_RT="-Wl,-rpath,"
+
+  # Well, this is ugly. MySQL tries to emulate libtool's convenience
+  # libraries, but doesn't unpack archives if there is no
+  # --whole-archive equivalent flag. It does not even use
+  # --whole-archive when it is available, instead it "uses" the symbols
+  # it wants to export. This causes issues on irix where symbols from
+  # object files are exported by the DSO automatically but symbols from
+  # archives and other DSO's are not. We add the
+  # -Wl,-hidden_symbol,_no_symbol_like_this_one to change this default
+  # behavior, and export symbols that come from these "convenience"
+  # archives.
+  
+  LDFLAGS="-Wl,-hidden_symbol,_no_symbol_like_this_one" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings \
+-D_REENTRANT -nodtk"
+  CXX=cxx CXXFLAGS="-O2 -ieee -arch ev5 -model ansi \
+ -timplicit_local -msym -readonly_strings -D_REENTRANT"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2  -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+# Cmake ignores CPPFLAGS, so define it once here and then copy
+# it into CFLAGS and CXXFLAGS:
+CPPFLAGS="${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses} \
+${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+${CPPFLAGS+${CPPFLAGS}}"
+
+# CMake Defines:
+#   Cmake complains about manually specifying the various -DCURSES_*
+#   forms, because it thinks they are unused... but if we don't specify
+#   them manually, Cmake makes a (wrong) guess at the values and ends
+#   up using the system library path at link-time which is almost
+#   certainly incompatible with the RPATH versions used at runtime.
+# RPATHS in LDFLAGS:
+#   Cmake doesn't honour RPATH settings for uninstalled binaries, so
+#   when it runs them from the build tree, they cannot find the
+#   libraries they were linked with.  To workaround that, we specify
+#   all of the RPATH directories again in LDFLAGS.
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2} ${CPPFLAGS}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2} ${CPPFLAGS}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}\
+ ${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB} ${CC_LD_RT}${SB_VAR_READLINE_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB} ${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB} ${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+cmake . \
+-DCMAKE_VERBOSE_MAKEFILE=ON \
+-DCMAKE_INSTALL_PREFIX="${SB_INSTALL_PREFIX}" \
+-DCMAKE_LIBRARY_PATH="${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_LIB}}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_LIB}}\
+${SB_VAR_TCPWRAP+;${SB_VAR_TCPWRAP_LIB}}" \
+-DCMAKE_INSTALL_RPATH="${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_GCC_RT+;${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_LIB}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_LIB}}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_LIB}}" \
+-DCMAKE_INCLUDE_PATH="${SB_INSTALL_PREFIX}/include\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_INC}}\
+${SB_VAR_NCURSES+;${SB_VAR_NCURSES_INC};${SB_VAR_NCURSES_INC}/ncurses}\
+${SB_VAR_READLINE+;${SB_VAR_READLINE_INC}}\
+${SB_VAR_TCPWRAP+;${SB_VAR_TCPWRAP_INC}}" \
+${SB_VAR_LIBZ+-DWITH_ZLIB=system \
+-DZLIB_INCLUDE_DIR:PATH=${SB_VAR_LIBZ_INC}} \
+-DINSTALL_INFODIR:STRING=info -DINSTALL_MANDIR:STRING=man \
+-DINSTALL_SCRIPTDIR:STRING=bin -DINSTALL_DOCDIR:STRING=${_docdir} \
+-DINSTALL_DOCREADMEDIR:STRING=${_docdir} \
+-DINSTALL_SHAREDIR:STRING=${_datadir} \
+-DINSTALL_SUPPORTFILESDIR:STRING=${_datadir} \
+${_localstatedir+-DINSTALL_MYSQLDATADIR:STRING=${_localstatedir} \
+-DMYSQL_DATADIR:PATH=${_localstatedir} \
+-DMYSQL_UNIX_ADDR=${_localstatedir}/run/mysql.sock} \
+$(test "${_localstatedir+set}" = set || echo -DWITHOUT_SERVER:BOOL=ON) \
+-DSYSCONFDIR:PATH=${_sysconfdir} \
+-DWITH_SSL=bundled \
+${SB_VAR_TCPWRAP+-DWITH_LIBWRAP:BOOL=ON} \
+${ARGS+${ARGS}} -DENABLED_PROFILING:BOOL=OFF \
+-DENABLED_LOCAL_INFILE:BOOL=ON \
+-DWITH_LIBEDIT:BOOL=OFF \
+-DWITH_READLINE:BOOL=ON \
+-DWITH_EXTRA_CHARSETS:STRING=all \
+-DENABLE_DTRACE:BOOL=OFF \
+-DWITH_DEBUG:BOOL=OFF
+
+# fix up -config script
+${SB_PATH_SED} -i -e "\
+s!-L\${pkglibdir} !-L\${pkglibdir} ${CC_LD_RT}\${pkglibdir} !" \
+scripts/mysql_config.sh
+
+chmod +x gnulib/configure gnulib/config.guess gnulib/config.sub \
+gnulib/install-sh gnulib/depcomp gnulib/missing
+
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00)
+   (cd gnulib
+    ./configure CC=cc CFLAGS="${CFLAGS} +Z") ;;
+ esac)
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00*)
+   gmake -C gnulib ;;
+ esac)
+
+gmake
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -C libmysql install
+gmake -C include install
+
+# Install mysql_config
+(cd scripts
+ cmake -DCMAKE_INSTALL_COMPONENT=Development \
+ -DCOMPONENT=Development -P cmake_install.cmake)
+]]>
+      </install>
+
+      <uninstall>
+        <remove-db-entry program="mysql"
+          module="DBD-mysql-5.12.2">v==5.5.15</remove-db-entry>
+        <remove-db-entry program="mysql"
+          module="Class-DBI-mysql-5.12.2">v==5.5.15</remove-db-entry>
+        <remove-db-entry program="mysql" module="Time-Piece-MySQL-5.12.2"
+          systype="*-irix*|*-linux*|*-solaris*">v==5.5.15</remove-db-entry>
+        <remove-db-entry program="mysql"
+          module="MySQL-python-2.6.7">v==5.5.15</remove-db-entry>
+        <remove-db-entry program="mysql"
+          module="MySQL-python-2.7.2">v==5.5.15</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="5.1.x" to="5.5.x">
+        <items name="Added Features">
+          <item><para>Scalability on multi-core CPUs is improved. The
+trend in hardware development now is toward more cores rather than
+continued increases in CPU clock speeds, which renders "wait until
+CPUs get faster" a nonviable means of improving database performance.
+Instead, it is necessary to make better use of multiple cores to
+maximally exploit the processing cycles they make available. MySQL 5.5
+takes advantage of features of SMP systems and tries to eliminate
+bottlenecks in MySQL architecture that hinder full use of multiple
+cores. The focus has been on InnoDB, especially locking and memory
+management. InnoDB I/O subsystem changes enable more effective use of
+available I/O capacity.</para></item>
+          <item><para>There is better access to execution and
+performance information. Diagnostic improvements include Performance
+Schema (a feature for monitoring MySQL Server execution at a low
+level), DTrace probes, expanded SHOW ENGINE INNODB STATUS output,
+Debug Sync, and a new status variable.</para></item>
+          <item><para>Several modifications improve operation of MySQL
+Server on Solaris.</para></item>
+          <item><para>The default storage engine for new tables is
+InnoDB rather than MyISAM.</para></item>
+          <item><para>Support for an interface for semisynchronous
+replication: A commit performed on the master side blocks before
+returning to the session that performed the transaction until at least
+one slave acknowledges that it has received and logged the events for
+the transaction. Semisynchronous replication is implemented through an
+optional plugin component.</para></item>
+          <item><para>Support for supplementary Unicode characters;
+that is, characters outside the Basic Multilingual Plane (BMP). These
+new Unicode character sets include supplementary characters: utf16,
+utf32, and utf8mb4.</para></item>
+          <item><para>Enhancements to table partitioning:</para>
+          <unorderedlist>
+            <item><para>Two new types of user-defined partitioning are
+supported: RANGE COLUMNS partitioning is an extension to RANGE
+partitioning; LIST COLUMNS partitioning is an extension to LIST
+partitioning. Each of these extensions provides two enhancements to
+MySQL partitioning capabilities:</para>
+            <para>It is possible to define partitioning ranges or
+lists based on DATE, DATETIME, or string values (such as CHAR or
+VARCHAR).</para>
+            <para>You can also define ranges or lists based on
+multiple column values when partitioning tables by RANGE COLUMNS or
+LIST COLUMNS, respectively. Such a range or list may refer to up to 16
+columns.</para>
+            <para>For tables defined using these partitioning types,
+partition pruning can now optimize queries with WHERE conditions that
+use multiple comparisons between (different) column values and
+constants, such as a = 10 AND b &gt; 5 or a &lt; "2005-11-25" AND b =
+10 AND c = 50.</para></item>
+            <item><para>It is now possible to delete all rows from one
+or more partitions of a partitioned table using the ALTER TABLE ...
+TRUNCATE PARTITION statement. Executing the statement deletes rows
+without affecting the structure of the table. The partitions named in
+the TRUNCATE PARTITION clause do not have to be
+contiguous.</para></item>
+            <item><para>Key caches are now supported for indexes on
+partitioned MyISAM tables, using the CACHE INDEX and LOAD INDEX INTO
+CACHE statements. In addition, a key cache can be defined for and
+loaded with indexes from an entire partitioned table, or for one or
+more partitions. In the latter case, the partitions are not required
+to be contiguous.</para></item>
+            <item><para>The new TO_SECONDS() function converts a date or
+datetime expression to a number of seconds since the year 0. This is a
+general-purpose function, but is useful for partitioning. You may use
+it in partitioning expressions, and partition pruning is supported for
+tables defined using such expressions.</para></item>
+          </unorderedlist></item>
+          <item><para>Support for the SQL standard SIGNAL and RESIGNAL
+statements.</para></item>
+          <item><para>Enhancements to XML functionality, including a
+new LOAD XML INFILE statement.</para></item>
+          <item><para>MySQL authentication supports two new
+capabilities, pluggable authentication and proxy users. With pluggable
+authentication, the server can use plugins to authenticate incoming
+client connections, and clients can load an authentication plugin that
+interacts properly with the corresponding server plugin. This
+capability enables clients to connect to the MySQL server with
+credentials that are appropriate for authentication methods other than
+the built-in MySQL authentication based on native MySQL passwords
+stored in the mysql.user table. For example, plugins can be created to
+use external authentication methods such as LDAP, Kerberos, PAM, or
+Windows login IDs. Proxy user capability enables a client who connects
+and authenticates as one user to be treated, for purposes of access
+control while connected, as having the privileges of a different user.
+In effect, one user impersonates another. Proxy capability depends on
+pluggable authentication because it is based on having an
+authentication plugin return to the server the user name that the
+connecting user impersonates.</para></item>
+          <item><para>MySQL releases are now built using CMake rather
+than the GNU autotools. Accordingly, the instructions for installing
+MySQL from source have been updated to discuss how to build MySQL
+using CMake.</para></item>
+          <item><para>The build process is now similar enough on all
+platforms, including Windows, that there are no longer sections
+dedicated to notes for specific platforms.</para></item>
+        </items>
+
+        <items name="Removed Features">
+          <item><para>The following constructs are obsolete and have
+been removed in MySQL 5.5. Where alternatives are shown, applications
+should be updated to use them.</para></item>
+          <item><para>The language system variable (use
+lc_messages_dir and lc_messages).</para></item>
+          <item><para>The log_bin_trust_routine_creators system
+variable (use log_bin_trust_function_creators).</para></item>
+          <item><para>The myisam_max_extra_sort_file_size system
+variable.</para></item>
+          <item><para>The record_buffer system variable (use
+read_buffer_size).</para></item>
+          <item><para>The sql_log_update system
+variable.</para></item>
+          <item><para>The Innodb_buffer_pool_read_ahead_rnd and
+Innodb_buffer_pool_read_ahead_seq status variables (use
+Innodb_buffer_pool_read_ahead and
+Innodb_buffer_pool_read_ahead_evicted).</para></item>
+          <item><para>The table_type system variable (use
+storage_engine).</para></item>
+          <item><para>The FRAC_SECOND modifier for the TIMESTAMPADD()
+function (use MICROSECOND).</para></item>
+          <item><para>The TYPE table option to specify the storage
+engine for CREATE TABLE or ALTER TABLE (use ENGINE).</para></item>
+          <item><para>The SHOW TABLE TYPES SQL statement (use SHOW
+ENGINES).</para></item>
+          <item><para>The SHOW INNODB STATUS and SHOW MUTEX STATUS SQL
+statements (use SHOW ENGINE INNODB STATUS SHOW ENGINE INNODB
+MUTEX).</para></item>
+          <item><para>The SHOW PLUGIN SQL statement (use SHOW
+PLUGINS).</para></item>
+          <item><para>The LOAD TABLE ... FROM MASTER and LOAD DATA
+FROM MASTER SQL statements (use mysqldump or mysqlhotcopy to dump
+tables and mysql to reload dump files).</para></item>
+          <item><para>The BACKUP TABLE and RESTORE TABLE SQL
+statements (use mysqldump or mysqlhotcopy to dump tables and mysql to
+reload dump files).</para></item>
+          <item><para>TIMESTAMP(N) data type: The ability to specify a
+display width of N (use without N).</para></item>
+          <item><para>The --default-character-set and
+--default-collation server options (use --character-set-server and
+--collation-server).</para></item>
+          <item><para>The --default-table-type server option (use
+--default-storage-engine).</para></item>
+          <item><para>The --delay-key-write-for-all-tables server
+option (use --delay-key-write=ALL).</para></item>
+          <item><para>The --enable-locking and --skip-locking server
+options (use --external-locking and
+--skip-external-locking).</para></item>
+          <item><para>The --log-bin-trust-routine-creators server
+option (use --log-bin-trust-function-creators).</para></item>
+          <item><para>The --log-long-format server
+option.</para></item>
+          <item><para>The --log-update server option.</para></item>
+          <item><para>The --master-xxx server options to set
+replication parameters (use the CHANGE MASTER TO statement instead):
+--master-host, --master-user, --master-password, --master-port,
+--master-connect-retry, --master-ssl, --master-ssl-ca,
+--master-ssl-capath, --master-ssl-cert, --master-ssl-cipher,
+--master-ssl-key.</para></item>
+          <item><para>The --safe-show-database server
+option.</para></item>
+          <item><para>The --skip-symlink and --use-symbolic-links
+server options (use --skip-symbolic-links and
+--symbolic-links).</para></item>
+          <item><para>The --sql-bin-update-same server
+option.</para></item>
+          <item><para>The --warnings server option (use
+--log-warnings).</para></item>
+          <item><para>The --no-named-commands option for mysql (use
+--skip-named-commands).</para></item>
+          <item><para>The --no-pager option for mysql (use
+--skip-pager).</para></item>
+          <item><para>The --no-tee option for mysql (use
+--skip-tee).</para></item>
+          <item><para>The --position option for mysqlbinlog (use
+--start-position).</para></item>
+          <item><para>The --all option for mysqldump (use
+--create-options).</para></item>
+          <item><para>The --first-slave option for mysqldump (use
+--lock-all-tables).</para></item>
+          <item><para>The --config-file option for mysqld_multi (use
+--defaults-extra-file).</para></item>
+          <item><para>The --set-variable=var_name=value and -O
+var_name=value general-purpose options for setting program variables
+(use --var_name=value).</para></item>
+          <item><para>The --with-pstack option for configure and the
+--enable-pstack option for mysqld.</para></item>
+        </items>
+      </change>
+
+      <change from="5.0.x" to="5.1.x">
+        <item><para>Partitioning. This capability enables
+distributing portions of individual tables across a file system,
+according to rules which can be set when the table is created. In
+effect, different portions of a table are stored as separate tables
+in different locations, but from the user point of view, the
+partitioned table is still a single table. Syntactically, this
+implements a number of new extensions to the CREATE TABLE, ALTER
+TABLE, and EXPLAIN ... SELECT statements. As of MySQL 5.1.6, queries
+against partitioned tables can take advantage of partition pruning.
+In some cases, this can result in query execution that is an order of
+magnitude faster than the same query against a nonpartitioned version
+of the same table. See Chapter 18, Partitioning, for further
+information on this functionality.</para></item>
+        <item><para>Row-based replication. Replication capabilities
+in MySQL originally were based on propagation of SQL statements from
+master to slave. This is called statement-based replication. As of
+MySQL 5.1.5, another basis for replication is available. This is
+called row-based replication. Instead of sending SQL statements to
+the slave, the master writes events to its binary log that indicate
+how individual table rows are effected. As of MySQL 5.1.8, a third
+option is available: mixed. This will use statement-based replication
+by default, and only switch to row-based replication in particular
+cases. See Section 16.1.2, "Replication Formats".</para></item>
+        <item><para>Plugin API. MySQL 5.1 adds support for a very
+flexible plugin API that enables loading and unloading of various
+components at runtime, without restarting the server. Although the
+work on this is not finished yet, plugin full-text parsers are a
+first step in this direction. This allows users to implement their
+own input filter on the indexed text, enabling full-text search
+capability on arbitrary data such as PDF files or other document
+formats. A pre-parser full-text plugin performs the actual parsing
+and extraction of the text and hands it over to the built-in MySQL
+full-text search. See Section 22.2, "The MySQL Plugin
+Interface".</para></item>
+        <item><para>Event scheduler. MySQL Events are tasks that
+run according to a schedule. When you create an event, you are
+creating a named database object containing one or more SQL
+statements to be executed at one or more regular intervals, beginning
+and ending at a specific date and time. Conceptually, this is similar
+to the idea of the Unix crontab (also known as a "cron job") or the
+Windows Task Scheduler. See Section 19.4, "Using the Event
+Scheduler".</para></item>
+        <item><para>Server log tables. Before MySQL 5.1, the server
+writes general query log and slow query log entries to log files. As
+of MySQL 5.1, the server's logging capabilities for these logs are
+more flexible. Log entries can be written to log files (as before) or
+to the general_log and slow_log tables in the mysql database. If
+logging is enabled, either or both destinations can be selected. The
+--log-output option controls the destination or destinations of log
+output. See Section 5.2.1, "Selecting General Query and Slow Query
+Log Output Destinations".</para></item>
+        <item><para>Upgrade program. The mysql_upgrade program
+(available as of MySQL 5.1.7) checks all existing tables for
+incompatibilities with the current version of MySQL Server and
+repairs them if necessary. This program should be run for each MySQL
+upgrade. See Section 4.4.8, "mysql_upgrade -- Check Tables for MySQL
+Upgrade".</para></item>
+        <item><para>MySQL Cluster. MySQL Cluster is now released as
+a separate product, based on MySQL 5.1 but with the addition of the
+NDBCLUSTER storage engine. Clustering support is no longer available
+in mainline MySQL 5.1 releases. MySQL Cluster releases are identified
+by a 3-part NDB version number; currently, the MySQL Cluster NDB 6.2
+and MySQL Cluster NDB 6.3 release series are available for production
+use.</para></item>
+        <item><para>Some of the changes in MySQL Cluster since
+MySQL 5.0 are listed here:</para>
+        <unorderedlist>
+          <item><para>MySQL Cluster replication. Replication
+between MySQL Clusters is now supported. It is now also possible to
+replicate between a MySQL Cluster and a noncluster database. See
+Section 17.6, "MySQL Cluster Replication".</para></item>
+          <item><para>MySQL Cluster disk data storage. Formerly,
+the NDBCLUSTER storage engine was strictly in-memory; now, it is
+possible to store Cluster data (but not indexes) on disk. This allows
+MySQL Cluster to scale upward with fewer hardware (RAM) requirements
+than previously. In addition, the Disk Data implementation includes a
+new "no-steal" restoration algorithm for fast node restarts when
+storing very large amounts of data (terabyte range). See Section
+17.5.9, "MySQL Cluster Disk Data Tables", for more
+information.</para></item>
+          <item><para>Improved backups for MySQL Cluster. A fault
+arising in a single data node during a Cluster backup no longer
+causes the entire backup to be aborted, as occurred in previous
+versions of MySQL Cluster.</para></item>
+        </unorderedlist></item>
+        <item><para>Many other new features and improvements have
+been made to the NDBCLUSTER storage engine in MySQL Cluster NDB 6.2
+and MySQL Cluster NDB 6.3; for more information about these, see
+Section 17.1.4, "MySQL Cluster Development Roadmap".</para></item>
+        <item><para>Backup of tablespaces. The mysqldump utility
+now supports an option for dumping tablespaces. Use -Y or
+--all-tablespaces to enable this functionality.</para></item>
+        <item><para>Improvements to INFORMATION_SCHEMA. MySQL 5.1
+provides much more information in its metadata database than was
+available in MySQL 5.0. New tables in the INFORMATION_SCHEMA database
+include FILES, EVENTS, PARTITIONS, PROCESSLIST, ENGINES, and
+PLUGINS.</para></item>
+        <item><para>XML functions with XPath support.
+ExtractValue() returns the content of a fragment of XML matching a
+given XPath expression. UpdateXML() replaces the element selected
+from a fragment of XML by an XPath expression supplied by the user
+with a second XML fragment (also user-supplied), and returns the
+modified XML. See Section 11.10, "XML Functions".</para></item>
+        <item><para>Load emulator. The mysqlslap program is
+designed to emulate client load for a MySQL server and report the
+timing of each stage. It works as if multiple clients were accessing
+the server. See Section 4.5.7, "mysqlslap -- Load Emulation
+Client".</para></item>
+      </change>
+
+      <note type="configuration">
+        <para>The default location for the database is
+<command>/var${SB_INSTALL_PREFIX}/mysql</command>. The default location for the
+"<command>my.cnf</command>" configuration file is
+<command>/etc${SB_INSTALL_PREFIX}/my.cnf</command>. The global configuration file
+<command>/etc${SB_INSTALL_PREFIX}/my.cnf</command> is read before the
+<command>~/.my.cnf</command> local file. The global configuration file
+is populated with the following defaults:</para>
+        <screen>
+[client]
+port                      = 3306
+socket                    = /var${SB_INSTALL_PREFIX}/run/mysql.sock
+
+[mysqld_safe]
+err-log                   = /var${SB_INSTALL_PREFIX}/log/mysql.err
+socket                    = /var${SB_INSTALL_PREFIX}/run/mysql.sock
+
+[mysqld]
+port                      = 3306
+user                      = mysql
+pid-file                  = /var${SB_INSTALL_PREFIX}/run/mysqld.pid
+socket                    = /var${SB_INSTALL_PREFIX}/run/mysql.sock
+log                       = /var${SB_INSTALL_PREFIX}/log/mysql.log
+basedir                   = ${SB_INSTALL_PREFIX}
+datadir                   = /var${SB_INSTALL_PREFIX}
+language                  = ${SB_INSTALL_BASE}/share/english
+character-sets-dir        = ${SB_INSTALL_BASE}/share/charsets
+
+innodb_data_home_dir      = /var${SB_INSTALL_PREFIX}/innodb
+innodb_log_group_home_dir = /var${SB_INSTALL_PREFIX}/log/innodb
+        </screen>
+
+        <para>Unlike previous releases, no database exists in
+<command>/var${SB_INSTALL_PREFIX}/mysql</command>. To create an initial
+database, execute the following as the user MySQL will run as (or, if
+executing it as root, make sure to chown/chgrp the MySQL database
+directory to the MySQL user after executing):</para>
+        <screen>
+# ${SB_INSTALL_PREFIX}/bin/mysql_install_db --user=mysql
+        </screen>
+
+        <para>The startup script assumes mysqld will be run as user
+"<command>mysql</command>". Therefore, prior to installing MySQL, a
+"<command>mysql</command>" user and "<command>mysql</command>" group
+should be created. The default user can be changed by modifying the
+"<command>user</command>" variable in the
+<command>/etc${SB_INSTALL_PREFIX}/my.cnf</command> configuration file.</para>
+        <para>On IRIX 6.5.3 and newer, the
+<command>CAP_SCHED_MGT</command> capability needs to be enabled for
+the "mysql" user or the mysqld binary,
+<command>${SB_INSTALL_PREFIX}/libexec/mysqld</command>, for thread
+creation to work:</para>
+        <screen>
+chcap "CAP_SCHED_MGT+epi" ${SB_INSTALL_PREFIX}/libexec/mysqld
+        </screen>
+      </note>
+
+      <note type="usage">
+        <para>The DBD::mysql, Class::DBI::mysql, and
+Time::Piece::MySQL Perl modules are available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>The directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+        <para>The MySQL-python Python module is available in the
+following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.x
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.x
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>
