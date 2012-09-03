@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="libffi" version="3.0.10" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}30</install-name>
+
+    <sources>
+      <source checksum="34cf8661d27c11f7c93e9115c8ece1c2"
+        checksum-type="md5" size="851641"
+        path="src/libffi-3.0.10.tar.bz2"/>
+      <patch checksum="2fcd65d2172ead52dc6cb6c900882d87"
+        checksum-type="md5" size="5162"
+        path="src/libffi-3.0.10.tww.patch"/>
+      <patch checksum="2bda2e3e21011f8a24d2601a2a9b6655"
+        checksum-type="md5" size="1851747"
+        path="src/libffi-3.0.10.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="!*-linux*">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="!*-linux*"/>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CFLAGS="-O2 -Wa,-KPIC"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--docdir=${_docdir} --disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir="${SB_INSTALL_PREFIX_LIB}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" libffi.pc
+]]>
+    </configure>
+
+    <test auto-include="0">
+      <dependencies>
+        <depend program="dejagnu" var="DEJAGNU"
+          install-name="dejagnu14"
+          add-path="prepend">v&gt;=1.4.4</depend>
+        <depend program="expect" install-name="expect54"
+          add-path="prepend">v&gt;=5.45</depend>
+        <depend program="gcc" var="GCC" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+      </dependencies>
+<![CDATA[
+set -x
+_dejagnu_datadir="${SB_VAR_DEJAGNU}/share"
+runtest --version
+
+# case "${SB_SYSTYPE}" in
+# hppa*)
+# mkdir -p ${SB_BUILD_PREFIX}/ldbin
+# cat >${SB_BUILD_PREFIX}/ldbin/gcc <<_EOF
+# #! /bin/sh
+# exec ${SB_VAR_GCC}/bin/gcc -B${SB_BUILD_PREFIX}/ldbin "\$@"
+# _EOF
+# chmod +x ${SB_BUILD_PREFIX}/ldbin/gcc
+# cat >${SB_BUILD_PREFIX}/ldbin/ld <<_EOF
+# #! /bin/sh
+# exec /usr/ccs/bin/ld -L${SB_BUILD_PREFIX}/.libs "\$@"
+# _EOF
+# chmod +x ${SB_BUILD_PREFIX}/ldbin/ld
+# export PATH=${SB_BUILD_PREFIX}/ldbin:$PATH
+# ;;
+# esac
+
+DEJAGNULIBS=${_dejagnu_datadir} gmake -k check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para align="center">libffi - Copyright (c) 1996-2009  Anthony
+Green, Red Hat, Inc and others.</para>
+        <para>See source files for details.</para>
+        <para>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:</para>
+        <para>The above copyright notice and this permission notice
+shall be included in all copies or substantial portions of the
+Software.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY
+OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</para>
+      </license>
+    </licenses>
+  </program>
+</programs>
