@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="bdb" version="0.6.5" revision="3"
+  systype="!*-hpux11.00">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="a6b1b04eede935f1de5327e365e350fa"
+        checksum-type="md5" size="321865"
+        path="src/bdb-0.6.5.tar.gz"/>
+      <patch checksum="349de87f826a4585cffe9d2b33ee6181"
+        checksum-type="md5" size="2271"
+        path="src/bdb-0.6.5.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="db" var="LIBDB"
+        install-name="libdb47">v&gt;=4.7.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-blibpath:" CC_LD_RT_POST=":/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+_db_version="4.7"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+${SB_VAR_RUBY}/bin/ruby extconf.rb \
+${SB_VAR_LIBDB+--with-db-include=${_db_inc:-${SB_VAR_LIBDB_INC}}} \
+--with-db-lib=${_db_lib:-${SB_VAR_LIBDB_LIB}} \
+--with-db-version="-${_db_version}"
+
+# fix runtime search path
+${SB_PATH_SED} -i -e "\
+s!^LDFLAGS =.*!\
+LDFLAGS = ${CC_LD_RT}${SB_VAR_RUBY_LIB}${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}}\
+${CC_LD_RT_POST+${CC_LD_RT_POST}}!" src/Makefile
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test || :
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# installation directory
+_sitearchdir=$(${SB_VAR_RUBY}/bin/ruby -e \
+'load "rbconfig.rb"; include Config; print CONFIG["sitearchdir"];')
+
+${SB_PATH_CHOWN} 0:0 ${_sitearchdir}/bdb.s[lo]
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+# installation directory
+_sitearchdir=$(${SB_VAR_RUBY}/bin/ruby -e \
+'load "rbconfig.rb"; include Config; print CONFIG["sitearchdir"];')
+
+rm ${_sitearchdir}/bdb.s[lo]
+]]>
+    </uninstall>
+
+    <module name="1.9.2">
+      <install-name>ruby19p</install-name>
+
+      <dependencies replace="0">
+        <depend program="ruby" var="RUBY"
+          add-path="prepend">v==1.9.2</depend>
+      </dependencies>
+    </module>
+
+    <module name="1.8.7">
+      <install-name>ruby18p</install-name>
+
+      <dependencies replace="0">
+        <depend program="ruby" var="RUBY"
+          add-path="prepend">v==1.8.7</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2011 October 31" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update 1.9.1 module for ruby 1.9.2</para></item>
+      </change>
+
+      <change date="2010 July 2" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 1.9.1 module.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
