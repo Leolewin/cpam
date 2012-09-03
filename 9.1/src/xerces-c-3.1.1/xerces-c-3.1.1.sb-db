@@ -1,0 +1,1570 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="xerces-c" version="3.1.1" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>libxercesc31</install-name>
+
+    <sources>
+      <source checksum="6a8ec45d83c8cfb1584c5a5345cb51ae"
+        checksum-type="md5" size="5051308"
+        path="src/xerces-c-3.1.1.tar.gz"/>
+      <patch checksum="e4758fbc07057ddbd6605608ce3f075f"
+        checksum-type="md5" size="6319"
+        path="src/xerces-c-3.1.1.tww.patch"/>
+      <patch checksum="a1cb7d79bcba0cf20a4ee8c281f4b010"
+        checksum-type="md5" size="761"
+        path="src/xerces-c-3.1.1.curl_libs.patch"/>
+      <patch checksum="1731ddedb8bddfe450db72e1424ec1c7"
+        checksum-type="md5" size="2257207"
+        path="src/xerces-c-3.1.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="curl" var="LIBCURL"
+        install-name="curl722">v&gt;=7.22.0</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <validate>
+        <depend program="xerces-c" module="gcc44">v==3.1.1</depend>
+        <depend program="xerces-c" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==3.1.1</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64-redhat-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  _bitstobuild=64 ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings -nodtk"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBCURL_INC}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}:${SB_VAR_LIBCURL_LIB} \
+${LDFLAGS+${LDFLAGS}}" --with-curl=${SB_VAR_LIBCURL} \
+--enable-netaccessor-curl --enable-transcoder-gnuiconv \
+--enable-debug-lib --disable-sse2 --disable-pretty-make \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" xerces-c.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install documentation
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+(cd doc/html
+ ${SB_PATH_TAR} cf - * | (cd ${_docdir}; ${SB_PATH_TAR} xf -))
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX}
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="curl" var="LIBCURL" install-name="curl722"
+          module="64bit">v&gt;=7.22.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _incdir=include/ppc64
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _incdir=include/hpux64
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _incdir=include/pa20_64
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _incdir=include/mips4
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _incdir=include/amd64
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _incdir=include/sparcv9
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix5.3*|*-aix[67]*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-bbigtoc -Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  PLATFORM="aix" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  PLATFORM="irix" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -m64 -xarch=sse2"
+  CC_LD_RT="-R"
+
+  PLATFORM="solarisx86" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R"
+
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m64 -xarch=sparc"
+  CC_LD_RT="-R"
+
+  PLATFORM="solaris" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBCURL}/${_incdir}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBCURL}/${_libdir} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/${_libdir}:${SB_VAR_LIBCURL}/${_libdir} \
+${LDFLAGS+${LDFLAGS}}" ac_cv_path_curl_config="" --with-curl \
+--enable-netaccessor-curl --enable-transcoder-gnuiconv \
+--enable-debug-lib --disable-sse2 --disable-pretty-make \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX}/${_libdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" xerces-c.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake -C src install-libLTLIBRARIES
+gmake install-pkgconfigDATA
+
+if [ ! -d ${SB_INSTALL_PREFIX_LIB}/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  esac
+fi
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/${_libdir}
+rm ${SB_INSTALL_PREFIX_LIB}/64
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44">
+      <dependencies replace="0">
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5" CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBCURL_INC}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}:${SB_VAR_LIBCURL_LIB} \
+${LDFLAGS+${LDFLAGS}}" --with-curl=${SB_VAR_LIBCURL} \
+--enable-netaccessor-curl --enable-transcoder-gnuiconv \
+--enable-debug-lib --disable-sse2 --disable-pretty-make \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB}/${_gccsubdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" xerces-c.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake -C src install-libLTLIBRARIES
+gmake install-pkgconfigDATA
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit-gcc44"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="curl" var="LIBCURL" install-name="curl722"
+          module="64bit">v&gt;=7.22.0</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-solaris*">v&gt;=4.4.6</depend>
+        <depend program="gcc64" install-name="gcc64-44"
+          add-path="prepend" systype="hppa*-hpux*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-solaris*"/>
+        <depend var="GCC_RT" install-name="gcc64-44r"
+          systype="hppa*-hpux*"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir="gcc44"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _incdir="include/ppc64"
+  _libsubdir=ppc64 ;;
+ia64*-hpux*)
+  _incdir="include/hpux64"
+  _libsubdir=hpux64 ;;
+*-hpux*)
+  _incdir="include/pa20_64"
+  _libsubdir=pa20_64 ;;
+*-irix*)
+  _incdir="include/mips4"
+  _libsubdir=../lib64
+  _libdir="lib/${_gccsubdir}/mips4" ;;
+i?86*-solaris*)
+  _incdir="include/amd64"
+  _libsubdir=amd64 ;;
+*-solaris*)
+  _incdir="include/sparcv9"
+  _libsubdir=sparcv9 ;;
+esac
+
+: ${_libdir="lib/${_gccsubdir}/${_libsubdir}"}
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mpowerpc64 -maix64"
+  CXXFLAGS="-O2 -mpowerpc64 -maix64"
+  LDFLAGS="-Wl,-bbigtoc -Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CFLAGS="-O2 -mlp64"
+  CXXFLAGS="-O2 -mlp64"
+  CC_LD_RT="-Wl,+b,"
+
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CFLAGS="-O2"
+  CXXFLAGS="-O2"
+  CC_LD_RT="-Wl,+s,+b,"
+  _gcc_rt="${SB_VAR_GCC_RT_LIB}"
+
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CFLAGS="-O2 -mabi=64"
+  CXXFLAGS="-O2 -mabi=64"
+  LDFLAGS="-Wl,-LD_LAYOUT:lgot_buffer=50"
+  CC_LD_RT="-Wl,-rpath,"
+
+  PLATFORM="irix" ;;
+i?86*-solaris*)
+  CC_LD_RT="-R"
+
+  PLATFORM="solarisx86" ;;
+*-solaris*)
+  CC_LD_RT="-R"
+
+  PLATFORM="solaris" ;;
+esac
+
+: ${_gcc_rt=${SB_VAR_GCC_RT}/lib/${_libsubdir}}
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2 -m64}" \
+CPPFLAGS="-I${SB_VAR_LIBCURL}/${_incdir}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2 -m64}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${_gcc_rt}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${_gcc_rt}} \
+-L${SB_VAR_LIBCURL}/lib/${_libsubdir} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/${_libdir}:\
+${SB_VAR_LIBCURL}/lib/${_libsubdir} \
+${LDFLAGS+${LDFLAGS}}" ac_cv_path_curl_config="" --with-curl \
+--enable-netaccessor-curl --enable-transcoder-gnuiconv \
+--enable-debug-lib --disable-sse2 --disable-pretty-make \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX}/${_libdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" xerces-c.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake -C src install-libLTLIBRARIES
+gmake install-pkgconfigDATA
+
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./${_libsubdir} ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ;;
+  *-irix*)
+    ln -s mips4 ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ;;
+  esac
+fi
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/${_libdir}
+rm ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="apache-2.0.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.1.0" to="3.1.1">
+        <item><para>Check that we have non-NULL host before trying to
+connect (XERCESC-1920).</para></item>
+        <item><para>Recover from the mismatching start/end even count
+which may happen when we continue parsing an invalid document
+(XERCESC-1919).</para></item>
+        <item><para>Add Visual Studio 2010 projects and
+solution.</para></item>
+        <item><para>Use proper VC++ version in PDB file
+name.</para></item>
+        <item><para>If the transcoder doesn't process any input, throw
+an exception (XERCESC-1916).</para></item>
+        <item><para>Delay the recursive expansion of includes until
+the document fragment has been placed in the final location
+(XERCESC-1918).</para></item>
+        <item><para>The code formatting a content model was skipping
+the cardinality indicators (*, +, ?) (XERCESC-1914).</para></item>
+        <item><para>Fix a few bugs and memory leaks in XInclude
+code.</para></item>
+        <item><para>Give proper name to 64-bit PDB file in static
+build (XERCESC-1907).</para></item>
+        <item><para>Spelling fixes (XERCESC-1911).</para></item>
+        <item><para>Don't include cpuid.h if we are using intrin.h
+(XERCESC-1912).</para></item>
+        <item><para>Fix socket leak.</para></item>
+        <item><para>Set scanner object on validation context. Needed
+during QName validation. Don't re-validate default/fixed values in
+preContentValidation when called from loadGrammar. This values are
+already validated in TraverseSchema.</para></item>
+        <item><para>Remove explicit setting of prefix for cloned
+elements and attributes since it is done properly by the create*()
+functions (XERCESC-1913).</para></item>
+      </change>
+
+      <change from="3.0.1" to="3.1.0">
+        <item><para>Remove the "experimental" marker from the
+loadGrammar API.</para></item>
+        <item><para>Fix an infinite loop bug in XML 1.1 NCName
+parsing.</para></item>
+        <item><para>Get rid of warnings uncovered with g++ -W
+-Wall.</para></item>
+        <item><para>Don't call u_init in ICU 3.6 and
+later.</para></item>
+        <item><para>Store the anonymous type count in the
+SchemaGrammar object.</para></item>
+        <item><para>Save the scope count to the grammar object in case
+we will be adding to this schema (multi-import case).</para></item>
+        <item><para>Mark schema DOM representation as unavailable
+after the call to TraverseSchema.</para></item>
+        <item><para>Don't use intrinsics in VS.NET 2003 since they are
+not available.</para></item>
+        <item><para>Redo libcurl check to avoid liking to the library
+when we don't use it. Also update the make pretty-printing
+code.</para></item>
+        <item><para>Fix a bug in the new LocalFileFormatTarget
+buffering implementation.</para></item>
+        <item><para>Clear the cached GrammarInfo list when calling
+resedCachedGrammarPool.</para></item>
+        <item><para>Limit the buffer growth in LocalFileFormatTarget
+to 64Kb. Optimize MemBufFormatTarget.</para></item>
+        <item><para>Make sure that imported schemas, as well as those
+loaded with loadGrammar or via the schemaLocation attributes get taken
+into account when we decide whether the schema in question has already
+been loaded.</para></item>
+        <item><para>Implement loading of multiple schemas with the
+same namespace in loadGrammar() when multi-import is
+enabled.</para></item>
+        <item><para>Extend multi-import support to schemas provided
+with the schemaLocation attributes (XERCESC-1659).</para></item>
+        <item><para>Try to switch to the XML Schema mode if we see
+xsi:type or xsi:nill (XERCESC-1263).</para></item>
+        <item><para>Provide a more descriptive error message for empty
+date-time type values (XERCESC-1703).</para></item>
+        <item><para>Skip the character that we just unescaped when
+searching for the next percent sign (XERCESC-1826).</para></item>
+        <item><para>Recognize a register-based authority in URI
+(XERCESC-1748, XERCESC-1747).</para></item>
+        <item><para>Commit a partial fix for XERCESC-1866 by David
+Bertoni.</para></item>
+        <item><para>Load schemas specified with the external schema
+location properties even if the load-schema property is set to false
+(XERCESC-1713).</para></item>
+        <item><para>Catch and ignore exceptions in destructors
+(XERCESC-1898).</para></item>
+        <item><para>Fixed DOMDocumentImpl::importNode() to copy the
+prefix of element and attribute nodes.</para></item>
+        <item><para>Add a variant to test for
+XERCESC-1893.</para></item>
+        <item><para>Call getDatatypeValidator before checking whether
+the schema has been imported.</para></item>
+        <item><para>Rework the way we search for and detect the ICU
+and libcurl libraries (XERCESC-1892).</para></item>
+        <item><para>Rework the binToText implementation and usage so
+that we don't need the XERCES_SIZEOF_* macros. This should allow using
+the same set of headers for 32 and 64-bit builds
+(XERCESC-1874).</para></item>
+        <item><para>Fix ICU message loader makefile to handle dist
+properly.</para></item>
+        <item><para>As we now generate source files for the ICU
+message loader, use standard automake code.</para></item>
+        <item><para>Rework compilation of ICU message loader resources
+(XERCESC-1882).</para></item>
+        <item><para>Do not complain that the XSD namespace is not
+imported (XERCESC-1896).</para></item>
+        <item><para>Enable multiple import handling in examples and
+test.</para></item>
+        <item><para>Allow the user to change the low water mark used
+by the parsers (XERCESC-1607).</para></item>
+        <item><para>Free resources if we throw from c-tors
+(XERCESC-1480).</para></item>
+        <item><para>Remove mentioning of XMLString::release
+(XERCESC-1847).</para></item>
+        <item><para>Use US-ASCII instead of USASCII.</para></item>
+        <item><para>Expand setNewLine() documentation
+(XERCESC-1507).</para></item>
+        <item><para>Disable throwing of an exception from the
+DOMLSParser::parse*() functions (XERCESC-1894).</para></item>
+        <item><para>Export PDB also for static builds
+(XERCESC-1759).</para></item>
+        <item><para>Implemented
+DOMLSParser::parseWithContext.</para></item>
+        <item><para>When the base type for a complex type cannot be
+found in an imported schema that has already been processed, check if
+a simple type with the same name exists (XERCESC-1893).</para></item>
+        <item><para>Check if glibtoolize exist. Otherwise call
+libtoolize.</para></item>
+        <item><para>For builds with curl, use curl-config to get
+appropriate compiler and linker flags (XERCESC-1892).</para></item>
+        <item><para>Place the creation of token in the main function
+to avoid misalignments.</para></item>
+        <item><para>When releasing an element, remove and release also
+its attributes (XERCESC-646).</para></item>
+        <item><para>Improve support for DOMLSParserFilter: (1) if
+startElement() returned REJECT it was treated like SKIP, and it was
+changing the current parent node one time too much; (2) the
+acceptNode() callback was invoked on text nodes every time some data
+was added to them, potentially removing it many times; (3) the nodes
+rejected by the callback were not recycled, leading to the same memory
+footprint as they were accepted.</para></item>
+        <item><para>Performance improvements.</para></item>
+        <item><para>The test to detect if the CPU was SSE2-enabled
+using __get_cpuid was reversed; configure.ac was testing for the
+presence of emmintrin.h before detecting which compiler option turned
+on SSE2, and the header cannot be used until that switch has been
+set.</para></item>
+        <item><para>If a minOccurs/maxOccurs cannot be parsed in a
+valid integer because it's too big, assume it is 500.</para></item>
+        <item><para>Use SSE2 instructions to speed up bit operations
+used in schema validation with large maxOccurs.</para></item>
+        <item><para>The invalid xs:float is now e-46, not
+e-39.</para></item>
+        <item><para>Updated documentation to reflect the change in
+limits for xs:float datatype.</para></item>
+        <item><para>Fixed memory leak; added optimization to the
+bitfield enumerator.</para></item>
+        <item><para>Improved performance and reduced memory footprint
+of schema validation involving large maxOccurs: (1) the CMStateSet
+uses a sparsely allocated matrix to store the bits, resulting in less
+memory usage and faster bitwise operations (when analyzing an
+unallocated chunk, no operations are done); also, having moved the
+dynamic buffer data members into a separate structure, the space used
+by two pointers has been added to the cached bit fields, that is now
+128 bits; (2) the DFA builder chooses the faster algorithm depending
+on the data being analyzed. The regression test for XERCESC-1051 now
+completes in 30 seconds instead of 80.</para></item>
+        <item><para>When testing for simple type blocked
+substitutions, allow list and unions when base type is
+anySimpleType.</para></item>
+        <item><para>When testing for blocked substitutions, check the
+entire inheritance chain.</para></item>
+        <item><para>Added optimizations forgotten in previous commit,
+plus tests.</para></item>
+        <item><para>When retrieving an attribute of a schema
+declaration, specify its type so that the proper whitespace collapse
+operation can be performed.</para></item>
+        <item><para>Improved validation of xsi:nil.</para></item>
+        <item><para>Move the list with the imported targetNamespace in
+TraverseSchema, so that a schema can "see" what an imported schema
+imports (XERCESC-1249).</para></item>
+        <item><para>When matching an XPath expression, don't accept a
+node only if it's the first branch of an union that matches. The XPath
+parser takes care of removing identical branches
+(XERCESC-809).</para></item>
+        <item><para>Ignore the lax directive if an element has an
+xsi:type directive (XERCESC-1707).</para></item>
+        <item><para>When storing a default/fixed value, use the
+canonical representation.</para></item>
+        <item><para>Use an entity resolver to feed the grammar for the
+XML namespace.</para></item>
+        <item><para>When building the key for identity constraints,
+use the topmost validator.</para></item>
+        <item><para>Name and reference to names should be whitespace
+collapsed.</para></item>
+        <item><para>Don't manipulate the XPath expression to ensure it
+starts with "./" before parsing; add the proper token after the
+scanner phase.</para></item>
+        <item><para>Complain if an identity constraint has an empty
+name.</para></item>
+        <item><para>When placing a value in the identity constraint
+map, store the actual validator used, instead of the official
+one.</para></item>
+        <item><para>Instead of using the FLT_MIN and FLT_MAX macros,
+use the XMLSchema definition of minimum and maximum value for a
+xs:float (XERCESC-1833).</para></item>
+        <item><para>When the xsi:type attribute is present, don't emit
+validation errors complaining of a missing declaration
+(XERCESC-1481).</para></item>
+        <item><para>Attributes in the xsi namespace were not
+whitespace-normalized.</para></item>
+        <item><para>Blocked substitution was not checked when defined
+on a complex type (XERCESC-1568): (1) Blocked substitution should not
+be checked when xsi:type names the same original type; (2) Blocked
+substitution didn't check the bit of the restriction/extension, but it
+performed an equality check.</para></item>
+        <item><para>When parsing a "block" attribute, an empty value
+means an empty set, not "use blockDefault".</para></item>
+        <item><para>When parsing a "final" attribute, an empty value
+means an empty set, not "use finalDefault"
+(XERCESC-1716).</para></item>
+        <item><para>When an identity constraint involves a QName,
+store the value using its Clark name so that values using different
+prefixes can be matched.</para></item>
+        <item><para>When validating an annotation, report the location
+of the error in the source schema, not inside the annotation
+itself.</para></item>
+        <item><para>Test that runs a few parse operations with an
+input stream that splits the source in bad locations.</para></item>
+        <item><para>Before assuming that a complex type has a simple
+type as base type simply because it has a data type validator, inspect
+the base type definition (XERCESC-697).</para></item>
+        <item><para>Before processing a schema location, remove the
+0xFFFF characters present in the non-normalized attribute value
+(XERCESC-1831).</para></item>
+        <item><para>If a derived attribute is prohibited, don't check
+type substitution and fixed facet (XERCESC-961).</para></item>
+        <item><para>Deprecate two symbols because of a typo in the
+name; added a version with the correct spelling.</para></item>
+        <item><para>Add check for NULL (XERCESC-1863).</para></item>
+        <item><para>Don't report repetitions in the block/final schema
+attributes as errors. If a derived attribute is prohibited, don't
+check type substitution and fixed facet (XERCESC-961).</para></item>
+        <item><para>On Linux, iconv requires char*; on Solaris, const
+char*. Use autoconf to pick the correct code.</para></item>
+        <item><para>Allow GNUiconv to be compiled on Solaris
+(XERCESC-1856).</para></item>
+        <item><para>Allow platform with machine/endian.h to select the
+GNUiconv transcoder.</para></item>
+        <item><para>Add an autoconf test to verify if the compiler
+supports the matching operator delete (XERCESC-1380).</para></item>
+        <item><para>Before complaining that there are not enough child
+nodes, test the existing ones to be correct
+(XERCESC-1246).</para></item>
+        <item><para>Fix end position for fixed string pattern matching
+(XERCESC-1021).</para></item>
+        <item><para>Report an error if more than one anyAttribute
+declaration is found, or if it is not the last declaration
+(XERCESC-1717).</para></item>
+        <item><para>If an imported schema had a keyref definition, all
+the others keyref definition ended up in that schema, and would not be
+enforced (XERCESC-1583).</para></item>
+        <item><para>If there is no complex type in the stack, fallback
+to the schema element definition, like it is done a few lines earlier
+(XERCESC-1808).</para></item>
+        <item><para>When copying a context object, allocate new memory
+for fMatch and fOffsets only if the size of the data being copied is
+different, so that a user-provided fMatch object can be properly
+filled (XERCESC-1870).</para></item>
+        <item><para>Improve scalability of identity checking by using
+a hash table whose hash value is computed on the canonical values of
+the values (XERCESC-1878).</para></item>
+        <item><para>Added methods defined in the Element Traversal
+specification
+(http://www.w3.org/TR/2008/REC-ElementTraversal-20081222/).</para></item>
+        <item><para>Include system-dependent files only if the
+appropriate macro is defined (XERCESC-1852).</para></item>
+        <item><para>Fix warning (XERCESC-1872).</para></item>
+        <item><para>Avoid recursion when parsing simply nested DTD
+structures. This issue is referenced in the following document:
+CVE-2009-1885 (http://nvd.nist.gov/nvd.cfm?cvename=CVE-2009-1885).
+Thanks to Jukka Taimisto, Tero Rontti and Rauli Kaksonen from the
+CROSS project at Codenomicon Ltd. and CERT-FI for bringing this issue
+to our attention.</para></item>
+        <item><para>Improve XSTSHarness to also run the XML Test
+Suite.</para></item>
+        <item><para>Add quotes around path in custom build command
+(XERCESC-1868).</para></item>
+        <item><para>The PDB file for VC 9.0 used "vc80"
+(XERCESC-1869).</para></item>
+        <item><para>Check return value of getaddrinfo for non-zero
+instead of less-than-zero (XERCESC-1871).</para></item>
+        <item><para>The implementation of some methods didn't match
+exactly the signature (XERCESC-1867).</para></item>
+        <item><para>Save the scope count value in the SchemaGrammar
+object. This is necessary for the multiple import option to function
+correctly.</para></item>
+        <item><para>Initializing unitialized variables in
+TranscodeToStr and TranscodeFromStr (#XERCESC-1858).</para></item>
+        <item><para>Fixed a bug when transcoding small strings using
+TranscodeToStr (XERCESC-1858).</para></item>
+        <item><para>When the DOMLSInput contains a stringData buffer,
+the encoding of the source is XMLCh.</para></item>
+      </change>
+
+      <change from="3.0.0" to="3.0.1">
+        <item><para>More robust handling of leading/trailing
+whitespaces (XERCESC-1838).</para></item>
+        <item><para>Minor documentation updates, including a fix for
+XERCESC-1848.</para></item>
+        <item><para>Add --disable-rpath configure
+option.</para></item>
+        <item><para>Remove class name from method declaration
+(XERCESC-1850).</para></item>
+        <item><para>Fix a bug in the socket and winsock net accessors
+when a redirection response does not contain a "Location"
+header.</para></item>
+        <item><para>Make XMLMutex use the correct MemoryManager when
+it closes it's mutex.</para></item>
+        <item><para>Documentation fixes (XERCESC-1841).</para></item>
+        <item><para>Backport fixes for memory leaks.</para></item>
+        <item><para>Force Borland projects to use CRLF
+EOL.</para></item>
+        <item><para>The wrong constructor was called, causing a memory
+leak (XERCESC-1840).</para></item>
+        <item><para>Fix memory leak (XERCESC-1834).</para></item>
+        <item><para>Update URLs in source code to point to the new
+pages.</para></item>
+      </change>
+
+      <change from="2.8.0" to="3.0.0">
+        <item><para>Create Borland project for NetAccessor
+test.</para></item>
+        <item><para>Allow use of the Windows transcoder and net
+accessor on Cygwin but only if the user explicitly asks for
+it.</para></item>
+        <item><para>Avoid DOMDocument definition from Windows SDK
+(XERCESC-1830).</para></item>
+        <item><para>Pass raw names to start/endElement if namespaces
+are disabled.</para></item>
+        <item><para>Reimplement skippedString logic to handle "short"
+and "long" strings separately.</para></item>
+        <item><para>Temporary fix for XERCESC-1827 along with sanity
+test case.</para></item>
+        <item><para>Avoid pretty-printing comments only in text-only
+nodes.</para></item>
+        <item><para>Do not add any whitespaces around CDATA sections
+and comments since they might be non-ignorable
+(XERCESC-1823).</para></item>
+        <item><para>Add support for generating pkgconfig
+file..</para></item>
+        <item><para>Pass proper memory manager to mutex.</para></item>
+        <item><para>Allow changing global DOMDocument heap parameters
+via overloaded Initialize().</para></item>
+        <item><para>Include winnt.h from the Platform SDK instead of
+winres.h from MFC.</para></item>
+        <item><para>Performance improvement.</para></item>
+        <item><para>Remove the PCRE-like regular expression engine,
+and replace it with a XPath 2.0-compatible one
+(XERCESC-1816).</para></item>
+        <item><para>XML to DOM parsing optimizations.</para></item>
+        <item><para>Various optimizations.</para></item>
+        <item><para>Remove repetitive calls to the getOwnerDocument()
+virtual function and in some cases use the data member directly. Put
+DOMStringPool functionality directly into DOMDocumentImpl, make
+getPooledString() inline.</para></item>
+        <item><para>Get rid of unused MemoryManager argument in hash
+functions.</para></item>
+        <item><para>Fixed regression in determining lax/skip/strict
+processing of an xsd:any preceded by another xsd:any represented using
+compact syntax (XERCESC-1822).</para></item>
+        <item><para>The XSTS schema allows multiple schema files to be
+loaded before a test.</para></item>
+        <item><para>When comparing two unions, use the validator that
+correctly parses both instances.</para></item>
+        <item><para>If an element cannot be found in the schema for
+its namespace, it is also searched in the empty namespace to see if
+the user mistakenly forgot about undefining the default namespace; in
+this case a better error report is generated and (if schema processing
+is allowed to continue) the empty namespace definition is taken.
+However, even if the empty namespace definition didn't pass a few
+checks, we ended up silently using it -&gt; we changed the namespace of
+the element without notifying the user (XERCESC-1819).</para></item>
+        <item><para>Build a compact tree also for xsd:any nodes
+(XERCESC-1051). Reduce the memory required to build a DFA by creating
+a shallow CMNode hierarchy. Avoid stack overflow when analyzing
+non-compact model trees. Optimized the building of the DFA state table
+by avoiding linear searches.</para></item>
+        <item><para>Cygwin is a POSIX emulation layer so use POSIX
+file manager, transcoder, path delimiter, and net accessor. Still
+using Windows mutex manager because of the problem in Cygwin pthread
+emulation.</para></item>
+        <item><para>Require the exact match for the schema loader and
+storer version.</para></item>
+        <item><para>Fix for XERCESC-1806.</para></item>
+        <item><para>More cleanup for unsigned int/XMLSize_t changes
+and various compiler warnings.</para></item>
+        <item><para>Fix for XERCESC-1818.</para></item>
+        <item><para>Backported fix for XERCESJ-773: build a
+representation of large minOccurs/maxOccurs in constant time and
+memory (which uses a counter during validation) for element and
+wildcard particles when each model group particle in the content
+model: has minOccurs/maxOccurs == 1 or contains only one
+element/wildcard particle with minOccurs/maxOccurs == 1.
+(XERCESC-1051).</para></item>
+        <item><para>Use mutex to synchronize access to global
+document. Fixes XERCESC-1652.</para></item>
+        <item><para>Disable automatic selection of ICU message loader
+when ICU is available (XERCESC-1769).</para></item>
+        <item><para>Review, cleanup and make consistent all error
+messages.</para></item>
+        <item><para>Use the ISO8859-1 encoding in net accessors. Add
+support for httpInfo in the curl net accessor..</para></item>
+        <item><para>Added more checks to the XSD syntax.</para></item>
+        <item><para>Increment XERCES_GRAMMAR_SERIALIZATION_LEVEL since
+the size of line/column fields has changed.</para></item>
+        <item><para>Cleanup interfaces in parsers/ to use
+XMLSize_t.</para></item>
+        <item><para>Cleanup public interfaces in framework/ to use
+XMLSize_t.</para></item>
+        <item><para>Use the _wcsupr naming instead of wcsupr (only
+Visual C++ defines both, Borland only defines the version prefixed by
+the underscore).</para></item>
+        <item><para>Add 64-bit support.</para></item>
+        <item><para>Fix for XERCESC-1813.</para></item>
+        <item><para>Use XMLFileLoc consistently to represent
+line/column. Clean up the SAX interface to use XMLSize_t instead of
+int/long.</para></item>
+        <item><para>Add XMLFileLoc type (64-bit) that represents
+location in a file (line/column). Use it in DOM
+interfaces.</para></item>
+        <item><para>Added missing "Is" in front of the
+"MusicalSymbols" regex group.</para></item>
+        <item><para>Use XMLSize_t instead of int/long for indexes and
+sizes in DOM interfaces. Use enum types instead of
+short.</para></item>
+        <item><para>Define regular expression category \w as defined
+by the XMLSchema specs (XERCESC-541).</para></item>
+        <item><para>Provide a way to disable automatic loading of
+schemas specified in XML documents.</para></item>
+        <item><para>Move XMLGrammarPoolImpl from internal/ to
+framework/ so that it can be instantiated directly by the
+use.</para></item>
+        <item><para>XSTSHarness now handles the 2006 version of the
+test suite.</para></item>
+        <item><para>Implement the revised interpretation of ##other in
+which unqualified names are not matched. Fixes XERCESC-1758,
+XERCESC-1655.</para></item>
+        <item><para>Add getContentType function to the BinInputStream
+to allow stream to report out-of-band content type. Implement it in
+various streams. Factor out and cleanup common code from Socket and
+WinSock net accessors. Fix a number of bugs.</para></item>
+        <item><para>Change the DOMXPathResult interface to accommodate
+both XPath 1 and 2 models. Return DOMXPathResult* instead of void*
+from evaluate. Add basic auto pointer operations to JanitorMemFunCall
+class template.</para></item>
+        <item><para>Make regular expressions thread-safe and use
+runtime memory manager when executing. Add new allMatches() function
+for advanced use-cases.</para></item>
+        <item><para>DOM XPath support: Support for resolving default
+namespace. Support for removing namespace-prefix bindings. Additional
+documentation.</para></item>
+        <item><para>Avoid that an external entity having an empty
+SYSTEM id is treated as internal (XERCESC-1763).</para></item>
+        <item><para>Schema fixes for e1-16 errata and full schema
+checking of any choice restricted by any.</para></item>
+        <item><para>Add addNamespaceBinding() and release() APIs to
+XPathNSResolver class (XERCESC-1802)</para></item>
+        <item><para>Don't blindly subtract a number from an unsigned
+int, it could overflow (XERCESC-1804).</para></item>
+        <item><para>Rewrite the storage mechanism to avoid cast
+(XERCESC-1678).</para></item>
+        <item><para>Avoid error messages where English words are
+specified at runtime.</para></item>
+        <item><para>Replace copyrighted schema with a simple test case
+(XERCESC-1791).</para></item>
+        <item><para>Fix XERCESC-1790. Other error messages
+cleanups.</para></item>
+        <item><para>DOMPrint now shows how to run an XPath query on a
+DOM tree (XERCESC-1786).</para></item>
+        <item><para>If the XPath parser returns 'false', it means the
+XPath is invalid. (XERCESC-1787).</para></item>
+        <item><para>Identity constraints on xs:anySimpleType instances
+are enforced by comparing their lexical values
+(XERCESC-1393).</para></item>
+        <item><para>Lock the mutex when performing cleanup in the
+WinSock net accessor.</para></item>
+        <item><para>When looking for the best encoding, match both
+char size and endianness.</para></item>
+        <item><para>Add UTF16-LE and UTF16-BE to the list of encodings
+tested by GNUiconv (XERCESC-1663).</para></item>
+        <item><para>Get rid of lazy initialization that relied on
+double-checked locking. Now every static object is initialized in
+Initialize() and released in Terminate() via
+XMLInitializer.</para></item>
+        <item><para>Get rid of atomic operations.</para></item>
+        <item><para>New RPM spec by Scott Cantor.</para></item>
+        <item><para>Apply the fast DOM child append patch
+(XERCESC-1735).</para></item>
+        <item><para>Adjust DOM heap allocation parameters to be the
+same as in 2.8.0 which appears to give the best overall
+performance.</para></item>
+        <item><para>Add VC9 target, remove references to deprecated
+DOM.</para></item>
+        <item><para>Validate the attributes of a simple type
+definition before trusting its content (XERCESC-1718).</para></item>
+        <item><para>Report an error when a grammar or a type is not
+found (XERCESC-1745).</para></item>
+        <item><para>Added configuration to VC9 project files to build
+Xerces with the ICU transcoder.</para></item>
+        <item><para>Added configuration to VC8 project files to build
+Xerces with the ICU transcoder.</para></item>
+        <item><para>Added configuration to VC7.1 project files to
+build Xerces with the ICU transcoder.</para></item>
+        <item><para>Check for the callback pointer to be valid before
+each call, as a callback could be resetting it
+(XERCESC-1781).</para></item>
+        <item><para>Make sure the base type was provided when trying
+to resolve the schema grammar (addition to the previous fix)
+(XERCESC-1777).</para></item>
+        <item><para>In restriction checking, when looking for a
+declaration of a base element, use the schema grammar corresponding to
+the type this element is declared in (XERCESC-1777).</para></item>
+        <item><para>Update gMaxProtoLen to reflect the addition of
+"https" (XERCESC-1698).</para></item>
+        <item><para>Use the same code as in the fopen.c sample from
+libcurl (XERCESC-1756).</para></item>
+        <item><para>Show how to release a transcoded string
+(XERCESC-1767).</para></item>
+        <item><para>Fixed 64 bit issue (XERCESC-1768).</para></item>
+        <item><para>Add project files for Visual Studio
+2008.</para></item>
+        <item><para>Encode characters for anyURI using xlink 5.4
+algorithm.</para></item>
+        <item><para>- Don't allocate a stack unless the string to be
+matched is longer than 256 characters. Don't use backtracking if the
+regex pattern doesn't have ambiguities (XERCESC-1242).</para></item>
+        <item><para>- SrcOffset is a XMLFilePos (64 bit). MsgLoader
+and Transcode API needed some more XMLSize_t
+(XERCESC-1531).</para></item>
+        <item><para>Avoid recursion when checking for
+closures.</para></item>
+        <item><para>The GroupContentRestricted error is used for both
+'sequence' and 'choice' models, so get the model at runtime
+(XERCESC-1724).</para></item>
+        <item><para>Parser interfaces now use XMLSize_t for
+characters, comment, ignorableWhitespace, docCharacters,
+doctypeWhitespace (XERCESC-1531).</para></item>
+        <item><para>Fixed signed/unsigned conversions
+(XERCESC-1531).</para></item>
+        <item><para>Send the NODE_CLONED notification for each node in
+the tree when cloning the entire DOMDocument
+(XERCESC-1722).</para></item>
+        <item><para>GNUIconv should not look at APP_NO_THREADS, and
+look at where endian.h is located (XERCESC-1709).</para></item>
+        <item><para>Line numbers should use unsigned long
+(XERCESC-1531).</para></item>
+        <item><para>XMLString, XMLBuffer and Base64 should use
+XMLSize_t (XERCESC-1531).</para></item>
+        <item><para>XMLTransService should use XMLSize_t
+(XERCESC-1531).</para></item>
+        <item><para>XSerializeEngine should use XMLSize_t
+(XERCESC-1531).</para></item>
+        <item><para>All lists and vectors should use unsigned int to
+report size and access items (XERCESC-1531).</para></item>
+        <item><para>Changed MemBufInputSource to use XMLSize_t
+(XERCESC-1531).</para></item>
+        <item><para>Changed XMLFormatTarget interface to have
+writeChars use XMLSize_t (XERCESC-1531).</para></item>
+        <item><para>Changed XMLTransService interface to have
+transcodeFrom and transcodeTo use XMLSize_t
+(XERCESC-1531).</para></item>
+        <item><para>Changed BinOutputStream interface to have curPos
+return a 64-bit integer, and use XMLSize_t in writeBytes
+(XERCESC-1531).</para></item>
+        <item><para>Changed BinInputStream interface to have curPos
+return a 64-bit integer, and use XMLSize_t in readBytes
+(XERCESC-1531).</para></item>
+        <item><para>Apply base whitespace facet to enumeration
+values.</para></item>
+        <item><para>Suppress DTD error message for attribute referring
+to unknown entity when attribute not used.</para></item>
+        <item><para>In the fix for XERCESC-1592, code to set xmlns=""
+that was moved from retrieveNamespaceMappping to preprocessSchema was
+not executed for imported schemas.</para></item>
+        <item><para>mblen returns 0 when given an empty string;
+rewrote code to only use mbstowcs (XERCESC-1702).</para></item>
+        <item><para>Add https to the list of valid protocols for
+XMLURL (XERCESC-1698).</para></item>
+        <item><para>Add x64 target to VC8 project files.</para></item>
+        <item><para>Fix for XERCESC-1092.</para></item>
+        <item><para>Make the header guards less obvious
+(XERCESC-1693).</para></item>
+        <item><para>Fix for XERCESC-1592.</para></item>
+        <item><para>Fixed infinite loop when an XPath expression
+contained an unexpected character (XERCESC-1682).</para></item>
+        <item><para>IconvGNU and IconvFBSD transcoders override
+application-set locale, XERCESC-1660.</para></item>
+        <item><para>Initial commit of XInclude support.</para></item>
+        <item><para>Even if the XSTS suite thinks differently, the
+XMLSchema 1.1 clarifies that two values derived from the same value
+space should be treated as equals; so find out the common ancestor and
+use it to perform the comparison.</para></item>
+        <item><para>Implemented the DOML3 XPath interfaces, reusing
+the XPath processor used inside the XMLSchema validation; this means
+it understands only a limited subset of the XPath syntax, and can only
+return DOMElement nodes. However, it could be useful for simple
+navigations, or maybe be later expanded.</para></item>
+        <item><para>Allow 'list' and 'union' in the finalDefault
+attribute of a schema (XERCESC-1633).</para></item>
+        <item><para>Fix backport of XERCESC-1237.</para></item>
+        <item><para>Only xs:key should complain if not all the fields
+of an identity constraint are not found in the XML instance
+(XERCESC-1237).</para></item>
+        <item><para>When calling getAttributeNodeNS, ensure we are
+providing a localName (XERCESC-1473).</para></item>
+        <item><para>The 'dst' argument in the
+DOMUserDataHandler::handle callback is non-const, in order to let the
+application modify the newly created node (XERCESC-783).</para></item>
+        <item><para>Performance improvement: allocate memory only when
+the data inside the XMLElementDecl cannot be reused.</para></item>
+        <item><para>Use the algorithm from
+http://unicode.org/unicode/faq/utf_bom.html#35 to encode/decode
+surrogate pairs (XERCESC-1654).</para></item>
+        <item><para>Enable IPv6 addresses by using getaddrinfo when
+available.</para></item>
+        <item><para>Handle both IPv4 and IPv6 on Windows (to be
+enabled via a macro, as it is only available starting with Windows
+XP).</para></item>
+        <item><para>Report the correct error when the XML PI has 'XML'
+instead of 'xml' (XERCESC-1641).</para></item>
+        <item><para>Allow the user to specify the memory manager used
+by LSSerializer::writeToString.</para></item>
+        <item><para>Removed warnings (XERCESC-1619).</para></item>
+        <item><para>Make some methods const
+(XERCESC-1628).</para></item>
+        <item><para>When checking for a valid restriction, take into
+account substitution groups (XERCESC-1281).</para></item>
+        <item><para>Don't crash if an external parameter entity has no
+SYSTEM id (XERCESC-1536).</para></item>
+        <item><para>IconvGNU transcoder now works on big endian
+machines.</para></item>
+        <item><para>Default or fixed attribute values should be
+whitespace normalized, if the datatype requires it, before being
+validated.</para></item>
+        <item><para>DOMLSParserImpl::loadGrammar should not release
+the previously loaded DOMDocument (XERCESC-1626).</para></item>
+        <item><para>Reduce the number of allocations needed by text
+and attribute nodes (XERCESC-1585).</para></item>
+        <item><para>Remove support for building Xerces with
+VC7.</para></item>
+        <item><para>Removed usage of MB_CUR_MAX from iconv transcoder;
+if the block-oriented APIs are available, use them
+(XERCESC-1444).</para></item>
+        <item><para>Added parameter space-first-level-elements to
+DOMLSSerializer to let the user control whether the children of the
+document root should have an extra line feed between them (XERCESC-
+1561).</para></item>
+        <item><para>SAX2XMLReader should use the prefix reported by
+the reader, not the one stored in the element declaration
+(XERCESC-1598).</para></item>
+        <item><para>DGXMLScanner was treating predefined entities
+inside attribute values as if they were in the element content
+(XERCESC-1597).</para></item>
+        <item><para>Fix for XERCESC-1595.</para></item>
+        <item><para>Allow spaces in anyURIs, as they are 'legal but
+highly discouraged' (XERCESC-1581).</para></item>
+        <item><para>Factory method is no more inline to avoid
+including an internal header in a public one
+(XERCESC-1579).</para></item>
+        <item><para>Remove BOM-detection code inside
+refreshCharBuffer: the fix for XERCESC-1284 makes it unnecessary, and
+the UTF-8 part was updating the wrong index
+(XERCESC-1385).</para></item>
+        <item><para>When serializing attribute values, escape also
+carriage returns and tabs (XERCESC-1547).</para></item>
+        <item><para>If an encoding has been forced on a InputSource,
+ignore a compatible BOM found in the stream
+(XERCESC-1284).</para></item>
+        <item><para>Fix for XERCESC-1555.</para></item>
+        <item><para>Fixes for XERCESC-1548.</para></item>
+        <item><para>Fix for XERCESC-1546. Canonical value of list was
+putting in an extra null character.</para></item>
+        <item><para>When evaluating a union in a regular expression,
+take the branch that matches the longest part of the input string
+(XERCESC-1521).</para></item>
+        <item><para>Improve validation performances when dealing with
+schemas with lots of top level definitions
+(XERCESC-1542).</para></item>
+        <item><para>Fix for XERCESC-1533 (default attributes in the
+definition for an element that is not validated because of errors
+would be added to the list of attributes even if already
+present).</para></item>
+        <item><para>Expose the memory allocation functionalities of
+DOMDocumentImpl through the DOMMemoryManager interface; this removes
+dangerous casts in the operator new and allows to tune the size of the
+memory chunks (XERCESC-1475).</para></item>
+        <item><para>When cloning or importing a node, also copy the
+type information (XERCESC- 1517).</para></item>
+        <item><para>Added projects for Visual Studio
+2005.</para></item>
+        <item><para>Nodes that implement getFeature should also
+implement isSupported (XERCESC-1479).</para></item>
+        <item><para>Message update for qname fix and
+XERCESC-1515.</para></item>
+        <item><para>closesocket should be dynamically bound
+(XERCESC-1467).</para></item>
+        <item><para>Fix for XERCESC-1240.</para></item>
+        <item><para>Fix for XERCESC-896.</para></item>
+        <item><para>Fix for XERCESC-896.</para></item>
+        <item><para>Schema errata e2-67 fix, ported from java to allow
+[^+-].</para></item>
+        <item><para>Remove references to nonexist DOMSystemException.
+XERCESC-1400.</para></item>
+        <item><para>Documentation for Base64::decode now state how
+whitespace is treated (XERCESC-974).</para></item>
+        <item><para>Close the socket even in case of exceptions being
+thrown (XERCESC-1467).</para></item>
+        <item><para>Added comment to state the namespace info wont
+work with this parser. XERCESC-1377.</para></item>
+        <item><para>Follow-up fix to XERCESC-990. Allow lookup for
+imported schema with no namespace.</para></item>
+        <item><para>Fixes for XERCESC-1463.</para></item>
+        <item><para>Schema errata E2-27: don't have negative sign in
+front of zero.</para></item>
+        <item><para>Reset the flag used to signal a trailing space if
+the chunk doesn't end with a space (XERCESC-1239).</para></item>
+        <item><para>After looking for the DOM element defining the
+required type we should use the registry to perform the lookup instead
+of assuming the one we just parsed is the right one
+(XERCESC-990).</para></item>
+        <item><para>Fix problem where incorrect xsmodel was generated
+for UseCachedGrammarInParse.</para></item>
+        <item><para>Fix various schema date time
+problems.</para></item>
+        <item><para>Update XMLDateTime to correctly test for
+timezone.</para></item>
+        <item><para>Empty content for Base64Binary and HexBinary
+should be allowed.</para></item>
+        <item><para>Added getter methods for flags
+(XERCESC-1450).</para></item>
+        <item><para>Fix for XERCESC-1449.</para></item>
+        <item><para>Schema errata E2-67: allow unescaped '-' at the
+beginning and end of a regex.</para></item>
+        <item><para>Add const qualifier to getDocumentLocations to
+match interface (patch to 191040 for bug XERCESC-1153).</para></item>
+        <item><para>XMLSchemaDescriptionImpl::getLocationHints()
+returns a const pointer (XERCESC-1153).</para></item>
+        <item><para>DOMDocument::importNode accepts a const pointer
+(XERCESC-1223).</para></item>
+        <item><para>Resolve bug XERCESC-1436. Header and
+implementation of OpFactory used inconsistent function signature.
+Thanks to Axel Weiss.</para></item>
+        <item><para>Fixes for XERCESC-1409.</para></item>
+        <item><para>Fix for XERCESC-1423 from Christian.</para></item>
+        <item><para>Fixes for XERCESC-1368.</para></item>
+        <item><para>Patch for XERCESC-1420.</para></item>
+        <item><para>Fixes for XERCESC-1348.</para></item>
+        <item><para>Fix for XERCESC-1115. Allow zero length
+content.</para></item>
+        <item><para>Fixes for XERCESC-1417.</para></item>
+        <item><para>Don't treat characters 0x2028 and 0x85 as plain
+characters in XML 1.1.</para></item>
+        <item><para>Schema errata update. Ignore length, minLength and
+maxLength facets for qname and notation.</para></item>
+      </change>
+
+      <change from="2.7.7" to="2.8.0">
+        <item><para>RPM spec file update to support 64 bit builds
+(XERCESC-1740)</para></item>
+        <item><para>Remove option to explicitly link against
+libc.</para></item>
+        <item><para>Rename afxres.h to winres.h
+(XERCESC-1737).</para></item>
+        <item><para>Static build option.</para></item>
+        <item><para>Exponential growth for DOM heap.</para></item>
+        <item><para>Add HTTPS scheme to URI.</para></item>
+        <item><para>64 bit Windows build (XERCESC-1531).</para></item>
+        <item><para>Explicit type conversion to get rid of a
+warning.</para></item>
+        <item><para>Auto-detect HP aCC3 vs aCC6 compiler
+versions.</para></item>
+        <item><para>Verbose mode (add VERBOSE=1 to the gmake command
+line).</para></item>
+        <item><para>Support for g++ on AIX and HP-UX.</para></item>
+        <item><para>Change optimization level on GNU/Linux from -O to
+-O2.</para></item>
+        <item><para>Add appendChildFast and call it in parser.
+Performance patch.</para></item>
+        <item><para>64 bit compile/link options auto-detection for
+Solaris.</para></item>
+        <item><para>VC8 projects.</para></item>
+        <item><para>The GroupContentRestricted error is used for both
+'sequence' and 'choice' models, so get the model at runtime
+(XERCESC-1724).</para></item>
+        <item><para>XSWildcard was always getting a 'strict'
+processContent when the namespace list contained more than 2
+elements.</para></item>
+        <item><para>Performance patch for XERCESC-1657.</para></item>
+        <item><para>Patch for XERCESC-1591.</para></item>
+        <item><para>Send the NODE_CLONED notification for each node in
+the tree when cloning the entire DOMDocument
+(XERCESC-1722).</para></item>
+        <item><para>Fix for null pointer dereference in the case where
+the expression is empty and the case-insensitive option is
+specified.</para></item>
+        <item><para>Apply base whitespace facet to enumeration
+values.</para></item>
+        <item><para>Suppress DTD error message for attribute referring
+to unknown entity when attribute not used.</para></item>
+        <item><para>Add missing include for MinGW
+(XERCESC-1617)</para></item>
+        <item><para>Schema fixes for anonymous type with mixed and
+substitution with bock.</para></item>
+        <item><para>For enumeration only check base as per
+spec.</para></item>
+        <item><para>Only complain when NOTATION is in schema
+namespace.</para></item>
+        <item><para>mblen returns 0 when given an empty string;
+rewrote code to only use mbstowcs (XERCESC-1702).</para></item>
+        <item><para>In the Windows registry, the code page for an
+encoding is stored in @InternetEncoding, not in @Codepage
+(XERCESC-1092).</para></item>
+        <item><para>Various schema fixes.</para></item>
+        <item><para>Performance improvements.</para></item>
+        <item><para>A decimal value of 0.0 was treated as a positive
+number, so it was different from 0.</para></item>
+        <item><para>Fixed infinite loop when an XPath expression
+contained an unexpected character (XERCESC-1682).</para></item>
+        <item><para>IconvGNU and IconvFBSD transcoders override
+application-set locale (XERCESC-1660).</para></item>
+        <item><para>Even if the XSTS suite thinks differently, the
+XMLSchema 1.1 clarifies that two values derived from the same value
+space should be treated as equals; so find out the common ancestor and
+use it to perform the comparison.</para></item>
+        <item><para>When invoking the userData handlers, first build a
+snapshot of the map, so that the callbacks can update it
+safely.</para></item>
+        <item><para>Equal lexical values of unrelated types must be
+treated as different.</para></item>
+        <item><para>Handle escaped characters in schemaLocation
+attributes.</para></item>
+        <item><para>Before using a local memory manager, check that we
+have a valid pointer.</para></item>
+        <item><para>Allow 'list' and 'union' in the finalDefault
+attribute of a schema (XERCESC-1633).</para></item>
+        <item><para>Only xs:key should complain if not all the fields
+of an identity constraint are not found in the XML instance
+(XERCESC-1237).</para></item>
+        <item><para>Complex type restriction with substation group
+fix.</para></item>
+        <item><para>Schema and UTF32 fixes.</para></item>
+        <item><para>When calling getAttributeNodeNS, ensure we are
+providing a localName (XERCESC-1473).</para></item>
+        <item><para>Added support for WinSock and Windows Transcoder
+on Mingw/msys platform (XERCESC-1617).</para></item>
+        <item><para>Detect open() failures
+(XERCESC-1658).</para></item>
+        <item><para>Performance improvement: allocate memory only when
+the data inside the XMLElementDecl cannot be reused.</para></item>
+        <item><para>Schema derivation fixes.</para></item>
+        <item><para>Case insensitive regular expression
+fixes.</para></item>
+        <item><para>Static initialization fix.</para></item>
+        <item><para>Report the correct error when the XML PI has 'XML'
+instead of 'xml' (XERCESC-1641).</para></item>
+        <item><para>Allow whitespace-only nodes to be added as
+children of a DOMDocument.</para></item>
+        <item><para>Handle anonymous types properly.</para></item>
+        <item><para>Don't add extra whitespace when validating
+datatypes.</para></item>
+        <item><para>Treat "." as invalid double/float.</para></item>
+        <item><para>Removed unnecessary transcoding of file names,
+that resulted in round-trip transcoding. Moved calls to initializer
+list to avoid initializing to a default value.</para></item>
+        <item><para>Fixed some bugs where the literal 0 was being used
+as the value of an invalid file handle. This affects platforms like
+Solaris, which use open/close, etc., instead of fopen/fclose,
+etc.</para></item>
+        <item><para>When checking for a valid restriction, take into
+account substitution groups (XERCESC-1281).</para></item>
+        <item><para>Don't crash if an external parameter entity has no
+SYSTEM id (XERCESC-1536).</para></item>
+        <item><para>Default or fixed attribute values should be
+whitespace normalized, if the datatype requires it, before being
+validated.</para></item>
+        <item><para>DOMLSParserImpl::loadGrammar should not release
+the previously loaded DOMDocument (XERCESC-1626).</para></item>
+        <item><para>Fix memory leak (XERCESC-1624).</para></item>
+        <item><para>OS400 fixes.</para></item>
+        <item><para>Fix crashes that can occur when a non-default
+memory manager tries to clean up after running out of
+memory.</para></item>
+        <item><para>SAX2XMLReader should use the prefix reported by
+the reader, not the one stored in the element declaration
+(XERCESC-1598)</para></item>
+        <item><para>DGXMLScanner was treating predefined entities
+inside attribute values as if they were in the element content
+(XERCESC-1597)</para></item>
+        <item><para>Documentation update. Default validation is never,
+not auto.</para></item>
+        <item><para>Better message for invalid boolean
+datatype.</para></item>
+        <item><para>Performance fix, don't use QName as colon location
+is already available.</para></item>
+        <item><para>Use ln -fs instead of ln -f to avoid error message
+during Unix build.</para></item>
+        <item><para>Fix an error that manifested itself when a DTD
+defined a general entity using a parameter entity for specifying the
+name.</para></item>
+        <item><para>setEncoding was relying on
+XMLRecognizer::encodingForName to return OtherEncoding when presented
+with a endian-neutral UTF16/UTF32 encoding, but it doesn't do it
+anymore.</para></item>
+        <item><para>Put xmlns attributes in registry to avoid errors
+when checking for required attributes.</para></item>
+        <item><para>Ensure decimal is valid on getActualValue call
+when toValidate is true.</para></item>
+        <item><para>Thread safety fix, don't do lazy evaluation of
+patterns.</para></item>
+        <item><para>Allow whitespace at the beginning and after the
+union operator in XPath expressions of identity
+constraints.</para></item>
+        <item><para>Make getCanonical for float and double have
+consistent behaviour with getActual.</para></item>
+        <item><para>If "entities" feature is set to TRUE, entities
+reference inside attribute values should be serialized as
+"&amp;ent;"</para></item>
+        <item><para>Factory method is no more inline to avoid
+including an internal header in a public one
+(XERCESC-1579).</para></item>
+        <item><para>Display actual errorCode when reporting an
+error.</para></item>
+        <item><para>Allow non-standard names for the C++
+compiler.</para></item>
+        <item><para>Updated Borland C++ 6 projects.</para></item>
+        <item><para>Remove BOM-detection code inside
+refreshCharBuffer: the fix for XERCESC-1284 makes it unnecessary, and
+the UTF-8 part was updating the wrong index
+(XERCESC-1385).</para></item>
+        <item><para>Improve performances of addRange.</para></item>
+        <item><para>When serializing attribute values, escape also
+carriage returns and tabs (XERCESC-1547).</para></item>
+        <item><para>If an encoding has been forced on a InputSource,
+ignore a compatible BOM found in the stream
+(XERCESC-1284).</para></item>
+        <item><para>Fix for XERCESC-1491.</para></item>
+        <item><para>Put annotations for duplicate elements on the
+first element.</para></item>
+        <item><para>Update schema limitations and clarify float and
+double behaviour.</para></item>
+        <item><para>Do not generate error message if switchGrammar
+fails when laxly validating.</para></item>
+        <item><para>Fix for XERCESC-1555.</para></item>
+        <item><para>Fixes for XERCESC-1548.</para></item>
+        <item><para>Fix for XERCESC-1546. Canonical value of list was
+putting in an extra null character.</para></item>
+        <item><para>When evaluating a union in a regular expression,
+take the branch that matches the longest part of the input string
+(XERCESC-1521).</para></item>
+        <item><para>Fix for erroneous duplicate id
+problem.</para></item>
+        <item><para>Uniconv390 fixes.</para></item>
+        <item><para>Put debug code under specific flag so it only gets
+built when needed instead of for each debug build.</para></item>
+        <item><para>Fix size of boolean structure.</para></item>
+        <item><para>Schema fixes for union of union and empty
+element.</para></item>
+        <item><para>Improve validation performances when dealing with
+schemas with lots of top level definitions
+(XERCESC-1542).</para></item>
+        <item><para>Fix for XERCESC-1533 (default attributes in the
+definition for an element that is not validated because of errors
+would be added to the list of attributes even if already
+present).</para></item>
+        <item><para>Added missing parameter
+(XERCESC-1538).</para></item>
+        <item><para>When cloning or importing a node, also copy the
+type information (XERCESC-1517).</para></item>
+        <item><para>Treat "+" and "-" as invalid numeric schema
+values.</para></item>
+        <item><para>Fix bug where very long element names gives
+parsing error.</para></item>
+        <item><para>Generated static library in lowercase like the
+dynamic one (XERCESC-1522).</para></item>
+        <item><para>Nodes that implement getFeature should also
+implement isSupported (XERCESC- 1479).</para></item>
+        <item><para>Fix for XERCESC-1515.</para></item>
+        <item><para>Message update for QName fix and
+XERCESC-1515.</para></item>
+        <item><para>QName fix. Need to verify that the prefix is
+defined.</para></item>
+        <item><para>Check for valid schema characters for float and
+double.</para></item>
+        <item><para>Annotation bug fixes.</para></item>
+        <item><para>closesocket should be dynamically bound
+(XERCESC-1467).</para></item>
+      </change>
+
+      <note type="build">
+        <para>All libraries are built with POSIX thread
+support except on Solaris 2.6.</para>
+      </note>
+
+      <note type="usage">
+        <para>Versions of the library for the vendor C++ compiler and
+GCC 4.4.6 are available in the following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib            # Vendor C++ compiler
+${SB_INSTALL_PREFIX}/lib/gcc44      # GCC 4.4.6
+        </screen>
+
+        <para>64-bit libraries are available in
+<command>${SB_INSTALL_PREFIX}/lib/64</command> if the platform
+supports separate 64-bit object files.</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST710.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2012 April 3" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 64bit-gcc44 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
