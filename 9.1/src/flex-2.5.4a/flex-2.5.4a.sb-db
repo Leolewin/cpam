@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="flex" version="2.5.4a" revision="11">
+    <build-name>${SB_PROG_NAME}-2.5.4</build-name>
+
+    <install-name>${SB_PROG_NAME}</install-name>
+
+    <sources>
+      <source checksum="bd8753d0b22e1f4ec87a553a73021adf"
+        checksum-type="md5" size="380995"
+        path="src/flex-2.5.4a.tar.gz"/>
+      <patch checksum="844587e67bda1c7cc1c9a16d61f360f2"
+        checksum-type="md5" size="432"
+        path="src/flex-2.5.4.rhel-skel.patch"/>
+      <patch checksum="d5a10315b3a647af8c9712496148cea7"
+        checksum-type="md5" size="2464"
+        path="src/flex-2.5.4.rhel-glibc22.patch"/>
+      <patch checksum="0f624e1433e0bd41cc8a80c846269ea0"
+        checksum-type="md5" size="359"
+        path="src/flex-2.5.4.rhel-gcc3.patch"/>
+      <patch checksum="35ea0629728843a6fdd289f9655f87a5"
+        checksum-type="md5" size="3356"
+        path="src/flex-2.5.4.rhel-gcc31.patch"/>
+      <patch checksum="00ea1d47807cca01e7870dbc920b303f"
+        checksum-type="md5" size="1278"
+        path="src/flex-2.5.4.rhel-yy_no_input.patch"/>
+      <patch checksum="839499ca430eed8edd8998ae68a6f47d"
+        checksum-type="md5" size="1117"
+        path="src/flex-2.5.4.tww.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=com" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Onofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux10*|*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -Ae -z +ESlit +Onofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Onofltacc +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linuxe[56]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic" ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ${SHELL} ./configure \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <changelog>
+      <change date="2010 June 29" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 May 1" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31/PA</para></item>
+      </change>
+
+      <change date="2008 December 25" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2007 April 29" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 May 7" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2005 November 5" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+        <item><para>Report version number as 2.5.4a, not
+2.5.4</para></item>
+      </change>
+
+      <change date="2005 September 16" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 April 22" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+        <item><para>Remove bison dependency</para></item>
+      </change>
+
+      <change date="2005 March 3" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patches from RHEL 3.0</para></item>
+      </change>
+
+      <change date="2005 January 21" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Announce version as 2.5.4a, not
+2.5.4</para></item>
+      </change>
+
+      <change date="2003 April 4" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX 
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
