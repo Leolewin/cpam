@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Graph-ReadWrite" version="2.00" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="e82da37e1202dcf431f03375e5e553e0"
+        checksum-type="md5" size="24093"
+        path="src/Graph-ReadWrite-2.00.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+
+: ignore test failures
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Graph/ReadWrite/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Graph/ReadWrite/.packlist
+rmdir ${_installsitearch}/auto/Graph/ReadWrite
+rmdir ${_installsitearch}/auto/Graph 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Graph::ReadWrite|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="Graph" module="5.8.8">v&gt;=0.65</depend>
+        <depend program="XML-Parser" module="5.8.8">v&gt;=2.34</depend>
+        <depend program="XML-Writer"
+          module="5.8.8">v&gt;=0.545</depend>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Graph" module="5.12.2">v&gt;=0.65</depend>
+        <depend program="XML-Parser"
+          module="5.12.2">v&gt;=2.34</depend>
+        <depend program="XML-Writer"
+          module="5.12.2">v&gt;=0.545</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2009 May 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Remove 5.6.1 module</para></item>
+        <item><para>Add 5.8.8 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
