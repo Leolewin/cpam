@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="xmlto" version="0.0.24" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>xmlto00</install-name>
+
+    <sources>
+      <source checksum="9d45bbe43f7c66c6bf585ba6635df31a"
+        checksum-type="md5" size="111860"
+        path="src/xmlto-0.0.24.tar.bz2"/>
+      <patch checksum="40c70b5acabab96dff234c65db77c643"
+        checksum-type="md5" size="3495"
+        path="src/xmlto-0.0.24.tww.patch"/>
+      <patch checksum="fcd277fb904c01706e4f14feff98c843"
+        checksum-type="md5" size="171973"
+        path="src/xmlto-0.0.24.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11">v&gt;=1.1.26</depend>
+      <depend program="bash" var="BASH"
+        install-name="bash42">v&gt;=4.2</depend>
+      <depend program="coreutils" var="COREUTILS"
+        install-name="coreutils811">v&gt;=8.11</depend>
+      <depend program="findutils" var="FINDUTILS"
+        install-name="findutils44">v&gt;=4.4.2</depend>
+      <depend program="getopt" var="GETOPT"
+        install-name="getopt11">v&gt;=1.1.4</depend>
+      <depend program="lynx" var="LYNX"
+        install-name="lynx28">v&gt;=2.8.7</depend>
+      <depend program="mktemp" var="MKTEMP"
+        install-name="mktemp17">v&gt;=1.7</depend>
+      <depend program="zip" var="ZIP"
+        install-name="zip30">v&gt;=3.0</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-Dinline="
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" LDFLAGS="${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_BASH+BASH="${SB_VAR_BASH}/bin/bash"} \
+${SB_VAR_COREUTILS+GCP="${SB_VAR_COREUTILS}/bin/gcp"} \
+${SB_VAR_COREUTILS+TAIL="${SB_VAR_COREUTILS}/bin/gtail"} \
+${SB_VAR_FINDUTILS+FIND="${SB_VAR_FINDUTILS}/bin/gfind"} \
+${SB_VAR_GETOPT+GETOPT="${SB_VAR_GETOPT}/bin/getopt"} \
+${SB_VAR_LIBXML+XMLLINT="${SB_VAR_LIBXML}/bin/xmllint"} \
+${SB_VAR_LIBXSLT+XSLTPROC="${SB_VAR_LIBXSLT}/bin/xsltproc"} \
+${SB_VAR_LYNX+LYNK="${SB_VAR_LYNX}/bin/lynx"} \
+${SB_VAR_MKTEMP+MKTEMP="${SB_VAR_MKTEMP}/bin/mktemp"} \
+${SB_VAR_ZIP+ZIP="${SB_VAR_ZIP}/bin/zip"} \
+--with-webbrowser=lynx --disable-dependency-tracking ${ARGS+${ARGS}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s,^#!.*$,#! ${SB_VAR_BASH}/bin/bash," \
+xmlif/test/run-test
+
+gmake check
+]]>
+    </test>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="0.0.23" to="0.0.24">
+        <item><para>README file was improved to provide better guidance
+for users</para></item>
+        <item><para>show the text-web-browser converting command in
+verbose mode for better debugging</para></item>
+        <item><para>workaround passivetex limitation for chapters titles
+starting with L</para></item>
+        <item><para>use passivetex/fop extensions by default, provide
+--noextensions option to disable them</para></item>
+        <item><para>c experimental support for conversion from docbook
+to epub</para></item>
+      </change>
+
+      <change from="0.0.22" to="0.0.23">
+        <item><para>add support for detection of tail and gnu cp, do not
+hardcode /bin/bash initial value</para></item>
+        <item><para>use those detected binaries instead of previously
+hardcoded ones</para></item>
+        <item><para>use `type -t` bash shell builtin instead of `which`
+utility for detection of file availability</para></item>
+        <item><para>new option --noautosize to prevent overriding of
+user-defined paper sizes</para></item>
+      </change>
+
+      <change from="0.0.21" to="0.0.22">
+        <item><para>added experimental support for xhtml1 source format
+(output formats are awt, dvi, fo, mif, pcl,  pdf, ps, svg,
+txt)</para></item>
+        <item><para>create tex and xhtml subpackage in spec file to
+reduce requirements for main package</para></item>
+        <item><para>automated detection of programs path in configure,
+program/utility path could be passed to configure by variable, allowed
+selection of default backend and default webbrowser (just for
+requirements at the moment)</para></item>
+        <item><para>check for missing tools/programs, fail if tool is
+not available</para></item>
+        <item><para>fixed libpaper cleaning up</para></item>
+        <item><para>xmllint validity check now with noent
+option</para></item>
+        <item><para>fixed --stringparam option</para></item>
+        <item><para>added some messages to easier detection of troubles,
+used different error codes for various situations(see
+docs)</para></item>
+        <item><para>fixed FSF addresses, xmlif now licensed under GPLv2+
+(was GPL+, various indentation fixes, fixed documentation compilation
+warnings</para></item>
+      </change>
+
+      <change from="0.0.20" to="0.0.21">
+        <item><para>added experimental support for dblatex(needs
+installed dblatex package)</para></item>
+        <item><para>fixed issue with cp -a option on non-gnu systems
+non-mandatory support for libpaper</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>
