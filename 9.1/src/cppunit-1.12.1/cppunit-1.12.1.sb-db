@@ -1,0 +1,603 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="cppunit" version="1.12.1" revision="2"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}112</install-name>
+
+    <sources>
+      <source checksum="bd30e9cf5523cdfc019b94f5e1d7fd19"
+        checksum-type="md5" size="762803"
+        path="src/cppunit-1.12.1.tar.gz"/>
+      <patch checksum="cdbbf9e309ef7f35b4dde9a8d9c88997"
+        checksum-type="md5" size="3595"
+        path="src/cppunit-1.12.1.tww.patch"/>
+      <patch checksum="1fe9fc6122f4fdde4f198e4a34c38684"
+        checksum-type="md5" size="1309805"
+        path="src/cppunit-1.12.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="doxygen" install-name="doxygen17"
+        add-path="prepend" type="build">v&gt;=1.7.4</depend>
+      <depend program="graphviz" install-name="graphviz228"
+        add-path="prepend" type="build">v&gt;=2.28.0</depend>
+      <depend program="ghostscript" var="GHOSTSCRIPT"
+        type="build">v&gt;=9.01</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_gs_datadir="${SB_VAR_GHOSTSCRIPT}/share"
+
+_gcc_subdir="gcc44"
+]]>
+    </script-header>
+
+    <test>
+<![CDATA[
+gmake check
+
+# Make install doesn't work
+case "${SB_SYSTYPE}" in
+*-irix*)
+  (cd src/DllPlugInTester
+   gmake clean
+   rm -rf ii_files
+   gmake) ;;
+esac
+]]>
+    </test>
+
+    <module name="default">
+      <validate>
+        <depend program="cppunit" module="stlport4"
+          systype="*-solaris*">v==1.12.1</depend>
+        <depend program="cppunit" module="gcc44">v==1.12.1</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_gs_datadir="${SB_VAR_GHOSTSCRIPT}/share"
+
+_gcc_subdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -ieee -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local -D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i386*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+--disable-dependency-tracking \
+--datadir=${_datadir} ${ARGS+${ARGS}} \
+--libdir="${_libdir:-${SB_INSTALL_PREFIX_LIB}}" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\([^\"][^\"]*\)!-L\1 ${CC_LD_RT}\1!" cppunit-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" cppunit.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+if [ -n "${_gs_datadir}" ]; then
+# Use Ghostscript fonts for URW Helvetica
+  cat >${SB_BUILD_PREFIX}/local.conf <<_EOT_
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>${_gs_datadir}/fonts</dir>
+</fontconfig>
+_EOT_
+
+  export FONTCONFIG_PATH="${SB_BUILD_PREFIX}"
+fi
+
+gmake htmldir="${_docdir}/html"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+
+# Make install doesn't work
+case "${SB_SYSTYPE}" in
+*-irix*)
+  (cd src/DllPlugInTester
+   gmake clean
+   rm -rf ii_files
+   gmake) ;;
+esac
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install htmldir="${_docdir}/html"
+
+${SB_PATH_CHOWN} -hR 0:0 ${_docdir}/html
+]]>
+      </install>
+    </module>
+
+    <module name="gcc44"
+    systype="*-aix*|*-hpux*|*-irix*|*-linux*|*-osf*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_gs_datadir="${SB_VAR_GHOSTSCRIPT}/share"
+
+_gcc_subdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=common" CXXFLAGS="-O2 -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+i?86*-linuxe[345]*|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mieee -mcpu=ev5" CXXFLAGS="-O2 -mieee -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i386*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} ${CC_LD_RT}${SB_VAR_GCC_RT_LIB} \
+${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--disable-doxygen --disable-dot --disable-html-docs \
+--datadir=${_datadir} ${ARGS+${ARGS}} \
+--bindir="${SB_INSTALL_PREFIX}/bin/${_gcc_subdir}" \
+--includedir="${SB_INSTALL_PREFIX}/include/${_gcc_subdir}" \
+--libdir="${SB_INSTALL_PREFIX}/lib/${_gcc_subdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\([^\"][^\"]*\)!-L\1 ${CC_LD_RT}\1!" cppunit-config
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+# Use Ghostscript fonts for URW Helvetica
+cat >${SB_BUILD_PREFIX}/local.conf <<_EOT_
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>${_gs_datadir}/fonts</dir>
+</fontconfig>
+_EOT_
+
+FONTCONFIG_PATH="${SB_BUILD_PREFIX}" gmake htmldir="${_docdir}/html"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+
+# Make install doesn't work
+case "${SB_SYSTYPE}" in
+*-irix*)
+  (cd src/DllPlugInTester
+   gmake clean
+   rm -rf ii_files
+   gmake) ;;
+esac
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install-binSCRIPTS install-pkgconfigdataDATA
+gmake -C src/cppunit install-libLTLIBRARIES
+gmake -C include/cppunit/ui/qt install-libcppunitincludeHEADERS
+gmake -C include/cppunit/ui/mfc install-libcppunitincludeHEADERS
+gmake -C include/cppunit/ui/text install-libcppunitincludeHEADERS
+gmake -C include/cppunit/tools install-libcppunitincludeHEADERS
+gmake -C include/cppunit/config install-libcppunitincludeHEADERS
+gmake -C include/cppunit/plugin install-libcppunitincludeHEADERS
+gmake -C include/cppunit/portability install-libcppunitincludeHEADERS
+gmake -C include/cppunit/extensions install-libcppunitincludeHEADERS
+gmake -C include/cppunit install-libcppunitincludeHEADERS
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/bin/${_gcc_subdir} \
+${SB_INSTALL_PREFIX}/include/${_gcc_subdir} \
+${SB_INSTALL_PREFIX}/lib/${_gcc_subdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="stlport4"
+    systype="*-solaris*">
+      <dependencies replace="0">
+        <depend program="sunstudioruntime" var="SUNSTUDIORUNTIME"
+          install-name="sunstudioruntime10">v&gt;=1.0 r&gt;=3</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_gs_datadir="${SB_VAR_GHOSTSCRIPT}/share"
+
+_gcc_subdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -library=stlport4 -features=tmplife \
+-xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -library=stlport4 -features=tmplife \
+-xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -library=stlport4 -features=tmplife \
+-xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${CC_LD_RT}${SB_VAR_SUNSTUDIORUNTIME_LIB}/stlport4 \
+${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--disable-doxygen --disable-dot --disable-html-docs \
+--datadir=${_datadir} ${ARGS+${ARGS}} \
+--bindir="${SB_INSTALL_PREFIX}/bin/stlport4" \
+--libdir="${SB_INSTALL_PREFIX_LIB}/stlport4" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\([^\"][^\"]*\)!-L\1 ${CC_LD_RT}\1!" cppunit-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" cppunit.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+# Use Ghostscript fonts for URW Helvetica
+cat >${SB_BUILD_PREFIX}/local.conf <<_EOT_
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <dir>${_gs_datadir}/fonts</dir>
+</fontconfig>
+_EOT_
+
+FONTCONFIG_PATH="${SB_BUILD_PREFIX}" gmake htmldir="${_docdir}/html"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+
+# Make install doesn't work
+case "${SB_SYSTYPE}" in
+*-irix*)
+  (cd src/DllPlugInTester
+   gmake clean
+   rm -rf ii_files
+   gmake) ;;
+esac
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install-binSCRIPTS install-pkgconfigdataDATA
+gmake -C src/cppunit install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/stlport4 \
+${SB_INSTALL_PREFIX}/bin/stlport4
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.12.0" to="1.12.1">
+        <item><para>Assertion: CPPUNIT_ASSERT_DOUBLES_EQUAL() now
+properly handles non-finite values, specifically NaN, +Inf, and
+-Inf.</para></item>
+        <item><para>Portability:</para>
+        <unorderedlist>
+          <item><para>Fixed some compilation issue for
+QtTestRunner</para></item>
+          <item><para>Code should build on Windows in UNICODE
+mode</para></item>
+        </unorderedlist></item>
+      </change>
+
+      <change from="1.11.4" to="1.12.0">
+        <item><para>Portability: autogen.sh can now be run on Mac OS X
+(patch #1449380 contributed by Sander Temme).</para></item>
+        <item><para>MFC Test runner: fixed bug #1498175: double click
+on failure would sometime not goto failed assertion in visual
+studio</para></item>
+        <item><para>Documentation: now generated with doxygen 1.4.7
+new 'tabs' style</para></item>
+      </change>
+
+      <change from="1.11.2" to="1.11.4">
+        <item><para>Portability: Support for Embedded Visual C++ 4
+added. For this purpose, CppUnit now provides a very simple stream
+implementation if none is provided. This should also help porting on
+other platforms which have STL but no stream support. Just make sure
+that CPPUNIT_NO_STREAM is defined to 1 in your config
+header.</para></item>
+        <item><para>Assertion:</para>
+        <unorderedlist>
+          <item><para>Added missing _MESSAGE variants for the
+following assertions:</para>
+          <screen>
+CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE
+CPPUNIT_ASSERT_THROW_MESSAGE
+CPPUNIT_ASSERT_NO_THROW_MESSAGE
+CPPUNIT_ASSERT_ASSERTION_FAIL_MESSAGE
+CPPUNIT_ASSERT_ASSERTION_PASS_MESSAGE
+          </screen>
+          <para>Notes: change made to CPPUNIT_ASSERT_THROW may cause
+compilation error if you're expecting std::exception as it would be
+caught twice. Contact us if it is an issue (we don't see much use for
+such a test).</para>
+          <para>Some assertions failure message are now more detailed
+(exception, expression)</para></item>
+          <item><para>Assertion on real number now output expected and
+actual value using the maximum available precision instead of the
+previous strategy of rounding to 6 digits.</para></item>
+        </unorderedlist></item>
+        <item><para>Outputter:</para>
+        <unorderedlist>
+          <item><para>XML Ouputter: patch #997006 contributed by Akos
+Maroy makes the 'stand-alone' attribute of the XML header optional.
+See XmlOutputter::setStandalone() &amp;
+XmlDocument::setStandalone().</para></item>
+          <item><para>Better integration of compiler output for gcc on
+Mac OS X with Xcode</para></item>
+        </unorderedlist></item>
+        <item><para>MFC Test Runner:</para>
+        <unorderedlist>
+          <item><para>Integration with VC++ 7.0 &amp; 7.1. Double
+clicking on a failure will now to the failure location in the open IDE
+(no add-in necessary)</para></item>
+          <item><para>Progress bar: now use system color to draw
+border (patch from bug #1165875)</para></item>
+        </unorderedlist></item>
+        <item><para>QT Test Runner: Fixed display of multi-line
+messages</para></item>
+        <item><para>Compilation:</para>
+        <unorderedlist>
+          <item><para>The standard pkg-config file is now generated on
+unix</para></item>
+          <item><para>MinGW: patch #1024428 contributed by astar,
+fixed compilation issue in
+Win32DynamicLibraryManager.cpp.</para></item>
+          <item><para>MinGW, cygwin: enable build of shared library
+when using libtool</para></item>
+          <item><para>autotool: applied patch #1076398. Quote: "This
+patch allows AM_PATH_CPPUNIT to accept version numbers without minor
+and micro version. Now you can do:</para>
+          <screen>
+AM_PATH_CPPUNIT(1.9)
+          </screen>
+          <para>instead of</para>
+          <screen>
+AM_PATH_CPPUNIT(1.9.0)"
+          </screen></item>
+          <item><para>Visual Studio 2005: removed deprecated
+warning</para></item>
+        </unorderedlist></item>
+        <item><para>Documentation: Corrected many typos in cookbook
+and money example</para></item>
+        <item><para>Bug Fix:</para>
+        <unorderedlist>
+          <item><para>cppunit.m4: patch #946302, AM_PATH_CPPUNIT
+doesn't report result if CppUnit is missing.</para></item>
+          <item><para>Message/SourceLine: copy constructor have been
+specifically implemented to ensure they are thread-safe even if
+std::string copy constructor is not (usually on reference count based
+implementation)</para></item>
+          <item><para>TestResultCollector: fixed memory leak occuring
+when calling reset()</para></item>
+        </unorderedlist></item>
+        <item><para>Contrib:</para>
+        <unorderedlist>
+          <item><para>added XSLT for compatibility with Ant junit xml
+formatter. See xml-xsl/cppunit2junit.xsl and cppunit2junit.txt for
+details.</para></item>
+          <item><para>xml-xsl/report.xsl has been fixed to work with
+current xml output.</para></item>
+        </unorderedlist></item>
+        <item><para>(Possible) Compatiblity break:</para>
+        <unorderedlist>
+          <item><para>All text output is now done on cout() instead of
+sometime cerr &amp; sometime cout depending on the
+component</para></item>
+          <item><para>OStringStream definition has been removed from
+Portability.h. This means that &lt;sstream&gt; is no longer included,
+and that ostringstream and string might not be defined. In practice
+this should have no impact since those includes have been moved to
+other CppUnit headers.</para></item>
+        </unorderedlist></item>
+        <item><para>Notes: CppUnit now uses the alias OStream when
+refering to std::ostream for portability</para></item>
+      </change>
+
+      <note type="usage">
+        <para>Versions of the library for the vendor C++ compiler and
+GCC are available in the following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib            # Vendor C++ compiler
+${SB_INSTALL_PREFIX}/lib/gcc44      # GCC 4.4.6
+        </screen>
+
+        <para>For Solaris 7+, a version of the library for the vendor
+C++ compiler built with the newer stlport4 library is available in the
+following directory. <command>-library=stlport4</command> must be
+specified when compiling and linking against it.</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/stlport4   # Vendor C++ compiler with
+                                      -library=stlport4
+        </screen>
+      </note>
+
+      <platform name="AIX 5.x">
+        <para>If compiling against the libraries in
+${SB_INSTALL_PREFIX}/lib for the vendor C++ library, the
+<command>-qrtti</command> option must be used because of cppunit's
+use of <command>dynamic_cast</command>.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 20" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update doxygen dependency from 1.5.8 to
+1.7.4</para></item>
+        <item><para>Update graphviz dependency from 2.24.0 to
+2.28.0</para></item>
+        <item><para>Update ghostscript dependency from 8.63 to
+9.01</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
