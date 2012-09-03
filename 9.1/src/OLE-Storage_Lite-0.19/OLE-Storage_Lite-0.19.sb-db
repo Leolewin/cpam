@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="OLE-Storage_Lite" version="0.19" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="1a713f5342c7d90e54ab0d9659650296"
+        checksum-type="md5" size="21952"
+        path="src/OLE-Storage_Lite-0.19.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/OLE/Storage_Lite/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/OLE/Storage_Lite/.packlist
+rmdir ${_installsitearch}/auto/OLE/Storage_Lite
+rmdir ${_installsitearch}/auto/OLE 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<OLE::Storage_Lite|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
