@@ -1,0 +1,964 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gd" version="2.0.35" revision="8">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}20</install-name>
+
+    <sources>
+      <source checksum="6c6c3dbb7bf079e0bb5fbbfd3bb8a71c"
+        checksum-type="md5" size="1212730"
+        path="src/gd-2.0.35.tar.bz2"/>
+      <patch checksum="8955f3b299dd5b326dfc7b3ffb865bfb"
+        checksum-type="md5" size="963"
+        path="src/gd-2.0.35.fc-infinite-loop.patch"/>
+      <patch checksum="2f5289cd1dbf27ef600f51c799b0b63a"
+        checksum-type="md5" size="373"
+        path="src/gd-2.0.35.fc-overflow.patch"/>
+      <patch checksum="62777023e419ee58cc4d1570401e342b"
+        checksum-type="md5" size="25002"
+        path="src/gd-2.0.35.tww.patch"/>
+      <patch checksum="de45e62d761a5c3236f73af46e695414"
+        checksum-type="md5" size="1892800"
+        path="src/gd-2.0.35.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/docs"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="jpeg" var="JPEG"
+          install-name="libjpeg8">v&gt;=8b</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="xpm" var="XPM"
+          install-name="xpm">v&gt;=3.4k</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="gd" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==2.0.35</depend>
+        <depend program="gd" module="GD-5.12.2">v==2.0.35</depend>
+        <depend program="gd"
+          module="GDTextUtil-5.12.2">v==2.0.35</depend>
+        <depend program="gd" module="GDGraph-5.12.2">v==2.0.35</depend>
+        <depend program="gd"
+          module="GD-Graph3d-5.12.2">v==2.0.35</depend>
+        <depend program="gd" module="gdmodule-2.6.7">v==2.0.35</depend>
+        <depend program="gd" module="gdmodule-2.7.2">v==2.0.35</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/docs"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib64"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ;;
+i?86*-redhat-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  LDFLAGS="-L/usr/X11R6/lib"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ;;
+*-linux*)
+  LDFLAGS="-L/usr/X11R6/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+LDFLAGS="${SB_VAR_XPM+${CC_LD_RT}${SB_VAR_XPM_LIB}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB} \
+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static \
+--with-jpeg${SB_VAR_JPEG+=${SB_VAR_JPEG}} \
+--with-freetype${SB_VAR_LIBTTF+=${SB_VAR_LIBTTF}} \
+--with-xpm${SB_VAR_XPM+=${SB_VAR_XPM}} \
+--with-png${SB_VAR_LIBPNG+=${SB_VAR_LIBPNG}} \
+--with-zlib${SB_VAR_LIBZ+=${SB_VAR_LIBZ}} \
+--with-fontconfig${SB_VAR_FCPACKAGE+=${SB_VAR_FCPACKAGE}} \
+--disable-dependency-tracking --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\$libdir\)!-L\1 ${CC_LD_RT}\1!;" config/gdlib-config
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 index.html ${_docdir}
+]]>
+      </install>
+    </module>
+
+    <module name="gdmodule-2.7.2">
+      <build-name>gdmodule-0.56</build-name>
+
+      <sources>
+        <source checksum="6a6db28a089d4caf5a921cd266a62b3d"
+          checksum-type="md5" size="48748"
+          path="src/gdmodule-0.56.tar.gz"/>
+        <patch checksum="450f64373cea08828547e3c1c39665b1"
+          checksum-type="md5" size="1392"
+          path="src/gdmodule-0.56.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="jpeg" var="JPEG"
+          install-name="libjpeg8">v&gt;=8b</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="xpm" var="XPM"
+          install-name="xpm">v&gt;=3.4k</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gd" var="LIBGD">v==2.0.35</depend>
+        <depend program="python" var="PYTHON">v==2.7.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s|%libdirs%|[\"${SB_VAR_JPEG_LIB}\",\"${SB_VAR_FCPACKAGE_LIB}\",\
+\"${SB_VAR_LIBTTF_LIB}\",\"${SB_VAR_LIBPNG_LIB}\",\"${SB_VAR_XPM_LIB}\",\
+\"${SB_VAR_LIBZ_LIB}\",\"${SB_VAR_LIBGD_LIB}\",\"${SB_VAR_LIBICONV_LIB}\"]|;\
+s|%extra_link_args%|[\"${CC_LD_RT}${SB_VAR_JPEG_LIB}:\
+${SB_VAR_FCPACKAGE_LIB}:${SB_VAR_LIBTTF_LIB}:${SB_VAR_LIBICONV_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_XPM_LIB}:\
+${SB_VAR_LIBZ_LIB}:${SB_VAR_LIBGD_LIB}\"\
+${LDFLAGS+,\"${LDFLAGS}\"}]|;\
+s|%incdirs%|[\"${SB_VAR_JPEG_INC}\",\"${SB_VAR_FCPACKAGE_INC}\",\
+\"${SB_VAR_LIBTTF_INC}\",\"${SB_VAR_LIBPNG_INC}\",\"${SB_VAR_XPM_INC}\",\
+\"${SB_VAR_LIBZ_INC}\",\"${SB_VAR_LIBGD_INC}\",\
+\"${SB_VAR_LIBICONV_LIB}\"]|;" Setup.py
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python Setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+export PYTHONPATH=$(ls -d ${SB_BUILD_PREFIX}/build/lib.*)
+${SB_VAR_PYTHON}/bin/python gddemo.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python Setup.py install \
+--prefix=${_install_prefix} --install-lib=${_install_prefix} \
+--install-purelib=${_install_prefix} \
+--install-platlib=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="GDTextUtil-5.12.2">
+      <build-name>GDTextUtil-0.86</build-name>
+
+      <sources>
+        <source checksum="941ad06eadc86b47f3a32da405665c41"
+          checksum-type="md5" size="64698"
+          path="src/GDTextUtil-0.86.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gd" var="LIBGD"
+          module="GD-5.12.2">v==2.0.35</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+export PERL5LIB="${_install_prefix}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_install_prefix}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+        <remove-db-entry program="gd" module="GD-5.12.2">v==2.0.35</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <module name="GDGraph-5.12.2">
+      <build-name>GDGraph-1.44</build-name>
+
+      <sources>
+        <source checksum="a8a4ab62741258803b5744cb8882e68c"
+          checksum-type="md5" size="154855"
+          path="src/GDGraph-1.44.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gd" var="LIBGD"
+          module="GD-5.12.2">v==2.0.35</depend>
+        <depend program="gd" var="LIBGD"
+          module="GDTextUtil-5.12.2">v==2.0.35</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+export PERL5LIB="${_install_prefix}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_install_prefix}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+        <remove-db-entry program="gd" module="GD-5.12.2">v==2.0.35</remove-db-entry>
+        <remove-db-entry program="gd"
+          module="GDTextUtil-5.12.2">v==2.0.35</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="jpeg" var="JPEG" install-name="libjpeg8"
+          module="64bit">v&gt;=8b</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="xpm" var="XPM" install-name="xpm"
+          module="64bit">v&gt;=3.4k</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+  -xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_FCPACKAGE+-I${SB_VAR_FCPACKAGE_INC}} \
+${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}/freetype2} \
+${SB_VAR_XPM+-I${SB_VAR_XPM_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+PERL=${SB_VAR_PERL}/bin/perl \
+LDFLAGS="${SB_VAR_JPEG+-L${SB_VAR_JPEG}/${_libdir}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG}/${_libdir}} \
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE}/${_libdir}} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV}/${_libdir} \
+${CC_LD_RT}${SB_VAR_LIBICONV}/${_libdir}} \
+${SB_VAR_LIBTTF+-L${SB_VAR_LIBTTF}/${_libdir}} \
+${SB_VAR_XPM+-L${SB_VAR_XPM}/${_libdir}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ}/${_libdir}} \
+${SB_VAR_XPM+${CC_LD_RT}${SB_VAR_XPM}/${_libdir}} \
+${LDFLAGS+${LDFLAGS}}" --enable-shared --enable-static --with-jpeg \
+--with-freetype --with-xpm --with-png --with-zlib --with-fontconfig \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="GD-Graph3d-5.12.2">
+      <build-name>GD-Graph3d-0.63</build-name>
+
+      <sources>
+        <source checksum="f866dcdd1e7e2056bb946ab7ac3fe37b"
+          checksum-type="md5" size="97855"
+          path="src/GD-Graph3d-0.63.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gd" var="LIBGD"
+          module="GD-5.12.2">v==2.0.35</depend>
+        <depend program="gd" var="LIBGD"
+          module="GDTextUtil-5.12.2">v==2.0.35</depend>
+        <depend program="gd" var="LIBGD"
+          module="GDGraph-5.12.2">v==2.0.35</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+
+export PERL5LIB="${_install_prefix}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_install_prefix}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+        <remove-db-entry program="gd" module="GD-5.12.2">v==2.0.35</remove-db-entry>
+        <remove-db-entry program="gd"
+          module="GDTextUtil-5.12.2">v==2.0.35</remove-db-entry>
+        <remove-db-entry program="gd" module="GDGraph-5.12.2">v==2.0.35</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <module name="gdmodule-2.6.7">
+      <build-name>gdmodule-0.56</build-name>
+
+      <sources>
+        <source checksum="6a6db28a089d4caf5a921cd266a62b3d"
+          checksum-type="md5" size="48748"
+          path="src/gdmodule-0.56.tar.gz"/>
+        <patch checksum="450f64373cea08828547e3c1c39665b1"
+          checksum-type="md5" size="1392"
+          path="src/gdmodule-0.56.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="jpeg" var="JPEG"
+          install-name="libjpeg8">v&gt;=8b</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="xpm" var="XPM"
+          install-name="xpm">v&gt;=3.4k</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gd" var="LIBGD">v==2.0.35</depend>
+        <depend program="python" var="PYTHON">v==2.6.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*|*-osf*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC_LD_RT="-Wl,-R" ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s|%libdirs%|[\"${SB_VAR_JPEG_LIB}\",\"${SB_VAR_FCPACKAGE_LIB}\",\
+\"${SB_VAR_LIBTTF_LIB}\",\"${SB_VAR_LIBPNG_LIB}\",\"${SB_VAR_XPM_LIB}\",\
+\"${SB_VAR_LIBZ_LIB}\",\"${SB_VAR_LIBGD_LIB}\",\"${SB_VAR_LIBICONV_LIB}\"]|;\
+s|%extra_link_args%|[\"${CC_LD_RT}${SB_VAR_JPEG_LIB}:\
+${SB_VAR_FCPACKAGE_LIB}:${SB_VAR_LIBTTF_LIB}:${SB_VAR_LIBICONV_LIB}:\
+${SB_VAR_LIBPNG_LIB}:${SB_VAR_XPM_LIB}:\
+${SB_VAR_LIBZ_LIB}:${SB_VAR_LIBGD_LIB}\"\
+${LDFLAGS+,\"${LDFLAGS}\"}]|;\
+s|%incdirs%|[\"${SB_VAR_JPEG_INC}\",\"${SB_VAR_FCPACKAGE_INC}\",\
+\"${SB_VAR_LIBTTF_INC}\",\"${SB_VAR_LIBPNG_INC}\",\"${SB_VAR_XPM_INC}\",\
+\"${SB_VAR_LIBZ_INC}\",\"${SB_VAR_LIBGD_INC}\",\
+\"${SB_VAR_LIBICONV_LIB}\"]|;" Setup.py
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python Setup.py build
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+export PYTHONPATH=$(ls -d ${SB_BUILD_PREFIX}/build/lib.*)
+${SB_VAR_PYTHON}/bin/python gddemo.py
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python Setup.py install \
+--prefix=${_install_prefix} --install-lib=${_install_prefix} \
+--install-purelib=${_install_prefix} \
+--install-platlib=${_install_prefix}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="GD-5.12.2">
+      <build-name>GD-2.46</build-name>
+
+      <sources>
+        <source checksum="ea86a94eb45330eae27ecbfd5c2f43bb"
+          checksum-type="md5" size="260989"
+          path="src/GD-2.46.tar.gz"/>
+        <patch checksum="3f162774c445fac97602eba2312c8a14"
+          checksum-type="md5" size="2104"
+          path="src/GD-2.46.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gd" var="LIBGD"
+          add-path="prepend">v==2.0.35</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test TEST_VERBOSE=1
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_install_prefix}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+
+rm ${SB_INSTALL_PREFIX}/man/man3/GD* || :
+rm ${SB_INSTALL_PREFIX}/man/man1/bdf2gdfont.pl.1
+rm ${SB_INSTALL_PREFIX}/bin/bdf2gdfont.pl.1
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.0.34" to="2.0.35">
+        <item><para>Fix valgrind error in
+gdImageFillTiled</para></item>
+        <item><para>Add missing custom cmake macros</para></item>
+        <item><para>Avoid signature buffer copy  in
+gd_gif_c</para></item>
+        <item><para>Race condition in gdImageStringFTEx</para></item>
+        <item><para>Reading GIF images is not thread safe (static
+usage in private functions)</para></item>
+        <item><para>GIF Local palette is read twice</para></item>
+        <item><para>GIF, Use local frame dimension when possible
+instead of the logical screen size</para></item>
+        <item><para>OpenVMS build support, see VMS/README.VMS for the
+details</para></item>
+        <item><para>GIF, do not try to use the global colmap if it
+does not exist</para></item>
+        <item><para>gdImageAALine draws axis lines with two pixels
+width</para></item>
+        <item><para>TTF usage doesn't work properly on
+Netware</para></item>
+        <item><para>gdImageArc CPU usage with large
+angles</para></item>
+        <item><para>gdImageFilledRectangle regression fixed when used
+with reversed edges</para></item>
+        <item><para>Possible infinite loop in libgd/gd_png.c, flaw
+found by Xavier Roche</para></item>
+        <item><para>Fixed segfault when an invalid color index is
+present in a GIF image data</para></item>
+        <item><para>Possible integer overflow in
+gdImageCreateTrueColor</para></item>
+        <item><para>gdImageCreateXbm can crash if gdImageCreate
+fails</para></item>
+      </change>
+
+      <change from="2.0.33" to="2.0.34">
+        <item><para>Initialize variables in tweenColorTest, fix
+cache</para></item>
+        <item><para>gdImageFill, multiple segfaults with patterns or
+invalid arguments</para></item>
+        <item><para>gdImageRectangle draws corners twice</para></item>
+        <item><para>GIF Output does use the transparent color with
+truecolor images</para></item>
+        <item><para>Multiple security issues in GIF
+loader</para></item>
+        <item><para>gdIimageCopy doen't use the alpha
+channel</para></item>
+        <item><para>Add autogen and and misc
+configure/makefile</para></item>
+        <item><para>gdImageFilledEllipse does not respect
+transparency</para></item>
+        <item><para>gdImageCreateFromPng*  crashes with empty
+file</para></item>
+        <item><para>gdImageCreateFromPngCrx, initialize the signature
+buffer not the infile</para></item>
+        <item><para>leak in jinit_2pass_quantizer</para></item>
+        <item><para>Added santiy checks for possible memory allocation
+errors</para></item>
+        <item><para>gdImageCreatePaletteFromTrueColor, later color
+allocations overwrite the palette colors</para></item>
+        <item><para>Obscure error on Sun's compiler in
+entities.tcl</para></item>
+        <item><para>gdImageCreate, invalid gdFree call when overflow2
+fails</para></item>
+        <item><para>HWB_Diff, invalid usage of abs instead of
+fabs</para></item>
+        <item><para>Fixed gdImageCopyMergeGray when used with a true
+color image</para></item>
+        <item><para>transparency preservation in
+gdImageCopyRotated</para></item>
+        <item><para>Out of range checks in
+gdImageSetAAPixelColor</para></item>
+        <item><para>gdFontCacheSetup does not stop on
+error</para></item>
+        <item><para>Errors when gdImageStringFTEx is called with an
+empty string</para></item>
+        <item><para>gdft.c, uninitialized variable "charmap" and avoid
+divide-by-zero</para></item>
+        <item><para>DISABLE_THREADS to permit disabling of thread
+support</para></item>
+        <item><para>dynamicGetbuf, sourceGetbuf must return 0 for
+errors and EOF</para></item>
+        <item><para>gdSeek declaration is wrong</para></item>
+        <item><para>Windows native makefile</para></item>
+        <item><para>restores the ability to recognize and handle a
+font with Adobe-specific character encoding. Added
+gdFTEX_Adobe_Custom.</para></item>
+        <item><para>Shared library support on cygwin</para></item>
+        <item><para>Pattern-fill works incorrectly if tile is created
+via gdImageCreateTruecolor</para></item>
+        <item><para>malformed PNG image crashes (CRC
+error)</para></item>
+        <item><para>reading some gif images creates infinite
+loop</para></item>
+        <item><para>gdImageFillToBorder crashes when used with
+alpha</para></item>
+        <item><para>possible Buffer overflow in the gdImageStringFTEx
+function in gdft.c (CVE-2007-0455)</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The gdmodule Python binding is available in the
+following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.x
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.x
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+        <para>The GD, GDTextUtil, GDGraph, and GD::Graph3d Perl
+bindings are available in the following directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>The directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2010 December 20" revision="8"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+1.4.4</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update jpeg dependency from 6b to 8b</para></item>
+        <item><para>Replace perl 5.8.8 modules with 5.12.2
+modules</para></item>
+        <item><para>Replace python 2.5.2 module with 2.6.7
+module</para></item>
+      </change>
+
+      <change date="2010 October 29" revision="7"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2010 July 7" revision="6"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add gdmodule python 2.5.2 module</para></item>
+      </change>
+
+      <change date="2010 January 11" revision="5"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 5.10.1 perl modules</para></item>
+      </change>
+
+      <change date="2009 May 11" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31/PA</para></item>
+      </change>
+
+      <change date="2009 January 14" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2008 August 29" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update fcpackage dependency from 2.4 to
+2.6</para></item>
+        <item><para>Update freetype dependency from 2.3.5 to
+2.3.7</para></item>
+        <item><para>Update libpng dependency from 1.2.18 to
+1.2.29</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
