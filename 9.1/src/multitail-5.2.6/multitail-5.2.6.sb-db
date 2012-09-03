@@ -1,0 +1,410 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="multitail" version="5.2.6" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}52</install-name>
+
+    <sources>
+      <source checksum="6496b3d78660ff8d11c743a0d03cca34"
+        checksum-type="md5" size="164839"
+        path="src/multitail-5.2.6.tgz"/>
+      <patch checksum="46f2987dd39e5ef8c4c04fe5baaa0148"
+        checksum-type="md5" size="57818"
+        path="src/multitail-5.2.6.tww.patch"/>
+      <patch checksum="7398c2e389830adffffbef01c40c6c1d"
+        checksum-type="md5" size="389682"
+        path="src/multitail-5.2.6.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses57">v&gt;=5.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--mandir="${SB_INSTALL_PREFIX}/man" --sysconfdir=${_sysconfdir} \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install docdir=${_docdir}
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/multitail.conf
+cat >${_sysconfdir}/multitail.conf <<_EOT_
+check_mail:0
+_EOT_
+]]>
+    </install>
+
+    <notes>
+      <change from="5.2.1" to="5.2.2">
+        <item><para>added '--follow-all' (see -f for
+semantics)</para></item>
+        <item><para>configuration-file parameters with 'y' instead of
+'yes' were taken for no</para></item>
+        <item><para>fixed assertion error happening when doing a
+search with the '-ts' switch in the scrollback window</para></item>
+        <item><para>re-enabled 'suspend' (^z)</para></item>
+        <item><para>write script: won't write --bi with value &lt; 1
+anymore</para></item>
+        <item><para>fixes for solaris makefiles</para></item>
+        <item><para>fixed problem with editrules</para></item>
+      </change>
+
+      <change from="5.2.0" to="5.2.1">
+        <item><para>added horizontal scroll for non-linewrapped
+windows</para></item>
+        <item><para>fixed segfault when saving buffer in the
+scrollback window</para></item>
+        <item><para>the enter key will now add a markerline in all
+windows</para></item>
+        <item><para>labels would give incorrect linewraps in the
+scrollbackwindow</para></item>
+      </change>
+
+      <change from="5.1.3" to="5.2.0">
+        <item><para>merged 5.0.5 with 5.1.3</para></item>
+      </change>
+
+      <change from="5.1.2" to="5.1.3">
+        <item><para>fixed small memory leak (global filter was not
+freed)</para></item>
+        <item><para>when a -E was used also all -e's were copied as
+well</para></item>
+      </change>
+
+      <change from="5.1.1" to="5.1.2">
+        <item><para>some compilation/installation fixes for
+cygwin</para></item>
+        <item><para>added colorscheme for acpitail</para></item>
+        <item><para>removed 3 memoryleaks</para></item>
+        <item><para>searching in the scrollback window can now open a
+new window as well</para></item>
+        <item><para>searching would not work when you were halfway a
+line in scrollback</para></item>
+        <item><para>moving to the beginning of the first line when it
+is longer then the screenwidth would not work in
+scrollback</para></item>
+      </change>
+
+      <change from="5.1.0" to="5.1.1">
+        <item><para>errors in error popups would not fit
+sometimes</para></item>
+        <item><para>improved scrolling in the scrollback menu: also
+scrolling in a line is now possible</para></item>
+        <item><para>colors can now be suppressed in the scrollback
+window to improve scrollingspeed</para></item>
+        <item><para>one can now redirect to a socket (syslog/udp/514)
+as well</para></item>
+        <item><para>Solaris problems fixed (malloc of 0
+bytes)</para></item>
+        <item><para>fixed a segfault (occuring only on AIX) at
+exit</para></item>
+        <item><para>unfiltered redirection would only emit the first
+line in certain situations</para></item>
+        <item><para>made some errors not fatal - e.g. let them give an
+error popup instead</para></item>
+        <item><para>MultiTail can now act as a syslog-server (e.g.
+listening on UDP port 514 for messages). this is usefull when you want
+to monitor syslog capable devices (UNIX servers, Cisco switches, etc.)
+without the need for a syslog server</para></item>
+        <item><para>one can now explicitly wether the 'tail' used is a
+posix only tail (e.g. inotail) or also supports the old "-[0-9]"
+format</para></item>
+        <item><para>replaced 2 strcat()s with strncat()</para></item>
+        <item><para>fixed 2 memory leaks</para></item>
+        <item><para>added -kS which, like sed, can select parts of
+strings to keep. e.g. -kS "^.*(TCP[^ ]*).*$" would keep the string
+matched by what is between ( and )</para></item>
+        <item><para>error messaging is more uniform</para></item>
+        <item><para>made more parameters configurable</para></item>
+        <item><para>fixed a cosmetic bug in the 'add window'
+menu</para></item>
+        <item><para>MultiTail used to wake up 4 times a second, it now
+only wakes up if there is really something to do</para></item>
+      </change>
+
+      <change from="5.0.5" to="5.1.0">
+        <item><para>added conversion signal number to signal
+name</para></item>
+        <item><para>page up (in the scrollbackwindow) did not work
+when there were lines bigger then the scrollbackwindow</para></item>
+        <item><para>compilation fix for uClibc</para></item>
+      </change>
+
+      <change from="5.0.4" to="5.0.5">
+        <item><para>HOME/END in scrollback did not redraw the
+screen</para></item>
+        <item><para>fix for freebsd: one can now set the characters to
+use for borders</para></item>
+        <item><para>fixes for systems where 'char' is actually
+unsigned</para></item>
+      </change>
+
+      <change from="5.0.3" to="5.0.4">
+        <item><para>changed default changeline_color to white on blue
+which is better readable then the previous colors</para></item>
+        <item><para>not all commandline settings were written when
+executing the 'write script' functionality</para></item>
+        <item><para>added color scheme for the BOINC
+project</para></item>
+      </change>
+
+      <change from="5.0.2" to="5.0.3">
+        <item><para>removed bogus error message when aborting 'write
+script'</para></item>
+      </change>
+
+      <change from="5.0.1" to="5.0.2">
+        <item><para>removed some debugging code that garbled the
+screen</para></item>
+        <item><para>version 5.0.0 always remembered the last
+searchstring, this can now be turned off in the
+configfile</para></item>
+        <item><para>on certain terminals one need to explicitly set
+the background color to be usable</para></item>
+        <item><para>conversion schemes/color schemes selection would
+fail if no schemes were defined in the config file.</para></item>
+        <item><para>--mergeall would merge all the following files
+into the previous window(!) which may be unwanted, so added
+'--mergeall-new' which creates a new window in which all the following
+files upto --no-mergeall are merged</para></item>
+      </change>
+
+      <change from="5.0.0" to="5.0.1">
+        <item><para>fixed a segfault in the 'find'-code</para></item>
+        <item><para>added colorscheme for motion</para></item>
+        <item><para>default linewrap mode in configurationfile was
+incorrectly parsed</para></item>
+      </change>
+
+      <change from="4.3.7" to="5.0.0">
+        <item><para>merge with developmentversion 4.3.7</para></item>
+      </change>
+
+      <change from="4.3.6" to="4.3.7">
+        <item><para>added case insensitive toggle to
+searchfields</para></item>
+        <item><para>added support (in colorschemes) for alternating
+colors</para></item>
+        <item><para>added colorscheme for Argus
+(http://qosient.com/argus/) - copied from
+http://wtf.hijacked.us/wiki/index.php/Multitail</para></item>
+        <item><para>statistics screen now also shows the number of
+colorpairs in use</para></item>
+        <item><para>added mcsre/mcsre_s/etc. (like cs_re/cs_re_s/etc.)
+but which merges these attributes to the attributes of a previous
+matched cs_re/mcsre</para></item>
+        <item><para>disabled terminal-mode for stdin (as that would
+not work)</para></item>
+        <item><para>terminal-mode can now also select the
+subwindow</para></item>
+        <item><para>when reading from stdin and the end of the file is
+reached, multitail would busy-loop causing high cpu load</para></item>
+        <item><para>do a read of SSIZE_MAX or 65536 (whichever is
+smaller) instead of just hardcoded 65535 bytes: that way it'll also
+run on UNIX systems where SSIZE_MAX &lt; 65535</para></item>
+      </change>
+
+      <change from="4.3.5" to="4.3.6">
+        <item><para>MultiTail now verifies that you did not
+accidentely tried to pipe something into multitail while not using
+-j/-J</para></item>
+        <item><para>added history to inputfields like searchstrings:
+press ^r or cursor key down when entering a search-string or filename
+or command</para></item>
+        <item><para>global search now remembers the last
+searchstring</para></item>
+        <item><para>in the scrollback menu, search next ('n') did not
+work</para></item>
+        <item><para>added 'N' which clears all buffers and
+windows</para></item>
+      </change>
+
+      <change from="4.3.4" to="4.3.5">
+        <item><para>'n' (clear a buffer+window) did not
+work</para></item>
+        <item><para>added wordwrap (-p w)</para></item>
+        <item><para>-[qQ] did not use the default linewrap
+mode</para></item>
+        <item><para>Ex (e.g. use the following for all following
+files) would fail when you would edit the command from within the
+menu</para></item>
+        <item><para>check_mail value of 0 was not accepted altough it
+should be</para></item>
+        <item><para>fixed a warning about TERM_IGNORE in utils.c
+(harmless but anoying netherless)</para></item>
+        <item><para>added -[eE]X which only gives the matching
+substring as a parameter to the command which is invoked for each
+matching line</para></item>
+        <item><para>fixes so that on IRIX MultiTail compiles without
+path-changes to the Makefile</para></item>
+        <item><para>merged view (after a (global) search) can now show
+the window/subwindow number in front of each line (press
+^t)</para></item>
+        <item><para>fixed sysstat colorschemes</para></item>
+        <item><para>fixes in the cs_re* logic</para></item>
+        <item><para>fixed memoryleak in merged
+scrollback</para></item>
+        <item><para>lists of subwindows did not show file/command
+name</para></item>
+        <item><para>updated on-line help</para></item>
+        <item><para>added colorscheme for portsentry</para></item>
+        <item><para>performance optimalisation of buffering; expected
+speed-up is 90%</para></item>
+        <item><para>code cleanups</para></item>
+        <item><para>when adding a timestamp, a subwindownumber or a
+label before each line, colorschemes would get garbled</para></item>
+        <item><para>when selecting a subwindow, the subwindow number
+is displayed in front of each subwindow-name as well</para></item>
+        <item><para>adding subwindow-id before each line can now be
+toggled at runtime (only for new lines)</para></item>
+        <item><para>conversion schemes can now be selected at runtime
+(^v) (only for new lines)</para></item>
+        <item><para>default conversion scheme for a file can now be
+selected</para></item>
+      </change>
+
+      <change from="4.3.3" to="4.3.4">
+        <item><para>terminal emulation can now also be selected via
+the menus</para></item>
+        <item><para>order of colorschemes and script:-lines in the
+configfile no longer matters</para></item>
+        <item><para>added page-up/down for colorscheme
+selection</para></item>
+        <item><para>cleaned up and optimised (for speed - loading
+67000 colorschemes is now 200x faster) the
+configfileparser</para></item>
+        <item><para>'fixed' (it was not really a bug) a deadlock for
+colorschemes and conversionschemes where no substring select was done
+by the regexp</para></item>
+        <item><para>added colorscheme for mpstat (part of
+sysstat)</para></item>
+        <item><para>colorschemes can now be determined by an external
+script</para></item>
+        <item><para>added beep-functionality: multitail can now beep
+every line it processes (or every x-th line)</para></item>
+        <item><para>added colorscheme for 'p0f'</para></item>
+      </change>
+
+      <change from="4.3.2" to="4.3.3">
+        <item><para>can convert a value to KB/MB/GB</para></item>
+        <item><para>multiple occurences for a convert can now be in a
+line</para></item>
+        <item><para>convert (-cv) can now also use an external
+script/program for the conversions!</para></item>
+        <item><para>accidently still had -pg (profiling support) in
+the Makefile switched on</para></item>
+        <item><para>cursor keys did not work anymore</para></item>
+      </change>
+
+      <change from="4.3.1" to="4.3.2">
+        <item><para>^l now also redraws the terminal</para></item>
+        <item><para>updated man-page</para></item>
+        <item><para>updated help (-h) output</para></item>
+        <item><para>the abort/exit key can now be configured in the
+configfile</para></item>
+        <item><para>tabs would garble the display</para></item>
+        <item><para>optimized code</para></item>
+        <item><para>attributes for reverse can now be configured in
+the configfile (used for, e.g. -eC)</para></item>
+        <item><para>on GNU LIBC systems, a backtrace is now shown in
+error situations</para></item>
+        <item><para>compilation fixes voor freebsd 4.x</para></item>
+        <item><para>-eC/-ec did not work</para></item>
+        <item><para>cnv_ts_format would overrule the the settings for
+ts_format, that is now fixed</para></item>
+      </change>
+
+      <change from="4.3.0" to="4.3.1">
+        <item><para>a label can be set which will be put in front of
+each line using '--label "text"'</para></item>
+        <item><para>splitline can be removed and attributes can be
+configured (in the configfile)</para></item>
+        <item><para>fix to get it to compile (and run) on MacOS X
+again</para></item>
+      </change>
+
+      <change from="4.2.1" to="4.3.0">
+        <item><para>one can now define a set of edit-rules in the
+configfile</para></item>
+      </change>
+
+      <change from="4.2.0" to="4.2.1">
+        <item><para>on AIX, the program would exit because of an
+realloc of 0 bytes</para></item>
+        <item><para>typo fix in stripstring.c</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 31" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
