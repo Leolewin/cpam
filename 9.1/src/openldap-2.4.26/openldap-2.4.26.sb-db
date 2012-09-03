@@ -1,0 +1,2706 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="openldap" version="2.4.26" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}24</install-name>
+
+    <sources>
+      <source checksum="f36f3086031dd56ae94f722ffae8df5e"
+        checksum-type="md5" size="5250064"
+        path="src/openldap-2.4.26.tgz"/>
+      <patch checksum="f062c9fe9bdcc815b36b5d3d56d7723a"
+        checksum-type="md5" size="1943"
+        path="src/openldap-2.4.26.CVE-2012-1164.patch"/>
+      <patch checksum="fbce23f3e4aaca11b70c67b07869e889"
+        checksum-type="md5" size="724"
+        path="src/openldap-2.4.26.upstream-isoc-cleanup.patch"/>
+      <patch checksum="5909e5c49285a9cc79a47dee744d0038"
+        checksum-type="md5" size="618"
+        path="src/openldap-2.4.26.bug6992.patch"/>
+      <patch checksum="1c825a419b828e31b04912d8c5d463f6"
+        checksum-type="md5" size="4984"
+        path="src/openldap-2.4.26.ntlm.patch"/>
+      <patch checksum="c59f85d9e8cd265ab30048f484463ca1"
+        checksum-type="md5" size="55302"
+        path="src/openldap-2.4.26.avl.patch"/>
+      <patch checksum="db2a59c55d303efdbf67d9e153294ebe"
+        checksum-type="md5" size="45971"
+        path="src/openldap-2.4.26.tww.patch"/>
+      <patch checksum="b9d4e784f507ca3b3da7dc937271d929"
+        checksum-type="md5" size="144597"
+        path="src/openldap-2.4.26.ltdl.patch"/>
+      <patch checksum="64d3d5e9fb7fa8d38c0ec7aaef8111b0"
+        checksum-type="md5" size="578272"
+        path="src/openldap-2.4.26.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit +We901"
+  CC_LD_RT="-Wl,+b,"
+
+  # disable -mthreads
+  export ol_cv_pthread_mthreads=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-z +O2 +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # warning from <arpa/nameser.h> forces autoconf to ignore
+  # the header file so bypass autoconf and force available
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-ipv6=no"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -nodtk -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" 
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="groff" install-name="groff121"
+          add-path="prepend" type="build">v&gt;=1.21</depend>
+        <depend program="db" var="LIBDB"
+          install-name="libdb47">v&gt;=4.7.25</depend>
+        <depend program="tcp_wrappers" var="TCPWRAP">v==7.6</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21">v&gt;=2.1.25</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="openldap" module="gnutls">v==2.4.26</depend>
+        <depend program="openldap"
+          module="python-ldap-2.6.7">v==2.4.26</depend>
+        <depend program="openldap"
+          module="python-ldap-2.7.2">v==2.4.26</depend>
+        <depend program="openldap" module="64bit"
+          systype="*-aix*|*-irix*|*-solaris*">v==2.4.26</depend>
+        <depend program="openldap" module="64bit-gnutls"
+          systype="*-aix*|*-irix*|*-solaris*">v==2.4.26</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit +We901"
+  CC_LD_RT="-Wl,+b,"
+
+  # disable -mthreads
+  export ol_cv_pthread_mthreads=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-z +O2 +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # warning from <arpa/nameser.h> forces autoconf to ignore
+  # the header file so bypass autoconf and force available
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-ipv6=no"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -nodtk -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" 
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CPP="${CPP+${CPP}}" \
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+${SB_VAR_LIBSASL+-I${SB_VAR_LIBSASL_INC} }\
+${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC} }\
+${SB_VAR_LIBDB+-I${SB_VAR_LIBDB_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+${SB_VAR_LIBSASL+-L${SB_VAR_LIBSASL_LIB} }\
+${SB_VAR_LIBOPENSSL+-L${SB_VAR_LIBOPENSSL_LIB} }\
+${SB_VAR_LIBDB+-L${SB_VAR_LIBDB_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/lib\
+${SB_VAR_LIBSASL+:${SB_VAR_LIBSASL_LIB}}\
+${SB_VAR_LIBOPENSSL_LIB+:${SB_VAR_LIBOPENSSL_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_TCPWRAP+--enable-wrappers=yes} \
+${SB_VAR_LIBSASL+--with-cyrus-sasl} \
+${SB_VAR_LIBSASL+--enable-spasswd} \
+${SB_VAR_LIBOPENSSL+--with-tls=openssl} \
+--enable-syslog --enable-passwd --enable-static \
+--enable-shared --with-subdir=no --enable-overlays=mod \
+--enable-crypt --disable-dependency-tracking \
+$(test "${_localstatedir+set}" != set && echo --disable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-bdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-dnssrv=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-hdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-ldap=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-meta=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-monitor=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-null=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-passwd=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-relay=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-modules) \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --sysconfdir=${_sysconfdir} \
+--datadir=${_datadir} ${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x build/install-sh
+
+case "${SB_SYSTYPE}" in
+*-irix*) 
+  ${SB_PATH_SED} -i "/URANDOM_DEVICE/d" config.status
+  ./config.status ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake SOELIM=gsoelim && {
+  if [ "${_localstatedir+set}" = set ]; then
+    # build smbk5pwd module
+    gmake -C contrib/slapd-modules/smbk5pwd
+  fi
+}
+]]>
+      </build>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="grep" install-name="grep25"
+            add-path="prepend">v&gt;=2.5.3</depend>
+        </dependencies>
+<![CDATA[
+# grep on AIX cannot handle lines >2K
+${SB_PATH_SED} -i -e "\
+s!^egrep!gegrep!" ${SB_BUILD_PREFIX}/tests/scripts/acfilter.sh
+
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install SOELIM=gsoelim
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/devel \
+${_docdir}/drafts ${_docdir}/rfc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/devel/* ${_docdir}/devel
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/drafts/* ${_docdir}/drafts
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/rfc/* ${_docdir}/rfc
+
+if [ "${_localstatedir+set}" = set ]; then
+  # install smbk5pwd module
+  gmake -C contrib/slapd-modules/smbk5pwd install
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_localstatedir}/run
+fi
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_sysconfdir} ${_localstatedir+${_localstatedir}} \
+${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="groff" install-name="groff121"
+          add-path="prepend" type="build">v&gt;=1.21</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21" module="64bit">v&gt;=2.1.25</depend>
+        <depend program="openssl" var="LIBOPENSSL"
+          install-name="libopenssl10"
+          module="64bit">v&gt;=1.0.0e</depend>
+        <depend program="db" var="LIBDB" install-name="libdb47"
+          module="64bit">v&gt;=4.7.25</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _bindir=bin/ppc64
+  _libdir=lib/ppc64
+  _libexecdir=libexec/ppc64
+  _sbindir=sbin/ppc64 ;;
+ia64*-hpux*)
+  _bindir=bin/hpux64
+  _libdir=lib/hpux64
+  _libexecdir=libexec/hpux64
+  _sbindir=sbin/hpux64 ;;
+*-hpux*)
+  _bindir=bin/pa20_64
+  _libdir=lib/pa20_64
+  _libexecdir=libexec/pa20_64
+  _sbindir=sbin/pa20_64 ;;
+*-irix*)
+  _bindir=bin/mips4
+  _libdir=lib64
+  _libexecdir=libexec/mips4
+  _sbindir=sbin/mips4 ;;
+i?86*-solaris*)
+  _bindir=bin/amd64
+  _libdir=lib/amd64
+  _libexecdir=libexec/amd64
+  _sbindir=sbin/amd64 ;;
+*-solaris*)
+  _bindir=bin/sparcv9
+  _libdir=lib/sparcv9
+  _libexecdir=libexec/sparcv9
+  _sbindir=sbin/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1 -qarch=ppc64"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="lt_cv_dlopen_self_static=yes" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit +We901"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac
+
+  ARGS="${ARGS} --enable-ipv6=no"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no
+
+  # warning from <arpa/nameser.h> on HP-UX 11.00 forces autoconf to
+  # ignore the header file so bypass autoconf and force available
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CPP="${CPP+${CPP}}" \
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBSASL+-I${SB_VAR_LIBSASL_INC} }\
+${SB_VAR_LIBOPENSSL+-I${SB_VAR_LIBOPENSSL_INC} }\
+${SB_VAR_LIBDB+-I${SB_VAR_LIBDB_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBSASL+-L${SB_VAR_LIBSASL}/${_libdir} }\
+${SB_VAR_LIBOPENSSL+-L${SB_VAR_LIBOPENSSL}/${_libdir} }\
+${SB_VAR_LIBDB+-L${SB_VAR_LIBDB}/${_libdir}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}${_libdir}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB}/${_libdir}}\
+${SB_VAR_LIBSASL+:${SB_VAR_LIBSASL}/${_libdir}}\
+${SB_VAR_LIBOPENSSL+:${SB_VAR_LIBOPENSSL}/${_libdir}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_TCPWRAP+--enable-wrappers=yes} \
+${SB_VAR_LIBSASL+--with-cyrus-sasl} \
+${SB_VAR_LIBSASL+--enable-spasswd} \
+${SB_VAR_LIBOPENSSL+--with-tls=openssl} \
+--enable-syslog --enable-passwd --enable-static \
+--enable-shared --with-subdir=no --enable-overlays=mod \
+--enable-crypt --disable-dependency-tracking \
+$(test "${_localstatedir+set}" != set && echo --disable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-bdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-dnssrv=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-hdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-ldap=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-meta=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-monitor=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-null=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-passwd=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-relay=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-modules) \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --sysconfdir=${_sysconfdir} \
+--datadir=${_datadir} --bindir="${SB_INSTALL_PREFIX}/${_bindir}" \
+--libexecdir="${SB_INSTALL_PREFIX}/${_libexecdir}" \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--sbindir="${SB_INSTALL_PREFIX}/${_sbindir}" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x build/install-sh
+
+case "${SB_SYSTYPE}" in
+*-irix*) 
+  ${SB_PATH_SED} -i /URANDOM_DEVICE/d config.status
+  ./config.status
+  ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake SOELIM=gsoelim
+]]>
+      </build>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="grep" install-name="grep25"
+            add-path="prepend">v&gt;=2.5.3</depend>
+        </dependencies>
+<![CDATA[
+# grep on AIX cannot handle lines >2K
+${SB_PATH_SED} -i -e "\
+s!^egrep!gegrep!" ${SB_BUILD_PREFIX}/tests/scripts/acfilter.sh
+
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C libraries install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="python-ldap-2.6.7">
+      <build-name>python-ldap-2.4.3</build-name>
+
+      <sources>
+        <source checksum="772cba8e066cd1404ffb90d16efd5dde"
+          checksum-type="md5" size="125989"
+          path="src/python-ldap-2.4.3.tar.gz"/>
+        <patch checksum="51621fa30b155059ba6ae66a86c30679"
+          checksum-type="md5" size="1329"
+          path="src/python-ldap-2.4.3.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21">v&gt;=2.1.25</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+        <depend program="openldap" var="OPENLDAP">v==2.4.26</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@OPENLDAP_LIB@!${SB_VAR_OPENLDAP_LIB}!; \
+s!@OPENLDAP_INC@!${SB_VAR_OPENLDAP_INC} \
+${SB_VAR_LIBSASL_INC}/sasl!;" setup.cfg
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit-gnutls"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="groff" install-name="groff121"
+          add-path="prepend" type="build">v&gt;=1.21</depend>
+        <depend program="db" var="LIBDB" install-name="libdb47"
+          module="64bit">v&gt;=4.7.25</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21" module="64bit">v&gt;=2.1.25</depend>
+        <depend program="gnutls" var="LIBGNUTLS"
+          install-name="libgnutls210"
+          module="64bit">v&gt;=2.10.5</depend>
+        <depend program="libgcrypt" var="LIBGCRYPT"
+          install-name="libgcrypt14"
+          module="64bit">v&gt;=1.4.6</depend>
+        <depend program="libgpg-error" var="LIBGPGERROR"
+          install-name="libgpgerror110"
+          module="64bit">v&gt;=1.10</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _bindir=bin/ppc64
+  _libdir=lib/ppc64
+  _libexecdir=libexec/ppc64
+  _sbindir=sbin/ppc64 ;;
+ia64*-hpux*)
+  _bindir=bin/hpux64
+  _libdir=lib/hpux64
+  _libexecdir=libexec/hpux64
+  _sbindir=sbin/hpux64 ;;
+*-hpux*)
+  _bindir=bin/pa20_64
+  _libdir=lib/pa20_64
+  _libexecdir=libexec/pa20_64
+  _sbindir=sbin/pa20_64 ;;
+*-irix*)
+  _bindir=bin/mips4
+  _libdir=lib64
+  _libexecdir=libexec/mips4
+  _sbindir=sbin/mips4 ;;
+i?86*-solaris*)
+  _bindir=bin/amd64
+  _libdir=lib/amd64
+  _libexecdir=libexec/amd64
+  _sbindir=sbin/amd64 ;;
+*-solaris*)
+  _bindir=bin/sparcv9
+  _libdir=lib/sparcv9
+  _libexecdir=libexec/sparcv9
+  _sbindir=sbin/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1 -qarch=ppc64"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="lt_cv_dlopen_self_static=yes" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit +We901"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac
+
+  ARGS="${ARGS} --enable-ipv6=no"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no
+
+  # warning from <arpa/nameser.h> on HP-UX 11.00 forces autoconf to
+  # ignore the header file so bypass autoconf and force available
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CPP="${CPP+${CPP}}" \
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBSASL+-I${SB_VAR_LIBSASL_INC} }\
+${SB_VAR_LIBGNUTLS+-I${SB_VAR_LIBGNUTLS_INC} }\
+${SB_VAR_LIBGCRYPT+-I${SB_VAR_LIBGCRYPT_INC} }\
+${SB_VAR_LIBGPGERROR+-I${SB_VAR_LIBGPGERROR_INC} }\
+${SB_VAR_LIBDB+-I${SB_VAR_LIBDB_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBSASL+-L${SB_VAR_LIBSASL}/${_libdir} }\
+${SB_VAR_LIBGNUTLS+-L${SB_VAR_LIBGNUTLS}/${_libdir} }\
+${SB_VAR_LIBGCRYPT+-L${SB_VAR_LIBGCRYPT}/${_libdir} }\
+${SB_VAR_LIBDB+-L${SB_VAR_LIBDB}/${_libdir}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/${_libdir}\
+${SB_VAR_LIBSASL+:${SB_VAR_LIBSASL}/${_libdir}}\
+${SB_VAR_LIBNGUTLS+:${SB_VAR_LIBGNUTLS}/${_libdir}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB}/${_libdir}} ${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_TCPWRAP+--enable-wrappers=yes} \
+${SB_VAR_LIBSASL+--with-cyrus-sasl} \
+${SB_VAR_LIBSASL+--enable-spasswd} \
+${SB_VAR_LIBGNUTLS+--with-tls=gnutls} \
+--enable-syslog --enable-passwd --enable-static \
+--enable-shared --with-subdir=no --enable-overlays=mod \
+--enable-crypt --disable-dependency-tracking \
+$(test "${_localstatedir+set}" != set && echo --disable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-bdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-dnssrv=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-hdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-ldap=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-meta=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-monitor=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-null=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-passwd=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-relay=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-modules) \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --sysconfdir=${_sysconfdir} \
+--datadir=${_datadir} --bindir="${SB_INSTALL_PREFIX}/${_bindir}/gnutls" \
+--libexecdir="${SB_INSTALL_PREFIX}/${_libexecdir}/gnutls" \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}/gnutls" \
+--sbindir="${SB_INSTALL_PREFIX}/${_sbindir}/gnutls" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x build/install-sh
+
+case "${SB_SYSTYPE}" in
+*-irix*) 
+  ${SB_PATH_SED} -i /URANDOM_DEVICE/d config.status
+  ./config.status
+  ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake SOELIM=gsoelim
+]]>
+      </build>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="grep" install-name="grep25"
+            add-path="prepend">v&gt;=2.5.3</depend>
+        </dependencies>
+<![CDATA[
+# grep on AIX cannot handle lines >2K
+${SB_PATH_SED} -i -e "\
+s!^egrep!gegrep!" ${SB_BUILD_PREFIX}/tests/scripts/acfilter.sh
+
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C libraries install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/${_libdir}/gnutls
+]]>
+      </uninstall>
+    </module>
+
+    <module name="python-ldap-2.7.2">
+      <build-name>python-ldap-2.4.3</build-name>
+
+      <sources>
+        <source checksum="772cba8e066cd1404ffb90d16efd5dde"
+          checksum-type="md5" size="125989"
+          path="src/python-ldap-2.4.3.tar.gz"/>
+        <patch checksum="51621fa30b155059ba6ae66a86c30679"
+          checksum-type="md5" size="1329"
+          path="src/python-ldap-2.4.3.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21">v&gt;=2.1.25</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+        <depend program="openldap" var="OPENLDAP">v==2.4.26</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@OPENLDAP_LIB@!${SB_VAR_OPENLDAP_LIB}!; \
+s!@OPENLDAP_INC@!${SB_VAR_OPENLDAP_INC} \
+${SB_VAR_LIBSASL_INC}/sasl!;" setup.cfg
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gnutls">
+      <dependencies>
+        <depend program="groff" install-name="groff121"
+          add-path="prepend" type="build">v&gt;=1.21</depend>
+        <depend program="tcp_wrappers" var="TCPWRAP">v==7.6</depend>
+        <depend program="db" var="LIBDB"
+          install-name="libdb47">v&gt;=4.7.25</depend>
+        <depend program="cyrus-sasl" var="LIBSASL"
+          install-name="libsasl21">v&gt;=2.1.25</depend>
+        <depend program="gnutls" var="LIBGNUTLS"
+          install-name="libgnutls210">v&gt;=2.10.5</depend>
+        <depend program="libgcrypt" var="LIBGCRYPT"
+          install-name="libgcrypt14">v&gt;=1.4.6</depend>
+        <depend program="libgpg-error" var="LIBGPGERROR"
+          install-name="libgpgerror110">v&gt;=1.10</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit +We901"
+  CC_LD_RT="-Wl,+b,"
+
+  # disable -mthreads
+  export ol_cv_pthread_mthreads=no ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-z +O2 +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # warning from <arpa/nameser.h> forces autoconf to ignore
+  # the header file so bypass autoconf and force available
+  export ac_cv_header_arpa_nameser_h=yes ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +ESlit +Ofltacc +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-ipv6=no"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  # getaddrinfo broken
+  export ac_cv_func_getaddrinfo=no ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -nodtk -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" 
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CPP="${CPP+${CPP}}" \
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_TCPWRAP+-I${SB_VAR_TCPWRAP_INC}} \
+${SB_VAR_LIBSASL+-I${SB_VAR_LIBSASL_INC} }\
+${SB_VAR_LIBGNUTLS+-I${SB_VAR_LIBGNUTLS_INC} }\
+${SB_VAR_LIBGCRYPT+-I${SB_VAR_LIBGCRYPT_INC} }\
+${SB_VAR_LIBGPGERROR+-I${SB_VAR_LIBGPGERROR_INC} }\
+${SB_VAR_LIBDB+-I${SB_VAR_LIBDB_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_TCPWRAP+-L${SB_VAR_TCPWRAP_LIB}} \
+${SB_VAR_LIBSASL+-L${SB_VAR_LIBSASL_LIB} }\
+${SB_VAR_LIBGNUTLS+-L${SB_VAR_LIBGNUTLS_LIB} }\
+${SB_VAR_LIBGCRYPT+-L${SB_VAR_LIBGCRYPT_LIB} }\
+${SB_VAR_LIBGPGERROR+-L${SB_VAR_LIBGPGERROR_LIB} }\
+${SB_VAR_LIBDB+-L${SB_VAR_LIBDB_LIB}} \
+${CC_LD_RT}${SB_INSTALL_PREFIX}/lib/gnutls\
+${SB_VAR_LIBSASL+:${SB_VAR_LIBSASL_LIB}}\
+${SB_VAR_LIBGNUTLS+:${SB_VAR_LIBGNUTLS_LIB}}\
+${SB_VAR_LIBGCRYPT+:${SB_VAR_LIBGCRYPT_LIB}}\
+${SB_VAR_LIBGPGERROR+:${SB_VAR_LIBGPGERROR_LIB}}\
+${SB_VAR_LIBDB+:${SB_VAR_LIBDB_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_TCPWRAP+--enable-wrappers=yes} \
+${SB_VAR_LIBSASL+--with-cyrus-sasl} \
+${SB_VAR_LIBSASL+--enable-spasswd} \
+${SB_VAR_LIBGNUTLS+--with-tls=gnutls} \
+--enable-syslog --enable-passwd --enable-static \
+--enable-shared --with-subdir=no --enable-overlays=mod \
+--enable-crypt --disable-dependency-tracking \
+$(test "${_localstatedir+set}" != set && echo --disable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-slapd) \
+$(test "${_localstatedir+set}" = set && echo --enable-bdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-dnssrv=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-hdb=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-ldap=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-meta=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-monitor=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-null=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-passwd=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-relay=mod) \
+$(test "${_localstatedir+set}" = set && echo --enable-modules) \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --sysconfdir=${_sysconfdir} \
+--datadir=${_datadir} --bindir="${SB_INSTALL_PREFIX}/bin/gnutls" \
+--libexecdir="${SB_INSTALL_PREFIX}/libexec/gnutls" \
+--libdir="${SB_INSTALL_PREFIX}/lib/gnutls" \
+--sbindir="${SB_INSTALL_PREFIX}/sbin/gnutls" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_CHMOD} +x build/install-sh
+
+case "${SB_SYSTYPE}" in
+*-irix*) 
+  ${SB_PATH_SED} -i /URANDOM_DEVICE/d config.status
+  ./config.status
+  ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake SOELIM=gsoelim
+]]>
+      </build>
+
+      <test auto-include="0">
+        <dependencies>
+          <depend program="grep" install-name="grep25"
+            add-path="prepend">v&gt;=2.5.3</depend>
+        </dependencies>
+<![CDATA[
+chmod +x tests/scripts/test053-ldaps
+
+# grep on AIX cannot handle lines >2K
+${SB_PATH_SED} -i -e "\
+s!^egrep!gegrep!" ${SB_BUILD_PREFIX}/tests/scripts/acfilter.sh
+
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake -C libraries install
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/gnutls
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.4.25" to="2.4.26">
+        <item><para>Added libldap LDAP_OPT_X_TLS_PACKAGE
+(ITS#6969)</para></item>
+        <item><para>Fixed libldap MozNSS with CACertDir
+(ITS#6975)</para></item>
+        <item><para>Fixed libldap MozNSS with PR_SetEnv
+(ITS#6862)</para></item>
+        <item><para>Fixed libldap descriptor leak
+(ITS#6929)</para></item>
+        <item><para>Fixed libldap socket leak (ITS#6930)</para></item>
+        <item><para>Fixed libldap get option crash
+(ITS#6931)</para></item>
+        <item><para>Fixed libldap lockup (ITS#6898)</para></item>
+        <item><para>Fixed libldap ASYNC TLS setup
+(ITS#6828)</para></item>
+        <item><para>Fixed libldap with missing \n terminations
+(ITS#6947)</para></item>
+        <item><para>Fixed tools double free (ITS#6946)</para></item>
+        <item><para>Fixed tools verbose output
+(ITS#6977)</para></item>
+        <item><para>Fixed ldapmodify SEGV on invalid LDIF
+(ITS#6978)</para></item>
+        <item><para>Added slapd extra_attrs database option
+(ITS#6513)</para></item>
+        <item><para>Fixed slapd asserts (ITS#6932)</para></item>
+        <item><para>Fixed slapd configfile param on windows
+(ITS#6933)</para></item>
+        <item><para>Fixed slapd config with global chaining
+(ITS#6843)</para></item>
+        <item><para>Fixed slapd uninitialized variables
+(ITS#6935)</para></item>
+        <item><para>Fixed slapd config objectclass is readonly
+(ITS#6963)</para></item>
+        <item><para>Fixed slapd entry response with control
+(ITS#6899)</para></item>
+        <item><para>Fixed slapd with unknown attrs
+(ITS#6819)</para></item>
+        <item><para>Fixed slapd normalization of schema RDN
+(ITS#6967)</para></item>
+        <item><para>Fixed slapd operations cache to 10 op limit
+(ITS#6944)</para></item>
+        <item><para>Fixed slapd syncrepl crash with non-replicated ops
+(ITS#6892)</para></item>
+        <item><para>Fixed slapd-bdb/hdb with sparse index ranges
+(ITS#6961)</para></item>
+        <item><para>Fixed slapd-monitor stray code cleanup
+(ITS#6974)</para></item>
+        <item><para>Fixed back-ldap ppolicy updates
+(ITS#6711)</para></item>
+        <item><para>Fixed back-ldap with id-assert
+(ITS#6817)</para></item>
+        <item><para>Fixed slapd-meta reentry issues
+(ITS#6909)</para></item>
+        <item><para>Fixed slapd-sql length of data type
+(ITS#6657,ITS#6691)</para></item>
+        <item><para>Added slapo-accesslog filter matching
+(ITS#6815)</para></item>
+        <item><para>Fixed slapo-accesslog with invalid attrs
+(ITS#6819)</para></item>
+        <item><para>Added slapo-auditlog connID and peername logging
+(ITS#6936)</para></item>
+        <item><para>Fixed slapo-memberof with accesslog
+(ITS#6329,ITS#6766,ITS#6915)</para></item>
+        <item><para>Fixed slapo-pcache with unknown attrs
+(ITS#6823)</para></item>
+        <item><para>Fixed slapo-pcache with '1.1', '+', and '*' attrs
+(ITS#6950)</para></item>
+        <item><para>Fixed slapo-pcache buffersize issues
+(ITS#6951)</para></item>
+        <item><para>Fixed slapo-pcache refresh
+(ITS#6953)</para></item>
+        <item><para>Fixed slapo-pcache with pCacheBind
+(ITS#6954)</para></item>
+        <item><para>Fixed slapo-pcache database corruption
+(ITS#6831)</para></item>
+        <item><para>Fixed slapo-rwm with attributes with no equality
+rule (ITS#6943)</para></item>
+        <item><para>Fixed slapo-sssvlv limits check when global
+(ITS#6973)</para></item>
+        <item><para>Fixed slapo-syncprov with replicated subtrees
+(ITS#6872)</para></item>
+        <item><para>Fixed slapo-unique with managedsait
+(ITS#6641)</para></item>
+        <item><para>Fixed slapo-unique filter with zero-length values
+(ITS#6901)</para></item>
+        <item><para>Added contrib/acl GSS naming extensions ACL
+module</para></item>
+        <item><para>Fixed contrib/smbk5pwd with shadowLastChange
+(ITS#6955)</para></item>
+        <items name="Build Environment">
+          <item><para>Fixed builds that do not have GETTIMEOFDAY
+(ITS#6885)</para></item>
+          <item><para>Fixed libldap libfetch dependancy
+(ITS#6889)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>ldap_get_dn(3) add man page
+(ITS#6959)</para></item>
+          <item><para>slapo-nssov(5) Fixed typo
+(ITS#6934)</para></item>
+          <item><para>slapd-backends(5) update recommended database
+backend (ITS#6904)</para></item>
+          <item><para>slapd-bdb(5) update recommended database backend
+(ITS#6904)</para></item>
+          <item><para>slapd-hdb(5) update recommended database backend
+(ITS#6904)</para></item>
+          <item><para>admin24 update that cn=config is preferred
+(ITS#6905)</para></item>
+          <item><para>admin24 update information about indexes
+(ITS#6906)</para></item>
+          <item><para>admin24 fix --enable-wrappers option
+(ITS#6971)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.24" to="2.4.25">
+        <item><para>Fixed ldapsearch pagedresults loop
+(ITS#6755)</para></item>
+        <item><para>Fixed tools for incompatible args
+(ITS#6849)</para></item>
+        <item><para>Fixed libldap MozNSS crash
+(ITS#6863)</para></item>
+        <item><para>Fixed slapd add objectclasses in order
+(ITS#6837)</para></item>
+        <item><para>Added slapd ordering for uidNumber and gidNumber
+(ITS#6852)</para></item>
+        <item><para>Fixed slapd segfault when adding values out of
+order (ITS#6858)</para></item>
+        <item><para>Fixed slapd sortval handling
+(ITS#6845)</para></item>
+        <item><para>Fixed slapd-bdb with slapadd/index quick option
+(ITS#6853)</para></item>
+        <item><para>Fixed slapd-ldap chain cn=config support
+(ITS#6837)</para></item>
+        <item><para>Fixed slapd-ldap chain with slapd.conf
+(ITS#6857)</para></item>
+        <item><para>Fixed slapd-meta deadlock (ITS#6846)</para></item>
+        <item><para>Fixed slapo-sssvlv with multiple requests
+(ITS#6850)</para></item>
+        <item><para>Fixed contrib/lastbind install rules
+(ITS#6238)</para></item>
+        <item><para>Fixed contrib/cloak install rules
+(ITS#6877)</para></item>
+        <items name="Build Environment">
+          <item><para>Fixed windows NT threads build
+(ITS#6859)</para></item>
+          <item><para>Fixed libldap/lberl/util if/else usage
+(ITS#6832)</para></item>
+          <item><para>Fixed Windows odbc32 detection
+(ITS#6125)</para></item>
+          <item><para>Fixed Windows msys build
+(ITS#6870)</para></item>
+          <item><para>Fixed test020 exit codes
+(ITS#6404)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 guide ldapi usage
+(ITS#6839)</para></item>
+          <item><para>admin24 guide conversion notes
+(ITS#6834)</para></item>
+          <item><para>admin24 guide fix drawback math for syncrepl
+(ITS#6866)</para></item>
+          <item><para>admin24 guide note manpages are definitive
+(ITS#6855)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.23" to="2.4.24">
+        <item><para>Added LDIF line wrapping setting
+(ITS#6645)</para></item>
+        <item><para>Added MozNSS support
+(ITS#6714,ITS#6742,ITS#6790,ITS#6791)</para></item>
+        <item><para>Added MozNSS support
+(ITS#6802,ITS#6811,ITS#6816,ITS#5696)</para></item>
+        <item><para>Added libldap cert x500UniqueIdentifier handling
+(ITS#6741)</para></item>
+        <item><para>Added libldap_r,libldap formal concurrency API
+(ITS#6625,ITS#5421)</para></item>
+        <item><para>Added slapadd attribute value checking
+(ITS#6592)</para></item>
+        <item><para>Added slapcat continue mode for problematic DBs
+(ITS#6482)</para></item>
+        <item><para>Added slapd syncrepl suffixmassage support
+(ITS#6781)</para></item>
+        <item><para>Added slapd multiple listener threads
+(ITS#6780)</para></item>
+        <item><para>Added slapd extensible match for ordering rules
+(ITS#6532)</para></item>
+        <item><para>Added slapd-meta paged results control forwarding
+(ITS#6664)</para></item>
+        <item><para>Added slapd-meta subtree-include support
+(ITS#6801)</para></item>
+        <item><para>Added slapd-null back-config support
+(ITS#6624)</para></item>
+        <item><para>Added slapd-sql autocommit support
+(ITS#6612)</para></item>
+        <item><para>Added slapd-sql support for long long keys
+(ITS#6617)</para></item>
+        <item><para>Added slapo-sssvlv multiple sorts per connection
+(ITS#6686)</para></item>
+        <item><para>Added contrib/autogroup LDAP URI with attribute
+filter (ITS#6536)</para></item>
+        <item><para>Added contrib/dupent module
+(ITS#6630)</para></item>
+        <item><para>Added contrib/lastbind (ITS#6238)</para></item>
+        <item><para>Added contrib/kinit for kerberos
+tickets</para></item>
+        <item><para>Added contrib/noopsrch for entry counting
+(ITS#6598)</para></item>
+        <item><para>Fixed client tools control logging
+(ITS#6775)</para></item>
+        <item><para>Fixed client tools one time leak
+(ITS#6778)</para></item>
+        <item><para>Fixed liblber to not close invalid sockets
+(ITS#6585)</para></item>
+        <item><para>Fixed liblber unmatched brace handling
+(ITS#6764)</para></item>
+        <item><para>Fixed liblber error setting
+(ITS#6732)</para></item>
+        <item><para>Fixed liblber memory debugging
+(ITS#6733)</para></item>
+        <item><para>Fixed libldap connectionless warnings
+(ITS#6747)</para></item>
+        <item><para>Fixed libldap dnssrv port format specifier
+(ITS#6644)</para></item>
+        <item><para>Fixed libldap EOF handling
+(ITS#6723)</para></item>
+        <item><para>Fixed libldap GnuTLS hang on socket close
+(ITS#6673)</para></item>
+        <item><para>Fixed libldap sasl partial write handling
+(ITS#6639)</para></item>
+        <item><para>Fixed libldap search leak (ITS#6453)</para></item>
+        <item><para>Fixed libldap referral chasing
+(ITS#6602)</para></item>
+        <item><para>Fixed libldap leak when chasing referrals
+(ITS#6744)</para></item>
+        <item><para>Fixed libldap url parsing with NULL host
+(ITS#6653)</para></item>
+        <item><para>Fixed libldap ldap_open_internal_connection
+(ITS#6788)</para></item>
+        <item><para>Fixed libldap sync checking for BER errors
+(ITS#6738)</para></item>
+        <item><para>Fixed libldap variable usage
+(ITS#6813)</para></item>
+        <item><para>Fixed liblutil getpass prompts
+(ITS#6702)</para></item>
+        <item><para>Fixed ldapsearch segfault with deref
+(ITS#6638)</para></item>
+        <item><para>Fixed ldapsearch multiple controls parsing
+(ITS#6651)</para></item>
+        <item><para>Fixed slapd SlapReply usage
+(ITS#6758)</para></item>
+        <item><para>Fixed slapd acl parsing overflow
+(ITS#6611)</para></item>
+        <item><para>Fixed slapd acl when resuming parsing
+(ITS#6804)</para></item>
+        <item><para>Fixed slapd Compare operation
+(ITS#6753)</para></item>
+        <item><para>Fixed slapd default config acls with overlays
+(ITS#6822)</para></item>
+        <item><para>Fixed slapd assert control
+(ITS#5862)</para></item>
+        <item><para>Fixed slapd assertions and debugging
+(ITS#6759)</para></item>
+        <item><para>Fixed slapd config leak with olcDbDirectory
+(ITS#6634)</para></item>
+        <item><para>Fixed slapd connectionless warnings
+(ITS#6747)</para></item>
+        <item><para>Fixed slapd listeners destruction
+(ITS#6736)</para></item>
+        <item><para>Fixed slapd to free controls if needed
+(ITS#6629)</para></item>
+        <item><para>Fixed slapd to stop if given unknown options
+(ITS#6754)</para></item>
+        <item><para>Fixed slapd filter leak (ITS#6635)</para></item>
+        <item><para>Fixed slapd matching rules for strict ordering
+(ITS#6722)</para></item>
+        <item><para>Fixed slapd when first acl is value dependent
+(ITS#6693)</para></item>
+        <item><para>Fixed slapd modify to return actual error
+(ITS#6581)</para></item>
+        <item><para>Fixed slapd modrdn with empty DN
+(ITS#6768)</para></item>
+        <item><para>Fixed slapd c_authz_backend setting
+(ITS#6824)</para></item>
+        <item><para>Fixed slapd sortvals of attributes with 1 value
+(ITS#6715)</para></item>
+        <item><para>Fixed slapd syncrepl reuse of presence list
+(ITS#6707)</para></item>
+        <item><para>Fixed slapd syncrepl uninitialized return code
+(ITS#6719)</para></item>
+        <item><para>Fixed slapd syncrepl variable initialization
+(ITS#6739)</para></item>
+        <item><para>Fixed slapd syncrepl refresh to use complete
+cookie (ITS#6807)</para></item>
+        <item><para>Fixed slapd-bdb hasSubordinates generation
+(ITS#6712)</para></item>
+        <item><para>Fixed slapd-bdb entry cache delete failure
+(ITS#6577)</para></item>
+        <item><para>Fixed slapd-bdb entry cache leak on multi-core
+systems (ITS#6660)</para></item>
+        <item><para>Fixed slapd-bdb error propagation to overlays
+(ITS#6633)</para></item>
+        <item><para>Fixed slapd-bdb slapadd -q with glued dbs
+(ITS#6794)</para></item>
+        <item><para>Fixed slapd-ldap debug output of timeout
+(ITS#6721)</para></item>
+        <item><para>Fixed slapd-ldap DNSSRV referral chaining
+(ITS#6565)</para></item>
+        <item><para>Fixed slapd-ldap chaining with bind failures
+(ITS#6607)</para></item>
+        <item><para>Fixed slapd-ldap chaining with onelevel scope
+(ITS#6699)</para></item>
+        <item><para>Fixed slapd-ldap chaining with ppolicy
+(ITS#6540)</para></item>
+        <item><para>Fixed slapd-ldap with SASL/EXTERNAL
+(ITS#6642)</para></item>
+        <item><para>Fixed slapd-ldap crasher on matchedDN
+(ITS#6793)</para></item>
+        <item><para>Fixed slapd-ldap with unknown objectClasses
+(ITS#6814)</para></item>
+        <item><para>Fixed slapd-ldif error strings
+(ITS#6731)</para></item>
+        <item><para>Fixed slapd-ndb to honor rootpw setting
+(ITS#6661)</para></item>
+        <item><para>Fixed slapd-ndb hasSubordinates generation
+(ITS#6712)</para></item>
+        <item><para>Fixed slapd-ndb variable initialization
+(ITS#6806)</para></item>
+        <item><para>Fixed slapd-ndb with out of order attributes
+(ITS#6821)</para></item>
+        <item><para>Fixed slapd-meta anon retry with failed auth
+method (ITS#6643)</para></item>
+        <item><para>Fixed slapd-meta rebind proc
+(ITS#6665)</para></item>
+        <item><para>Fixed slapd-meta to correctly rebind as user
+(ITS#6574)</para></item>
+        <item><para>Fixed slapd-meta with SASL/EXTERNAL
+(ITS#6642)</para></item>
+        <item><para>Fixed slapd-meta matchedDN return code
+(ITS#6774)</para></item>
+        <item><para>Fixed slapd-meta candidate selection
+(ITS#6799)</para></item>
+        <item><para>Fixed slapd-meta attribute normalization
+(ITS#6818)</para></item>
+        <item><para>Fixed slapd-monitor hasSubordinates generation
+(ITS#6712)</para></item>
+        <item><para>Fixed slapd-monitor abandon processing
+(ITS#6783)</para></item>
+        <item><para>Fixed slapd-monitor entry locks
+(ITS#6787)</para></item>
+        <item><para>Fixed slapd-sock missing newline in Compare
+operation (ITS#6809)</para></item>
+        <item><para>Fixed slapd-sql with null objectClass
+(ITS#6616)</para></item>
+        <item><para>Fixed slapd-sql hasSubordinates generation
+(ITS#6712)</para></item>
+        <item><para>Fixed slapo-accesslog with controls
+(ITS#6652)</para></item>
+        <item><para>Fixed slapo-dynlist Compare operation
+(ITS#6752)</para></item>
+        <item><para>Fixed slapo-dynlist entry handling
+(ITS#6752)</para></item>
+        <item><para>Fixed slapo-memberof CSN generation
+(ITS#6766)</para></item>
+        <item><para>Fixed slapo-memberof log messages
+(ITS#6748)</para></item>
+        <item><para>Fixed slapo-memberof with an empty groupOfNames
+(ITS#6670)</para></item>
+        <item><para>Fixed slapo-memberof with modrdn operations
+(ITS#6700)</para></item>
+        <item><para>Fixed slapo-pcache callback freeing
+(ITS#6640)</para></item>
+        <item><para>Fixed slapo-pcache to ignore undefined attrs
+(ITS#6600)</para></item>
+        <item><para>Fixed slapo-pcache pointer freeing
+(ITS#6797)</para></item>
+        <item><para>Fixed slapo-pcache with negative caching
+(ITS#6796)</para></item>
+        <item><para>Fixed slapo-pcache monitoring cleanup
+(ITS#6808)</para></item>
+        <item><para>Fixed slapo-ppolicy don't update opattrs on
+consumers (ITS#6608)</para></item>
+        <item><para>Fixed slapo-ppolicy to allow userPassword deletion
+(ITS#6620)</para></item>
+        <item><para>Fixed slapo-refint when last group member is
+deleted (ITS#6663)</para></item>
+        <item><para>Fixed slapo-refint with subtree rename
+(ITS#6730)</para></item>
+        <item><para>Fixed slapo-rwm double free
+(ITS#6720)</para></item>
+        <item><para>Fixed slapo-rwm crasher
+(ITS#6632,ITS#6727)</para></item>
+        <item><para>Fixed slapo-rwm entry handling
+(ITS#6760)</para></item>
+        <item><para>Fixed slapo-rwm response hang
+(ITS#6792)</para></item>
+        <item><para>Fixed slapo-sssvlv initialization
+(ITS#6649)</para></item>
+        <item><para>Fixed slapo-sssvlv to not advertise when unused
+(ITS#6647)</para></item>
+        <item><para>Fixed slapo-sssvlv result code
+(ITS#6685)</para></item>
+        <item><para>Fixed slapo-syncprov to send error if consumer is
+newer (ITS#6606)</para></item>
+        <item><para>Fixed slapo-syncprov filter race condition
+(ITS#6708)</para></item>
+        <item><para>Fixed slapo-syncprov active mod race
+(ITS#6709)</para></item>
+        <item><para>Fixed slapo-syncprov to refresh if context is
+dirty (ITS#6710)</para></item>
+        <item><para>Fixed slapo-syncprov CSN updates to all replicas
+(ITS#6718)</para></item>
+        <item><para>Fixed slapo-syncprov sessionlog ordering
+(ITS#6716)</para></item>
+        <item><para>Fixed slapo-syncprov sessionlog with adds
+(ITS#6503)</para></item>
+        <item><para>Fixed slapo-syncprov mutex
+(ITS#6438)</para></item>
+        <item><para>Fixed slapo-syncprov mincsn check with MMR
+(ITS#6717)</para></item>
+        <item><para>Fixed slapo-syncprov control leak
+(ITS#6795)</para></item>
+        <item><para>Fixed slapo-syncprov error codes
+(ITS#6812)</para></item>
+        <item><para>Fixed slapo-translucent entry leak
+(ITS#6746)</para></item>
+        <item><para>Fixed contrib/autogroup install location
+(ITS#6684)</para></item>
+        <item><para>Fixed contrib/autogroup crash with ppolicy
+(ITS#6684)</para></item>
+        <item><para>Fixed contrib/autogroup with non-DN URIs
+(ITS#6684)</para></item>
+        <item><para>Fixed contrib/autogroup with memberOf overlay
+(ITS#6684)</para></item>
+        <item><para>Fixed contrib/cloak when returning multiple
+entries (ITS#6762)</para></item>
+        <item><para>Fixed contrib/nssov to only close socket on
+shutdown (ITS#6676)</para></item>
+        <item><para>Fixed contrib/nssov multi platform support
+(ITS#6604)</para></item>
+        <items name="Build Environment">
+          <item><para>Added support for [unsigned] long long
+(ITS#6622)</para></item>
+          <item><para>Added slapd support for BDB 5.0+
+(ITS#6698)</para></item>
+          <item><para>Fixed config.guess/sub to pick up newer OSes
+(ITS#6547)</para></item>
+          <item><para>Fixed libldap mutex code - cleanup
+(ITS#6672)</para></item>
+          <item><para>Fixed libldap unnecessary ifdef's
+(ITS#6603)</para></item>
+          <item><para>Fixed slapd-tester EOF handling
+(ITS#6723)</para></item>
+          <item><para>Fixed slapd-tester filter initialization
+(ITS#6735)</para></item>
+          <item><para>Fixed test scripts with alternate testdir
+(ITS#6782)</para></item>
+          <item><para>Removed antiquated SunOS LWP support
+(ITS#6669)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 guide fix examples
+(ITS#6681)</para></item>
+          <item><para>admin24 guide typo fixes
+(ITS#6609)</para></item>
+          <item><para>admin24 guide refint rootdn requirement
+(ITS#6364)</para></item>
+          <item><para>admin24 add pcache overlay section
+(ITS#6521)</para></item>
+          <item><para>ldap_open(3) document ldap_set_urllist_proc
+(ITS#6601)</para></item>
+          <item><para>ldap.conf(5) GnuTLS cipher spec info
+(ITS#6525)</para></item>
+          <item><para>slapd.conf(5) GnlTLS cipher spec info
+(ITS#6525)</para></item>
+          <item><para>slapd.conf(5) multi-listener support
+(ITS#6780)</para></item>
+          <item><para>slapd-config(5) GnuTLS cipher spec info
+(ITS#6525)</para></item>
+          <item><para>slapd-config(5) multi-listener support
+(ITS#6780)</para></item>
+          <item><para>slapd-meta(5) note deprecated items
+(ITS#6800)</para></item>
+          <item><para>slapd-meta(5) document subtree-include
+(ITS#6801)</para></item>
+          <item><para>slapo-pcache(5) note rootdn requirement
+(ITS#6522)</para></item>
+          <item><para>slapo-refint(5) rootdn requirement
+(ITS#6364)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.22" to="2.4.23">
+        <item><para>Fixed libldap to return server's error code
+(ITS#6569)</para></item>
+        <item><para>Fixed libldap memleaks (ITS#6568)</para></item>
+        <item><para>Fixed liblutil off-by-one with delta
+(ITS#6541)</para></item>
+        <item><para>Fixed slapd acls with glued databases
+(ITS#6468)</para></item>
+        <item><para>Fixed slapd syncrepl rid logging
+(ITS#6533)</para></item>
+        <item><para>Fixed slapd modrdn handling of invalid values
+(ITS#6570)</para></item>
+        <item><para>Fixed slapd-bdb hasSubordinates computation
+(ITS#6549)</para></item>
+        <item><para>Fixed slapd-bdb to use memcpy instead for strcpy
+(ITS#6474)</para></item>
+        <item><para>Fixed slapd-bdb entry cache delete failure
+(ITS#6577)</para></item>
+        <item><para>Fixed slapd-ldap to return control responses
+(ITS#6530)</para></item>
+        <item><para>Fixed slapo-ppolicy to use Debug
+(ITS#6566)</para></item>
+        <item><para>Fixed slapo-refint to zero out freed DN vals
+(ITS#6572)</para></item>
+        <item><para>Fixed slapo-rwm to use Debug
+(ITS#6566)</para></item>
+        <item><para>Fixed slapo-sssvlv to use Debug
+(ITS#6566)</para></item>
+        <item><para>Fixed slapo-syncprov lost deletes in refresh phase
+(ITS#6555)</para></item>
+        <item><para>Fixed slapo-valsort to use Debug
+(ITS#6566)</para></item>
+        <item><para>Fixed contrib/nssov network.c missing patch
+(ITS#6562)</para></item>
+        <items name="Build Environment">
+          <item><para>Fixed test043 attribute sorting
+(ITS#6553)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>slapd-config(5) note default rootdn
+(ITS#6546)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.21" to="2.4.22">
+        <item><para>Added slapd SLAP_SCHEMA_EXPOSE flag for hidden
+schema elements (ITS#6435)</para></item>
+        <item><para>Added slapd tools selective iterations
+(ITS#6442)</para></item>
+        <item><para>Added slapd syncrepl TCP keepalive
+(ITS#6389)</para></item>
+        <item><para>Added slapo-ldap idassert-passthru
+(ITS#6456)</para></item>
+        <item><para>Added slapo-pbind</para></item>
+        <item><para>Fixed libldap gmtime re-entrancy
+(ITS#6262)</para></item>
+        <item><para>Fixed libldap gssapi off by one error
+(ITS#6223)</para></item>
+        <item><para>Fixed libldap GnuTLS serial length
+(ITS#6460)</para></item>
+        <item><para>Fixed libldap MozNSS context and PEM support
+(ITS#6432)</para></item>
+        <item><para>Fixed libldap referral on bind
+behavior(ITS#6510)</para></item>
+        <item><para>Fixed slapd acl non-entry internal searches
+(ITS#6481)</para></item>
+        <item><para>Fixed slapd acl attrval style initialization
+(ITS#6520)</para></item>
+        <item><para>Fixed slapd certificateListValidate
+(ITS#6466)</para></item>
+        <item><para>Fixed slapd empty URI parsing
+(ITS#6465)</para></item>
+        <item><para>Fixed slapd glued misplaced entries
+(ITS#6506)</para></item>
+        <item><para>Fixed slapd glued paged cookies
+(ITS#6507)</para></item>
+        <item><para>Fixed slapd glued paged results
+(ITS#6504)</para></item>
+        <item><para>Fixed slapd gmtime re-entrancy
+(ITS#6262)</para></item>
+        <item><para>Fixed slapd to ignore controls with unrecognized
+flags (ITS#6480)</para></item>
+        <item><para>Fixed slapd entry ownership
+(ITS#5340)</para></item>
+        <item><para>Fixed slapd sasl auxprop_lookup
+(ITS#6441)</para></item>
+        <item><para>Fixed slapd sasl auxprop ssf
+(ITS#5195)</para></item>
+        <item><para>Fixed slapd syncrepl for attributes with no
+matching rule (ITS#6458)</para></item>
+        <item><para>Fixed slapd syncrepl for unknown attrs and
+delta-sync (ITS#6473)</para></item>
+        <item><para>Fixed slapd syncrepl loop with moddn
+(ITS#6472)</para></item>
+        <item><para>Fixed slapo-accesslog to not replicate internal
+purges (ITS#6519)</para></item>
+        <item><para>Fixed slapd-bdb contextCSN updates from updatedn
+(ITS#6469)</para></item>
+        <item><para>Fixed slapd-bdb lockobj zeroing
+(ITS#6501)</para></item>
+        <item><para>Fixed slapd-ldap/meta control criticality
+(ITS#6523)</para></item>
+        <item><para>Fixed slapd-ldap/meta with ordered values
+(ITS#6516)</para></item>
+        <item><para>Fixed slapo-collect entry ownership
+(ITS#5340,ITS#6423)</para></item>
+        <item><para>Fixed slapo-dds with NULL backend
+(ITS#6490)</para></item>
+        <item><para>Fixed slapo-dynlist entry ownership
+(ITS#5340,ITS#6423)</para></item>
+        <item><para>Fixed slapo-memberof attr count
+(ITS#6508)</para></item>
+        <item><para>Fixed slapo-pcache to release its own entries
+(ITS#6484)</para></item>
+        <item><para>Fixed slapo-pcache with NULL backend
+(ITS#6490)</para></item>
+        <item><para>Fixed slapo-rwm entry release handling
+(ITS#6484)</para></item>
+        <item><para>Fixed slapo-rwm memory handling with rewrites
+(ITS#6526)</para></item>
+        <item><para>Fixed slapo-rwm olcRwmMap handling
+(ITS#6436)</para></item>
+        <item><para>Fixed slapo-rwm entry ownership
+(ITS#5340,ITS#6423)</para></item>
+        <item><para>Fixed slapo-syncprov memory leak
+(ITS#6459)</para></item>
+        <item><para>Fixed slapo-translucent counter increment
+(ITS#6497)</para></item>
+        <item><para>Fixed slapo-valsort entry ownership
+(ITS#5340,ITS#6423)	</para></item>
+        <item><para>Fixed contrib/sha2 adds mechs for more hashes
+(ITS#6433)</para></item>
+        <item><para>Fixed contrib/nssov to use nss-pam-ldapd
+(ITS#6488)</para></item>
+        <items name="Build Environment">
+          <item><para>Added back-ldif, back-null test support
+(ITS#5810)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 avoid explicit moduleload statements
+(ITS#6486)</para></item>
+          <item><para>admin24 broken link fixes
+(ITS#6493,ITS#6515)</para></item>
+          <item><para>slapd.access(5) val.regex explanation
+(ITS#5804)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.20" to="2.4.21">
+        <item><para>Fixed liblutil for negative microsecond offsets
+(ITS#6405)</para></item>
+        <item><para>Fixed slapd global settings to work without
+restart (ITS#6428)</para></item>
+        <item><para>Fixed slapd looping with SSL/TLS connections
+(ITS#6412)</para></item>
+        <item><para>Fixed slapd syncrepl freeing tasks from queue
+(ITS#6413)</para></item>
+        <item><para>Fixed slapd syncrepl parsing of tls defaults
+(ITS#6419)</para></item>
+        <item><para>Fixed slapd syncrepl uninitialized variables
+(ITS#6425)</para></item>
+        <item><para>Fixed slapd-config Adds with Abstract classes
+(ITS#6408)</para></item>
+        <item><para>Fixed slapo-dynlist behavior with simple filters
+(ITS#6421)</para></item>
+        <item><para>Fixed slapd-ldif access outside database directory
+(ITS#6414)</para></item>
+        <item><para>Fixed slapd-null extraneous assert
+(ITS#6403)</para></item>
+        <item><para>Fixed slapo-translucent with back-null
+(ITS#6403)</para></item>
+        <item><para>Fixed slapo-unique criteria checking
+(ITS#6270)</para></item>
+        <items name="Build Environment">
+          <item><para>Deleted broken LBER_INVALID macro
+(ITS#6402)</para></item>
+          <item><para>Fixed test058 kill usage
+(ITS#6420)</para></item>
+          <item><para>Fixed meta regression test
+(ITS#6418)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>slapd-meta(5) Note deprecated functions
+(ITS#6424)</para></item>
+          <item><para>admin24 fix set example for group of groups
+(ITS#6382)</para></item>
+          <item><para>admin24 fix dynamic group documentation
+(ITS#6290)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.19" to="2.4.20">
+        <item><para>Fixed client tools with LDAP options
+(ITS#6283)</para></item>
+        <item><para>Fixed liblber embedded NUL values in BerValues
+(ITS#6353)</para></item>
+        <item><para>Fixed liblber inverted LBER_USE_DER test
+(ITS#6348)</para></item>
+        <item><para>Fixed liblber to return failure on certain
+failures (ITS#6344)</para></item>
+        <item><para>Fixed libldap connection initialization
+(ITS#6386)</para></item>
+        <item><para>Fixed libldap sasl buffer sizing
+(ITS#6327,ITS#6334)</para></item>
+        <item><para>Fixed libldap uninitialized return value
+(ITS#6355)</para></item>
+        <item><para>Fixed libldap unlimited timeout
+(ITS#6388)</para></item>
+        <item><para>Added slapd handling of hex server IDs
+(ITS#6297)</para></item>
+        <item><para>Added slapd syncrepl contextCSN storing in
+subentry (ITS#6373)</para></item>
+        <item><para>Fixed slapd asserts in minimal environment
+(ITS#6361)</para></item>
+        <item><para>Fixed slapd authid-rewrite parsing (ITS#6392)
+</para></item>
+        <item><para>Fixed slapd checks of str2filter
+(ITS#6391)</para></item>
+        <item><para>Fixed slapd configArgs initialization
+(ITS#6363)</para></item>
+        <item><para>Fixed slapd debug handling of LDAP_DEBUG_ANY
+(ITS#6324)</para></item>
+        <item><para>Fixed slapd db_open with connection_fake_init
+(ITS#6381)</para></item>
+        <item><para>Fixed slapd with embedded \0 in bervals
+(ITS#6378,ITS#6379)</para></item>
+        <item><para>Fixed slapd inclusion of ac/unistd.h
+(ITS#6342)</para></item>
+        <item><para>Fixed slapd invalid dn log message
+(ITS#6309)</para></item>
+        <item><para>Fixed slapd lockup on shutdown
+(ITS#6372)</para></item>
+        <item><para>Fixed slapd onetime leak (ITS#6398)</para></item>
+        <item><para>Fixed slapd RID range to be decimal only
+(ITS#6394)</para></item>
+        <item><para>Fixed slapd sl_free to better reclaim memory
+(ITS#6380)</para></item>
+        <item><para>Fixed slapd syncrepl deletes in MirrorMode
+(ITS#6368)</para></item>
+        <item><para>Fixed slapd syncrepl to use correct SID
+(ITS#6367)</para></item>
+        <item><para>Fixed slapd termination for one level DNs
+(ITS#6338)</para></item>
+        <item><para>Fixed slapd tls_accept to retry in certain cases
+(ITS#6304)</para></item>
+        <item><para>Fixed slapd-bdb/hdb cache corruption
+(ITS#6341)</para></item>
+        <item><para>Fixed slapd-bdb/hdb entry cache
+(ITS#6360)</para></item>
+        <item><para>Fixed slapd-ldap leak (ITS#6326)</para></item>
+        <item><para>Fixed slapd-relay bind segfault
+(ITS#6337)</para></item>
+        <item><para>Fixed slapo-accesslog ensure CSNs are normalized
+(ITS#6400)</para></item>
+        <item><para>Fixed slapo-memberof operational attr updates
+(ITS#6329)</para></item>
+        <item><para>Fixed slapo-pcache entry dupe
+(ITS#6310)</para></item>
+        <item><para>Fixed slapo-syncprov checkpoint conversion
+(ITS#6370)</para></item>
+        <item><para>Fixed slapo-syncprov deadlock
+(ITS#6335)</para></item>
+        <item><para>Fixed slapo-syncprov memory leak
+(ITS#6376)</para></item>
+        <item><para>Fixed slapo-syncprov out of order changes
+(ITS#6346)</para></item>
+        <item><para>Fixed slapo-syncprov psearch with stale cookie
+(ITS#6397)</para></item>
+        <items name="Build Environment">
+          <item><para>Added additional operations for
+ITS#6332</para></item>
+          <item><para>Fixed memrchr define (ITS#6351)</para></item>
+          <item><para>Fixed slapd MAXPATHLEN handling
+(ITS#6342)</para></item>
+          <item><para>Added test050 rapid add/mod/del sequence
+(ITS#6368)</para></item>
+          <item><para>Fixed test057 handling of memberof/refint
+(ITS#6343)</para></item>
+          <item><para>Fixed slapd test error ignoring
+(ITS#6345)</para></item>
+          <item><para>Fixed liblutil constant (ITS#5909)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 fix RFC4511 and other references
+(ITS#6399)</para></item>
+          <item><para>ldap_get_dn(3) typos (ITS#5366)</para></item>
+          <item><para>ldap.conf(5) clarify comment usage
+(ITS#6384)</para></item>
+          <item><para>slapd.conf(5) note hex server IDs
+(ITS#6297)</para></item>
+          <item><para>slapd-config(5) note hex server IDs
+(ITS#6297)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.18" to="2.4.19">
+        <item><para>Fixed client tools with null timeouts
+(ITS#6282)</para></item>
+        <item><para>Fixed slapadd to warn about missing attrs for
+replicas (ITS#6281)</para></item>
+        <item><para>Fixed slapd acl cache (ITS#6287)</para></item>
+        <item><para>Fixed slapd tools to allow -n for conversion
+(ITS#6258)</para></item>
+        <item><para>Fixed slapd-ldap with null timeouts
+(ITS#6282)</para></item>
+        <item><para>Fixed slapd-ldap with strong binds with
+relay/translucent (ITS#6296)</para></item>
+        <item><para>Fixed slapd-ldif buffer overflow
+(ITS#6303)</para></item>
+        <item><para>Fixed slapo-auditlog comments when modifying
+(ITS#6286)</para></item>
+        <item><para>Fixed slapo-dynlist lock leak
+(ITS#6308)</para></item>
+        <item><para>Fixed slapo-pcache cache corruption
+(ITS#6242)</para></item>
+        <item><para>Fixed slapo-sssvlv sort control dereferencing
+(ITS#6288)</para></item>
+        <item><para>Fixed contrib/autogroup segfaults
+(ITS#6279)</para></item>
+        <item><para>Fixed contrib/nssov getgroupbymembers
+(ITS#6291)</para></item>
+        <item><para>Fixed contrib/smbk5pwd rpath linking
+(ITS#6323)</para></item>
+        <items name="Build Environment">
+          <item><para>Fixed --enable-deref support
+(ITS#6311)</para></item>
+          <item><para>Fixed contrib/autogroup default libtool path
+(ITS#6284)</para></item>
+          <item><para>Deleted nadf.schema (ITS#6140)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.17" to="2.4.18">
+        <item><para>Fixed client tools common options
+(ITS#6049)</para></item>
+        <item><para>Fixed liblber speed and other problems
+(ITS#6215)</para></item>
+        <item><para>Added libldap MozNSS PEM support
+(ITS#6278)</para></item>
+        <item><para>Added libldap option for SASL_USERNAME
+(ITS#6257)</para></item>
+        <item><para>Fixed libldap error parsing
+(ITS#6197)</para></item>
+        <item><para>Fixed libldap native getpass usage
+(ITS#4643)</para></item>
+        <item><para>Fixed libldap tls_check_hostname for OpenSSL and
+MozNSS (ITS#6239)</para></item>
+        <item><para>Added slapd tcp buffers support
+(ITS#6234)</para></item>
+        <item><para>Fixed slapd allow mirrormode to be set to FALSE
+(ITS#5946)</para></item>
+        <item><para>Fixed slapd certificate list parsing
+(ITS#6241)</para></item>
+        <item><para>Fixed slapd writers blocking
+(ITS#6276)</para></item>
+        <item><para>Fixed slapd dncachesize behavior to unlimited by
+default (ITS#6222)</para></item>
+        <item><para>Fixed slapd incorrectly applying writetimeout when
+not set (ITS#6220)</para></item>
+        <item><para>Fixed slapd with duplicate empty lines for
+olcDbConfig (ITS#6240)</para></item>
+        <item><para>Fixed slapd server URL matching
+(ITS#5942)</para></item>
+        <item><para>Fixed slapd subordinate needs a suffix
+(ITS#6216)</para></item>
+        <item><para>Fixed slapd syncrepl decrement on possible NULL
+value (ITS#6256)</para></item>
+        <item><para>Fixed slapd tools to properly close database
+(ITS#6214)</para></item>
+        <item><para>Fixed slapd uninitialized SlapReply components
+(ITS#6101)</para></item>
+        <item><para>Fixed slapd-meta starttls with targets
+(ITS#6190)</para></item>
+        <item><para>Fixed slapd-monitor stats with glued subordinates
+(ITS#6243)</para></item>
+        <item><para>Fixed slapd-ndb startup (ITS#6203)</para></item>
+        <item><para>Fixed slapd-relay various issues
+(ITS#6133)</para></item>
+        <item><para>Fixed slapd-relay response/cleanup callback
+mismatch (ITS#6154)</para></item>
+        <item><para>Fixed slapd-sql with baseObject query
+(ITS#6172)</para></item>
+        <item><para>Fixed slapd-sql with empty attribute
+(ITS#6163)</para></item>
+        <item><para>Fixed slapo-dynlist uninitialized var
+(ITS#6266)</para></item>
+        <item><para>Fixed slapo-pcache multiple enhancements
+(ITS#6152,ITS#5178)</para></item>
+        <item><para>Fixed slapo-ppolicy updating operational
+attributes (ITS#6265)</para></item>
+        <item><para>Fixed slapo-translucent attribute return
+(ITS#6254)</para></item>
+        <item><para>Fixed slapo-translucent filter matching
+(ITS#6255)</para></item>
+        <item><para>Fixed slapo-translucent to honor sizelimit
+(ITS#6253)</para></item>
+        <item><para>Fixed slapo-unique filter matching
+(ITS#6077)</para></item>
+        <item><para>Fixed tools off by one error
+(ITS#6233)</para></item>
+        <item><para>Fixed tools resource leaks
+(ITS#6145)</para></item>
+        <item><para>Added contrib/allowed (ITS#4730)</para></item>
+        <item><para>Fixed contrib/autogroup with RE24
+(ITS#6227)</para></item>
+        <item><para>Fixed contrib/nss symbols (ITS#6273)</para></item>
+        <items name="Build Environment">
+          <item><para>Tests note which backend is being tested
+(ITS#5810)</para></item>
+          <item><para>Fixed test056-monitor with custom ports
+(ITS#6213)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 fix broken link (ITS#6264)</para></item>
+          <item><para>ldap_open(3) document URI
+(ITS#6261)</para></item>
+          <item><para>ldap_set/get_option(3) SASL/TLS options added
+(ITS#6260)</para></item>
+          <item><para>man page format updates (ITS#6023)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.16" to="2.4.17">
+        <item><para>Fixed liblber to use ber_strnlen
+(ITS#6080)</para></item>
+        <item><para>Fixed libldap GnuTLS private key init
+(ITS#6053)</para></item>
+        <item><para>Fixed libldap openssl digest initialization
+(ITS#6192)</para></item>
+        <item><para>Fixed libldap tls NULL error messages
+(ITS#6079)</para></item>
+        <item><para>Fixed libldap_r missing stub
+(ITS#6188)</para></item>
+        <item><para>Fixed liblutil opendir/closedir on windows
+(ITS#6041)</para></item>
+        <item><para>Fixed liblutil for _GNU_SOURCE
+(ITS#5464,ITS#5666)</para></item>
+        <item><para>Added slapd sasl auxprop support
+(ITS#6147)</para></item>
+        <item><para>Added slapd schema checking tool
+(ITS#6150)</para></item>
+        <item><para>Added slapd writetimeout keyword
+(ITS#5836)</para></item>
+        <item><para>Fixed slapd abandon/cancel handling for some ops
+(ITS#6157)</para></item>
+        <item><para>Fixed slapd access setstyle to expand
+(ITS#6179)</para></item>
+        <item><para>Fixed slapd assert with closing connections
+(ITS#6111)</para></item>
+        <item><para>Fixed slapd bind race condition
+(ITS#6189)</para></item>
+        <item><para>Fixed slapd cancel behavior
+(ITS#6137)</para></item>
+        <item><para>Fixed slapd cert validation
+(ITS#6098)</para></item>
+        <item><para>Fixed slapd connection_destroy assert
+(ITS#6089)</para></item>
+        <item><para>Fixed slapd csn normalization
+(ITS#6195)</para></item>
+        <item><para>Fixed slapd errno handling
+(ITS#6037)</para></item>
+        <item><para>Fixed slapd global alloc handling
+(ITS#6054)</para></item>
+        <item><para>Fixed slapd hung writers (ITS#5836)</para></item>
+        <item><para>Fixed slapd ldapi issues (ITS#6056)</para></item>
+        <item><para>Fixed slapd moduleload with static backends and
+modules (ITS#6016)</para></item>
+        <item><para>Fixed slapd normalization of updated schema
+attributes (ITS#5540)</para></item>
+        <item><para>Fixed slapd olcLimits handling
+(ITS#6159)</para></item>
+        <item><para>Fixed slapd olcLogLevel with hex levels
+(ITS#6162)</para></item>
+        <item><para>Fixed slapd pagedresults stacked control with
+overlays (ITS#6056)</para></item>
+        <item><para>Fixed slapd password-hash incorrect limit on arg
+length (ITS#6139)</para></item>
+        <item><para>Fixed slapd readonly restrictions
+(ITS#6109)</para></item>
+        <item><para>Fixed slapd sending cancelled operations results
+(ITS#6103)</para></item>
+        <item><para>Fixed slapd slapi_entry_has_children
+(ITS#6132)</para></item>
+        <item><para>Fixed slapd sockets usage on windows
+(ITS#6039)</para></item>
+        <item><para>Fixed slapd some abandon and cancel race
+conditions (ITS#6104)</para></item>
+        <item><para>Fixed slapd tls context after changes
+(ITS#6135)</para></item>
+        <item><para>Fixed slapd-bdb/hdb adjust dncachesize if too low
+(ITS#6176)</para></item>
+        <item><para>Fixed slapd-bdb/hdb crashes during delete
+(ITS#6177)</para></item>
+        <item><para>Fixed slapd-bdb/hdb multiple olcIndex for same
+attr (ITS#6196)</para></item>
+        <item><para>Fixed slapd-hdb freeing of already freed entries
+(ITS#6074)</para></item>
+        <item><para>Fixed slapd-hdb entryinfo cleanup
+(ITS#6088)</para></item>
+        <item><para>Fixed slapd-hdb dncache lockups
+(ITS#6095)</para></item>
+        <item><para>Fixed slapd-ldap deadlock with non-responsive TLS
+URIs (ITS#6167)</para></item>
+        <item><para>Fixed slapd-relay to return failure on failure
+(ITS#5328)</para></item>
+        <item><para>Fixed slapd-sql with BACKSQL_ARBITRARY_KEY defined
+(ITS#6100)</para></item>
+        <item><para>Fixed slapo-collect collectinfo ordering
+(ITS#6076)</para></item>
+        <item><para>Fixed slapo-collect missing equality match rule
+(ITS#6075)</para></item>
+        <item><para>Fixed slapo-dds entry expiration
+(ITS#6169)</para></item>
+        <item><para>Fixed slapo-perl symbols (ITS#5658)</para></item>
+        <item><para>Fixed slapo-ppolicy to honor pwdLockout
+(ITS#6168)</para></item>
+        <item><para>Fixed slapo-ppolicy to return check modules error
+message (ITS#6082)</para></item>
+        <item><para>Fixed slapo-refint refint_repair handling
+(ITS#6056)</para></item>
+        <item><para>Added slapo-rwm rwm-drop-unrequested-attrs config
+option (ITS#6057)</para></item>
+        <item><para>Fixed slapo-rwm dn passing
+(ITS#6070)</para></item>
+        <item><para>Fixed slapo-rwm entry free
+(ITS#6058)</para></item>
+        <item><para>Fixed slapo-rwm entry release
+(ITS#6081)</para></item>
+        <item><para>Fixed slapo-translucent entry gathering
+(ITS#6156)</para></item>
+        <item><para>Fixed tools returning ldif errors
+(ITS#5892)</para></item>
+        <item><para>Fixed contrib/smbk5pwd use of private functions
+(ITS#5535)</para></item>
+        <items name="Build Environment">
+          <item><para>Added test056-monitor (ITS#5540)</para></item>
+          <item><para>Added test057-memberof-refint
+(ITS#5395)</para></item>
+          <item><para>Fixed winsock detection for windows (ITS#6102,
+ITS#6078)</para></item>
+          <item><para>Removed GSSAPI configure option
+(ITS#6091,ITS#6092,ITS#6093,ITS#5369)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 relocate configuration examples
+(ITS#6183)</para></item>
+          <item><para>admin24 fixed example regex
+(ITS#6052)</para></item>
+          <item><para>admin24 removed temporary back-monitor note
+(ITS#6130)</para></item>
+          <item><para>admin24 slapd.conf to cn=config conversion
+process (ITS#6060)</para></item>
+          <item><para>man page consistency fixes
+(ITS#6023)</para></item>
+          <item><para>ldapcompare(1) note -e option
+(ITS#6107)</para></item>
+          <item><para>ldapdelete(1) note -e option
+(ITS#6107)</para></item>
+          <item><para>ldapmodify(1) note -e option
+(ITS#6107)</para></item>
+          <item><para>ldapmodrdn(1) note -e option
+(ITS#6107)</para></item>
+          <item><para>ldapsearch(1) output format description
+(ITS#6146)</para></item>
+          <item><para>ldapurl(1) note -e option
+(ITS#6107)</para></item>
+          <item><para>ldapwhoami(1) note -e option
+(ITS#6107)</para></item>
+          <item><para>ldap_result(3) Add RETURN VALUE heading
+(ITS#6180)</para></item>
+          <item><para>ldap.conf(5) improve sizelimit/timelimit limits
+(ITS#6127)</para></item>
+          <item><para>slapd.access(5) Fix &lt;setstyle&gt; to use
+expand (ITS#6179)</para></item>
+          <item><para>slapd.conf(5) document default modulepath
+(ITS#5829)</para></item>
+          <item><para>slapd.conf(5) pidfile/argsfile description fix
+(ITS#5975)</para></item>
+          <item><para>slapd-config(5) document default modulepath
+(ITS#5829)</para></item>
+          <item><para>slapd-config(5) pidfile/argsfile description fix
+(ITS#5975)</para></item>
+          <item><para>slapo-constraint(5) clarify URI example
+(ITS#6118)</para></item>
+          <item><para>slapo-unique(5) explicitly note rootdn
+requirement (ITS#6108)</para></item>
+          <item><para>slapadd(8) note it does indexing
+(ITS#6160)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.15" to="2.4.16">
+        <item><para>Fixed libldap GnuTLS with x509v1 CA certs
+(ITS#5992)</para></item>
+        <item><para>Fixed libldap GnuTLS with CA chains
+(ITS#5991)</para></item>
+        <item><para>Fixed libldap GnuTLS TLSVerifyClient try
+(ITS#5981)</para></item>
+        <item><para>Fixed libldap segfault in checking cert/DN
+(ITS#5976)</para></item>
+        <item><para>Fixed libldap peer cert double free
+(ITS#5849)</para></item>
+        <item><para>Fixed libldap referral chasing
+(ITS#5980)</para></item>
+        <item><para>Fixed slapd backglue with empty DBs
+(ITS#5986)</para></item>
+        <item><para>Fixed slapd ctxcsn race condition
+(ITS#6001)</para></item>
+        <item><para>Fixed slapd debug message (ITS#6027)</para></item>
+        <item><para>Fixed slapd redundant module loading
+(ITS#6030)</para></item>
+        <item><para>Fixed slapd schema_init freed value
+(ITS#6036)</para></item>
+        <item><para>Fixed slapd syncrepl newCookie sync messages
+(ITS#5972)</para></item>
+        <item><para>Fixed slapd syncrepl hang during shutdown
+(ITS#6011)</para></item>
+        <item><para>Fixed slapd syncrepl too many MMR messages
+(ITS#6020)</para></item>
+        <item><para>Fixed slapd syncrepl skipped entries with MMR
+(ITS#5988)</para></item>
+        <item><para>Fixed slapd-bdb/hdb cachesize handling
+(ITS#5860)</para></item>
+        <item><para>Fixed slapd-bdb/hdb with slapcat with empty dn
+(ITS#6006)</para></item>
+        <item><para>Fixed slapd-bdb/hdb with NULL transactions
+(ITS#6012)</para></item>
+        <item><para>Fixed slapd-ldap incorrect referral handling
+(ITS#6003,ITS#5916)</para></item>
+        <item><para>Fixed slapd-ldap/meta with broken AD results
+(ITS#5977)</para></item>
+        <item><para>Fixed slapd-ldap/meta with invalid attrs again
+(ITS#5959)</para></item>
+        <item><para>Fixed slapo-accesslog interaction with ppolicy
+(ITS#5979)</para></item>
+        <item><para>Fixed slapo-dynlist conversion to cn=config
+(ITS#6002)</para></item>
+        <item><para>Fixed slapo-syncprov newCookie sync messages
+(ITS#5972)</para></item>
+        <item><para>Fixed slapd-syncprov too many MMR messages
+(ITS#6020)</para></item>
+        <item><para>Fixed slapo-syncprov replica lockout
+(ITS#5985)</para></item>
+        <item><para>Fixed slapo-syncprov modtarget tracking
+(ITS#5999)</para></item>
+        <item><para>Fixed slapo-syncprov multiple CSN propagation
+(ITS#5973)</para></item>
+        <item><para>Fixed slapo-syncprov race condition
+(ITS#6045)</para></item>
+        <item><para>Fixed slapo-syncprov sending cookies without CSN
+(ITS#6024)</para></item>
+        <item><para>Fixed slapo-syncprov skipped entries with MMR
+(ITS#5988)</para></item>
+        <item><para>Fixed tools passphrase free
+(ITS#6014)</para></item>
+        <items name="Build Environment">
+          <item><para>Cleaned up alloc/free functions for Windows
+(ITS#6005)</para></item>
+          <item><para>Fixed running of autosave files in testsuite
+(ITS#6026)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 clarified MMR URI requirements
+(ITS#5942,ITS#5987)</para></item>
+          <item><para>Added ldapexop(1) manual page
+(ITS#5982)</para></item>
+          <item><para>slapd-ldap/meta(5) added missing TLS options
+(ITS#5989)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.14" to="2.4.15">
+        <item><para>Fixed libldap alias dereferencing in C API again
+(ITS#5916)</para></item>
+        <item><para>Fixed libldap GnuTLS compilation
+(ITS#5955)</para></item>
+        <item><para>Fixed slapd bconfig conversion again
+(ITS#5346)</para></item>
+        <item><para>Fixed slapd behavior with superior objectClasses
+again (ITS#5517)</para></item>
+        <item><para>Fixed slapd RFC4512 behavior with same attr in
+RDN (ITS#5968)</para></item>
+        <item><para>Fixed slapd corrupt contextCSN
+(ITS#5947)</para></item>
+        <item><para>Fixed slapd syncrepl order to match on
+add/delete (ITS#5954)</para></item>
+        <item><para>Fixed slapd adding rdn with other values
+(ITS#5965)</para></item>
+        <item><para>Fixed slapd-bdb/hdb behavior with unallocatable
+shm (ITS#5956)</para></item>
+        <item><para>Fixed slapd-ldap/meta with entries with invalid
+attrs (ITS#5959)</para></item>
+        <item><para>Fixed slapd-relay control initialization
+(ITS#5724)</para></item>
+        <item><para>Fixed slapo-pcache caching invalid entries
+(ITS#5927)</para></item>
+        <item><para>Fixed slapo-syncprov csn updates
+(ITS#5969)</para></item>
+        <item><para>Fixed slapo-rwm objectClass preservation
+(ITS#5760)</para></item>
+        <item><para>Fixed slapo-rwm rwm_bva_rewrite handling
+(ITS#5960)</para></item>
+        <items name="Build Environment">
+          <item><para>Fixed tester library linking for windows
+(ITS#5740)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.13" to="2.4.14">
+        <item><para>Added libldap option to disable SASL host
+canonicalization (ITS#5812)</para></item>
+        <item><para>Added libldap TLS_PROTOCOL_MIN
+(ITS#5655)</para></item>
+        <item><para>Added libldap GnuTLS support for TLS_CIPHER_SUITE
+(ITS#5887)</para></item>
+        <item><para>Added libldap GnuTLS setting random file
+(ITS#5462)</para></item>
+        <item><para>Added libldap alias dereferencing in C API
+(ITS#5916)</para></item>
+        <item><para>Fixed libldap chasing multiple referrals
+(ITS#5853)</para></item>
+        <item><para>Fixed libldap deref handling
+(ITS#5768)</para></item>
+        <item><para>Fixed libldap NULL pointer deref
+(ITS#5934)</para></item>
+        <item><para>Fixed libldap peer cert memory leak
+(ITS#5849)</para></item>
+        <item><para>Fixed libldap interaction with GnuTLS CN IP-based
+matches (ITS#5789)</para></item>
+        <item><para>Fixed libldap intermediate response behavior
+(ITS#5896)</para></item>
+        <item><para>Fixed libldap IPv6 address handling
+(ITS#5937)</para></item>
+        <item><para>Fixed libldap_r deref building
+(ITS#5768)</para></item>
+        <item><para>Fixed libldap_r slapd lockup when paused during
+shutdown (ITS#5841)</para></item>
+        <item><para>Added slapd syncrepl default retry setting
+(ITS#5825)</para></item>
+        <item><para>Added slapd val.regex expansion
+(ITS#5804)</para></item>
+        <item><para>Added slapd TLS_PROTOCOL_MIN
+(ITS#5655)</para></item>
+        <item><para>Added slapd slapi_pw_find
+(ITS#2615,ITS#4359)</para></item>
+        <item><para>Added slapd compatibility with MSAD ranged values
+(ITS#5927)</para></item>
+        <item><para>Fixed slapd bconfig to return error codes
+(ITS#5867)</para></item>
+        <item><para>Fixed slapd bconfig encoding incorrectly
+(ITS#5897)</para></item>
+        <item><para>Fixed slapd bconfig dangling pointers
+(ITS#5924)</para></item>
+        <item><para>Fixed slapd behavior with superior objectClasses
+(ITS#5517)</para></item>
+        <item><para>Fixed slapd connection assert
+(ITS#5835)</para></item>
+        <item><para>Fixed slapd epoll handling
+(ITS#5886)</para></item>
+        <item><para>Fixed slapd frontend/backend options handling
+(ITS#5857)</para></item>
+        <item><para>Fixed slapd glue with MMR (ITS#5925)</para></item>
+        <item><para>Fixed slapd logging on Windows
+(ITS#5392)</para></item>
+        <item><para>Fixed slapd listener comparison
+(ITS#5613)</para></item>
+        <item><para>Fixed slapd manageDSAit with glue entries
+(ITS#5921)</para></item>
+        <item><para>Fixed slapd relax behavior with
+structuralObjectClass (ITS#5792)</para></item>
+        <item><para>Fixed slapd syncrepl rename handling
+(ITS#5809)</para></item>
+        <item><para>Fixed slapd syncrepl MMR when adding new server
+(ITS#5850)</para></item>
+        <item><para>Fixed slapd syncrepl MMR with deleted entries
+(ITS#5843)</para></item>
+        <item><para>Fixed slapd syncrepl replication with glued DB
+(ITS#5866)</para></item>
+        <item><para>Fixed slapd syncrepl replication with moddn
+(ITS#5901)</para></item>
+        <item><para>Fixed slapd syncrepl replication with referrals
+(ITS#5881)</para></item>
+        <item><para>Fixed slapd syncrepl replication with config tree
+(ITS#5935)</para></item>
+        <item><para>Fixed slapd wake_sds close on Windows
+(ITS#5855)</para></item>
+        <item><para>Fixed slapd-bdb/hdb dncachesize handling
+(ITS#5860)</para></item>
+        <item><para>Fixed slapd-bdb/hdb RFC4528 control support
+(ITS#5861)</para></item>
+        <item><para>Fixed slapd-bdb/hdb trickle task usage
+(ITS#5864)</para></item>
+        <item><para>Fixed slapd-hdb idlcache with empty suffix
+(ITS#5859)</para></item>
+        <item><para>Fixed slapd-ldap idassert-bind validity checking
+(ITS#5863)</para></item>
+        <item><para>Fixed slapd-ldap/meta RFC4525 increment support
+(ITS#5912)</para></item>
+        <item><para>Fixed slapd-ldap/meta search dereferencing
+(ITS#5916)</para></item>
+        <item><para>Fixed slapd-ldap/meta with intermediate response
+(ITS#5931)</para></item>
+        <item><para>Fixed slapd-ldif numerous bugs
+(ITS#5408)</para></item>
+        <item><para>Fixed slapd-ldif rename on same DN
+(ITS#5319)</para></item>
+        <item><para>Fixed slapd-ldif deadlock (ITS#5329)</para></item>
+        <item><para>Fixed slapd-meta double response sending
+(ITS#5854)</para></item>
+        <item><para>Fixed slapd-meta alias deref for retry
+(ITS#5889)</para></item>
+        <item><para>Fixed slapd-relay recursion detection
+(ITS#5943)</para></item>
+        <item><para>Fixed slapd-sock descriptor leak
+(ITS#5939)</para></item>
+        <item><para>Fixed slapo-accesslog on glued dbs
+(ITS#5907)</para></item>
+        <item><para>Fixed slapo-dynlist handling of flags
+(ITS#5898)</para></item>
+        <item><para>Fixed slapo-memberof multiple instantiation
+(ITS#5903)</para></item>
+        <item><para>Fixed slapo-pcache filter sorting
+(ITS#5756)</para></item>
+        <item><para>Fixed slapo-ppolicy to not be global
+(ITS#5858)</para></item>
+        <item><para>Fixed slapo-rwm double free
+(ITS#5923)</para></item>
+        <item><para>Fixed slapo-rwm with back-config
+(ITS#5906)</para></item>
+        <item><para>Fixed slapo-rwm olcRwmRewrite modification
+(ITS#5940)</para></item>
+        <item><para>Added slapo-rwm newRDN rewriting
+(ITS#5834)</para></item>
+        <item><para>Added slapadd progress meter
+(ITS#5922)</para></item>
+        <item><para>Updated contrib/addpartial module
+(ITS#5764)</para></item>
+        <item><para>Added contrib/cloak module
+(ITS#5872)</para></item>
+        <item><para>Added contrib/smbk5pwd gcrypt support
+(ITS#5410)</para></item>
+        <item><para>Added contrib/passwd sha2 support
+(ITS#5660)</para></item>
+        <items name="Build Environment">
+          <item><para>Fixed test006 appending to log file
+(ITS#5910)</para></item>
+          <item><para>Fixed test036,test039 behavior on error
+(ITS#5893)</para></item>
+          <item><para>Fixed test048 sed pathname substitution
+(ITS#5910)</para></item>
+          <item><para>Fixed test049,test050 to work on windows
+(ITS#5842)</para></item>
+          <item><para>Updated test017,test018,test019 to cover more
+cases (ITS#5883)</para></item>
+          <item><para>Removed patch for BerkeleyDB 4.7.25 (Official
+patch available)</para></item>
+          <item><para>Fixed MSVC 9.0 build issues
+(ITS#5888)</para></item>
+          <item><para>Fixed gss detection on Solaris
+(ITS#5846)</para></item>
+          <item><para>Fixed uuid_create/uuid_unparse_lower detection
+(ITS#5905)</para></item>
+          <item><para>Fixed liblutil tavl_delete to macroize constants
+(ITS#5909)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 added limits chapter
+(ITS#5818)</para></item>
+          <item><para>admin24 access-control clarify global ACLS
+(ITS#5851,ITS#5852)</para></item>
+          <item><para>admin24 search on nested naming contexts
+(ITS#5788)</para></item>
+          <item><para>admin24 consistent loglevel documentation
+(ITS#5904)</para></item>
+          <item><para>slapd-bdb/hdb expansion on dncachesize behavior
+(ITS#5721)</para></item>
+          <item><para>slapo-constraint(5) example fix
+(ITS#5895)</para></item>
+          <item><para>slap*(8) man pages should mention slapd-config
+(ITS#5828)</para></item>
+          <item><para>slapacl(8c) fix wording (ITS#5918)</para></item>
+          <item><para>slapd(8) document sid (ITS#5873)</para></item>
+          <item><para>slapd.access(5) clarify global ACLS
+(ITS#5851,ITS#5852)</para></item>
+          <item><para>slapadd/cat/index(8) note -n 0 for slapd-config
+(ITS#5891)</para></item>
+          <item><para>Added SEE ALSO slapd-config(5) to relevant man
+pages (ITS#5914)</para></item>
+        </items>
+      </change>
+
+      <change from="2.4.12" to="2.4.13">
+        <item><para>Added libldap dereference control support
+(ITS#5768)</para></item>
+        <item><para>Fixed libldap parameter checking
+(ITS#5817)</para></item>
+        <item><para>Fixed liblutil hex conversion
+(ITS#5699)</para></item>
+        <item><para>Fixed liblutil returning undefined data
+(ITS#5748)</para></item>
+        <item><para>Fixed libldap error code return
+(ITS#5762)</para></item>
+        <item><para>Fixed libldap interaction with GnuTLS CN IP-based
+matches (ITS#5789)</para></item>
+        <item><para>Fixed libldap MAXHOSTNAMELEN typo
+(ITS#5815)</para></item>
+        <item><para>Fixed libldap Ipv6 detection
+(ITS#5739)</para></item>
+        <item><para>Fixed libldap setuid usage with .ldaprc
+(ITS#4750)</para></item>
+        <item><para>Fixed slapacl crasher (ITS#5820)</para></item>
+        <item><para>Fixed slapd acl checks on ADD
+(ITS#4556,ITS#5723)</para></item>
+        <item><para>Fixed slapd acl application to newly created
+backends (ITS#5572)</para></item>
+        <item><para>Fixed slapd #if/#elif issues in thread includes
+(ITS#5824)</para></item>
+        <item><para>Added slapd keyword add_content_acl for add checks
+(ITS#4556,ITS#5723)</para></item>
+        <item><para>Fixed slapd concurrent access to connections
+(ITS#5814)</para></item>
+        <item><para>Fixed slapd config backend olcLogFile support
+(ITS#5765)</para></item>
+        <item><para>Fixed slapd contextCSN pending list
+(ITS#5709)</para></item>
+        <item><para>Fixed slapd control criticality
+(ITS#5785)</para></item>
+        <item><para>Added slapd dn.this search limits
+(ITS#5734)</para></item>
+        <item><para>Fixed slapd error status on shutdown
+(ITS#5745)</para></item>
+        <item><para>Fixed slapd filter substring handling
+(ITS#5803)</para></item>
+        <item><para>Fixed slapd nameUIDPretty bitstring parsing
+(ITS#5750)</para></item>
+        <item><para>Fixed slapd null termination of password
+(ITS#5794)</para></item>
+        <item><para>Fixed slapd overlay/database open with real
+structure (ITS#5724)</para></item>
+        <item><para>Fixed slapd parsing of read entry control
+(ITS#5741)</para></item>
+        <item><para>Added slapd PMI schema (ITS#5695)</para></item>
+        <item><para>Added slapd private databases in global overlays
+(ITS#5735,ITS#5736)</para></item>
+        <item><para>Fixed slapd rdn generation when it isn't specified
+(ITS#5819)</para></item>
+        <item><para>Fixed slapd slapd.conf validation to LDIF
+(ITS#5755)</para></item>
+        <item><para>Fixed slapd startup scan for CSN
+(ITS#5640)</para></item>
+        <item><para>Fixed slapd statslog printing of released entry
+(ITS#5775)</para></item>
+        <item><para>Added slapd support for certificateListExactMatch
+(ITS#5700)</para></item>
+        <item><para>Fixed slapd syncrepl event loss
+(ITS#5710)</para></item>
+        <item><para>Fixed slapd syncrepl MOD of attrs with no EQ rule
+(ITS#5781)</para></item>
+        <item><para>Fixed slapd syncrepl rename handling
+(ITS#5809)</para></item>
+        <item><para>Fixed slapd syncrepl schema checking
+(ITS#5798)</para></item>
+        <item><para>Fixed slapd syncrepl filter leak
+(ITS#5826)</para></item>
+        <item><para>Fixed slapd undef promote
+(ITS#5783,ITS#5795)</para></item>
+        <item><para>Added slapd What failed? control
+(ITS#5784)</para></item>
+        <item><para>Fixed slapd-bdb/hdb invalid db crash
+(ITS#5698)</para></item>
+        <item><para>Added slapd-bdb/hdb dbpagesize
+keyword</para></item>
+        <item><para>Added slapd-bdb/hdb checksum keyword</para></item>
+        <item><para>Fixed slapd-bdb/hdb indexing of entryDN
+(ITS#5790)</para></item>
+        <item><para>Fixed slapd-bdb/hdb lookup of entryDN with
+equality (ITS#5791)</para></item>
+        <item><para>Fixed slapd-bdb/hdb uninitialized
+bli_flag</para></item>
+        <item><para>Fixed slapd-ldap snprintf buffer overflow test
+(ITS#4467)</para></item>
+        <item><para>Fixed slapd-ldap search stop on minor failure
+(ITS#5816)</para></item>
+        <item><para>Fixed slapd-ldif file rename on windows
+(ITS#5774)</para></item>
+        <item><para>Fixed slapd-null read controls support
+(ITS#5757)</para></item>
+        <item><para>Fixed slapd-sql value length with right index
+(ITS#5779)</para></item>
+        <item><para>Fixed slapo-chain/translucent back-config support
+(ITS#5736)</para></item>
+        <item><para>Fixed slapo-chain segv with search references
+(ITS#5742)</para></item>
+        <item><para>Fixed slapo-collect compile with C89
+(ITS#5747)</para></item>
+        <item><para>Added slapo-constraint support for LDAP URI
+constraints (ITS#5704)</para></item>
+        <item><para>Added slapo-constraint support for constraining
+rename (ITS#5703)</para></item>
+        <item><para>Added slapo-constraint support for relax control
+(ITS#5705)</para></item>
+        <item><para>Added slapo-constraint "set" type
+(ITS#5702)</para></item>
+        <item><para>Fixed slapo-constraint filter parsing error
+(ITS#5751)</para></item>
+        <item><para>Added slapo-dynlist URI restriction ability
+(ITS#5761)</para></item>
+        <item><para>Fixed slapo-ppolicy unaligned BerElement
+(ITS#5770)</para></item>
+        <item><para>Fixed slapo-rwm objectClass preservation
+(ITS#5760)</para></item>
+        <item><para>Fixed slapo-rwm rewriting undefined filter
+(ITS#5731)</para></item>
+        <item><para>Fixed slapo-rwm rewritten DN-valued attrs
+(ITS#5772)</para></item>
+        <item><para>Fixed slapo-rwm reusing freed filter
+(ITS#5732)</para></item>
+        <item><para>Fixed slapo-rwm entry get (ITS#5773)</para></item>
+        <item><para>Fixed slapo-syncprov runqueue removal
+(ITS#5776)</para></item>
+        <item><para>Fixed slapo-syncprov unreplicatable ops
+(ITS#5709)</para></item>
+        <item><para>Fixed slapo-syncprov psearch leak
+(ITS#5827)</para></item>
+        <item><para>Added slapo-translucent try local bind when remote
+fails (ITS#5656)</para></item>
+        <item><para>Added slapo-translucent support for PasswordModify
+exop (ITS#5656)</para></item>
+        <item><para>Fixed tools simple bind without SASL
+(ITS#5753)</para></item>
+        <item><para>Fixed tools unaligned BerElement
+(ITS#5770)</para></item>
+        <item><para>Fixed contrib nssov crash on empty groups
+(ITS#5800)</para></item>
+        <item><para>Fixed contrib nssov crash with nssov-map
+(ITS#5801)</para></item>
+        <item><para>Fixed contrib nssov filter and search limits
+(ITS#5802)</para></item>
+        <item><para>Added contrib smbk5pwd honor principal expiration
+(ITS#5766)</para></item>
+        <items name="Build Environment">
+          <item><para>Added ldapurl command</para></item>
+          <item><para>Added slapd GSSAPI refactoring
+(ITS#5369)</para></item>
+          <item><para>Added slapo-deref overlay (ITS#5768)</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>admin24 added olcLimits to example
+(ITS#5746)</para></item>
+          <item><para>admin24 consolidated on whitespace
+(ITS#5759)</para></item>
+          <item><para>slapd.conf,config(5) subordinate/olcSubordinate
+keyword (ITS#5788)</para></item>
+          <item><para>slapd.conf(5) fixed disable keyword for limits
+(ITS#5821)</para></item>
+          <item><para>slapo-dds(5) manageDIT to relax
+(ITS#5780)</para></item>
+          <item><para>slapo-dds(5) rootdn requirement added
+(ITS#5811)</para></item>
+          <item><para>slapo-syncprov(5) sessionlog clarification
+(ITS#5806)</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>OpenLDAP has been compiled with support for TCP
+Wrappers. However, TCP Wrappers is not a requirement for OpenLDAP to
+work. To add support for TCP Wrappers, load the config subset of the
+TCP Wrappers package and configure the hosts.allow and hosts.deny
+files.</para>
+        <para>Configuration files are located in
+"<command>/etc${SB_INSTALL_PREFIX}</command>". The default path for the database
+is "<command>/var${SB_INSTALL_PREFIX}</command>". An alternate configuration file
+can be specified with the "<command>-f</command>" flag to
+<command>slapd</command>. In the configuration file, an alternate path
+to a database can be specified.</para>
+        <para>OpenLDAP supports the LDAP v3 protocol with SSL/TLS.
+OpenSSL has been linked against the OpenLDAP libraries to provide the
+SSL/TLS support. Because a device file is not available for AIX 5.1,
+HP-UX, IRIX, Solaris 6-7/SPARC, and Tru64 UNIX to generate random
+data, the PRNGD daemon must be used to provide such a device file. The
+path to the device file can be set with the environment variable
+<command>RANDFILE</command> before starting slapd or with the variable
+"<command>TLSRandfilePath</command>" in the
+<command>slapd.conf</command> file.</para>
+        <para>The "<command>${SB_INSTALL_PREFIX}/lib/gnutls</command>"
+directory contains a version of the OpenLDAP libraries linked with
+GnuTLS. While the OpenLDAP license is GPL compatible, the OpenSSL
+license is not. Therefore, a separate version of the library is
+available for linking against GPL programs.</para>
+        <para>The ldap Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 August 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2012-1164 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-1164">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2012-1164</ulink>).
+slapd in OpenLDAP allows remote attackers to cause a denial of service
+(assertion failure and daemon exit) via an LDAP search query with
+attrsOnly set to true, which causes empty attributes to be
+returned.</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
