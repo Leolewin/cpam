@@ -1,0 +1,443 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gnupg" version="1.4.11" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="411744e1ef8ce90b87938c4203f001f1"
+        checksum-type="md5" size="3407075"
+        path="src/gnupg-1.4.11.tar.bz2"/>
+      <patch checksum="27fc34b7bb90200371cdc37f4135ae23"
+        checksum-type="md5" size="11146"
+        path="src/gnupg-1.4.11.tww.patch"/>
+      <patch checksum="57e2ec2f664a7382736c993dbc85a7d7"
+        checksum-type="md5" size="513120"
+        path="src/gnupg-1.4.11.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="bzip2" var="BZIP2"
+        install-name="bzip210">v&gt;=1.0.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" var="PERL"
+        type="build">v==5.12.2</depend>
+      <depend program="prngd" var="PRNGD"
+        systype="*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  _prngd_socket="/var${SB_VAR_PRNGD}/pool"
+fi
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_ZLIB_LIB+${CC_LD_RT}${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_BZIP2_LIB+${CC_LD_RT}${SB_VAR_BZIP2_LIB}} \
+${SB_VAR_LIBCURL+${CC_LD_RT}${SB_VAR_LIBCURL_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --disable-ldap \
+${SB_VAR_ZLIB+--with-zlib=${SB_VAR_ZLIB}} \
+${SB_VAR_BZIP2+--with-bzip2=${SB_VAR_BZIP2}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_PRNGD+--disable-dev-random} \
+${SB_VAR_PRNGD+--with-egd-socket=${_prngd_socket}} \
+${SB_VAR_PRNGD+--enable-static-rnd=egd} \
+--without-libcurl --datarootdir=${_datadir} \
+--datadir=${_datadir} --disable-dependency-tracking \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir} checks=
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake SUBDIRS=checks check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+
+# need to make gpg SUID to enable memory locking
+case "${SB_SYSTYPE}" in
+*-aix*|*-osf*|*-hpux*|*-linux*|*-solaris*)
+  ${SB_PATH_CHMOD} u+s ${SB_INSTALL_PREFIX}/bin/gpg ;;
+esac
+
+${SB_PATH_CHMOD} u-w ${SB_INSTALL_PREFIX}/bin/*
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/gpg.texi doc/gpl.texi \
+doc/gnupg1.texi doc/gpgv.texi doc/opt-homedir.texi \
+doc/see-also-note.texi doc/specify-user-id.texi doc/version.texi \
+${_docdir}/texinfo
+]]>
+    </install>
+
+    <notes>
+      <change from="1.4.10" to="1.4.11">
+        <item><para>Bug fixes and portability changes</para></item>
+        <item><para>Minor changes for better interoperability with
+GnuPG-2</para></item>
+      </change>
+
+      <change from="1.4.9" to="1.4.10">
+        <item><para>2048 bit RSA keys are now generated by default.
+The default hash algorithm preferences has changed to prefer SHA-256
+over SHA-1. 2048 bit DSA keys are now generated to use a 256 bit hash
+algorithm</para></item>
+        <item><para>Support v2 OpenPGP cards</para></item>
+        <item><para>The algorithm to compute the SIG_ID status has
+been changed to match the one from 2.0.10</para></item>
+        <item><para>Improved file locking. Implemented it for
+W32.</para></item>
+        <item><para>Fixed a memory leak which made imports of many
+keys very slow</para></item>
+        <item><para>Many smaller bug fixes</para></item>
+        <item><para>Support for the Camellia cipher
+(RFC-5581)</para></item>
+        <item><para>Support for HKP keyservers over SSL
+("HKPS")</para></item>
+      </change>
+
+      <change from="1.4.8" to="1.4.9">
+        <item><para>Improved AES encryption performance by more than
+20% (on ia32). Decryption is also a bit faster.</para></item>
+        <item><para>Fixed possible memory corruption bug in 1.4.8
+while importing OpenPGP keys</para></item>
+      </change>
+
+      <change from="1.4.7" to="1.4.8">
+        <item><para>Changed the license to GPLv3</para></item>
+        <item><para>Improved detection of keyrings specified multiple
+times</para></item>
+        <item><para>Changes to better cope with broken
+keyservers</para></item>
+        <item><para>Minor bug fixes</para></item>
+        <item><para>The new OpenPGP standard is now complete, and has
+been published as RFC-4880. The GnuPG --openpgp mode (note this is not
+the default) has been updated to match the new standard. The --rfc2440
+option can be used to return to the older RFC-2440 behavior. The main
+differences between the two are "--enable-dsa2 --no-rfc2440-text
+--escape-from-lines --require-cross-certification".</para></item>
+        <item><para>By default (i.e. --gnupg mode),
+--require-cross-certification is now on. --rfc2440-text and
+--force-v3-sigs are now off.</para></item>
+        <item><para>Allow encryption using legacy Elgamal sign+encrypt
+keys if option --rfc2440 is used</para></item>
+        <item><para>Fixed the auto creation of the key stub for
+smartcards</para></item>
+        <item><para>Fixed a rare bug in decryption using the OpenPGP
+card</para></item>
+        <item><para>Fix RFC-4880 typo in the SHA-224 hash prefix. Old
+SHA-224 signatures will continue to work.</para></item>
+      </change>
+
+      <change from="1.4.6" to="1.4.7">
+        <item><para>By default, do not allow processing multiple
+plaintexts in a single stream. Many programs that called GnuPG were
+assuming that GnuPG did not permit this, and were thus not using the
+plaintext boundary status tags that GnuPG provides. This change makes
+GnuPG reject such messages by default which makes those programs safe
+again. --allow-multiple-messages returns to the old
+behavior.</para></item>
+        <item><para>[W32] The environment variable LANGUAGE may be
+used to override the language given by HKCU\Software\GNU\GnuPG:Lang.
+The language files "*.mo" are expected in a directory named
+"gnupg.nls" below the directory with the gpg.exe binary.</para></item>
+        <item><para>New --verify-option show-primary-uid-only.
+</para></item>
+      </change>
+
+      <change from="1.4.5" to="1.4.6">
+        <item><para>Fixed a serious and exploitable bug in processing
+encrypted packages. [CVE-2006-6235].</para></item>
+        <item><para>Fixed a buffer overflow in gpg. [bug#728,
+CVE-2006-6169]</para></item>
+        <item><para>Fixed a bug while decrypting certain compressed
+and encrypted messages. [bug#537]</para></item>
+        <item><para>Added --s2k-count to set the number of times
+passphrase mangling is repeated. The default is 65536
+times.</para></item>
+        <item><para>Added --passphrase-repeat to set the number of
+times GPG will prompt for a new passphrase to be repeated. This is
+useful to help memorize a new passphrase. The default is 1
+repetition.</para></item>
+        <item><para>Added a GPL license exception to the keyserver
+helper programs gpgkeys_ldap, gpgkeys_curl, and gpgkeys_hkp, to
+clarify any potential questions about the ability to distribute
+binaries that link to the OpenSSL library. GnuPG does not link
+directly to OpenSSL, but libcurl (used for HKP, HTTP, and FTP) and
+OpenLDAP (used for LDAP) may. Note that this license exception is
+considered a bug fix and is intended to forgive any violations
+pertaining to this issue, including those that may have occurred in
+the past.</para></item>
+        <item><para>Man pages are now built from the same source as
+those of GnuPG-2.</para></item>
+      </change>
+
+      <change from="1.4.4" to="1.4.5">
+        <item><para>Reverted check for valid standard handles under
+Windows.</para></item>
+        <item><para>More DSA2 tweaks.</para></item>
+        <item><para>Fixed a problem uploading certain keys to the
+smart card.</para></item>
+        <item><para>Fixed 2 more possible memory allocation
+attacks.</para></item>
+        <item><para>Added Norwegian translation.</para></item>
+      </change>
+
+      <change from="1.4.3" to="1.4.4">
+        <item><para>User IDs are now capped at 2048 bytes. This avoids
+a memory allocation attack (see CVE-2006-3082).</para></item>
+        <item><para>Added support for the SHA-224 hash. Like the
+SHA-384 hash, it is mainly useful when DSS (the US Digital Signature
+Standard) compatibility is desired.</para></item>
+        <item><para>Added support for the latest update to DSA keys
+and signatures. This allows for larger keys than 1024 bits and hashes
+other than SHA-1 and RIPEMD/160. Note that not all OpenPGP
+implementations can handle these new keys and signatures yet. See
+"--enable-dsa2" in the manual for more information.</para></item>
+      </change>
+
+      <change from="1.4.2" to="1.4.3">
+        <item><para>If available, cURL-based keyserver helpers are
+built that can retrieve keys using HKP or any protocol that cURL
+supports (HTTP, HTTPS, FTP, FTPS, etc). If cURL is not available, HKP
+and HTTP are still supported using a built-in cURL emulator. To force
+building the old pre-cURL keyserver helpers, use the configure option
+--enable-old-keyserver-helpers. Note that none of this affects finger
+or LDAP support, which are unchanged. Note also that a future version
+of GnuPG will remove the old keyserver helpers
+altogether.</para></item>
+        <item><para>Implemented Public Key Association (PKA) signature
+verification. This uses special DNS records and notation data to
+associate a mail address with an OpenPGP key to prove that mail coming
+from that address is legitimate without the need for a full trust path
+to the signing key.</para></item>
+        <item><para>When exporting subkeys, those specified with a key
+ID or fingerpint and the '!' suffix are now merged into one
+keyblock.</para></item>
+        <item><para>Added "gpg-zip", a program to create encrypted
+archives that can interoperate with PGP Zip.</para></item>
+        <item><para>Added support for signing subkey
+cross-certification "back signatures". Requiring cross-certification
+to be present is currently off by default, but will be changed to on
+by default in the future, once more keys use it. A new "cross-certify"
+command in the --edit-key menu can be used to update signing subkeys
+to have cross-certification.</para></item>
+        <item><para>The key cleaning options for --import-options and
+--export-options have been further polished. "import-clean" and
+"export-clean" replace the older import-clean-sigs/import-clean-uids
+and export-clean-sigs/export-clean-uids option pairs.</para></item>
+        <item><para>New "minimize" command in the --edit-key menu
+removes everything that can be removed from a key, rendering it as
+small as possible. There are corresponding "export-minimal" and
+"import-minimal" commands for --export-options and
+--import-options.</para></item>
+        <item><para>New --fetch-keys command to retrieve keys by
+specifying a URI. This allows direct key retrieval from a web page or
+other location that can be specified in a URI. Available protocols are
+HTTP and finger, plus anything that cURL supplies, if built with cURL
+support.</para></item>
+        <item><para>Files containing several signed messages are not
+allowed any longer as there is no clean way to report the status of
+such files back to the caller. To partly revert to the old behaviour
+the new option --allow-multisig-verification may be
+used.</para></item>
+        <item><para>The keyserver helpers can now handle keys in
+either ASCII armor or binary format.</para></item>
+        <item><para>New auto-key-locate option that takes an ordered
+list of methods to locate a key if it is not available at encryption
+time (-r or --recipient). Possible methods include "cert" (use DNS
+CERT as per RFC2538bis, "pka" (use DNS PKA), "ldap" (consult the LDAP
+server for the domain in question), "keyserver" (use the currently
+defined keyserver), as well as arbitrary keyserver URIs that will be
+contacted for the key.</para></item>
+        <item><para>Able to retrieve keys using DNS CERT records as
+per RFC-4398.</para></item>
+      </change>
+
+      <change from="1.4.1" to="1.4.2">
+        <item><para>New command "verify" in the card-edit menu to
+display the Private-DO-3. The Admin command has been enhanced to take
+the optional arguments "on", "off" and "verify". The latter may be
+used to verify the Admin Pin without modifying data; this allows
+displaying the Private-DO-4 with the "list" command.</para></item>
+        <item><para>Rewrote large parts of the card code to optionally
+make use of a running gpg-agent. If --use-agent is being used and a
+gpg-agent with enabled scdaemon is active, gpg will now divert all
+card operations to that daemon. This is required because both,
+scdaemon and gpg require exclusive access to the card reader. By
+delegating the work to scdaemon, both can peacefully coexist and
+scdaemon is able to control the use of the reader. Note that this
+requires at least gnupg 1.9.17.</para></item>
+        <item><para>Fixed a couple of problems with the card
+reader.</para></item>
+        <item><para>Command completion is now available in the
+--edit-key and --card-edit menus. Filename completion is available at
+all filename prompts. Note that completion is only available if the
+system provides a readline library.</para></item>
+        <item><para>New experimental HKP keyserver helper that uses
+the cURL library. It is enabled via the configure option
+--with-libcurl like the other (also experimental) cURL
+helpers.</para></item>
+        <item><para>New key cleaning options that can be used to
+remove unusable (expired, revoked) signatures from a key. This is
+available via the new "clean" command in --edit-key on a key by key
+basis, as well as via the import-clean-sigs/import-clean-uids and
+export-clean-sigs/export-clean-uids options for --import-options and
+--export-options. These are currently off by default, and replace the
+import-unusable-sigs/export-unusable-sigs options from version
+1.4.1.</para></item>
+        <item><para>New export option
+export-reset-subkey-passwd.</para></item>
+        <item><para>New option
+--limit-card-insert-tries.</para></item>
+      </change>
+
+      <change from="1.4.0" to="1.4.1">
+        <item><para>New --rfc2440-text option which controls how text
+is handled in signatures. This is in response to some problems seen
+with certain PGP/MIME mail clients and GnuPG version
+1.4.0.</para></item>
+        <item><para>New "import-unusable-sigs" and
+"export-unusable-sigs" tags for --import-options and --export-options.
+These are off by default, and cause GnuPG to not import or export key
+signatures that are not usable (e.g. expired
+signatures).</para></item>
+        <item><para>New experimental HTTP, HTTPS, FTP, and FTPS
+keyserver helper that uses the cURL library to retrieve keys. This is
+disabled by default, but may be enabled with the configure option
+--with-libcurl. Without this option, the existing HTTP code is used
+for HTTP, and HTTPS, FTP, and FTPS are not supported.</para></item>
+        <item><para>When running a --card-status or --card-edit and a
+public key is available, missing secret key stubs will be created on
+the fly. Details of the key are listed too.</para></item>
+        <item><para>The implicit packet dumping in double verbose mode
+is now sent to stderr and not to stdout</para></item>
+        <item><para>Added countermeasures against the
+Mister/Zuccherato CFB attack</para></item>
+        <item><para>[W32] The algorithm for the default home directory
+changed: First we look at the environment variable GNUPGHOME, if this
+one is not set, we check whether the registry entry
+{HKCU,HKLM}\Software\GNU\GnuPG:HomeDir has been set. If this fails we
+use a GnuPG directory below the standard application data directory
+(APPDATA) of the current user. Only in the case that this directory
+cannot be determined, the old default of c:\gnupg will be used. The
+option --homedir still overrides all of them.</para></item>
+        <item><para>[W32] The locale selection under Windows changed.
+You need to enter the locale in the registry at
+HKCU\Software\GNU\GnuPG:Lang. For German you would use "de". If it is
+not set, GnuPG falls back to HKLM. The languages files "*.mo" are
+expected in a directory named "gnupg.nls" below the installation
+directory; that directory must be stored in the registry at the same
+key as above with the name "Install Directory".</para></item>
+        <item><para>Add new --edit-key command "bkuptocard" to allow
+restoring a card key from a backup</para></item>
+        <item><para>The "fetch" command of --card-edit now retrieves
+the key using the default keyserver if no URL has been stored on the
+card</para></item>
+        <item><para>New configure option
+--enable-noexecstack</para></item>
+      </change>
+
+      <note type="compilation">
+        <para>AIX 5.2 does not have the <command>mlock()</command>
+function used to lock a region of memory and prevent it from being
+swapped to disk (necessary so the GPG secret key does not appear on
+disk). The <command>plock()</command> function is used instead.
+<command>plock()</command> locks the entire data segment of the
+process in memory. While not as fine-grained as
+<command>mlock()</command>, it achieves the desired goal of creating a
+secure memory region.</para>
+      </note>
+
+      <note type="usage">
+        <para>Because a device file to gather entropy is not available
+on all systems to generate random data, the PRNGD daemon should be
+used to provide such a device file for GnuPG. GnuPG was compiled to
+expect the device file <command>/var${SB_INSTALL_BASE}/prngd/pool</command> for the
+platforms where PRNGD is a requirement. This can be changed at runtime
+by specifying the command-line option <command>-E=PATH</command>,
+<command>--egd-socket=PATH</command> where PATH is the name of the
+socket PRNGD is listening on.</para>
+        <para>On AIX, HP-UX, Redhat Linux, Solaris, and Tru64 UNIX,
+the <command>gpg</command> binary,
+<command>${SB_INSTALL_PREFIX}/bin/gpg</command> is SUID root to allow
+locks on memory regions.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
