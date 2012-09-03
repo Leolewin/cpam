@@ -1,0 +1,793 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="tk" version="8.5.10" revision="1">
+    <build-name>${SB_PROG_NAME}${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}85</install-name>
+
+    <sources>
+      <source checksum="adfdaca46cc95fec8557df8ecdb0715c"
+        checksum-type="md5" size="3807862"
+        path="src/tk8.5.10-src.tar.gz"/>
+      <patch checksum="4c7634bc9e8d4393e786e37928639177"
+        checksum-type="md5" size="14158"
+        path="src/tk8.5.10.tww.patch"/>
+      <patch checksum="5a82bd46f4c8fa44cb4932717aad5d98"
+        checksum-type="md5" size="492062"
+        path="src/tk8.5.10.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+
+  ARGS="--enable-threads" ;;
+*-hpux11.[23]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+
+  ARGS="--enable-threads" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+
+  ARGS="--enable-threads" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--enable-threads" ;;
+x86_64*-linuxe4)
+  ARGS="--x-libraries=/usr/X11R6/lib64 --enable-threads" ;;
+*-linux*)
+  ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+
+  ARGS="--enable-threads" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+
+  ARGS="--enable-threads" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CPPFLAGS="-DFUNCPROTO=1"
+
+  ARGS="--enable-threads" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+
+  ARGS="--enable-threads" ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake -C unix
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="tcl" state="build">v==8.5.10</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend var="TKP" install-name="tk85p"
+          set-var-only="1"/>
+        <depend program="tcl" var="TCL">v==8.5.10</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="tk" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==8.5.10</depend>
+        <depend program="tk" module="64bit-static"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==8.5.10</depend>
+        <depend program="tk" module="static">v==8.5.10</depend>
+        <depend program="BWidget" module="8.5.10">v==1.8.0</depend>
+        <depend program="Tktable" module="8.5.10">v==2.10</depend>
+        <depend program="itk" module="8.5.10">v==3.4</depend>
+        <depend program="iwidgets" module="8.5.10">v==4.0.1</depend>
+        <depend program="tix" module="8.5.10">v==8.4.3</depend>
+        <depend program="tkcon" module="8.5.10">v==2.4</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+
+  ARGS="--enable-threads" ;;
+*-hpux11.[23]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+
+  ARGS="--enable-threads" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+
+  ARGS="--enable-threads" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--enable-threads" ;;
+x86_64*-linuxe4)
+  ARGS="--x-libraries=/usr/X11R6/lib64 --enable-threads" ;;
+*-linux*)
+  ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+
+  ARGS="--enable-threads" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+
+  ARGS="--enable-threads" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CPPFLAGS="-DFUNCPROTO=1"
+
+  ARGS="--enable-threads" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+
+  ARGS="--enable-threads" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cd unix
+PKG_CONFIG_PATH="${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig}:\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig}" \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" --enable-shared \
+tcl_cv_cc_visibility_hidden=no \
+--with-tcl="${SB_BUILD_BASE}/tcl8.5.10/unix" ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+# Modify TK_CC_SEARCH_FLAGS and TK_LD_SEARCH_FLAGS with path to tk
+# for use when linking with other applications
+${SB_PATH_SED} -i -e "\
+s!RUNTIME_DIR}!RUNTIME_DIR}:${SB_INSTALL_PREFIX_LIB}:\
+${SB_VAR_TCL_LIB}!" config.status
+sh config.status
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C unix
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake -C unix install
+
+# Fix runtime path to tk shared library
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  (cd unix
+   rm wish
+   gmake TCL_LIB_SPEC="-L${SB_VAR_TCL_LIB} -ltcl8.5" \
+   TK_BUILD_LIB_SPEC="-L${SB_INSTALL_PREFIX_LIB} -ltk8.5" wish)
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 unix/wish \
+  ${SB_INSTALL_PREFIX}/bin/wish8.5 ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+        <remove-db-entry program="BWidget" module="8.5.10">v==1.7.0</remove-db-entry>
+        <remove-db-entry program="Tktable" module="8.5.10">v==2.8</remove-db-entry>
+        <remove-db-entry program="tix" module="8.5.10">v==8.1.4</remove-db-entry>
+        <remove-db-entry program="tkcon" module="8.5.10">v==2.4</remove-db-entry>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="tcl" module="64bit"
+          state="build">v==8.5.10</depend>
+        <depend program="tcl" var="TCL"
+          module="64bit">v==8.5.10</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  BINDIR="bin/ppc64" LIBDIR="lib/ppc64" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  BINDIR="bin/hpux64" LIBDIR="lib/hpux64" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  BINDIR="bin/pa20_64" LIBDIR="lib/pa20_64"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--host=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--host=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--host=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--host=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  BINDIR="bin/mips4" LIBDIR="lib64" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  BINDIR="bin/amd64" LIBDIR="lib/amd64" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v9"
+  CPPFLAGS="-DFUNCPROTO=1"
+  BINDIR="bin/sparcv9" LIBDIR="lib/sparcv9" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  BINDIR="bin/sparcv9" LIBDIR="lib/sparcv9" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cd unix
+PKG_CONFIG_PATH="${SB_VAR_LIBTTF+${SB_VAR_LIBTTF}/${LIBDIR}/pkgconfig}:\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE}/${LIBDIR}/pkgconfig}" \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" --enable-threads --enable-64bit \
+--bindir="${SB_INSTALL_PREFIX}/${BINDIR}" \
+--libdir="${SB_INSTALL_PREFIX}/${LIBDIR}" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--with-tcl="${SB_BUILD_BASE}/tcl8.5.10/unix" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# Modify TK_CC_SEARCH_FLAGS and TK_LD_SEARCH_FLAGS with path to tk
+# for use when linking with other applications
+${SB_PATH_SED} -i -e "\
+s!RUNTIME_DIR}!RUNTIME_DIR}:${SB_INSTALL_PREFIX}/${LIBDIR}:\
+${SB_VAR_TCL}/${LIBDIR}!" config.status
+sh config.status
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C unix
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/bin/64 ]; then
+  ln -s ./$(basename ${BINDIR}) ${SB_INSTALL_PREFIX}/bin/64
+fi
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${LIBDIR}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake -C unix install-binaries
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/${BINDIR}/wish8.5
+
+rm -rf ${SB_INSTALL_PREFIX}/${LIBDIR}/tk8.5
+rm ${SB_INSTALL_PREFIX}/${LIBDIR}/libtk8.5.s[lo] \
+${SB_INSTALL_PREFIX}/${LIBDIR}/libtkstub8.5.a \
+${SB_INSTALL_PREFIX}/${LIBDIR}/tkConfig.sh
+
+rmdir ${SB_INSTALL_PREFIX}/${BINDIR}
+rm ${SB_INSTALL_PREFIX}/bin/64
+
+rmdir ${INSTALL_PREFIX}/${LIBDIR} && rm ${INSTALL_PREFIX}/lib/64
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <module name="static">
+      <dependencies replace="0">
+        <depend program="tcl" module="static"
+          state="build">v==8.5.10</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="tcl" module="static">v==8.5.10</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+
+  ARGS="--enable-threads" ;;
+*-hpux11.[23]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+
+  ARGS="--enable-threads" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+
+  ARGS="--enable-threads" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--enable-threads" ;;
+x86_64*-linuxe4)
+  ARGS="--x-libraries=/usr/X11R6/lib64 --enable-threads" ;;
+*-linux*)
+  ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -nodtk -arch ev5 -msym -readonly_strings"
+
+  ARGS="--enable-threads" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+
+  ARGS="--enable-threads" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CPPFLAGS="-DFUNCPROTO=1"
+
+  ARGS="--enable-threads" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+
+  ARGS="--enable-threads" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cd unix
+PKG_CONFIG_PATH="${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig}:\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig}" \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" --disable-shared \
+tcl_cv_cc_visibility_hidden=no \
+--with-tcl="${SB_BUILD_BASE}/tcl8.5.10/unix" ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C unix
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX_LIB}
+
+${SB_PATH_INSTALL} -o root -g 0 unix/libtk8.5.a \
+${SB_INSTALL_PREFIX_LIB}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX_LIB}/libtk8.5.a
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit-static"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="tcl" module="64bit-static"
+          state="build">v==8.5.10</depend>
+        <depend program="tcl" module="64bit">v==8.5.10</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  BINDIR="bin/ppc64" LIBDIR="lib/ppc64" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  BINDIR="bin/hpux64" LIBDIR="lib/hpux64" ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  BINDIR="bin/pa20_64" LIBDIR="lib/pa20_64"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--host=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--host=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--host=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--host=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  BINDIR="bin/mips4" LIBDIR="lib64" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -xarch=amd64"
+  BINDIR="bin/amd64" LIBDIR="lib/amd64" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v9"
+  CPPFLAGS="-DFUNCPROTO=1"
+  BINDIR="bin/sparcv9" LIBDIR="lib/sparcv9" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  BINDIR="bin/sparcv9" LIBDIR="lib/sparcv9" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+cd unix
+PKG_CONFIG_PATH="${SB_VAR_LIBTTF+${SB_VAR_LIBTTF}/${LIBDIR}/pkgconfig}:\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE}/${LIBDIR}/pkgconfig}" \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" --disable-shared --enable-threads \
+--enable-64bit --libdir="${SB_INSTALL_PREFIX}/${LIBDIR}" \
+--with-tcl="${SB_BUILD_BASE}/tcl8.5.10/unix" \
+--mandir="${SB_INSTALL_PREFIX}/man" ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C unix
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${LIBDIR}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${SB_INSTALL_PREFIX}/${LIBDIR}
+${SB_PATH_INSTALL} -m 555 -o root -g 0 unix/libtk8.5.a \
+${SB_INSTALL_PREFIX}/${LIBDIR}
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/${LIBDIR}/libtk8.5.a
+
+rmdir ${INSTALL_PREFIX}/${LIBDIR} && rm ${INSTALL_PREFIX}/lib/64
+
+:
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="8.5.9" to="8.5.10">
+        <items name="Bug fixes">
+          <item><para>[3057573] specify combobox text fg
+color</para></item>
+          <item><para>[2829363] [$tv see] open item -&gt; sched
+display</para></item>
+          <item><para>[3085489] crash in [tag
+add/remove]</para></item>
+          <item><para>[3071836] crash in tk_getSaveFile</para></item>
+          <item><para>[3154705] tk_messageBox close button
+disabled</para></item>
+          <item><para>[3205260] crash in [wm manage]</para></item>
+          <item><para>[3181181] tearoff submenu fix</para></item>
+          <item><para>[3205464] [wm forget] loses window</para></item>
+          <item><para>[3223850] ttk button state disabled during
+click</para></item>
+          <item><para>[3000002] ttk scrollbar size
+Appearance</para></item>
+          <item><para>[3239768] Win menu font support</para></item>
+          <item><para>[3129527] stop buffer overflows</para></item>
+          <item><para>[723765] [grid remove] lost -in
+value</para></item>
+          <item><para>[3291543] mem corrupt when [$canvas dchars]
+removes all coords of a polygon</para></item>
+          <item><para>[2949774] cascade menu unpost</para></item>
+          <item><para>[2546087] [console] treatment of
+'\0'</para></item>
+          <item><para>[2358545] Restore "08" in spinbox configured
+with -from and -to</para></item>
+          <item><para>[2484771] modal dialog settings</para></item>
+          <item><para>[3175610] incomplete line item
+refresh</para></item>
+          <item><para>[3062331] crash in unset traces</para></item>
+        </items>
+
+        <items name="Platform support">
+          <item><para>Revisions to support rpm 4.4.2</para></item>
+          <item><para>VS 2005 SP1 MSVC compiler</para></item>
+          <item><para>OpenBSD build improvements</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Updated German messages.</para></item>
+          <item><para>add [ttk::entry validate]</para></item>
+          <item><para>[2997657] No -container for
+[labelframe]</para></item>
+        </items>
+      </change>
+
+      <change from="8.5.8" to="8.5.9">
+        <items name="Bug fixes">
+          <item><para>[2899949] crash on widget destroy</para></item>
+          <item><para>[2902814] fix [wm iconphoto] on LP64
+systems</para></item>
+          <item><para>[2548661] crash in
+GetFontFamilyName</para></item>
+          <item><para>[2864685] Compiz menu item
+animation</para></item>
+          <item><para>[2902573] Update Safe Tk to new Safe
+Base</para></item>
+          <item><para>[2912473] accept :: in DISPLAY
+name</para></item>
+          <item><para>[2496162] crash calling
+Tk_DeleteOptionTable()</para></item>
+          <item><para>[2917663] [send] accept SI:* on auth
+list</para></item>
+          <item><para>[2919205] syntax bug in
+[tk_messageBox]</para></item>
+          <item><para>[2912356] [ttk::sizegrip] accommodate
+Compiz</para></item>
+          <item><para>[2879927] Win: cascade menu
+highlight</para></item>
+          <item><para>[1924761] stop [event generate] / XIM
+conflict</para></item>
+          <item><para>[2848897] ODS_NOACCEL flag support</para></item>
+          <item><para>[220950] [$menu delete] bounds
+check</para></item>
+          <item><para>[1163496] X: [wm transient] fix</para></item>
+          <item><para>[2932808] canvas update on state
+change</para></item>
+          <item><para>[2931374] overflow in complex tag
+search</para></item>
+          <item><para>[2952745] crash in menu deletion</para></item>
+          <item><para>[2968379] crash in peer text dump</para></item>
+          <item><para>[3006842] crash on empty bind
+scripts</para></item>
+          <item><para>entry validation compat with Itcl
+scope</para></item>
+          <item><para>[2585265] text &lt;Delete&gt;,&lt;Backspace&gt;
+note selection</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>[3053320] update Ttk to tile 0.8.6 feature
+set</para></item>
+          <item><para>[TIP 360] Modernize X11 Menus</para></item>
+          <item><para>[TIP 359] Extended Window Manager Hint
+Support</para></item>
+        </items>
+
+        <item><para>[2898255] unlimited multi-file
+select</para></item>
+      </change>
+
+      <change from="8.5.7" to="8.5.8">
+        <items name="Bug fixes">
+          <item><para>[2779910] updated Win chooseDir</para></item>
+          <item><para>prevent delete of selected folder in Win
+dialog</para></item>
+          <item><para>[2080533] panedwindow sash draw
+crash</para></item>
+          <item><para>[2504402] iconphoto on non-32-bit
+displays</para></item>
+          <item><para>[2785744] broken flag twiddling</para></item>
+          <item><para>[2791352] XLFD parsing error</para></item>
+          <item><para>[1923684] confused checkbutton
+state</para></item>
+          <item><para>[2794778] Win menu keyboard
+traversal</para></item>
+          <item><para>[2799589] crash on delayed window
+activation</para></item>
+          <item><para>[220935] canvas dash update
+problem</para></item>
+          <item><para>[2821962] photo image copy/paste</para></item>
+          <item><para>[2496114] focus in dead window
+crash</para></item>
+          <item><para>[2830420] X iconphoto for big
+endian</para></item>
+          <item><para>[text] word-wrap of non-breaking
+space</para></item>
+          <item><para>tk::MessageBox bindings for
+ttk::buttons</para></item>
+          <item><para>[1909931] [send] update for Fedora
+8</para></item>
+          <item><para>font allocation crash</para></item>
+          <item><para>[873608] win tearoff menu, no submenu
+arrows</para></item>
+          <item><para>[873613] win tearoff menu repeat
+select</para></item>
+          <item><para>grayscale from images</para></item>
+          <item><para>[2088597] min scrollbar slider
+size</para></item>
+          <item><para>[2787164] combobox/menubutton arrow
+size</para></item>
+          <item><para>[2870648] file dialog cursor</para></item>
+          <item><para>[2168768] file dialog -typevariable
+scope</para></item>
+          <item><para>[1469210] [text] modified error</para></item>
+          <item><para>[2883712] 64-bit Aqua progress bar</para></item>
+          <item><para>[1530276] X checkbutton
+-selectcolor</para></item>
+          <item><para>[1854913] [.t delete] before
+-startindex</para></item>
+          <item><para>[2809525] prevent X crash on overlong color
+name</para></item>
+          <item><para>[1825353] Russian Windows tiny fonts
+problem</para></item>
+          <item><para>[2891541] fix grab behaviour for main
+window</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>Vista theme support</para></item>
+          <item><para>[1961455] underline, overstrike Xft
+fonts</para></item>
+          <item><para>[2794032] permit [load] into Tcl 8.6+
+interps</para></item>
+        </items>
+      </change>
+
+      <change from="8.5.6" to="8.5.7">
+        <items name="Bug fixes">
+          <item><para>[1847002] Win: prevent grab bypass</para></item>
+          <item><para>crash on XCreateIC failure</para></item>
+          <item><para>[2507326] Restore aMSN compat</para></item>
+          <item><para>[1329198,456299,2507419] menu image
+display</para></item>
+          <item><para>[2513104] fix cursor hotspots</para></item>
+          <item><para>[2542828] Win: standard question_arrow
+cursor</para></item>
+          <item><para>[2645457] crash in
+Tk_MakeWindowExist()</para></item>
+          <item><para>[2178820] stop zero-size allocs in
+ttk</para></item>
+          <item><para>[1871101] blurry large fonts on
+Vista</para></item>
+          <item><para>[2116837] std virtual events with Caps
+Lock</para></item>
+        </items>
+
+        <items name="Platform support">
+          <item><para>better tools for BSD ports</para></item>
+          <item><para>MSVC and _WIN64 (hobbs)</para></item>
+        </items>
+
+        <items name="New features">
+          <item><para>CONFIG_INSTALL_DIR - where tclConfig.sh
+goes</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The default Tcl module search path directories
+are:</para>
+        <screen>
+${SB_INSTALL_BASE}/tk85p/lib/Tktable2.9
+${SB_INSTALL_BASE}/tk85p/lib/bwidget1.8
+${SB_INSTALL_BASE}/tcl85p/lib/itcl3.2
+${SB_INSTALL_BASE}/tcl85p/lib/itk3.2
+${SB_INSTALL_BASE}/tcl85p/lib/iwidgets4.0.1
+${SB_INSTALL_BASE}/tcl85p/lib/tcllib1.10
+${SB_INSTALL_BASE}/tcl85p/lib/tclx8.4
+${SB_INSTALL_BASE}/tk85p/lib/tix8.1
+        </screen>
+
+        <para>The default search path is set by the
+<command>TCLLIBPATH</command> environment variable. The executable
+wrapper for <command>wish8.5</command> sets the variable to the paths
+above.</para>
+        <para>The following 3rd-party modules are available: BWidget,
+Tktable, tix, tkcon.</para>
+        <para>Tkcon, available as
+<command>${SB_INSTALL_BASE}/tk85p/bin/tkcon8.5</command>, contains a more
+feature-rich replacement for the wish shell.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
