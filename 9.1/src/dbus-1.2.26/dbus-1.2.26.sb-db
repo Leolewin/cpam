@@ -1,0 +1,1503 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="dbus" version="1.2.26" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_localstaterundir="/var${SB_INSTALL_PREFIX}/run"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <module name="default">
+      <sources>
+        <source checksum="e42c16cd82f597aa5c2cdd79419db73f"
+          checksum-type="md5" size="1670158"
+          path="src/dbus-1.2.26.tar.gz"/>
+        <patch checksum="3d2cbee3e964f433d27b7fab828e562b"
+          checksum-type="md5" size="50544"
+          path="src/dbus-1.2.26.tww.patch"/>
+        <patch checksum="7f634948f4e179dd16b76a3f439ed46e"
+          checksum-type="md5" size="1270125"
+          path="src/dbus-1.2.26.gnulib.patch"/>
+        <patch checksum="bc5a1bc4b56f7e419771e1d6b1fd0952"
+          checksum-type="md5" size="10602"
+          path="src/dbus-1.2.26.tww-gnulib.patch"/>
+        <patch checksum="114a0d457bd4d70660204a0e239c437c"
+          checksum-type="md5" size="2778790"
+          path="src/dbus-1.2.26.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="dbus" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.2.26</depend>
+        <depend program="dbus" module="glib">v==1.2.26</depend>
+        <depend program="dbus" module="glib-64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.2.26</depend>
+        <depend program="dbus" module="python-2.6.7">v==1.2.26</depend>
+        <depend program="dbus" module="python-2.7.2">v==1.2.26</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_localstaterundir="/var${SB_INSTALL_PREFIX}/run"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-selinux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-selinux" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${_localstaterundir+--with-system-socket=${_localstaterundir}/system_bus_socket} \
+${_localstaterundir+--with-system-pid-file=${_localstaterundir}/messagebus.pid} \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+--with-xml=expat --with-dbus-user=dbus --disable-dependency-tracking \
+--with-x --disable-xml-docs --disable-doxygen-docs --disable-gcov \
+--disable-verbose-mode --disable-asserts --disable-tests \
+--with-test-socket-dir=${SB_BUILD_PREFIX} ${ARGS+${ARGS}} \
+--with-init-scripts=none --datarootdir=${_datadir} \
+--datadir=${_datadir} --bindir="${SB_INSTALL_PREFIX}/bin" \
+--exec-prefix=${SB_INSTALL_PREFIX} \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-1.pc
+]]>
+      </configure>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${_sysconfdir} \
+${_localstatedir+${_localstatedir}}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="glib">
+      <build-name>dbus-glib-0.92</build-name>
+
+      <sources>
+        <source checksum="b595b36890c4f9f8f5d5dec131c495f8"
+          checksum-type="md5" size="687138"
+          path="src/dbus-glib-0.92.tar.gz"/>
+        <patch checksum="462927a2bf95e9a21a4d7fcacafa8103"
+          checksum-type="md5" size="15802"
+          path="src/dbus-glib-0.92.tww.patch"/>
+        <patch checksum="3ffb0aed408f1f6976dc74217411aaaf"
+          checksum-type="md5" size="1638680"
+          path="src/dbus-glib-0.92.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="dbus" var="DBUS"
+          add-path="prepend">v==1.2.26</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_localstaterundir="/var${SB_INSTALL_PREFIX}/run"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_DBUS_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--disable-dependency-tracking --disable-gtk-doc \
+--disable-gcov --disable-doxygen-docs --disable-bash-completion \
+--with-test-socket-dir=${SB_BUILD_PREFIX} --disable-tests \
+--disable-verbose-mode --disable-asserts ${ARGS+${ARGS}} \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--exec-prefix=${SB_INSTALL_PREFIX} \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-glib-1.pc
+]]>
+      </configure>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/include/dbus/dbus-glib-error-enum.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-glib-lowlevel.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-gvalue-parse-variant.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-gtype-specialized.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-glib.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-glib-bindings.h \
+${SB_INSTALL_PREFIX_LIB}/libdbus-glib-1.* \
+${SB_INSTALL_PREFIX_LIB}/pkgconfig/dbus-glib-1.pc \
+${SB_INSTALL_PREFIX}/bin/dbus-binding-tool
+rm -rf ${SB_INSTALL_PREFIX}/share/gtk-doc
+]]>
+      </uninstall>
+    </module>
+
+    <module name="glib-test">
+      <build-name>dbus-glib-0.92</build-name>
+
+      <sources>
+        <source checksum="b595b36890c4f9f8f5d5dec131c495f8"
+          checksum-type="md5" size="687138"
+          path="src/dbus-glib-0.92.tar.gz"/>
+        <patch checksum="462927a2bf95e9a21a4d7fcacafa8103"
+          checksum-type="md5" size="15802"
+          path="src/dbus-glib-0.92.tww.patch"/>
+        <patch checksum="3ffb0aed408f1f6976dc74217411aaaf"
+          checksum-type="md5" size="1638680"
+          path="src/dbus-glib-0.92.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="dbus" var="DBUS"
+          add-path="prepend">v==1.2.26</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_localstaterundir="/var${SB_INSTALL_PREFIX}/run"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-g"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z -g"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae -z -g" 
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 -g"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-g"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC=cc CFLAGS="-g"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--g}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_DBUS_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--disable-dependency-tracking --disable-gtk-doc \
+--disable-gcov --disable-doxygen-docs \
+--with-test-socket-dir=${SB_BUILD_PREFIX} --enable-tests \
+--enable-verbose-mode --enable-asserts ${ARGS+${ARGS}} \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--exec-prefix=${SB_INSTALL_PREFIX} \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-glib-1.pc
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+:
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <sources>
+        <source checksum="e42c16cd82f597aa5c2cdd79419db73f"
+          checksum-type="md5" size="1670158"
+          path="src/dbus-1.2.26.tar.gz"/>
+        <patch checksum="3d2cbee3e964f433d27b7fab828e562b"
+          checksum-type="md5" size="50544"
+          path="src/dbus-1.2.26.tww.patch"/>
+        <patch checksum="7f634948f4e179dd16b76a3f439ed46e"
+          checksum-type="md5" size="1270125"
+          path="src/dbus-1.2.26.gnulib.patch"/>
+        <patch checksum="bc5a1bc4b56f7e419771e1d6b1fd0952"
+          checksum-type="md5" size="10602"
+          path="src/dbus-1.2.26.tww-gnulib.patch"/>
+        <patch checksum="114a0d457bd4d70660204a0e239c437c"
+          checksum-type="md5" size="2778790"
+          path="src/dbus-1.2.26.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20" module="64bit">v&gt;=2.0.1</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT}/${_libdir}} \
+${LDFLAGS+${LDFLAGS}}" \
+${_localstaterundir+--with-system-socket=${_localstaterundir}/system_bus_socket} \
+${_localstaterundir+--with-system-pid-file=${_localstaterundir}/messagebus.pid} \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+--with-xml=expat --with-dbus-user=dbus --disable-dependency-tracking \
+--with-x --disable-xml-docs --disable-doxygen-docs --disable-gcov \
+--disable-verbose-mode --disable-asserts --disable-tests \
+--with-test-socket-dir=${SB_BUILD_PREFIX} ${ARGS+${ARGS}} \
+--with-init-scripts=none --datarootdir=${_datadir} \
+--datadir=${_datadir} --exec-prefix=${SB_INSTALL_PREFIX} \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-1.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-pkgconfigDATA
+gmake -C dbus install-libLTLIBRARIES install-dbusarchincludeHEADERS
+]]>
+      </install>
+    </module>
+
+    <module name="default-test">
+      <sources>
+        <source checksum="e42c16cd82f597aa5c2cdd79419db73f"
+          checksum-type="md5" size="1670158"
+          path="src/dbus-1.2.26.tar.gz"/>
+        <patch checksum="3d2cbee3e964f433d27b7fab828e562b"
+          checksum-type="md5" size="50544"
+          path="src/dbus-1.2.26.tww.patch"/>
+        <patch checksum="7f634948f4e179dd16b76a3f439ed46e"
+          checksum-type="md5" size="1270125"
+          path="src/dbus-1.2.26.gnulib.patch"/>
+        <patch checksum="bc5a1bc4b56f7e419771e1d6b1fd0952"
+          checksum-type="md5" size="10602"
+          path="src/dbus-1.2.26.tww-gnulib.patch"/>
+        <patch checksum="114a0d457bd4d70660204a0e239c437c"
+          checksum-type="md5" size="2778790"
+          path="src/dbus-1.2.26.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_localstaterundir="/var${SB_INSTALL_PREFIX}/run"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-g"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z -g" 
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-Ae -z -g" 
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-g"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-selinux" ;;
+*-osf*)
+  CC=cc CFLAGS="-g"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-solaris*)
+  CC=cc CFLAGS="-g"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--g}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${_localstaterundir+--with-system-socket=${_localstaterundir}/system_bus_socket} \
+${_localstaterundir+--with-system-pid-file=${_localstaterundir}/messagebus.pid} \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+--bindir="${SB_INSTALL_PREFIX}/bin" --with-init-scripts=none \
+--libdir=${SB_INSTALL_PREFIX_LIB} --exec-prefix=${SB_INSTALL_PREFIX} \
+--with-xml=expat --with-dbus-user=dbus --disable-dependency-tracking \
+--with-x --disable-xml-docs --disable-doxygen-docs --disable-gcov \
+--enable-verbose-mode --enable-asserts --enable-tests \
+--with-test-socket-dir=${SB_BUILD_PREFIX} ${ARGS+${ARGS}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-1.pc
+
+# change conf file for tests
+case "${SB_SYSTYPE}" in
+*-aix*|*-osf*)
+  ${SB_PATH_SED} -i -e "\
+/group=/s/root/system/" \
+  test/data/valid-config-files/many-rules.conf ;;
+esac
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake -k check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+echo "Cannot install this module" && exit 1
+]]>
+      </install>
+    </module>
+
+    <module name="python-2.7.2">
+      <build-name>dbus-python-0.83.2</build-name>
+
+      <sources>
+        <source checksum="4ebcaa905bdcb4132b915196b0a3691b"
+          checksum-type="md5" size="539838"
+          path="src/dbus-python-0.83.2.tar.gz"/>
+        <patch checksum="a25622fee88253f080fa0f701029d5eb"
+          checksum-type="md5" size="10945"
+          path="src/dbus-python-0.83.2.tww.patch"/>
+        <patch checksum="0cb562634e61525aad03ef3c469da69d"
+          checksum-type="md5" size="1276327"
+          path="src/dbus-python-0.83.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="glib" install-name="libglib226"
+          module="pygobject-2.6.7">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          type="build">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend" type="build">v&gt;=2.7.2</depend>
+        <depend program="dbus" var="DBUS"
+          add-path="prepend">v==1.2.26</depend>
+        <depend program="dbus" var="DBUS_GLIB" module="glib"
+          add-path="prepend">v==1.2.26</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_gccsubdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*)
+  CC_LD_RT="-Wl,-rpath" ;;
+*-osf*)
+  CPPFLAGS="-I/usr/include.dtk"
+  CC_LD_RT="-Wl,-rpath" ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+-I${SB_VAR_PYTHON_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig:}\
+${SB_VAR_DBUS_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+am_cv_python_pythondir=${_install_prefix} \
+am_cv_python_pyexecdir=${_install_prefix} \
+--disable-dependency-tracking --disable-html-docs --disable-api-docs \
+--docdir="${_install_prefix}/doc" --includedir="${_install_prefix}/include" \
+--libdir=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-python.pc
+
+# Make sure python knows where to find the gobject module
+${SB_PATH_SED} -i -e "\
+s!PYTHONPATH=.!&${SB_VAR_LIBGLIB_LIB}/${_pysubdir}:!;" test/Makefile
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+MAKE=gmake gmake check || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="python-2.6.7">
+      <build-name>dbus-python-0.83.2</build-name>
+
+      <sources>
+        <source checksum="4ebcaa905bdcb4132b915196b0a3691b"
+          checksum-type="md5" size="539838"
+          path="src/dbus-python-0.83.2.tar.gz"/>
+        <patch checksum="a25622fee88253f080fa0f701029d5eb"
+          checksum-type="md5" size="10945"
+          path="src/dbus-python-0.83.2.tww.patch"/>
+        <patch checksum="0cb562634e61525aad03ef3c469da69d"
+          checksum-type="md5" size="1276327"
+          path="src/dbus-python-0.83.2.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20">v&gt;=2.0.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="glib" install-name="libglib226"
+          module="pygobject-2.6.7">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          type="build">v&gt;=4.4.6</depend>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend" type="build">v&gt;=2.6.7</depend>
+        <depend program="dbus" var="DBUS"
+          add-path="prepend">v==1.2.26</depend>
+        <depend program="dbus" var="DBUS_GLIB" module="glib"
+          add-path="prepend">v==1.2.26</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_gccsubdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*|*-linux*)
+  CC_LD_RT="-Wl,-rpath" ;;
+*-osf*)
+  CPPFLAGS="-I/usr/include.dtk"
+  CC_LD_RT="-Wl,-rpath" ;;
+*-solaris*)
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBEXPAT+-I${SB_VAR_LIBEXPAT_INC}} \
+${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+-I${SB_VAR_PYTHON_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+-L${SB_VAR_LIBEXPAT_LIB}} \
+${SB_VAR_GETTEXT+-L${SB_VAR_GETTEXT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig:}\
+${SB_VAR_DBUS_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+am_cv_python_pythondir=${_install_prefix} \
+am_cv_python_pyexecdir=${_install_prefix} \
+--disable-dependency-tracking --disable-html-docs --disable-api-docs \
+--docdir="${_install_prefix}/doc" --includedir="${_install_prefix}/include" \
+--libdir=${_install_prefix} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-python.pc
+
+# Make sure python knows where to find the gobject module
+${SB_PATH_SED} -i -e "\
+s!PYTHONPATH=.!&${SB_VAR_LIBGLIB_LIB}/${_pysubdir}:!;" test/Makefile
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+MAKE=gmake gmake check || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="glib-64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <build-name>dbus-glib-0.92</build-name>
+
+      <sources>
+        <source checksum="b595b36890c4f9f8f5d5dec131c495f8"
+          checksum-type="md5" size="687138"
+          path="src/dbus-glib-0.92.tar.gz"/>
+        <patch checksum="462927a2bf95e9a21a4d7fcacafa8103"
+          checksum-type="md5" size="15802"
+          path="src/dbus-glib-0.92.tww.patch"/>
+        <patch checksum="3ffb0aed408f1f6976dc74217411aaaf"
+          checksum-type="md5" size="1638680"
+          path="src/dbus-glib-0.92.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="expat" var="LIBEXPAT"
+          install-name="libexpat20" module="64bit">v&gt;=2.0.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018" module="64bit"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" install-name="libglib226" module="64bit"
+          append="bin/64" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="dbus" var="DBUS"
+          add-path="prepend">v==1.2.26</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -m64 -xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBEXPAT_INC} \
+-I${SB_VAR_GETTEXT_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_LIBEXPAT}/${_libdir} \
+-L${SB_VAR_GETTEXT}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB}/${_libdir}/pkgconfig:\
+${SB_VAR_DBUS}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig" \
+--disable-dependency-tracking --disable-gtk-doc \
+--disable-gcov --disable-doxygen-docs --disable-bash-completion \
+--with-test-socket-dir=${SB_BUILD_PREFIX} --disable-tests \
+--disable-verbose-mode --disable-asserts ${ARGS+${ARGS}} \
+${_localstatedir+--localstatedir=${_localstatedir}} \
+${_sysconfdir+--sysconfdir=${_sysconfdir}} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--exec-prefix=${SB_INSTALL_PREFIX} \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" dbus-glib-1.pc
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install-pkgconfigDATA
+gmake -C dbus install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/include/dbus/dbus-glib-error-enum.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-glib-lowlevel.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-gvalue-parse-variant.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-gtype-specialized.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-glib.h \
+${SB_INSTALL_PREFIX}/include/dbus/dbus-glib-bindings.h \
+${SB_INSTALL_PREFIX_LIB}/libdbus-glib-1.* \
+${SB_INSTALL_PREFIX_LIB}/pkgconfig/dbus-glib-1.pc \
+${SB_INSTALL_PREFIX}/bin/dbus-binding-tool
+rm -rf ${SB_INSTALL_PREFIX}/share/gtk-doc
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license>
+        <para>D-Bus is licensed to you under your choice of the
+Academic Free License version 2.1, or the GNU General Public License
+version 2 (or, at your option any later version).</para>
+        <para>Both licenses are included here. Some of the
+standalone binaries are under the GPL only; in particular, but not
+limited to, tools/dbus-cleanup-sockets.c and test/decode-gcov.c. Each
+source code file is marked with the proper copyright information - if
+you find a file that isn't marked please bring it to our
+attention.</para>
+      </license>
+
+      <license>
+        <para align="center">The Academic Free License v. 2.1</para>
+        <para>This Academic Free License (the "License") applies to
+any original work of authorship (the "Original Work") whose owner (the
+"Licensor") has placed the following notice immediately following the
+copyright notice for the Original Work: Licensed under the Academic
+Free License version 2.1</para>
+        <orderedlist>
+          <item><para>Grant of Copyright License. Licensor hereby
+grants You a world-wide, royalty-free, non-exclusive, perpetual,
+sublicenseable license to do the following:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>to reproduce the Original Work in
+copies;</para></item>
+            <item><para>to prepare derivative works ("Derivative
+Works") based upon the Original Work;</para></item>
+            <item><para>to distribute copies of the Original Work and
+Derivative Works to the public;</para></item>
+            <item><para>to perform the Original Work publicly;
+and</para></item>
+            <item><para>to display the Original Work
+publicly.</para></item>
+          </orderedlist></item>
+          <item><para>Grant of Patent License. Licensor hereby grants
+You a world-wide, royalty-free, non-exclusive, perpetual,
+sublicenseable license, under patent claims owned or controlled by the
+Licensor that are embodied in the Original Work as furnished by the
+Licensor, to make, use, sell and offer for sale the Original Work and
+Derivative Works.</para></item>
+          <item><para>Grant of Source Code License. The term "Source
+Code" means the preferred form of the Original Work for making
+modifications to it and all available documentation describing how to
+modify the Original Work. Licensor hereby agrees to provide a
+machine-readable copy of the Source Code of the Original Work along
+with each copy of the Original Work that Licensor distributes.
+Licensor reserves the right to satisfy this obligation by placing a
+machine-readable copy of the Source Code in an information repository
+reasonably calculated to permit inexpensive and convenient access by
+You for as long as Licensor continues to distribute the Original Work,
+and by publishing the address of that information repository in a
+notice immediately following the copyright notice that applies to the
+Original Work.</para></item>
+          <item><para>Exclusions From License Grant. Neither the names
+of Licensor, nor the names of any contributors to the Original Work,
+nor any of their trademarks or service marks, may be used to endorse
+or promote products derived from this Original Work without express
+prior written permission of the Licensor. Nothing in this License
+shall be deemed to grant any rights to trademarks, copyrights,
+patents, trade secrets or any other intellectual property of Licensor
+except as expressly stated herein. No patent license is granted to
+make, use, sell or offer to sell embodiments of any patent claims
+other than the licensed claims defined in Section 2. No right is
+granted to the trademarks of Licensor even if such marks are included
+in the Original Work. Nothing in this License shall be interpreted to
+prohibit Licensor from licensing under different terms from this
+License any Original Work that Licensor otherwise would have a right
+to license.</para></item>
+          <item><para>This section intentionally
+omitted.</para></item>
+          <item><para>Attribution Rights. You must retain, in the
+Source Code of any Derivative Works that You create, all copyright,
+patent or trademark notices from the Source Code of the Original Work,
+as well as any notices of licensing and any descriptive text
+identified therein as an "Attribution Notice." You must cause the
+Source Code for any Derivative Works that You create to carry a
+prominent Attribution Notice reasonably calculated to inform
+recipients that You have modified the Original Work.</para></item>
+          <item><para>Warranty of Provenance and Disclaimer of
+Warranty. Licensor warrants that the copyright in and to the Original
+Work and the patent rights granted herein by Licensor are owned by the
+Licensor or are sublicensed to You under the terms of this License
+with the permission of the contributor(s) of those copyrights and
+patent rights. Except as expressly stated in the immediately
+proceeding sentence, the Original Work is provided under this License
+on an "AS IS" BASIS and WITHOUT WARRANTY, either express or implied,
+including, without limitation, the warranties of NON-INFRINGEMENT,
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK
+AS TO THE QUALITY OF THE ORIGINAL WORK IS WITH YOU. This DISCLAIMER OF
+WARRANTY constitutes an essential part of this License. No license to
+Original Work is granted hereunder except under this
+disclaimer.</para></item>
+          <item><para>Limitation of Liability. Under no circumstances
+and under no legal theory, whether in tort (including negligence),
+contract, or otherwise, shall the Licensor be liable to any person for
+any direct, indirect, special, incidental, or consequential damages of
+any character arising as a result of this License or the use of the
+Original Work including, without limitation, damages for loss of
+goodwill, work stoppage, computer failure or malfunction, or any and
+all other commercial damages or losses. This limitation of liability
+shall not apply to liability for death or personal injury resulting
+from Licensor's negligence to the extent applicable law prohibits such
+limitation. Some jurisdictions do not allow the exclusion or
+limitation of incidental or consequential damages, so this exclusion
+and limitation may not apply to You.</para></item>
+          <item><para>Acceptance and Termination. If You distribute
+copies of the Original Work or a Derivative Work, You must make a
+reasonable effort under the circumstances to obtain the express assent
+of recipients to the terms of this License. Nothing else but this
+License (or another written agreement between Licensor and You) grants
+You permission to create Derivative Works based upon the Original Work
+or to exercise any of the rights granted in Section 1 herein, and any
+attempt to do so except under the terms of this License (or another
+written agreement between Licensor and You) is expressly prohibited by
+U.S. copyright law, the equivalent laws of other countries, and by
+international treaty. Therefore, by exercising any of the rights
+granted to You in Section 1 herein, You indicate Your acceptance of
+this License and all of its terms and conditions.</para></item>
+          <item><para>Termination for Patent Action. This License
+shall terminate automatically and You may no longer exercise any of
+the rights granted to You by this License as of the date You commence
+an action, including a cross-claim or counterclaim, against Licensor
+or any licensee alleging that the Original Work infringes a patent.
+This termination provision shall not apply for an action alleging
+patent infringement by combinations of the Original Work with other
+software or hardware.</para></item>
+          <item><para>Jurisdiction, Venue and Governing Law. Any
+action or suit relating to this License may be brought only in the
+courts of a jurisdiction wherein the Licensor resides or in which
+Licensor conducts its primary business, and under the laws of that
+jurisdiction excluding its conflict-of-law provisions. The application
+of the United Nations Convention on Contracts for the International
+Sale of Goods is expressly excluded. Any use of the Original Work
+outside the scope of this License or after its termination shall be
+subject to the requirements and penalties of the U.S. Copyright Act,
+17 U.S.C. 101 et seq., the equivalent laws of other countries, and
+international treaty. This section shall survive the termination of
+this License.</para></item>
+          <item><para>Attorneys Fees. In any action to enforce the
+terms of this License or seeking damages relating thereto, the
+prevailing party shall be entitled to recover its costs and expenses,
+including, without limitation, reasonable attorneys' fees and costs
+incurred in connection with such action, including any appeal of such
+action. This section shall survive the termination of this
+License.</para></item>
+          <item><para>Miscellaneous. This License represents the
+complete agreement concerning the subject matter hereof. If any
+provision of this License is held to be unenforceable, such provision
+shall be reformed only to the extent necessary to make it
+enforceable.</para></item>
+          <item><para>Definition of "You" in This License. "You"
+throughout this License, whether in upper or lower case, means an
+individual or a legal entity exercising rights under, and complying
+with all of the terms of, this License. For legal entities, "You"
+includes any entity that controls, is controlled by, or is under
+common control with you. For purposes of this definition, "control"
+means (i) the power, direct or indirect, to cause the direction or
+management of such entity, whether by contract or otherwise, or (ii)
+ownership of fifty percent (50%) or more of the outstanding shares, or
+(iii) beneficial ownership of such entity.</para></item>
+          <item><para>Right to Use. You may use the Original Work in
+all ways not otherwise restricted or conditioned by this License or by
+law, and Licensor promises not to interfere with or be responsible for
+such uses by You.</para></item>
+        </orderedlist>
+
+        <para>This license is Copyright (C) 2003-2004 Lawrence E.
+Rosen. All rights reserved. Permission is hereby granted to copy and
+distribute this license without modification. This license may not be
+modified without the express written permission of its copyright
+owner.</para>
+      </license>
+
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.2.24" to="1.2.26">
+        <item><para>Fix for CVE-2010-4352: sending messages with
+excessively-nested variants can crash the bus. The existing
+restriction to 64-levels of nesting previously only applied to the
+static type signature; now it also applies to dynamic nesting using
+variants.</para></item>
+        <item><para>Corrected thread problem causing some calls to
+hang for 25s</para></item>
+        <item><para>Enable address reuse on TCP sockets</para></item>
+        <item><para>Fix use of $servicename in init
+script</para></item>
+      </change>
+
+      <change from="1.2.22" to="1.2.24">
+        <item><para>This release notably fixes a critical crasher bug
+in the syslog code in dbus-1.2.22.</para></item>
+        <items name="shortlog">
+          <item><para>[bus] While creating a syslog, correctly get
+pointer data from DBusString</para></item>
+          <item><para>Add DBUS_GNUC_PRINTF checks to new formatting
+functions</para></item>
+          <item><para>Add DBUS_INT64_MODIFIER define, turn on
+-Wformat</para></item>
+          <item><para>[64 bit printf] Update to use DBUS_PID_FORMAT,
+print (omitted)</para></item>
+          <item><para>[bus] Don't install a SIGTERM
+handler</para></item>
+          <item><para>Move dispatching to destination to
+bus_dispatch_matches()</para></item>
+          <item><para>Dispatch post-activation messages to anyone
+interested</para></item>
+        </items>
+      </change>
+
+      <change from="1.2.20" to="1.2.22">
+        <item><para>[DBusConnection] When handling a watch,
+return if another thread is doing I/O</para>
+        <para>This fix is pretty important for avoiding UI
+freezes in newer Evolution versions (and any other program that makes
+synchronous DBus calls from a non-main thread).  So this version of
+DBus is highly recommended for shipment with GNOME 2.30.</para></item>
+        <item><para>Monitor service directories for
+changes</para>
+        <para>We never watched for changes in the services/
+directory, so if you installed a new app or component using DBus, most
+of the rest of the stack would automatically work (.desktop files,
+etc.) , but dbus wouldn't find the .service until it was manually sent
+SIGHUP.</para></item>
+        <items name="shortlog">
+          <item><para>Fix dummy file monitoring backend
+compilation</para></item>
+          <item><para>Monitor service directories for
+changes</para></item>
+          <item><para>[dbus-string] Sync up UNICODE_VALID with glib,
+add documentation</para></item>
+          <item><para>[configure.in] Use AM_SILENT_RULES if
+available</para></item>
+          <item><para>Support inotify on older kernels</para></item>
+          <item><para>[main] Handle OOM in reload watch</para></item>
+          <item><para>Refactor _dbus_log_info, _dbus_log_security into
+_dbus_log_system</para></item>
+          <item><para>Add DBUS_SYSTEM_LOG_FATAL severity</para></item>
+          <item><para>Add
+_dbus_credentials_to_string_append</para></item>
+          <item><para>Add a prefix to our syslog
+messages</para></item>
+          <item><para>Make SELinux initialization failure
+fatal</para></item>
+          <item><para>Don't send an reply for driver messages if one
+isn't requested</para></item>
+          <item><para>Delete name-test/test-names</para></item>
+          <item><para>Fix compilation of kqueue file monitoring on
+FreeBSD</para></item>
+          <item><para>Fix build when selinux is disabled but libaudit
+enabled</para></item>
+          <item><para>[dbus] Add missing va_end in
+dbus-errors.c</para></item>
+          <item><para>[dbus-spawn] Use correct sign values for
+variables</para></item>
+          <item><para>Fix double-free in error case.</para></item>
+          <item><para>[DBusConnection] When handling a watch, return
+if another thread is doing I/O</para></item>
+          <item><para>[doc/dbus-specification.xml] Explicitly specify
+lower-case hex must be used</para></item>
+        </items>
+      </change>
+
+      <change from="1.2.18" to="1.2.20">
+        <items name="shortlog">
+          <item><para>Fix inotify shutdown</para></item>
+          <item><para>Fix compilation in --disable-selinux
+case</para></item>
+        </items>
+      </change>
+
+      <change from="1.2.16" to="1.2.18">
+        <items name="shortlog">
+          <item><para>Bug 19432 followup - Fix Debian/FreeBSD CMSGCRED
+compilation</para></item>
+          <item><para>Bug 22788 - Fix detection of getpwnam_r on
+Solaris</para></item>
+          <item><para>Bug 22805 - Fix build with
+-Wl,--as-needed</para></item>
+          <item><para>Ignore exit code zero from activated
+services</para></item>
+          <item><para>Switch to libcap-ng, avoid linking libdbus
+against libcap[-ng]</para></item>
+          <item><para>Don't drop pending activations when reloading
+configuration</para></item>
+          <item><para>[doc] diagram.[svg,png] to
+EXTRA_DIST</para></item>
+          <item><para>Update messagebus.in init script to start
+earlier</para></item>
+          <item><para>Clean up inotify watch handling</para></item>
+          <item><para>Move system-activation.txt into non-conditional
+EXTRA_DIST</para></item>
+          <item><para>Don't crash when reloading if we haven't loaded
+user database yet</para></item>
+          <item><para>Fix link order: system libraries should come
+after libdbus-convenience</para></item>
+          <item><para>Bug 23502 - corrected wrong
+verbose-output</para></item>
+          <item><para>Correct timeout handling</para></item>
+          <item><para>dbus-monitor: use unbuffered stdout instead of
+handling SIGINT</para></item>
+          <item><para>Bug 25697 - Fix memory leak in policy
+reload</para></item>
+          <item><para>Bug 23977 - dbus-launch --exit-with-session not
+killing dbus-daemon on SIGINT</para></item>
+          <item><para>Update the HACKING file to contain instructions
+on how we develop with Git</para></item>
+          <item><para>Use monotonic clock for _dbus_get_current_time()
+if it's available.</para></item>
+          <item><para>Make array-printing code easier to
+follow</para></item>
+          <item><para>Forbid zero serial numbers</para></item>
+          <item><para>Include reason when reporting corrupt
+messages</para></item>
+          <item><para>Add an accessor for the loader's corruption
+reason</para></item>
+          <item><para>Print byte arrays as nicely-formatted
+hex.</para></item>
+          <item><para>Print all-printable-ASCII byte arrays as
+strings</para></item>
+        </items>
+      </change>
+
+      <change from="1.2.14" to="1.2.16">
+        <item><para>The most interesting changes here are a fix for
+a longstanding race condition primarily affecting dbus-send (work from
+several people), and the bus now allows method calls to have an
+infinite timeout.</para></item>
+        <items name="Shortlog">
+          <item><para>Bug 14259 - Work around broken getgrouplist on
+MacOS X</para></item>
+          <item><para>Bug 21657 - Fix configure checks for va_list in
+maintainer mode</para></item>
+          <item><para>Add missing include for unistd.h in
+test-service.c</para></item>
+          <item><para>Bug 21646 - Fix a signed char
+comparison</para></item>
+          <item><para>Bug 21545 - Move CFLAGS modification towards the
+end of configure</para></item>
+          <item><para>Bug 18121 - Use a monotonic clock for pthread
+timeouts</para></item>
+          <item><para>Bug 14259 - Make session address lookup
+system-dependent</para></item>
+          <item><para>Bug 14259 - Refactor
+_dbus_get_autolaunch_address</para></item>
+          <item><para>Bug 896 - Avoid race conditions reading message
+from exited process</para></item>
+          <item><para>Bug 22415 - COYPING file should note we allow
+later versions of GPL</para></item>
+          <item><para>Cope with dbus-launch not being in
+DBUS_BINDIR</para></item>
+          <item><para>Bug 2432 - Support --address option for
+dbus-monitor</para></item>
+          <item><para>Bug 19446 - HaikuOS support</para></item>
+          <item><para>Bug 19432 - Fix handling of HAVE_CMSGCRED case
+(FreeBSD)</para></item>
+          <item><para>Bug 12484 - Ensure initialized variable in
+dbus_connection_remove_filter</para></item>
+          <item><para>Bug 21347 - Don't fail autolaunching if process
+has SIGCHLD handler</para></item>
+          <item><para>configure.in: not all gccs support
+-Wno-pointer-sign</para></item>
+          <item><para>configure.in: fail abstract socket test
+gracefully when cross-compiling</para></item>
+          <item><para>Bug 22516 - Ensure inotify fd is set close on
+exec</para></item>
+          <item><para>Bug 16688 - typo in dbus-monitor.1</para></item>
+          <item><para>Make sure a pending call timeout isn't
+assumed.</para></item>
+          <item><para>Allow a pending call to block
+forever</para></item>
+          <item><para>Don't allocate DBusTimeout for pending call when
+passed INT_MAX</para></item>
+          <item><para>Update documentation now that INT_MAX means no
+timeout.</para></item>
+          <item><para>Fix issue where timeouts can
+overflow.</para></item>
+          <item><para>Remove 6 hour timeout restriction.</para></item>
+          <item><para>Explicitly check for zero time
+fields.</para></item>
+          <item><para>Expire list timeout may be negative for no
+expiry.</para></item>
+          <item><para>Change default reply timeout.</para></item>
+          <item><para>Unrestrict session bus timeout.</para></item>
+          <item><para>Add tests for pending call
+timeouts</para></item>
+          <item><para>Add test case for assert when unwinding a
+container.</para></item>
+          <item><para>bfo22316 - add
+dbus_message_iter_abandon_container()</para></item>
+          <item><para>dbus_message_append_args_valist - abandon
+container</para></item>
+          <item><para>Bug 21161 - Update the FSF address</para></item>
+          <item><para>Ensure messages are locked while
+marshalling.</para></item>
+        </items>
+      </change>
+
+      <change from="1.2.12" to="1.2.14">
+        <item><para>This release is a followup for an incorrect fix
+for a previous security issue (CVE-2008-3834).  The CVE assigned to
+this release is CVE-2009-1189, though no exploits are known at this
+time.  In this release, the "permissive" stream is only getting the
+security fix, while the primary one has other
+enhancements.</para></item>
+        <items name="shortlog">
+          <item><para>libselinux behavior in permissive mode wrt
+invalid domains</para></item>
+          <item><para>bfo20738 - Return a useful error message from
+dbus_signature_validate()</para></item>
+          <item><para>bfo20738 - Translate DBusValidity into error
+message</para></item>
+          <item><para>Bug 19567 - Make marshaling code usable without
+DBusConnection</para></item>
+          <item><para>Followup Bug 19502 - Don't attempt to init
+va_list, not portable</para></item>
+          <item><para>Bug 19502 - Sparse warning
+cleanups</para></item>
+          <item><para>dbus-launch: use InputOnly X
+window</para></item>
+          <item><para>Bug 20494 - Fix signed confusion for
+dbus_message_get_reply_serial return</para></item>
+          <item><para>Bug 20137 - Fix alignment usage when
+demarshaling basics</para></item>
+          <item><para>Always append closing quote in log
+command</para></item>
+          <item><para>Bug 17803 - Fix both test case and validation
+logic</para></item>
+          <item><para>configure.in: fix help string
+alignment</para></item>
+          <item><para>Fix typo in docs.</para></item>
+        </items>
+      </change>
+
+      <note type="configuration">
+        <para>Dbus requires a user and group "dbus", though this may
+be changed in the /etc${SB_INSTALL_PREFIX}/system.conf configuration file.</para>
+      </note>
+
+      <note type="usage">
+        <para>The dbus Python module is available in the following
+directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 May 12" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest gnulib to work around 64-bit
+build issue on AIX</para></item>
+        <item><para>Update to libtool-1.5-36 to correctly handle
+deplib linking</para></item>
+      </change>
+
+      <change date="2012 May 8" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64-bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
