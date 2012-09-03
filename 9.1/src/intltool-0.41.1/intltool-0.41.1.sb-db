@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="intltool" version="0.41.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}041</install-name>
+
+    <sources>
+      <source checksum="d6c91bf06681919ccfdf3624035b75dc"
+        checksum-type="md5" size="139287"
+        path="src/intltool-0.41.1.tar.gz"/>
+      <patch checksum="ff9425b2ae4ec21ad740493c6738ace1"
+        checksum-type="md5" size="1177"
+        path="src/intltool-0.41.1.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="XML-Parser"
+        module="5.12.2">v&gt;=2.41</depend>
+      <depend program="XML-Simple"
+        module="5.12.2">v&gt;=2.18</depend>
+      <depend program="perl" add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+${SHELL} ./configure ${ARGS+${ARGS}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+  </program>
+</programs>
