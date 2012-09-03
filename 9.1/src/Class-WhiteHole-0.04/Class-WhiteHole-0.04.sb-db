@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Class-WhiteHole" version="0.04" revision="5">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="43b986ad7d5d186a9a43d2d69a2ef327"
+        checksum-type="md5" size="3279"
+        path="src/Class-WhiteHole-0.04.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Class/WhiteHole/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Class/WhiteHole/.packlist
+rmdir ${_installsitearch}/auto/Class/WhiteHole
+rmdir ${_installsitearch}/auto/Class 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Class::WhiteHole|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2011 August 9" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 5.12.2 module</para></item>
+      </change>
+
+      <change date="2008 June 19" revision="4"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add Perl 5.8.8 module</para></item>
+      </change>
+
+      <change date="2005 February 15" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 5.8.6 module</para></item>
+      </change>
+
+      <change date="2004 October 13" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add uninstall section</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
