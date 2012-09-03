@@ -1,0 +1,1048 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="xalan-c" version="1.10.0" revision="6"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>xml-xalan</build-name>
+
+    <install-name>libxalanc110</install-name>
+
+    <sources>
+      <source checksum="0a3fbb535885531cc544b07a2060bfb1"
+        checksum-type="md5" size="1554940"
+        path="src/Xalan-C_1_10_0-src.tar.gz"/>
+      <patch checksum="397272ed30a1b6f6cf84de35707e646d"
+        checksum-type="md5" size="10276"
+        path="src/xml-xalan.PR603.patch"/>
+      <patch checksum="606b0c6a77e052e9f4f9e331ebf97d59"
+        checksum-type="md5" size="27575"
+        path="src/xml-xalan.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="xerces-c" var="LIBXERCESC"
+          install-name="libxercesc27">v&gt;=2.7.0</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="xalan-c" module="debug">v==1.10.0</depend>
+        <depend program="xalan-c" module="gcc44">v==1.10.0</depend>
+        <depend program="xalan-c"
+          module="gcc44-debug">v==1.10.0</depend>
+        <depend program="xalan-c" module="64bit"
+          systype="*-aix*|*-hpux11*|*-irix*|*-solaris*">v==1.10.0</depend>
+        <depend program="xalan-c" module="64bit-debug"
+          systype="*-aix*|*-hpux11*|*-irix*|*-solaris*">v==1.10.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -msym -readonly_strings -model ansi \
+-timplicit_local"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v8"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd c
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBXERCESC_LIB} -L${SB_INSTALL_PREFIX_LIB} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBXERCESC_LIB}:${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+XALANCROOT=${SB_BUILD_PREFIX}/c ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -r pthread -b ${_bitstobuild:-32} -p ${PLATFORM} \
+-C --libdir=${SB_INSTALL_PREFIX_LIB} \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install)
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 \
+${SB_BUILD_PREFIX}/c/bin/MsgCreator \
+${SB_BUILD_PREFIX}/c/bin/testXPath \
+${SB_BUILD_PREFIX}/c/bin/testXSLT \
+${SB_INSTALL_PREFIX}/bin
+
+# rebuild binaries and libraries to fix runtime path
+case "${SYSTYPE}" in
+hppa*-hpux*)
+  rm ${SB_BUILD_PREFIX}/c/bin/*
+  rm ${SB_BUILD_PREFIX}/c/lib/libxalan-c*
+
+  (cd c
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake)
+  rm ${SB_INSTALL_PREFIX_LIB}/libxalan-c*
+  (cd c/src/xalanc
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib)
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 \
+  ${SB_BUILD_PREFIX}/c/bin/MsgCreator \
+  ${SB_BUILD_PREFIX}/c/bin/Xalan \
+  ${SB_BUILD_PREFIX}/c/bin/testXPath \
+  ${SB_BUILD_PREFIX}/c/bin/testXSLT \
+  ${SB_INSTALL_PREFIX}/bin ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux11*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="xerces-c" var="LIBXERCESC"
+          install-name="libxercesc27"
+          module="64bit">v&gt;=2.7.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.8*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  ${SB_PATH_SED} -i -e 's|=v9|=sparc -m64|g'  c/runConfigure
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd c
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBXERCESC}/${_libdir} \
+-L${SB_INSTALL_PREFIX}/${_libdir} \
+${CC_LD_RT}${SB_VAR_LIBXERCESC}/${_libdir}:\
+${SB_INSTALL_PREFIX}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+XALANCROOT=${SB_BUILD_PREFIX}/c ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -r pthread -b 64 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake \
+XERCES_LIB="-L${SB_VAR_LIBXERCESC}/${_libdir} -lxerces-c")
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX_LIB}/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  *)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  esac
+fi
+
+(cd c/src/xalanc/Utils/XalanMsgLib
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install)
+(cd c/src/xalanc
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib)
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/${_libdir}/libxalan-c.s[lo]*
+rm ${SB_INSTALL_PREFIX}/${_libdir}/libxalanMsg.s[lo]*
+
+rmdir ${SB_INSTALL_PREFIX}/${_libdir} && {
+  rm ${SB_INSTALL_PREFIX_LIB}/64
+}
+
+: ignore rmdir failure
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44">
+      <dependencies>
+        <depend program="xerces-c" var="LIBXERCESC"
+          install-name="libxercesc27"
+          module="gcc44">v&gt;=2.7.0</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gcc" add-path="prepend">v==4.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir=gcc44
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=common" CXXFLAGS="-O2 -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CXXFLAGS="-O2 -fkeep-inline-functions"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd c
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} -L${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir} \
+-L${SB_INSTALL_PREFIX_LIB}/${_gccsubdir} \
+${CC_LD_RT}${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir}:\
+${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}:${SB_VAR_GCC_RT_LIB} \
+${LDFLAGS+${LDFLAGS}}" XALANCROOT=${SB_BUILD_PREFIX}/c \
+./runConfigure -c gcc -x g++ -r pthread -b 32 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake \
+XERCES_LIB="-L${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir} -lxerces-c")
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd c/src/xalanc/Utils/XalanMsgLib
+ XALANCROOT=${SB_BUILD_PREFIX}/c \
+ XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install)
+(cd c/src/xalanc
+ XALANCROOT=${SB_BUILD_PREFIX}/c \
+ XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib)
+
+# rebuild libraries to fix runtime path
+case "${SYSTYPE}" in
+hppa*-hpux*)
+  rm ${SB_BUILD_PREFIX}/c/lib/libxalan-c*
+
+  (cd c
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake \
+  XERCES_LIB="-L${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir} -lxerces-c")
+  rm ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}/libxalan-c*
+  (cd c/src/xalanc
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib) ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}/libxalan-c.s[lo]*
+rm ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}/libxalanMsg.s[lo]*
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit-debug"
+    systype="*-aix*|*-hpux11*|*-irix*|*-solaris*">
+      <dependencies>
+        <depend program="xerces-c" var="LIBXERCESC"
+          install-name="libxercesc27"
+          module="64bit-debug">v&gt;=2.7.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  CXX=xlC_r CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=pwr3"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -mips4 -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.8*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  ${SB_PATH_SED} -i -e 's|=v9|=sparc -m64|g'  c/runConfigure
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd c
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBXERCESC}/${_libdir} \
+-L${SB_INSTALL_PREFIX}/${_libdir} \
+${CC_LD_RT}${SB_VAR_LIBXERCESC}/${_libdir}:\
+${SB_INSTALL_PREFIX}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+XALANCROOT=${SB_BUILD_PREFIX}/c ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -d -r pthread -b 64 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX}/${_libdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+
+# append _g to library name
+${SB_PATH_SED} -i -e "\
+/^LIB_NAME/ { s!\$!_g!; }
+/^LIBRARY_LINK_NAME/ { s!\$!_g!; }
+/^LOCAL_LIB/ { s!\$!_g!; }
+/^LOC_LIBNAME/ { s!\$!_g!; }
+/^XERCES_LIB/ { s!\$!_g!; }" c/Makefile.incl
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake \
+XERCES_LIB="-L${SB_VAR_LIBXERCESC}/${_libdir} -lxerces-c_g")
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX_LIB}/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  *)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX_LIB}/64 ;;
+  esac
+fi
+
+(cd c/src/xalanc/Utils/XalanMsgLib
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install)
+(cd c/src/xalanc
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib)
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/${_libdir}/libxalan-c_g.s[lo]*
+rm ${SB_INSTALL_PREFIX}/${_libdir}/libxalanMsg_g.s[lo]*
+
+rmdir ${SB_INSTALL_PREFIX}/${_libdir} && {
+  rm ${SB_INSTALL_PREFIX_LIB}/64
+}
+
+: ignore rmdir failure
+]]>
+      </uninstall>
+    </module>
+
+    <module name="debug">
+      <dependencies>
+        <depend program="xerces-c" var="LIBXERCESC"
+          install-name="libxercesc27"
+          module="debug">v&gt;=2.7.0</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Odataprefetch \
++Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Onofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux"
+  _bitstobuild=64 ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings"
+  CXX="cxx" CXXFLAGS="-O2 -msym -readonly_strings -model ansi \
+-timplicit_local"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v8"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd c
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_LIBXERCESC_LIB} -L${SB_INSTALL_PREFIX_LIB} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_LIBXERCESC_LIB}:${SB_INSTALL_PREFIX_LIB}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+XALANCROOT=${SB_BUILD_PREFIX}/c ./runConfigure -c ${CC:-gcc} \
+-x ${CXX:-g++} -d -r pthread -b ${_bitstobuild:-32} -p ${PLATFORM} \
+-C --libdir=${SB_INSTALL_PREFIX_LIB} \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+
+# append _g to library name
+${SB_PATH_SED} -i -e "\
+/^LIB_NAME/ { s!\$!_g!; }
+/^LIBRARY_LINK_NAME/ { s!\$!_g!; }
+/^LOCAL_LIB/ { s!\$!_g!; }
+/^LOC_LIBNAME/ { s!\$!_g!; }
+/^XERCES_LIB/ { s!\$!_g!; }" c/Makefile.incl
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake)
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd c/src/xalanc/Utils/XalanMsgLib
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install)
+(cd c/src/xalanc
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib)
+
+# rebuild libraries to fix runtime path
+case "${SYSTYPE}" in
+hppa*-hpux*)
+  rm ${SB_BUILD_PREFIX}/c/lib/libxalan-c*_g*
+
+  (cd c
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake)
+  rm ${SB_INSTALL_PREFIX_LIB}/libxalan-c*_g*
+  (cd c/src/xalanc
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib) ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/lib*_g*
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44-debug">
+      <dependencies>
+        <depend program="xerces-c" var="LIBXERCESC"
+          install-name="libxercesc27"
+          module="gcc44-debug">v&gt;=2.7.0</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gcc" add-path="prepend">v==4.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gccsubdir=gcc44
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=common" CXXFLAGS="-O2 -mcpu=common"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  PLATFORM="aix" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+  PLATFORM="hp-11-ia64" ;;
+*-hpux*)
+  CXXFLAGS="-O2 -fkeep-inline-functions"
+  CC_LD_RT="-Wl,+s,+b,"
+  PLATFORM="hp-11" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="irix" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="linux" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev4" CXXFLAGS="-O2 -mcpu=ev4"
+  CC_LD_RT="-Wl,-rpath,"
+  PLATFORM="tru64" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+  PLATFORM="solarisx86" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CFLAGS="-O2 -mcpu=v8" CXXFLAGS="-O2 -mcpu=v8"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=v7" CXXFLAGS="-O2 -mcpu=v7"
+  CC_LD_RT="-R"
+  PLATFORM="solaris" ;;
+esac
+
+(cd c
+CFLAGS="${CFLAGS:--O2}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} -L${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir} \
+-L${SB_INSTALL_PREFIX_LIB}/${_gccsubdir} \
+${CC_LD_RT}${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir}:\
+${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}:${SB_VAR_GCC_RT_LIB} \
+${LDFLAGS+${LDFLAGS}}" XALANCROOT=${SB_BUILD_PREFIX}/c \
+./runConfigure -c gcc -x g++ -d -r pthread -b 32 -p ${PLATFORM} \
+-C --libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+${ARGS+-C ${ARGS}} -P ${SB_INSTALL_PREFIX})
+
+# append _g to library name
+${SB_PATH_SED} -i -e "\
+/^LIB_NAME/ { s!\$!_g!; }
+/^LIBRARY_LINK_NAME/ { s!\$!_g!; }
+/^LOCAL_LIB/ { s!\$!_g!; }
+/^LOC_LIBNAME/ { s!\$!_g!; }
+/^XERCES_LIB/ { s!\$!_g!; }" c/Makefile.incl
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+(cd c
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake \
+XERCES_LIB="-L${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir} -lxerces-c_g")
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+(cd c/src/xalanc/Utils/XalanMsgLib
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install)
+(cd c/src/xalanc
+XALANCROOT=${SB_BUILD_PREFIX}/c \
+XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib)
+
+# rebuild libraries to fix runtime path
+case "${SYSTYPE}" in
+hppa*-hpux*)
+  rm ${SB_BUILD_PREFIX}/c/lib/libxalan-c*
+
+  (cd c
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake \
+  XERCES_LIB="-L${SB_VAR_LIBXERCESC_LIB}/${_gccsubdir} -lxerces-c_g")
+  rm ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}/libxalan-c*
+  (cd c/src/xalanc
+  XALANCROOT=${SB_BUILD_PREFIX}/c \
+  XERCESCROOT=${SB_VAR_LIBXERCESC} gmake install-lib) ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}/lib*_g*
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="1.9" to="1.10">
+        <item><para>Support for XML 1.1 and Namespaces in XML
+1.1</para></item>
+        <item><para>Added support for IBM XLC 7.0 compiler on
+Linux</para></item>
+        <item><para>Improved and stabilized C pluggable memory
+management functionality</para></item>
+        <item><para>Various improvements in Xalan XML serializers for
+better performance and stability</para></item>
+        <items name="Bug Fixes">
+          <item><para>XALANC-572: Compile failure on
+SuSE80AMD_64b_GCC322</para></item>
+          <item><para>XALANC-569: Compile-time assert on 32-bit
+Solaris and HPUX due to IEEE754 issue</para></item>
+          <item><para>XALANC-568: Pattern "/" does not match the
+pseudo root document of a node-set obtained from a result-tree
+fragment via exsl:node-set</para></item>
+          <item><para>XALANC-511: Crash during
+XalanTransformer::initialize on AIX</para></item>
+          <item><para>XALANC-554: Xalan-C does not implement erratum
+25</para></item>
+          <item><para>XALANC-552: Problems with the new serializers
+with CDATA and unrepresentable or special characters</para></item>
+          <item><para>XALANC-558: Latest source code does not build
+with the Intel compiler on Windows</para></item>
+          <item><para>XALANC-555: XalanEXSLTDateTime.cpp has too many
+platform-specifc ifdefs</para></item>
+          <item><para>XALANC-421: omit-xml-declaration
+ignored</para></item>
+          <item><para>XALANC-529: Xalan-C sometimes creates empty text
+nodes in RTFs or sends empty characters() events to
+FormatterListeners</para></item>
+          <item><para>XALANC-530: Serializers filter attributes
+unnecessarily</para></item>
+          <item><para>XALANC-245: substring-before and
+substring-after</para></item>
+          <item><para>XALANC-115: Need to catch use of variables in
+xsl:key attributes</para></item>
+          <item><para>XALANC-540: XPath absolute location path does
+not work when the context node was obtained from a result tree
+fragment through exsl:node-set()</para></item>
+          <item><para>XALANC-544: Assert failure, then crash, during
+"variable undefined" error recovery in certain
+circumstances.</para></item>
+          <item><para>XALANC-543: Crash when calling a template that
+wrongly uses xsl:with-param instead of xsl:param to declare its
+parameter.</para></item>
+          <item><para>XALANC-539: XalanMap needs to compact buckets to
+prevent long search times and ever-increasing memory
+usage.</para></item>
+          <item><para>XALANC-542:
+XalanDocumentFragmentXNodeSetBaseProxy::dereferenced() is not
+implemented properly</para></item>
+          <item><para>XALANC-538: Better handling for non-existent
+node test</para></item>
+          <item><para>XALANC-541: Fixes for zOS build</para></item>
+          <item><para>XALANC-455: Problem when releasing InputSource
+obtained through an EntityResolver</para></item>
+          <item><para>XALANC-535: If an error/warning message contains
+not-displayable character for the local encoding , no message is shown
+at all</para></item>
+          <item><para>XALANC-532: FormatterToXMLUnicode does not
+serialize UTF-8</para></item>
+          <item><para>XALANC-536: ElemNumber uses extra temporary
+strings</para></item>
+          <item><para>XALANC-537: XalanC source code quotes
+incorrectly license protected documents</para></item>
+          <item><para>XALANC-526: Use of undefined stricmp breaks
+compilation on Linux</para></item>
+          <item><para>XALANC-513: ICUFormatNumberFunctor has some
+MemoryManager issues</para></item>
+          <item><para>XALANC-507: Safety improvements for
+XalanVector::insert()</para></item>
+          <item><para>XALANC-506: Remove references to stlport
+directory in Makefile.incl.in</para></item>
+          <item><para>XALANC-505: DirectoryEnumerator.hpp will not
+build on Solaris 10 with Sun Workshop 10</para></item>
+          <item><para>XALANC-502: XalanDOMStringCache has initializer
+list out of order</para></item>
+          <item><para>XALANC-501: Creation of comments and PIs needs
+to detect illegal values</para></item>
+          <item><para>XALANC-500: Remove old "diagnostic" output from
+StylesheetRoot and XSLTEngineImpl</para></item>
+          <item><para>XALANC-497: Local variables or parameters in
+EXSLT-functions are interpreted as global</para></item>
+          <item><para>XALANC-496: Glitches in header
+files</para></item>
+          <item><para>XALANC-493: Problem with XALAN_STATIC_CHECK on
+HP-UX IA64</para></item>
+          <item><para>XALANC-492: Various pluggable memory management
+bugs.</para></item>
+          <item><para>XALANC-490: XalanFileReporter is inconsistent in
+its usage of pluggable memory management</para></item>
+          <item><para>XALANC-489: XalanMemMgrs has a thread-safety
+issue</para></item>
+          <item><para>XALANC-488: XSLTInputSource does not support
+pluggable memory management</para></item>
+          <item><para>XALANC-487: URISupport does not provide explicit
+MemoryManager</para></item>
+          <item><para>XALANC-485: GCC warns about order of members in
+initializer list</para></item>
+          <item><para>XALANC-484: Remove compiler warnings about
+placement delete for HP's aCC compiler</para></item>
+          <item><para>XALANC-483: XercesParserLiaison does not create
+Xerces-C DOM instances with namespaces support enabled.</para></item>
+          <item><para>XALANC-482: Remove compiler
+warnings</para></item>
+          <item><para>XALANC-470: runConfigure does not pass link
+options to Makefile for AIX platform</para></item>
+          <item><para>XALANC-465: Add alt tag to footer.html page
+under html/apiDocs tree.</para></item>
+          <item><para>XALANC-463: Transforming an XML DOM document
+encapsulated within an XercesDOMWrapperParsedSource object triggers an
+invalid heap pointer exception if XSL opens other XML document with
+'document()' function.</para></item>
+          <item><para>XALANC-460: Linux/xlC port</para></item>
+          <item><para>XALANC-448: TestXSLT/process.cpp compilation
+fails, interface broken in FormatterToText.hpp</para></item>
+          <item><para>XALANC-445: generate-id() inserts periods into
+name which limits usage</para></item>
+        </items>
+      </change>
+
+      <note type="build">
+        <para>Native compiler versions for Redhat Linux 7.1 and RHEL
+2.1/x86 are not available due to compiler errors.</para>
+      </note>
+
+      <note type="usage">
+        <para>Versions of the library for the vendor C++ compiler and
+GCC are available in the following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib            # Vendor C++ compiler
+${SB_INSTALL_PREFIX}/lib/gcc44      # GCC 4.4.6
+        </screen>
+
+        <para>64-bit libraries are available in
+<command>${SB_INSTALL_PREFIX}/lib/64</command> if the platform
+supports separate 64-bit object files.</para>
+        <para>Debug versions of the library are available in the same
+directories, with "<command>_g</command>" appended to the library
+name. The debug versions of the library are built with optimizations
+for all platforms except IRIX (-g3 would be required to build the
+library with debugging and optizations and, according to CC(1), -g3
+would make the debugger inaccurate).</para>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST710.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2010 November 10" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 August 14" revision="4"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add support for HP-UX 11.31</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to
+4.2.4</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 July 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
