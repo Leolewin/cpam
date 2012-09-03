@@ -1,0 +1,299 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="dsh" version="0.25.7" revision="5">
+    <install-name>${SB_PROG_NAME}025</install-name>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01])
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="28808e77310fdf346fefee4cd3f42050"
+          checksum-type="md5" size="391977"
+          path="src/dsh-0.25.7.tar.gz"/>
+        <patch checksum="df9cc9573ea777f328409b4dd96e5708"
+          checksum-type="md5" size="7109"
+          path="src/dsh-0.25.7.tww.patch"/>
+        <patch checksum="974f896be262c9d4d1eb5ba7d5b32d10"
+          checksum-type="md5" size="73561"
+          path="src/dsh-0.25.7.gnulib.patch"/>
+        <patch checksum="bb906607e3766fe4059d29f0ae8599f2"
+          checksum-type="md5" size="1717317"
+          path="src/dsh-0.25.7.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="dsh" var="LIBDSHCONFIG"
+          module="libdshconfig">v==0.25.7</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01])
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_INSTALL_PREFIX}/include" \
+LDFLAGS="-L${SB_INSTALL_PREFIX_LIB} ${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--disable-dependency-tracking --datadir=${_datadir} \
+--sysconfdir=${_sysconfdir} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}/group
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/machines.list
+]]>
+      </install>
+    </module>
+
+    <module name="libdshconfig">
+      <build-name>${SB_MODULE_NAME}-0.20.12</build-name>
+
+      <sources>
+        <source checksum="27c74c0ef583b14459d616f83aa63da9"
+          checksum-type="md5" size="316955"
+          path="src/libdshconfig-0.20.12.tar.gz"/>
+        <patch checksum="91490e4e6cb900cbd86ba9c70d52d4fb"
+          checksum-type="md5" size="22122"
+          path="src/libdshconfig-0.20.12.tww.patch"/>
+        <patch checksum="7ea65b7f2c56ee969f24d6899bc4f88c"
+          checksum-type="md5" size="1330184"
+          path="src/libdshconfig-0.20.12.auto.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01])
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+$LDFLAGS}" --disable-dependency-tracking \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+    </module>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <changelog>
+      <change date="2012 January 28" revision="5"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Remove support for HPUX 10.20.</para></item>
+        <item><para>Remove support for RHEL 3 and SLED.</para></item>
+        <item><para>Remove support for Solaris 2.6 and 7.</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1.</para></item>
+        <item><para>Update libiconv dependency from 0.12 to
+0.13.1</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2.</para></item>
+        <item><para>Use a &lt;license&gt; stanza in the sb file rather
+than a license subdirectory in the package tree.</para></item>
+      </change>
+
+      <change date="2010 November 8" revision="4"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 November 9" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Add support for HPUX 11.31</para></item>
+        <item><para>Add support for SLES 10</para></item>
+        <item><para>Add compiler optimisations for
+i?86*-linuxe[345]*</para></item>
+        <item><para>Update compiler optimisations for *-aix*,
+*-hpux*, *-osf* and *-solaris*</para></item>
+        <item><para>Update gettext dependency from 0.14.1 to
+0.17</para></item>
+        <item><para>Update libiconv dependency from 1.9.2 to
+1.12</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
