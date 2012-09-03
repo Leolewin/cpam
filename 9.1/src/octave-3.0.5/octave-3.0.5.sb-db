@@ -1,0 +1,522 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="octave" version="3.0.5" revision="3">
+    <install-name>${SB_PROG_NAME}30</install-name>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="curl" var="LIBCURL"
+        install-name="curl722">v&gt;=7.22.0</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="gawk" install-name="gawk31" add-path="prepend"
+        type="build">v&gt;=3.1.8</depend>
+      <depend program="gnuplot" install-name="gnuplot44"
+        add-path="prepend">v&gt;=4.4.0</depend>
+      <depend program="gperf" install-name="gperf30"
+        add-path="prepend" type="build">v&gt;=3.0.4</depend>
+      <depend program="tetex" install-name="tetex30"
+        add-path="prepend" type="build">v&gt;=3.0</depend>
+      <depend program="atlas" var="LIBATLAS"
+        install-name="libatlas36" module="gcc44-shared"
+        systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*">v&gt;=3.6.0 r&gt;=10</depend>
+      <depend program="atlas" var="LIBATLAS"
+        install-name="libatlas36" module="shared"
+        systype="*-linux*">v&gt;=3.6.0 r&gt;=10</depend>
+      <depend program="fftw" var="LIBFFTW"
+        install-name="libfftw33">v&gt;=3.3</depend>
+      <depend program="gcc" var="GCC"
+        systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*">v==4.4.6</depend>
+      <depend program="hdf5" var="LIBHDF5" install-name="libhdf518"
+        module="gcc44"
+        systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*">v&gt;=1.8.2</depend>
+      <depend program="hdf5" var="LIBHDF5" install-name="libhdf518"
+        systype="*-linux*">v&gt;=1.8.2</depend>
+      <depend program="pcre" var="LIBPCRE"
+        install-name="libpcre811">v&gt;=8.11</depend>
+      <depend program="glpk" var="LIBGLPK"
+        install-name="libglpk43">v&gt;=4.36</depend>
+      <depend program="ncurses" var="NCURSES">v==5.7</depend>
+      <depend program="qhull" var="LIBQHULL"
+        install-name="libqhull2003"
+        systype="!*-aix*">v&gt;=2003.1</depend>
+      <depend program="readline" var="READLINE"
+        install-name="libreadline62">v&gt;=6.2</depend>
+      <depend program="suitesparse" var="SUITESPARSE"
+        install-name="suitesparse36">v==3.6.0</depend>
+      <depend program="texinfo" install-name="texinfo413"
+        add-path="prepend">v&gt;=4.13</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="gcc" var="GCC" install-name="gcc44"
+        systype="!*-linux*">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*"/>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <module name="default">
+      <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+      <sources>
+        <source checksum="bfba44eeda8fa6e29c2bbcd2604c34eb"
+          checksum-type="md5" size="10158578"
+          path="src/octave-3.0.5.tar.bz2"/>
+        <patch checksum="5e975fcd3095dcd4c56da66b7b8ebe74"
+          checksum-type="md5" size="28074"
+          path="src/octave-3.0.5.tww.patch"/>
+        <patch checksum="3eae2c632aee54d0cc57466c8ba9f66b"
+          checksum-type="md5" size="408"
+          path="src/octave-3.0.5.curl_no_types.patch"/>
+        <patch checksum="47887c00f3547d50afdccae87b065414"
+          checksum-type="md5" size="7428"
+          path="src/octave-3.0.5.incpaths.patch"/>
+        <patch checksum="5e72f52fa35305e328c4fcd7d1bc67e8"
+          checksum-type="md5" size="938697"
+          path="src/octave-3.0.5.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix5.2*)
+  CFLAGS="-O1 -mcpu=powerpc"
+  CXXFLAGS="-O1 -mcpu=powerpc"
+  FFLAGS="-O1 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-bbigtoc -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-dl" ;;
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  FFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-bbigtoc -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+
+  ARGS="--enable-dl" ;;
+*-hpux*)
+  CFLAGS="-O1" CXXFLAGS="-O1" FFLAGS="-O1"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-dl" ;;
+*-irix*)
+  CFLAGS="-O1" CXXFLAGS="-O1" FFLAGS="-O1"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-dl" ;;
+i?86*-linuxe4)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  F77=g77 FFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libhdf5_lib=${SB_VAR_LIBHDF5_LIB}
+  _libhdf5_inc=${SB_VAR_LIBHDF5_INC}
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB}
+
+  ARGS="--enable-dl" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  FFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libhdf5_lib=${SB_VAR_LIBHDF5_LIB}
+  _libhdf5_inc=${SB_VAR_LIBHDF5_INC}
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB}
+
+  ARGS="--enable-dl" ;;
+*-redhat-linuxe4)
+  CC_LD_RT="-Wl,-rpath,"
+  F77=g77
+
+  _libhdf5_lib=${SB_VAR_LIBHDF5_LIB}
+  _libhdf5_inc=${SB_VAR_LIBHDF5_INC}
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB}
+
+  ARGS="--enable-dl" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libhdf5_lib=${SB_VAR_LIBHDF5_LIB}
+  _libhdf5_inc=${SB_VAR_LIBHDF5_INC}
+  _libatlas_lib=${SB_VAR_LIBATLAS_LIB}
+
+  ARGS="--enable-dl" ;;
+*-osf*)
+  CFLAGS="-O1 -mcpu=ev4 -mieee"
+  CXXFLAGS="-O1 -mcpu=ev4 -mieee"
+  FFLAGS="-O1 -mcpu=ev4 -mieee"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-dl" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  FFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-dl" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc" CXXFLAGS="-O2 -mcpu=ultrasparc"
+  FFLAGS="-O2 -mcpu=ultrasparc"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-dl" ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s!@datadir@!${_datadir}!;" scripts/pkg/pkg.m
+
+## --------------------------------------------------------------- ##
+## configure time compiler paths are substituted into installed    ##
+## mkoctfile script, along with matching flag settings for that    ##
+## compiler.  We don't want to force mkoctfile callers to remember ##
+## to set their runtime compiler setting to match whatever was     ##
+## used when octave was built, so set full compiler paths in the   ##
+## environment for substitution into mkoctfile at configure time.  ##
+## --------------------------------------------------------------- ##
+if [ -n "${SB_VAR_GCC+set}" ]; then
+  CC="${SB_VAR_GCC}/bin/gcc"
+  CXX="${SB_VAR_GCC}/bin/g++"
+  F77="${SB_VAR_GCC}/bin/gfortran"
+fi
+
+${SHELL} ./configure CC="${CC:-`which gcc`}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_READLINE+-I${SB_VAR_READLINE_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+-I${SB_VAR_LIBFFTW_INC} -I${SB_VAR_LIBPCRE_INC} \
+-I${SB_VAR_LIBGLPK_INC} ${SB_VAR_LIBQHULL+-I${SB_VAR_LIBQHULL_INC}} \
+-I${SB_VAR_SUITESPARSE_INC} -I${SB_VAR_LIBCURL_INC} \
+-I${_libhdf5_inc-${SB_VAR_LIBHDF5_INC}/${_gccsubdir}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} -DH5_USE_16_API" \
+CXX="${CXX:-`which g++`}" CXXFLAGS="${CXXFLAGS:--O2}" \
+F77="${F77:-`which gfortran`}" FFLAGS="${FFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+-L${_libatlas_lib:-${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}} \
+${SB_VAR_READLINE+-L${SB_VAR_READLINE_LIB}} \
+${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+-L${SB_VAR_LIBFFTW_LIB} -L${SB_VAR_LIBPCRE_LIB} \
+-L${SB_VAR_LIBGLPK_LIB} ${SB_VAR_LIBQHULL+-L${SB_VAR_LIBQHULL_LIB}} \
+-L${SB_VAR_SUITESPARSE_LIB} -L${SB_VAR_LIBCURL_LIB} \
+-L${_libhdf5_lib-${SB_VAR_LIBHDF5_LIB}/${_gccsubdir}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${CC_LD_RT}${SB_VAR_GCC_RT+${SB_VAR_GCC_RT_LIB}:}\
+${_libatlas_lib:-${SB_VAR_LIBATLAS_LIB}/${_gccsubdir}}:\
+${SB_VAR_LIBQHULL+${SB_VAR_LIBQHULL_LIB}:}\
+${SB_VAR_LIBGLPK_LIB}:${SB_VAR_SUITESPARSE_LIB}:\
+${SB_VAR_LIBCURL_LIB}:\
+${SB_VAR_NCURSES+${SB_VAR_NCURSES_LIB}:}\
+${SB_VAR_READLINE+${SB_VAR_READLINE_LIB}:}\
+${SB_VAR_LIBFFTW_LIB}:${SB_VAR_LIBPCRE_LIB}:\
+${_libhdf5_lib-${SB_VAR_LIBHDF5_LIB}/${_gccsubdir}}:\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}:}\
+${SB_INSTALL_PREFIX}/lib ${LDFLAGS+${LDFLAGS}}" \
+${FLIBS+FLIBS="${FLIBS}"} \
+ac_cv_path_sed=${SB_PATH_SED} \
+octave_cv_path_sed=${SB_PATH_SED} \
+octincludedir="${SB_INSTALL_PREFIX}/include" \
+fcnfiledir="${_datadir}/m" \
+localfcnfiledir="${_datadir}/site/m" \
+localverfcnfiledir="${_datadir}/site/m" \
+localfcnfilepath='$(localfcnfiledir)//' \
+octlibdir="${SB_INSTALL_PREFIX_LIB}" \
+archlibdir="${SB_INSTALL_PREFIX}/libexec/exec" \
+localarchlibdir="${SB_INSTALL_PREFIX}/libexec/site/exec" \
+localverarchlibdir="${SB_INSTALL_PREFIX}/libexec/site/exec" \
+octfiledir="${SB_INSTALL_PREFIX}/libexec/oct" \
+localoctfiledir="${SB_INSTALL_PREFIX}/libexec/site/oct" \
+localveroctfiledir="${SB_INSTALL_PREFIX}/libexec/site/oct" \
+localoctfilepath='$(localoctfiledir)//' \
+imagedir="${_datadir}/imagelib" \
+--enable-rpath --enable-shared --enable-readline \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" --docdir=${_docdir} \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--datarootdir=${_datadir} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+# rebuild info and html files
+test -f doc/interpreter/octave.info && rm doc/interpreter/octave.info*
+test -f doc/interpreter/octave_toc.html && rm doc/interpreter/*html
+
+# rebuild generated source files
+rm -f lex.cc parse.cc __gnuplot_raw__.cc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+SED=${SB_PATH_SED} gmake MAKEINFOFLAGS="--no-split"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake -k check || :
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# Relink octave to fix runtime path
+case "${SB_SYSTYPE}" in
+*-hpux*)
+  (cd src
+   rm octave
+   gmake OCTAVE_LFLAGS="-L${SB_INSTALL_PREFIX}/lib" octave
+   ${SB_PATH_INSTALL} -m 755 -o root -g 0 octave ${SB_INSTALL_PREFIX}/bin) ;;
+esac
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/conf.texi \
+doc/interpreter/*.texi ${_docdir}/texinfo
+
+
+# default include.paths configuration file and directory
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir} \
+${_sysconfdir}/include.paths.d
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/include.paths
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <change from="2.x" to="3.0.0">
+        <item><para> Compatibility with Matlab graphics is much
+better now.  We now have some graphics features that work like
+Matlab's Handle Graphics (tm):</para>
+        <unorderedlist>
+          <item><para> You can make a subplot and then use the
+print function to generate a file with the plot.</para></item>
+          <item><para>RGB line colors are supported if you use
+gnuplot 4.2.  Octave can still use gnuplot 4.0, but there is no way to
+set arbitrary line colors with it when using the Matlab-style plot
+functions. There never was any way to do this reliably with older
+versions of gnuplot (whether run from Octave or not) since it only
+provided a limited set to choose from, and they were terminal
+dependent, so choosing color 1 with the X11 terminal would be
+different from color 1 with the PostScript terminal.  Valid RGB colors
+for gnuplot 4.0 are the eight possible combinations of 0 and 1 for the
+R, G and B values. Invalid values are all mapped to the same
+color.</para>
+          <para>This also affects patch objects used in the
+bar, countour, meshc and surfc functions, where the bars and contours
+will be monochrome. A workaround for this is to type "colormap gmap40"
+that loads a colormap that in many cases will be adequate for simple
+bar and contour plots.</para></item>
+          <item><para>You can control the width of lines using (for
+example):</para>
+          <screen>
+line (x, y, "linewidth", 4, "color", [1, 0, 0.5]);
+          </screen>
+          <para>(this also shows the color
+feature).</para></item>
+          <item><para>With gnuplot 4.2, image data is plotted with
+gnuplot and may be combined with other 2-d plot data.</para></item>
+          <item><para>Lines for contour plots are generated with an
+Octave function, so contour plots are now 2-d plots instead of special
+3-d plots, and this allows you to plot additional 2-d data on top of a
+contour plot.</para></item>
+          <item><para>With the gnuplot "extended" terminals the TeX
+interpreter is emulated. However, this means that the TeX interpreter
+is only supported on the postscript terminals with gnuplot 4.0. Under
+gnuplot 4.2 the terminals aqua, dumb, png, jpeg, gif, pm, windows,
+wxt, svg and x11 are supported as well.</para></item>
+          <item><para>The following plot commands are now
+considered obsolete and will be removed from a future version of
+Octave:</para>
+          <screen>
+__gnuplot_set__
+	__gnuplot_show__
+	__gnuplot_plot__
+	__gnuplot_splot__
+	__gnuplot_replot__
+          </screen>
+          <para>Additionally, these functions no longer have
+any effect on plots created with the Matlab-style plot commands (plot,
+line, mesh, semilogx, etc.).</para></item>
+          <item><para>Plot property values are not extensively
+checked.  Specifying invalid property values may produce unpredictible
+results.</para></item>
+          <item><para>Octave now sends data over the same pipe that
+is used to send commands to gnuplot.  While this avoids the problem of
+cluttering /tmp with data files, it is no longer possible to use the
+mouse to zoom in on plots.  This is a limitation of gnuplot, which is
+unable to zoom when the data it plots is not stored in a file.  Some
+work has been done to fix this problem in newer versions of gnuplot (&gt;
+4.2.2).  See for example, this thread <ulink url="http://www.nabble.com/zooming-of-inline-data-tf4357017.html#a12416496">http://www.nabble.com/zooming-of-inline-data-tf4357017.html#a12416496</ulink>
+on the gnuplot development list.</para></item>
+        </unorderedlist></item>
+        <item><para>The way Octave handles search paths has
+changed.  Instead of setting the built-in variable LOADPATH, you must
+use addpath, rmpath, or path to manipulate the function search path.
+These functions will maintain "." at the head of the path, for
+compatibility with Matlab.</para>
+        <para>Leading, trailing or doubled colons are no longer
+special. Now, all elements of the search path are explicitly included
+in the path when Octave starts.  To display the path, use the path
+function.</para>
+        <para>Path elements that end in // are no longer
+searched recursively. Instead, you may use addpath and the genpath
+function to add an entire directory tree to the path.  For
+example,</para>
+        <screen>
+addpath (genpath ("~/octave"));
+        </screen>
+        <para>will add ~/octave and all directories below it to
+the head of the path.</para></item>
+        <item><para>Previous versions of Octave had a number of
+built-in variables to control warnings (for example,
+warn_divide_by_zero).  These variables have been replaced by warning
+identifiers that are used with the warning function to control the
+state of warnings.</para>
+        <para>For example, instead of writing</para>
+        <screen>
+warn_divide_by_zero = false;
+        </screen>
+        <para>to disable divide-by-zero warnings, you should
+write</para>
+        <screen>
+warning ("off", "Octave:divide-by-zero");
+        </screen>
+        <para>You may use the same technique in your own code to
+control warnings.  For example, you can use</para>
+        <screen>
+warning ("My-package:phase-of-the-moon",
+               "the phase of the moon could cause trouble today");
+        </screen>
+        <para>to allow users to control this warning using the
+"My-package:phase-of-the-moon" warning identifier.</para>
+        <para>You may also enable or disable all warnings, or turn
+them into errors:</para>
+        <screen>
+warning ("on", "all");
+      warning ("off", "all");
+      warning ("error", "Octave:divide-by-zero");
+      warning ("error", "all");
+        </screen>
+        <para>You can query the state of current warnings
+using</para>
+        <screen>
+warning ("query", ID)
+      warning ("query")
+        </screen>
+        <para>(only those warning IDs which have been explicitly set
+are returned).</para>
+        <para>A partial list and description of warning identifiers
+is available using <command>help warning_ids</command></para></item>
+        <item><para>** All built-in variables have been converted to
+functions.  This change simplifies the interpreter and allows a
+consistent interface to internal variables for user-defined packages
+and the core functions distributed with Octave.  In most cases, code
+that simply accesses internal variables does not need to change.  Code
+that sets internal variables will change.  For example, instead of
+writing</para>
+        <screen>
+PS1 = "&gt;&gt; ";
+        </screen>
+        <para>you will need to write</para>
+        <screen>
+PS1 ("&gt;&gt; ");
+        </screen>
+        <para>If you need write code that will run in both old and
+new versions of Octave, you can use something like</para>
+        <screen>
+if (exist ("OCTAVE_VERSION") == 5)
+        ## New:
+        PS1 ("&gt;&gt; ");
+      else
+        ## Old:
+        PS1 = "&gt;&gt; ";
+      endif
+        </screen></item>
+        <item><para>For compatibility with Matlab, the output order
+of Octave's "system" function has changed from</para>
+        <screen>
+[output, status] = system (cmd);
+        </screen>
+        <para>to</para>
+        <screen>
+[status, output] = system (cmd);
+        </screen></item>
+        <item><para>For compatibility with Matlab, the output of
+Octave's fsolve function has been changed from</para>
+        <screen>
+[x, info, msg] = fsolve (...);
+        </screen>
+        <para>to</para>
+        <screen>
+[x, fval, info] = fsolve (...);
+        </screen></item>
+        <item><para>For compatibility with Matlab, normcdf, norminv,
+normpdf, and normrnd have been modified to compute distributions using
+the standard deviation instead of the variance.</para></item>
+        <item><para>For compatibility with Matlab, gamcdf, gaminv,
+gampdf, gamrnd, expcdf, expinv, exppdf and exprnd have been modified
+to compute the distributions using the standard scale factor rather
+than one over the scale factor.</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 12" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update curl dependency from 7.19.2 to
+7.22.0</para></item>
+        <item><para>Update fftw dependency from 3.2.1 to
+3.3</para></item>
+        <item><para>Update gawk dependency from 3.1.6 to
+3.1.8</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update gnuplot dependency from 4.2.4 to
+4.4.0</para></item>
+        <item><para>Update libz dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+        <item><para>Update pcre dependency from 7.8 to
+8.11</para></item>
+        <item><para>Update readline dependency from 5.2 to
+6.2</para></item>
+        <item><para>Update suitesparse dependency from 3.3.0 to
+3.6.0</para></item>
+      </change>
+
+      <change date="2010 November 1" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
