@@ -1,0 +1,240 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="popt" version="1.16" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}116</install-name>
+
+    <sources>
+      <source checksum="3743beefa3dd6247a73f8f7a32c14c33"
+        checksum-type="md5" size="702769"
+        path="src/popt-1.16.tar.gz"/>
+      <patch checksum="b919aaa47a1d7c3618fc4fcd521b3470"
+        checksum-type="md5" size="11474"
+        path="src/popt-1.16.tww.patch"/>
+      <patch checksum="f200087b0b241adaf0bb30350b8a963b"
+        checksum-type="md5" size="29265"
+        path="src/popt-1.16.gnulib.patch"/>
+      <patch checksum="027e57f0a9ffda9cceaf3fb4393d73c3"
+        checksum-type="md5" size="4479"
+        path="src/popt-1.16.tww-gnulib.patch"/>
+      <patch checksum="3297fc547a79e232a5a26491b4bac141"
+        checksum-type="md5" size="1650970"
+        path="src/popt-1.16.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" var="BISON" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_GETTEXT+-I${SB_VAR_GETTEXT_INC}} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --mandir="${SB_INSTALL_PREFIX}/man" \
+--libdir="${SB_INSTALL_PREFIX_LIB}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" popt.pc
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <licenses>
+      <license>
+        <para>Copyright (c) 1998  Red Hat Software</para>
+        <para>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:</para>
+        <para>The above copyright notice and this permission notice
+shall be included in all copies or substantial portions of the
+Software.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT.  IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</para>
+        <para>Except as contained in this notice, the name of the X
+Consortium shall not be used in advertising or otherwise to promote
+the sale, use or other dealings in this Software without prior written
+authorization from the X Consortium.</para>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="1.15" to="1.16">
+        <item><para>add lv.po, update translations (Translation
+Project).</para></item>
+        <item><para>include xcode project files in distributed popt
+tar ball.</para></item>
+        <item><para>make distcheck is now squeaky clean.</para></item>
+        <item><para>permit VPATH builds.</para></item>
+        <item><para>add shallow tests using ISP/RAS
+api-sanity-autotest.pl.</para></item>
+        <item><para>prefix bit set routines with popt to avoid symbol
+coolisions w rpm.</para></item>
+        <item><para>add tdict.c to exercise popt bit sets against
+/usr/dict/words.</para></item>
+        <item><para>add poptBitsArgs() method to generate args bit
+set.</para></item>
+        <item><para>add methods for bit set union and
+intersection.</para></item>
+        <item><para>permit comma separated attribute lists, handle
+negated attributes.</para></item>
+        <item><para>better test for POPT_ARG_BITSET.</para></item>
+        <item><para>add POPT_ARG_BITSET handling.</para></item>
+        <item><para>add POPT_ARG_SHORT handling.</para></item>
+        <item><para>handle all callback traversals within a C switch
+(for extendability ease).</para></item>
+        <item><para>add popt.pc.</para></item>
+        <item><para>add AC_CONFIG_AUX_DIR, AC_CONFIG_MACRO_DIR to
+configure. Create build-aux</para></item>
+        <item><para>del acinclude.m4 : AC_CHECK_VA_COPY is not used
+1.14 -&gt; 1.15:</para></item>
+      </change>
+
+      <change from="1.14" to="1.15">
+        <item><para>fix building under --disable-nls</para></item>
+        <item><para>fix building under non GLIBC platforms where
+glob_pattern_p fallback has to be used</para></item>
+        <item><para>fix building under platforms where FNM_EXTMATCH is
+not available</para></item>
+        <item><para>poptReadFile: permit NULL if return values are not
+desired.</para></item>
+        <item><para>poptReadFile: add routine.</para></item>
+        <item><para>trim out escaped newline(s) from file content,
+other fixes.</para></item>
+        <item><para>permit popt alias/exec to include content from a
+file.</para></item>
+        <item><para>permit glob(3) patterns in appName field of popt
+alias/exec config.</para></item>
+        <item><para>add test cases for bit operations and
+toggles.</para></item>
+        <item><para>avoid displaying --[no]nofoo with
+POPT_ARGFLAG_TOGGLE.</para></item>
+        <item><para>add poptArgInfo() to get argInfo, implementing
+POPT_ARGFLAG_TOGGLE.</para></item>
+        <item><para>add longOptionStrcmp() to match w
+POPT_ARGFLAG_TOGGLE.</para></item>
+        <item><para>change singleDash arg to a bit enum, use
+LF_ISSET(ONEDASH) instead.</para></item>
+        <item><para>rework the glob wrappers into something more
+useful. portability todo++.</para></item>
+        <item><para>stub in glob(3) wrappers for popt. more useful
+poptGlob() API next.</para></item>
+        <item><para>add
+poptInit/poptFini/poptReadConfigFiles/poptSaneFile
+routines.</para></item>
+        <item><para>rewrite poptReadConfigFile(), styling for (i.e.
+my) readbility.</para></item>
+        <item><para>reserve a bit for --[no]opt prefix
+toggling.</para></item>
+        <item><para>fix: check/print argv[0] in --help for
+NULL.</para></item>
+        <item><para>permit type/group bitmasks to be changed (if
+needed somewhen).</para></item>
+        <item><para>snip out 8 unused bits for argument
+groups.</para></item>
+        <item><para>fix: eliminate dead code (CID#5).</para></item>
+        <item><para>fix: rearrange code to better hint to coverity
+scan (CID#9).</para></item>
+        <item><para>fix: rewrite (and simplify)
+strdup_locale_from_utf8() (CID#7, CID#8, CID#11,
+CID#12).</para></item>
+        <item><para>test/use HAVE_SRANDOM to avoid portability
+issues.</para></item>
+        <item><para>fix: remove AC_CHECK_VA_COPY check, va_copy is no
+longer used.</para></item>
+        <item><para>add eo.po and id.po (Translation
+Project).</para></item>
+        <item><para>updated da.po (Translation Project).</para></item>
+        <item><para>extend coverage to several additional setup
+routines.</para></item>
+        <item><para>add tests for --usage/--help
+coverage.</para></item>
+        <item><para>add lconv/gcov targets to
+Makefile.am.</para></item>
+        <item><para>refactor automagic (*opt-&gt;arg) option arg store to
+poptSaveArg().</para></item>
+        <item><para>update INPUT tag in Doxyfile.in, fix doxygen
+warnings in popthelp.c.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>
