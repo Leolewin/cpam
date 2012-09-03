@@ -1,0 +1,1412 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="pango" version="1.28.4" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}128</install-name>
+
+    <sources>
+      <source checksum="3f3989700f04e9117d30544a9078b3a0"
+        checksum-type="md5" size="1503441"
+        path="src/pango-1.28.4.tar.bz2"/>
+      <patch checksum="28f4f783e91bcdde9b2bdb48704faeac"
+        checksum-type="md5" size="16628"
+        path="src/pango-1.28.4.tww.patch"/>
+      <patch checksum="6fccde42997f114190e021f6a92930ff"
+        checksum-type="md5" size="2188545"
+        path="src/pango-1.28.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="xmlcatalog" var="XMLCATALOG"
+        install-name="xmlcatalog11" module="docbook-xml-4.1.2"
+        type="build">v&gt;=1.1</depend>
+      <depend program="xmlcatalog" install-name="xmlcatalog11"
+        module="docbook-xsl-1.76" type="build">v&gt;=1.1</depend>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          add-path="prepend">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="jpeg" var="JPEG"
+          install-name="libjpeg8">v&gt;=8b</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          add-path="prepend">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="tiff" var="LIBTIFF"
+          install-name="libtiff39">v&gt;=3.9.5</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="pango"
+          module="Pango-5.12.2">v==1.28.4</depend>
+        <depend program="pango" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.28.4</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc -qnoeh \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit +noeh"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit +noeh"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit +noeh"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0 \
+-LANG:exceptions=OFF"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -model ansi -msym -readonly_strings \
+-timplicit_local  -nortti -noexceptions"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4 -features=no%except"
+
+  CPPFLAGS="-DFUNCPROTO=1"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa \
+-features=no%except"
+  CPPFLAGS="-DFUNCPROTO=1" CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis \
+-features=no%except"
+  CPPFLAGS="-DFUNCPROTO=1" CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CXX="${CXX:-g++}" \
+CXXFLAGS="${CXXFLAGS:--O2 -fno-exceptions -fno-rtti}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC} \
+${SB_VAR_LIBICONV+-I${SB_VAR_LIBICONV_INC}} \
+${SB_VAR_LIBTIFF+-I${SB_VAR_LIBTIFF_INC}} \
+${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB} -L${SB_VAR_GETTEXT_LIB} \
+${SB_VAR_LIBICONV+-L${SB_VAR_LIBICONV_LIB}} \
+${SB_VAR_LIBTIFF+-L${SB_VAR_LIBTIFF_LIB}} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+${SB_VAR_XMLCATALOG+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml"} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--sysconfdir=${_sysconfdir} --with-html-dir=${_docdir} \
+--disable-gtk-doc --disable-man --mandir=${SB_INSTALL_PREFIX}/man \
+--disable-rebuilds --enable-static --enable-shared \
+--disable-dependency-tracking --disable-silent-rules \
+--enable-explicit-deps ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s! -L/usr/lib64!!; \
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+pango.pc pangocairo.pc pangoft2.pc pangox.pc pangoxft.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake moduledir="${SB_INSTALL_PREFIX_LIB}/modules"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake -k check
+
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install moduledir="${SB_INSTALL_PREFIX_LIB}/modules" \
+docdir=${_docdir}
+
+# configuration file
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/pangorc
+cat >${_sysconfdir}/pangorc <<_EOT_
+[Pango]
+ModuleFiles=${SB_INSTALL_PREFIX_LIB}/modules/pango.modules
+ModulesPath=${SB_INSTALL_PREFIX_LIB}/modules
+
+[PangoX]
+AliasFiles=${_sysconfdir}/pangox.aliases
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-linux*) ;;
+*)
+  _xftconfig="${_sysconfdir}/XftConfig"
+
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_xftconfig}
+
+  for _fontdir in /usr/openwin/lib/X11/fonts/Type1 \
+  /usr/openwin/lib/X11/fonts/Type3 \
+  /usr/openwin/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/Type1 \
+  /usr/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/type1.st/typefaces \
+  /usr/lib/X11/fonts/ttf.st/typefaces; do
+    [ ! -d "${_fontdir}" ] && continue
+
+    cat >>${_xftconfig} <<_EOT_
+dir "${_fontdir}"
+_EOT_
+  done
+  ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <module name="Pango-5.12.2">
+      <build-name>Pango-1.222</build-name>
+
+      <sources>
+        <source checksum="56141fb3d30ed69740bd47322857dbd5"
+          checksum-type="md5" size="45285"
+          path="src/Pango-1.222.tar.gz"/>
+        <patch checksum="920c486931e9de8cc439c43bcc3f9e7b"
+          checksum-type="md5" size="694"
+          path="src/Pango-1.222.tww.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="ExtUtils-Depends"
+          module="5.12.2">v&gt;=0.300</depend>
+        <depend program="ExtUtils-PkgConfig"
+          module="5.12.2">v&gt;=1.11</depend>
+        <depend program="pkgconfig" install-name="pkgconfig02"
+          add-path="prepend" type="build">v&gt;=0.25</depend>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="Cairo-5.12.2">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          add-path="prepend">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="Glib-5.12.2">v&gt;=2.26.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44">v&gt;=2.26.1</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          type="build">v&gt;=4.4.6</depend>
+        <depend program="pango" var="LIBPANGO">v==1.28.4</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_gcc_subdir="gcc44"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:${SB_VAR_LIBCAIRO_LIB}/perl5122" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/${_gcc_subdir}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig" \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_install_prefix} \
+INSTALLSITEARCH=${_install_prefix} \
+INSTALLSITELIB=${_install_prefix} \
+PREFIX=${SB_INSTALL_PREFIX}
+
+# fix TOC overflow on AIX
+${SB_PATH_SED} -i -e "\
+s!\(-Wl,-bE[^ ][^ ]*\) !\1 -Wl,-bbigtoc !;" Makefile
+
+# remove system paths
+${SB_PATH_SED} -i -e "\
+s!:/usr/X11R6/lib64!!; \
+s!:/usr/X11R6/lib!!; \
+s!:/usr/lib/hpux32!!; \
+s!:/usr/openwin/lib!!; \
+s!:/usr/shlib!!; \
+s!:/usr/lib64!!; \
+s!:/usr/lib!!; \
+s!:/lib64!!; \
+s!:/lib!!;" Makefile
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:${SB_VAR_LIBCAIRO_LIB}/perl5122" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/${_gcc_subdir}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig" gmake NOECHO=""
+]]>
+      </build>
+
+      <test>
+        <dependencies>
+          <depend program="cairo" var="LIBCAIRO"
+            install-name="libcairo110"
+            module="Cairo-5.12.2">v&gt;=1.10.2</depend>
+          <depend program="fcpackage" var="FCPACKAGE"
+            install-name="fcpackage28">v&gt;=2.8</depend>
+          <depend program="glib" var="LIBGLIB" install-name="libglib226"
+            module="Glib-5.12.2">v==2.26.1</depend>
+        </dependencies>
+<![CDATA[
+_fcpackage_sysconfdir="${SB_VAR_FCPACKAGE}/etc"
+
+# A shared ~/.fontconfig causes errors when a newer version of the
+# OS has a font unavailable on an older release. Fontconfig will
+# assume every OS with the cached font path has it available.
+# Force test-specific font cache directory.
+(cp ${_fcpackage_sysconfdir}/fonts.conf .
+ ${SB_PATH_SED} -i -e "\
+s!<cachedir>.*!<cachedir>${SB_BUILD_PREFIX}/.fontconfig</cachedir>!" \
+ fonts.conf
+ rm -rf .fontconfig
+ mkdir .fontconfig)
+
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:${SB_VAR_LIBCAIRO_LIB}/perl5122" \
+FONTCONFIG_FILE="${SB_BUILD_PREFIX}/fonts.conf" \
+gmake test
+
+: ignore testsuite failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+PERL5LIB="${SB_VAR_LIBGLIB_LIB}/perl5122:${SB_VAR_LIBCAIRO_LIB}/perl5122" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB_LIB}/${_gcc_subdir}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig" \
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_install_prefix} ${SB_INSTALL_PREFIX}/man/man3
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="64bit">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit" add-path="prepend">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018" module="64bit"
+          add-path="prepend">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="jpeg" var="JPEG" install-name="libjpeg8"
+          module="64bit">v&gt;=8b</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113" module="64bit"
+          add-path="prepend">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="tiff" var="LIBTIFF" install-name="libtiff39"
+          module="64bit">v&gt;=3.9.5</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _bindir=bin/ppc64
+  _sysconfdir="${_sysconfdir}/ppc64"
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _bindir=bin/hpux64
+  _sysconfdir="${_sysconfdir}/hpux64"
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _bindir=bin/pa20_64
+  _sysconfdir="${_sysconfdir}/pa20_64"
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _bindir=bin/mips4
+  _sysconfdir="${_sysconfdir}/mips4"
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _bindir=bin/amd64
+  _sysconfdir="${_sysconfdir}/amd64"
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _bindir=bin/sparcv9
+  _sysconfdir="${_sysconfdir}/sparcv9"
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CXX=xlC CXXFLAGS="-O2 -q64 -qro -qroconst -qnotempinc -qnoeh \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch +Onolimit +noeh"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DD64 \
++Oentrysched +Odataprefetch +Onolimit +noeh"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0 -64 -mips4 \
+-LANG:exceptions=OFF"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -m64 -xtarget=pentium4 \
+-features=no%except"
+  CPPFLAGS="-DFUNCPROTO=1"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v9"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v9 \
+-features=no%except"
+  CPPFLAGS="-DFUNCPROTO=1"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m64 -xarch=sparc \
+-features=no%except"
+  CPPFLAGS="-DFUNCPROTO=1"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CXX="${CXX:-g++}" \
+CXXFLAGS="${CXXFLAGS:--O2 -fno-exceptions -fno-rtti}" \
+CPPFLAGS="-I${SB_VAR_GETTEXT_INC} -I${SB_VAR_LIBICONV_INC} \
+-I${SB_VAR_LIBTIFF_INC} -I${SB_VAR_JPEG_INC} \
+${CPPFLAGS+${CPPFLAGS}}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_FCPACKAGE}/${_libdir} \
+-L${SB_VAR_GETTEXT}/${_libdir} \
+-L${SB_VAR_LIBICONV}/${_libdir} -L${SB_VAR_LIBTIFF}/${_libdir} \
+-L${SB_VAR_JPEG}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PERL=${SB_VAR_PERL}/bin/perl \
+PKG_CONFIG_PATH="${SB_VAR_LIBGLIB}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig" \
+${SB_VAR_XMLCATALOG+--with-xml-catalog="${SB_VAR_XMLCATALOG}/catalog.xml"} \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--sysconfdir=${_sysconfdir} --with-html-dir=${_docdir} \
+--disable-gtk-doc --disable-man --mandir="${SB_INSTALL_PREFIX}/man" \
+--disable-rebuilds --enable-static --enable-shared \
+--disable-dependency-tracking --disable-silent-rules \
+--enable-explicit-deps ${ARGS+${ARGS}} \
+--bindir=${SB_INSTALL_PREFIX}/${_bindir} \
+--libdir=${SB_INSTALL_PREFIX}/${_libdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s! -L/usr/lib64!!; \
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+pango.pc pangocairo.pc pangoft2.pc pangox.pc pangoxft.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake moduledir="${SB_INSTALL_PREFIX}/${_libdir}/modules"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake -k check
+
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/bin/64 ]; then
+  ln -s ./$(basename ${_bindir}) ${SB_INSTALL_PREFIX}/bin/64
+fi
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-pkgconfigDATA
+gmake -C pango install-aliasDATA install-libLTLIBRARIES \
+  install-binPROGRAMS \
+  moduledir="${SB_INSTALL_PREFIX}/${_libdir}/modules"
+gmake -C pango-view install-binPROGRAMS \
+  moduledir="${SB_INSTALL_PREFIX}/${_libdir}/modules"
+gmake -C modules install \
+  moduledir="${SB_INSTALL_PREFIX}/${_libdir}/modules"
+
+# configuration file
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_sysconfdir}/pangorc
+cat >${_sysconfdir}/pangorc <<_EOT_
+[Pango]
+ModuleFiles=${SB_INSTALL_PREFIX}/${_libdir}/modules/pango.modules
+ModulesPath=${SB_INSTALL_PREFIX}/${_libdir}/modules
+
+[PangoX]
+AliasFiles=${_sysconfdir}/pangox.aliases
+_EOT_
+
+case "${SB_SYSTYPE}" in
+*-linux*) ;;
+*)
+  _xftconfig="${_sysconfdir}/XftConfig"
+
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null ${_xftconfig}
+
+  for _fontdir in /usr/openwin/lib/X11/fonts/Type1 \
+  /usr/openwin/lib/X11/fonts/Type3 \
+  /usr/openwin/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/Type1 \
+  /usr/lib/X11/fonts/TrueType \
+  /usr/lib/X11/fonts/type1.st/typefaces \
+  /usr/lib/X11/fonts/ttf.st/typefaces; do
+    [ ! -d "${_fontdir}" ] && continue
+
+    cat >>${_xftconfig} <<_EOT_
+dir "${_fontdir}"
+_EOT_
+  done
+  ;;
+esac
+]]>
+      </install>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.28.3" to="1.28.4">
+        <item><para>Various introspection annotation
+fixes</para></item>
+        <item><para>Build fixes</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 636348 - Hex boxes are incorrectly scaled
+with non identity cairo scale</para></item>
+          <item><para>Bug 639882 - Heap corruption in font parsing
+with FreeType2 backend</para></item>
+        </items>
+      </change>
+
+      <change from="1.28.2" to="1.28.3">
+        <items name="Bugs fixed">
+          <item><para>Bug 630857 - introspection: Use
+--include-uninstalled</para></item>
+        </items>
+      </change>
+
+      <change from="1.28.1" to="1.28.2">
+        <item><para>Reduce DLL hijack risk and simplify code in
+basic-win32 module</para></item>
+        <item><para>Improve performance on Windows especially for
+non-Latin scripts</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 628497 - Crash in
+pango_layout_line_get_extents at pango-layout.c</para></item>
+          <item><para>Bug 626966 - SIGFPE
+_hb_sanitize_array</para></item>
+          <item><para>Bug 629632 - configure bug</para></item>
+          <item><para>Bug 625807 - approximate character width is 0 on
+pangoft2</para></item>
+        </items>
+      </change>
+
+      <change from="1.28.0" to="1.28.1">
+        <item><para>pango-view now accepts --margin</para></item>
+        <item><para>Various HarfBuzz bug fixes</para></item>
+        <item><para>Build fixes</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 582698 - Support CSS-style margin
+specification</para></item>
+          <item><para>Bug 621612 - VPATH build fix</para></item>
+          <item><para>Bug 605870 - Incorrect shaping for
+Syriac</para></item>
+          <item><para>Bug 457990 - font metrics are not converted to
+user space in cairo backend</para></item>
+          <item><para>Bug 613015 - [HB] Does not sanitize Device
+tables referenced from ValueRecords</para></item>
+        </items>
+      </change>
+
+      <change from="1.27.1" to="1.28.0">
+        <item><para>[HB] Fix leak when duplicating blob</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 611033 - Layout using ATSUI fontmap treats
+absolute font sizes a...</para></item>
+          <item><para>Bug 605655 - Pango 1.26.2 introduces kerning
+bug</para></item>
+          <item><para>Bug 611229 - Pango reads from uninitialized
+memory</para></item>
+          <item><para>Bug 594101 - [Indic] needed character class data
+updates to support unicode 5.1</para></item>
+          <item><para>Bug 345066 - backspace changes independent indic
+characters</para></item>
+          <item><para>Bug 609326 - Complex script shaping failed in
+the FT2 backend on Windows</para></item>
+          <item><para>Bug 604128 - Applications crash when displaying
+Hebrew characters</para></item>
+          <item><para>Bug 608923 - Incorrect/broken ligatures on
+MacOS</para></item>
+          <item><para>Bug 610791 - checks fail for unused documented
+symbols</para></item>
+        </items>
+      </change>
+
+      <change from="1.26.2" to="1.27.1">
+        <item><para>Enable introspection again</para></item>
+        <item><para>Misc HarfBuzz bug fixes</para></item>
+        <item><para>Improve PangoLayout line breaking</para></item>
+        <item><para>Revert usage of CoreText in ATSUI
+backend</para></item>
+        <item><para>Fix FT_Face finalizer call</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 593240 - (pangoosx) Crash / infinite loop
+with Mac OS X</para></item>
+          <item><para>Bug 610183 - Pango doesn't compile with gcc
+3.3.3</para></item>
+          <item><para>Bug 582697 - Add pango-view --pixels
+option</para></item>
+        </items>
+      </change>
+
+      <change from="1.26.1" to="1.26.2">
+        <item><para>Fix non-standard C++ usage</para></item>
+        <item><para>Fix OpenType mark ligation</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 602823 - void function cannot return
+value</para></item>
+          <item><para>Bug 602660 - [HB] don't use flexible
+arrays</para></item>
+          <item><para>Bug 602408 - Invalid C++ code breaks compile
+with Sun C++ Compiler</para></item>
+        </items>
+      </change>
+
+      <change from="1.26.0" to="1.26.1">
+        <item><para>Finally fix GPOS positioning and kerning with
+non-identity cairo matrices</para></item>
+        <item><para>[HB] Fix lookup_flag ignoring</para></item>
+        <item><para>Fix leak with non-mmapped fonts</para></item>
+        <item><para>Allow using uninstalled glib</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 341481 - pangocairo kerning problem with
+nonidentity scaling</para></item>
+          <item><para>Bug 587768 - [patch] Don't build pango-view
+twice</para></item>
+          <item><para>Bug 594101 - [Indic] character class data
+updates to support unicode 5.1</para></item>
+          <item><para>Bug 596837 - Typo in pango_cairo_show_layout
+documentation</para></item>
+        </items>
+      </change>
+
+      <change from="1.25.6" to="1.26.0">
+        <item><para>New stable release series</para></item>
+        <item><para>Bugs fixed: Bug 595539 - Regressions in rendering
+certain Thai sequences</para></item>
+      </change>
+
+      <change from="1.25.5" to="1.25.6">
+        <item><para>Fix a couple of array overflow bugs</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 593240 - updating pango to latest git master
+makes things crash</para></item>
+          <item><para>Bug 593231 - &lt; c99 compiler dislikes
+ValueRecord</para></item>
+        </items>
+      </change>
+
+      <change from="1.25.4" to="1.25.5">
+        <item><para>Minor HarfBuzz code shuffling</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 592484 -  invalid write in HB</para></item>
+          <item><para>Bug 592194 -  Fix missing _SC_PAGE_SIZE
+macro</para></item>
+        </items>
+      </change>
+
+      <change from="1.25.3" to="1.25.4">
+        <item><para>Fix various possible overflows in
+HarfBuzz</para></item>
+        <item><para>Improve HB font sanitizing</para></item>
+        <item><para>Improved win32 performance</para></item>
+        <item><para>Really fix ming32 build issues</para></item>
+        <item><para>Re-enable introspection</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 592131 -  Add AM_SILENT_RULES</para></item>
+          <item><para>Bug 592036 - integer overflow bug causes
+misrendering of Nepali characters</para></item>
+          <item><para>Bug 591511 - hh-blob.c does not compile using
+mingw on windows</para></item>
+        </items>
+      </change>
+
+      <change from="1.25.2" to="1.25.3">
+        <item><para>Fix couple of crashers</para></item>
+        <item><para>Enforce -fno-exceptions better, should fix build
+issues for distros on x86-64.</para></item>
+        <item><para>Call mprotect() only when available.</para></item>
+        <item><para>New public API:
+pango_glyph_item_get_logical_widths()</para></item>
+        <item><para>Remove G_GNUC_PURE attr from
+pango_glyph_string_get_width()</para></item>
+        <item><para>Fix buffer corruption in HarfBuzz</para></item>
+        <items name="Bugs fixed">
+          <item><para>Bug 591413 needs to link with
+libstdc++</para></item>
+          <item><para>Bug 591511 hb-blob.c does not compile using
+mingw on windows</para></item>
+          <item><para>Bug 591557 [HB] crash scrolling the evolution
+message list</para></item>
+          <item><para>Bug 591576 crashed with SIGSEGV at
+pango</para></item>
+          <item><para>Bug 591465 Gimp crashes upon opening the font
+selection dialog</para></item>
+        </items>
+      </change>
+
+      <change from="1.25.1" to="1.25.2">
+        <item><para>Tweak C++ compiler options.  If you get link
+errors with gcc on x86-64 about __gxx_personality_v0(), make sure your
+CXXFLAGS does not have -fexceptions.  This will be fixed in Pango
+itself later.</para></item>
+        <item><para>Fix crasher with gzipped fonts.</para></item>
+        <item><para>Bug 591409 crash in firefox.  Handle non-mmapped
+FT_Face</para></item>
+      </change>
+
+      <change from="1.24.5" to="1.25.1">
+        <item><para>Merge harfbuzz-ng: brand new OpenType Layout
+engine Currently is not very portable.  Will be fixed as reports come
+in.</para></item>
+        <item><para>Port to ATSUI backend to use CoreText instead of
+ATS</para></item>
+        <item><para>New public API:
+pango_gravity_get_for_script_and_width()</para></item>
+        <items name="Misc bug fixes">
+          <item><para>Bug 590042 pango-view.1 manpage should not be
+gzipped</para></item>
+          <item><para>Bug 410169 gravity problem with Common
+chars</para></item>
+          <item><para>Bug 589113 Some characters rotated incorrectly
+in vertical text</para></item>
+          <item><para>Bug 582851 Little fix for compiling with
+Cygwin</para></item>
+          <item><para>Bug 588060 Fonts missing on Cygwin</para></item>
+        </items>
+      </change>
+
+      <change from="1.24.4" to="1.24.5">
+        <item><para>Build introspection again</para></item>
+        <items name="Misc bug fixes">
+          <item><para>Bug 589133 Firefox 3.5 complains about invalid
+weak references</para></item>
+          <item><para>Bug 585806 crash during
+pango_fc_font_map_shutdown</para></item>
+          <item><para>Bug 588678 pango crash: install a new theme
+from</para></item>
+        </items>
+      </change>
+
+      <change from="1.24.3" to="1.24.4">
+        <items name="Misc bug fixes">
+          <item><para>Bug 586814 Crashes related to fontmap destruction
+after upgrade</para></item>
+        </items>
+      </change>
+
+      <change from="1.24.2" to="1.24.3">
+        <item><para>Fix build with new automake</para></item>
+        <items name="Misc bug fixes">
+          <item><para>Bug 585337 Fails to install: install: will not
+overwrite just-created</para></item>
+          <item><para>Bug 585164 'man preload' shows man page for
+pango-view</para></item>
+          <item><para>Bug 584328 Persian sample text is not
+good</para></item>
+          <item><para>Bug 583250
+pango_font_metrics_get_approximate_char_width is wrong when
+LANG=fa_IR</para></item>
+        </items>
+      </change>
+
+      <change from="1.24.1" to="1.24.2">
+        <items name="Misc bug fixes">
+          <item><para>Bug 580987 SIGFPE in
+pango_glyph_string_index_to_x</para></item>
+          <item><para>Bug 580273 Font metrics functions incorrectly
+listed as reporting point sizes</para></item>
+          <item><para>Bug 579694 Cygwin parallel-build
+patch</para></item>
+          <item><para>Bug 578944 pango-1.24.1 fails its
+testsuite</para></item>
+          <item><para>Bug 578935 Syntax error (missing semicolon) in
+pango/pangowin32-fontmap.c</para></item>
+        </items>
+      </change>
+
+      <change from="1.24.0" to="1.24.1">
+        <item><para>Fix a couple of crashers</para></item>
+        <item><para>Fix minor pangofc API semantics
+breakage</para></item>
+        <item><para>Better handle SFNT fonts in dfont
+containers</para></item>
+        <item><para>Improved docs</para></item>
+        <item><para>Improved Indic shaper for new Unicode 5.1
+characters</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 577952 Error loading {GDEF,GSUB,GPOS} table
+0x6EAD</para></item>
+          <item><para>Bug 578336 ABI breakage from 1.22 to 1.24 in
+fontmap field of PangoFcFont</para></item>
+          <item><para>Bug 556132 gnome-panel crashed with SIGSEGV in
+g_cclosure_marshal_VOID__BOXED()</para></item>
+          <item><para>Bug 571291 Unicode 5.1 support in pango - Indic
+Lanuages</para></item>
+          <item><para>Bug 576298 Fails to link pango-view if
+--without-x is specified but cairo has X11 support</para></item>
+        </items>
+      </change>
+
+      <change from="1.23.0" to="1.24.0">
+        <items name="pango-view improvements">
+          <item><para>pango-view -q now works without a X
+server.</para></item>
+          <item><para>Ability to save to PS, EPS, PDF, and SVG files.
+Filetype is detected from output file extension.</para></item>
+          <item><para>New options --foreground, --background, and
+--annotate.</para></item>
+          <item><para>Now installs a manual page, thanks to
+help2man.</para></item>
+        </items>
+
+        <items name="PangoFc API changes">
+          <item><para>PangoFcFont now has a "fontmap" property that
+subclasses can use at construction time to setup the font-&gt;fontmap
+link.</para></item>
+          <item><para>New backend-public API:
+pango_fc_font_map_find_decoder()</para></item>
+        </items>
+
+        <item><para>Misc optimizations</para></item>
+        <item><para>Build fixes</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 547963 man page for pango-view</para></item>
+          <item><para>Bug 502804 pango-view or pangocairo-view option
+to annotate</para></item>
+          <item><para>Bug 502801 per-backend pango-view
+options</para></item>
+          <item><para>Bug 502805 pango-view option for
+foreground/background color</para></item>
+          <item><para>Red Hat Bug 490331 -  Crash of galeon in
+libpango</para></item>
+          <item><para>Bug 523166 pango-view opens display even when
+invoked with -q</para></item>
+          <item><para>Bug 567160 Share cmap cache between
+PangoFcFont's of the same face</para></item>
+          <item><para>Red Hat Bug 487593 -  crash changing language in
+gdm</para></item>
+          <item><para>Bug 572662 Remove deprecated GTK+
+symbols</para></item>
+          <item><para>Bug 572529 Poor -I ordering can break
+build</para></item>
+        </items>
+      </change>
+
+      <change from="1.22.4" to="1.23.0">
+        <item><para>Change the PangoFc font loading API to allow for
+lazy loading of fonts.</para></item>
+        <item><para>Add private PangoFcFontset that loads fallback
+fonts as needed.</para></item>
+        <item><para>Call FcFontMatch() and only if fallback fonts are
+needed call FcFontSort().</para></item>
+        <item><para>Optimize HarfBuzz number of malloc
+calls</para></item>
+        <item><para>Don't malloc megs of unused memory in
+HarfBuzz</para></item>
+        <item><para>Print-out, and parse, numeric styles correctly.
+Things like "DejaVu Sans weight=100" parse as font description
+now.</para></item>
+        <items name="New public API">
+          <item><para>Add two new public macros:</para>
+          <unorderedlist>
+            <item><para>PANGO_ATTRIBUTE_INDEX_FROM_TEXT_BEGINNING</para></item>
+            <item><para>PANGO_ATTRIBUTE_INDEX_TO_TEXT_END</para></item>
+          </unorderedlist></item>
+          <item><para>Add new public enum values:</para>
+          <unorderedlist>
+            <item><para>PANGO_WEIGHT_BOOK</para></item>
+            <item><para>PANGO_WEIGHT_ULTRAHEAVY</para></item>
+            <item><para>PANGO_WEIGHT_THIN</para></item>
+            <item><para>PANGO_WEIGHT_MEDIUM</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <item><para>Misc bug fixes</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 569763 pango doesn't like font descriptions
+without family!</para></item>
+          <item><para>Bug 560792 Make PangoLayoutLine with
+line-&gt;layout==NULL renderable</para></item>
+          <item><para>Bug 567392 Abiword crashes in pango when opening
+document with certain locales</para></item>
+          <item><para>Bug 566727 PangoFontsetLazy</para></item>
+          <item><para>Bug 567165 Apply all pattern
+matrices</para></item>
+          <item><para>Bug 567934 Add introspection support inside
+pango</para></item>
+          <item><para>Bug 549532 Correction to the sample string for
+Hindi in pango-language-sample-table.h</para></item>
+          <item><para>Bug 566726 Minor optimization</para></item>
+          <item><para>Bug 566941 Add
+PANGO_ATTRIBUTE_INDEX_FROM_TEXT_BEGINNING and
+PANGO_ATTRIBUTE_INDEX_TO_TEXT_END</para></item>
+          <item><para>Bug 551469 Fold '@' to '-' when parsing
+PangoLanguages</para></item>
+          <item><para>Bug 328206 Update/remove some old
+files</para></item>
+          <item><para>Bug 166709 Handle font variants more
+consistently</para></item>
+          <item><para>Bug 166676
+pango_fc_font_map_finalize</para></item>
+          <item><para>Bug 164001 pango-querymodules doesn't work
+uninstalled on win32</para></item>
+          <item><para>Bug 384362 pango can't select some font
+styles</para></item>
+          <item><para>Bug 168085 numeric styles in
+pango_font_description_to_string()</para></item>
+          <item><para>Bug 529591 Code related to malayalam is
+misplaced.</para></item>
+          <item><para>Bug 515807 Don't bind modules
+lazily</para></item>
+          <item><para>Bug 512662 Update check.docs for
+pango-undeclared.txt</para></item>
+          <item><para>Bug 565644 Maybe pango_font_descriptions_free is
+deprecated</para></item>
+          <item><para>Bug 469049 Fix all compiler
+warnings</para></item>
+          <item><para>Bug 565379 pango_font_description_better_match
+some style attributes of old_match are not checked</para></item>
+          <item><para>Bug 564877 pango-engine.h: PANGO_MODULE_PREFIX
+and G_MODULE_EXPORT</para></item>
+        </items>
+      </change>
+
+      <change from="1.22.3" to="1.22.4">
+        <item><para>Misc bug fixes</para></item>
+        <item><para>Improved docs</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 564644 Not complete description of the
+pango_font_description_better_match function</para></item>
+          <item><para>Bug 563898 Generated output is not
+deterministic</para></item>
+          <item><para>Bug 563803 pango_renderer_finalize fails to call
+parent finalize</para></item>
+          <item><para>Bug 499626 Space should be optional after comma
+in PangoFontDescription input string</para></item>
+          <item><para>Bug 499624 Spaces around commas in
+PangoFontDescription family name should be trimmed</para></item>
+          <item><para>Bug 563557 set g_get_prgname() in fc
+pattern</para></item>
+          <item><para>Bug 563356 The input area of firefox and the
+blank width after text in gnome-menu was stretched too wide, under
+pango-1.22.3</para></item>
+          <item><para>Bug 562574 Pangocariowin32 is leaking every
+cairo font it ever creates</para></item>
+        </items>
+      </change>
+
+      <change from="1.22.2" to="1.22.3">
+        <item><para>Minor bug fix with matrix operations</para></item>
+        <item><para>Fix build with older compilers</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 561779 incorrect calculations in
+pango_matrix_concat implementation</para></item>
+          <item><para>Bug 560730 pango 1.22.2 build failure on Solaris
+10, too many array initializers in pango-language.c</para></item>
+          <item><para>Bug 561740 Use stack allocation for
+thai_engine_break</para></item>
+        </items>
+      </change>
+
+      <change from="1.22.1" to="1.22.2">
+        <item><para>Fix crasher when a PangoFcFontMap was freed before
+its fonts.</para></item>
+        <item><para>Mark monospace fonts as monospace in the
+pangoatsui backend.</para></item>
+        <item><para>Fix font description parsing to better handle
+"normal".</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 558254 Internal reference handling messed
+up</para></item>
+          <item><para>Bug 558107 is_monospace always returns FALSE in
+pangoatsui</para></item>
+          <item><para>Bug 557620 pango_font_description_from_string
+not correct</para></item>
+        </items>
+      </change>
+
+      <change from="1.22.0" to="1.22.1">
+        <item><para>Fix crasher when freeing
+PangoLayoutIter's</para></item>
+        <item><para>Fix loading of bogus OpenType anchor
+tables</para></item>
+        <item><para>Fix OpenType CursiveChain
+positioning</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 528272 "Error loading GPOS table 5503"
+when using katakana characters</para></item>
+          <item><para>Bug 552107 Small libtool fixes</para></item>
+          <item><para>Bug 539623 document that pango_color_parse
+accepts NULL</para></item>
+          <item><para>Bug 555219 Memory leak when using
+pango_layout_iter_copy</para></item>
+          <item><para>Bug 553345 Japanese pangram.</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.6" to="1.22.0">
+        <item><para>Require cairo &gt;= 1.7.6.</para></item>
+        <item><para>Improved Romanian sample text</para></item>
+        <item><para>Don't use deprecated glib win32 API</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 552993 Romanian pangram</para></item>
+          <item><para>Bug 551865 Can't change justification of a
+PangoLayout after first draw</para></item>
+          <item><para>Bug 551416 pangowin32-fontcache.c: argument is
+different type</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.5" to="1.21.6">
+        <item><para>Win32 cross-compiling build system
+fix</para></item>
+        <item><para>Improve language sample strings.</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 550659 configure.in ignores a win32
+backend only scenario</para></item>
+          <item><para>Bug 549758 Swedish font sample text could use
+punctuation</para></item>
+          <item><para>Bug 549522 New pt_BR pangram for
+pango</para></item>
+          <item><para>Bug 549520 fr sample string</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.4" to="1.21.5">
+        <item><para>Make the reference the font-&gt;fontmap reference
+weak.  Previously all fontmaps had circular references to their fonts
+and back, making them leak instead of being freed upon finalization.
+Now they all clean after themselves.  There's a slight semantic change
+though, that a PangoFont does not keep its fontmap alive anymore, so
+that's up to the user.  But then again, finalizing fontmaps is not a
+good idea to begin with.</para></item>
+        <item><para>Improve pango_language_get_sample_string() to add
+language sample texts that are actually usable.  Compiled from a
+variety of sources. See pango-language-sample-table.h.</para></item>
+        <item><para>In pango_language_get_sample_string() use default
+language if provided language is NULL.</para></item>
+        <item><para>Update OpenType language-system tags to OpenType
+1.5 draft intersected with ISO639-3 of 2008/08/04.</para></item>
+        <items name="New API additions">
+          <item><para>Add a minor new public API:
+pango_language_get_scripts()</para>
+          <para>This is what pango_language_includes_script()
+has been using internally.  Previously one had to call that function
+over all possible script values to determine which scripts a language
+uses.  The new API makes that much easier.</para></item>
+        </items>
+
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 549003 pango_layout_set_height(): layout
+should not be cleared unless required</para></item>
+          <item><para>Bug 143542 PangoFT2Fontmap leak</para></item>
+          <item><para>Bug 314094 Get rid of poutpourri default
+sample string</para></item>
+          <item><para>Bug 473806 Improve
+pango_language_get_sample_string()</para></item>
+          <item><para>Bug 473805 Add API enumerating scripts for a
+language</para></item>
+          <item><para>Bug 470895 Improve OpenType language tag
+list</para></item>
+          <item><para>Bug 547432 Deprecation of
+pango_(backend)_font_map_create_context() not clean</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.3" to="1.21.4">
+        <item><para>Use cairo_show_text_glyphs() if target cairo
+surface supports that. This is done by adding a new PangoRenderer
+method, draw_glyph_item(). Custom PangoRenderer implementations that
+delegate to pango_cairo may want to implement this method if they
+target PDF files.</para></item>
+        <item><para>Requires cairo &gt;= 1.7.4 now</para></item>
+        <item><para>Win32 build improvements</para></item>
+        <item><para>Justify lines broken by U+2028 LINE
+SEPARATOR</para></item>
+        <item><para>Various small fixes and improvements</para></item>
+        <items name="New API additions">
+          <item><para>New public API:</para>
+          <unorderedlist>
+            <item><para>PangoRenderer::draw_glyph_item()</para></item>
+            <item><para>pango_renderer_draw_glyph_item()</para></item>
+          </unorderedlist>
+          <para>Make layout and layout-line default renderers go
+through draw_glyph_item(), which then by default falls back to
+draw_glyphs().  The advantage in draw_glyph_item() is that it has
+access to the text and cluster information.</para></item>
+          <item><para>New public API, for iterating a
+PangoGlyphItem:</para>
+          <unorderedlist>
+            <item><para>PangoGlyphItemIter</para></item>
+            <item><para>PANGO_TYPE_GLYPH_ITEM_ITER</para></item>
+            <item><para>pango_glyph_item_iter_copy()</para></item>
+            <item><para>pango_glyph_item_iter_free()</para></item>
+            <item><para>pango_glyph_item_iter_init_start()</para></item>
+            <item><para>pango_glyph_item_iter_init_end()</para></item>
+            <item><para>pango_glyph_item_iter_next_cluster()</para></item>
+            <item><para>pango_glyph_item_iter_prev_cluster()</para></item>
+          </unorderedlist></item>
+          <item><para>Make the following previously backend-only API
+public:</para>
+          <unorderedlist>
+            <item><para>pango_context_new()</para></item>
+            <item><para>pango_context_set_font_map()</para></item>
+          </unorderedlist>
+          <para>This also means that bindings are recommended
+to allow instantiation of pango.Context.  This was discouraged
+before.</para></item>
+          <item><para>New public API:
+pango_font_map_create_context()</para>
+          <para>This is equivalent to pango_context_new() followed
+by an immediate pango_context_set_font_map().  This change also
+deprecates various per-fontmap-type context constructors:</para>
+          <unorderedlist>
+            <item><para>Deprecate
+pango_cairo_font_map_create_context().</para></item>
+            <item><para>Deprecate
+pango_fc_font_map_create_context().</para></item>
+            <item><para>Deprecate
+pango_ft2_font_map_create_context().</para></item>
+            <item><para>Deprecate
+pango_win32_get_context().</para></item>
+            <item><para>Deprecate
+pango_xft_get_context().</para></item>
+            <item><para>Deprecate pango_x_get_context().</para></item>
+          </unorderedlist>
+          <para>Language bindings are encouraged to bind
+pango.Fontmap.create_context() and remove the create_context() method
+from subclass implementations.</para></item>
+        </items>
+
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 547303 pango_layout_get_cursor_pos crashes
+on certain text buffers</para></item>
+          <item><para>Fedora Bug 457883 - Sindhi Characters are not
+supported in pango [U+097B-U+097F]</para></item>
+          <item><para>Bug 441654 prefix fails when more than one
+base characters (as conjuncts) present after a half form the next
+prefix renders incorrectly</para></item>
+          <item><para>Bug 546534
+pango_cairo_font_map_set_default(NULL) errs</para></item>
+          <item><para>Bug 431394 Use pango_glyph_item_iter in more
+places</para></item>
+          <item><para>Bug 377948 Make pango_glyph_item_iter
+public</para></item>
+          <item><para>Bug 472625 Add draw_glyph_item() to
+PangoRenderer</para></item>
+          <item><para>Bug 540592 Crash in HB_GSUB_Apply_String with
+Linux-Libertine font</para></item>
+          <item><para>Bug 540036 Doesn't link to
+fontconfig</para></item>
+          <item><para>Bug 380094 Fix split matra rendering bug for
+Kannada language</para></item>
+          <item><para>Bug 536017 Remove SF_MPRE_FIXUP from Sinhala
+script flags</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.2" to="1.21.3">
+        <item><para>Various small fixes and
+improvements</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 538661 Improve
+pango_cairo_context_update_context()</para></item>
+          <item><para>Bug 536190 Make
+pango_fc_font_map_clear_cache() public?</para></item>
+          <item><para>Bug 537258 Add a pango_language_to_string()
+function</para></item>
+          <item><para>Bug 537257 pango_language_from_string(NULL)
+not happy</para></item>
+          <item><para>Bug 537186 Make PangoFcFont pattern property
+readable</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.1" to="1.21.2">
+        <item><para>Various win32 font handling
+improvements</para></item>
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 510299 - OpenType font variants are broken
+with ATSUI/Cairo</para></item>
+          <item><para>Bug 436363 - Bold and Bold Italic style of
+MS-Mincho font are not listed in GtkFontSelection</para></item>
+          <item><para>Bug 523193 - Vista Hebrew, CJK fonts to builtin
+win32 pango aliases</para></item>
+        </items>
+      </change>
+
+      <change from="1.21.0" to="1.21.1">
+        <item><para>Partial work to make pango_break() exactly
+follow Unicode TR#14 and TR#29. The Grapheme Boundaries and Word
+Boundaries now work.  For word boundaries, a new member was added to
+PangoLogAttr.  Sentence Boundaries and Line Breaks to follow in the
+next release.</para></item>
+        <item><para>Err if no cairo font backends
+found</para></item>
+        <item><para>Misc bug fixes</para></item>
+        <items name="New public API">
+          <item><para>Add new PangoLogAttr member is_word_boundary,
+that implements UAX#29's Word Boundaries semantics.  The is_word_start
+and is_word_end members will change implementation later on to be
+consitent with the word boundaries.</para></item>
+        </items>
+
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 531242 Leak when calculating win32 font
+coverage</para></item>
+          <item><para>Bug 530757 Docs build breaks because of hash
+sign in URL in &lt;ulink...&gt;</para></item>
+          <item><para>Bug 530685 Pango no longer using cairo as a
+backend as of pango 1.19.4</para></item>
+          <item><para>Part of Bug 97545 Make pango_default_break
+follow Unicode TR #29</para></item>
+        </items>
+      </change>
+
+      <change from="1.20.x" to="1.21.0">
+        <item><para>Require cairo &gt;= 1.6.4.</para></item>
+        <item><para>Write out HarfBuzz errors as hex.</para></item>
+        <item><para>Add a section in the docs for bidirectional
+text.</para></item>
+        <item><para>Improved hex-box rendering in the cairo
+backend.</para></item>
+        <item><para>Add some aliases for &lt;span&gt; tag
+attributes.</para></item>
+        <item><para>Preserve current-point around pango_cairo_*
+functions.</para></item>
+        <items name="New public API">
+          <item><para>pango_attr_type_get_name()</para></item>
+          <item><para>enum PangoBidiType;</para></item>
+          <item><para>pango_bidi_type_get_type()</para></item>
+          <item><para>pango_bidi_type_for_unichar()</para></item>
+          <item><para>pango_layout_get_baseline()</para></item>
+          <item><para>pango_cairo_create_context()</para></item>
+          <item><para>pango_cairo_font_map_set_default()</para></item>
+        </items>
+
+        <items name="Bugs fixed in this release">
+          <item><para>Bug 515432 Add function to get bidirectional
+character type of a unicode character</para></item>
+          <item><para>Bug 517119 Add
+pango_cairo_create_context()</para></item>
+          <item><para>Bug 404416 pango_layout_get_baseline or
+something</para></item>
+          <item><para>Bug 474706 cairo hexbox looks
+ugly</para></item>
+          <item><para>Bug 490669 add some &lt;span&gt; attribute
+aliases</para></item>
+          <item><para>Bug 501334 Make pango_cairo_[show_]*[_path]()
+functions preserve current point</para></item>
+          <item><para>Bug 514617 Add
+pango_cairo_font_map_set_default()</para></item>
+          <item><para>Bug 511183 Add
+pango_attr_type_get_name()</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The Pango Perl module is available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
