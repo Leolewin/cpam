@@ -1,0 +1,1032 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="texlive" version="2011" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}0705-source</build-name>
+
+    <install-name>${SB_PROG_NAME}2011</install-name>
+
+    <sources>
+      <source checksum="dfbd2771f636a0ada03dc5f0e2a538f4"
+        checksum-type="md5" size="154109014"
+        path="src/texlive-20110705-source.tar.bz2"/>
+      <patch checksum="a06a00d2e7da9d861519c09829c5bba7"
+        checksum-type="md5" size="1435"
+        path="src/texlive-20110705-source.off-by-one-fix-for-enctex-xetex.patch"/>
+      <patch checksum="4bb808378eae799a06fe2aded7a41d6e"
+        checksum-type="md5" size="2772"
+        path="src/texlive-20110705-source.synctex-coordinate-fix.patch"/>
+      <patch checksum="0ef16ec1bfab176d36be7de5ed66d620"
+        checksum-type="md5" size="5881"
+        path="src/texlive-20110705-source.r24159.patch"/>
+      <patch checksum="beafb7991df713e13832771b518a0018"
+        checksum-type="md5" size="38029"
+        path="src/texlive-20110705-source.tww.patch"/>
+      <patch checksum="3da683d890b61ccea4c10ba8576550b2"
+        checksum-type="md5" size="28350"
+        path="src/texlive-20110705-source.icu.patch"/>
+      <patch checksum="8fb6941c401a6261b93b32884c90e29c"
+        checksum-type="md5" size="10811"
+        path="src/texlive-20110705-source.texmfdir.patch"/>
+      <patch checksum="ccc459ef0ebebb884aba6a2a6f549233"
+        checksum-type="md5" size="39033775"
+        path="src/texlive-20110705-source.auto.patch"/>
+      <source checksum="ed7b558be35adf00a6c2e69609cd679a"
+        checksum-type="md5" size="1268839260"
+        path="src/texlive-20110705-texmf.tar.xz"
+        noop="1" var="MACROS"/>
+      <source checksum="6b554b0534f58ad7e7f0b0dc6d072a2c"
+        checksum-type="md5" size="299228"
+        path="src/texlive-20110705-extra.tar.xz"
+        noop="1" var="EXTRA"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="ghostscript" var="GS"
+        install-name="ghostscript90"
+        add-path="prepend">v&gt;=9.01</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="tar" install-name="tar12" add-path="prepend"
+        type="build">v&gt;=1.26</depend>
+      <depend program="xz" add-path="prepend"
+        type="build">v==5.0.3</depend>
+      <depend var="TEXLIVEP" install-name="texlive2011p"
+        set-var-only="1"/>
+      <depend program="Xaw3d" var="LIBXAW3D"
+        install-name="libxaw3d15">v&gt;=1.5e</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="flex" add-path="prepend">v&gt;=2.5.35</depend>
+      <depend program="freetype" var="LIBTTF" install-name="libttf24"
+        add-path="prepend">v&gt;=2.4.6</depend>
+      <depend program="gd" var="LIBGD"
+        install-name="libgd20">v&gt;=2.0.35</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="poppler" var="LIBPOPPLER"
+        install-name="libpoppler016">v&gt;=0.16.7</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib51">v&gt;=5.1.2</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="ncurses" var="NCURSES">v==5.7</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+export PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBPOPPLER_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig:"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11.[01]*)
+  # Compiler crashes building maket1font.cc with +Oentrysched
+  CC=cc CFLAGS="+O2 +ESlit +Ofltacc +DAportable \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Ofltacc +ESlit +DAportable \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0 -D_PTHREADS"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--x-libraries=/usr/X11R6/lib" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--x-libraries=/usr/X11R6/lib64" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings -nodtk"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local -D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--without-graphite" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+esac
+
+# Large files - we need to put them in CPPFLAGS so that the
+# subprojects are all configured the same
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}} \
+-D_LARGE_FILES=1 \
+-D_FILE_OFFSET_BITS=64 \
+-D_LARGEFILE_SOURCE \
+-D_REENTRANT \
+-D__EXTENSIONS__"
+
+# Use included zziplib,  graphite, teckit 
+# Use our freetype2 and included freetype1
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_LIBXAW3D_INC} -I${SB_VAR_FCPACKAGE_INC} \
+-I${SB_VAR_XPM_INC} ${CPPFLAGS+${CPPFLAGS}}" CXX="${CXX:-g++}" \
+CXXFLAGS="${CXXFLAGS:--O2}" LDFLAGS="-L${SB_VAR_LIBXAW3D_LIB} \
+-L${SB_VAR_LIBZ_LIB} -L${SB_VAR_XPM_LIB} \
+${CC_LD_RT}${SB_VAR_LIBXAW3D_LIB}:${SB_VAR_T1LIB_LIB}:\
+${SB_VAR_LIBGD_LIB}:${SB_VAR_LIBZ_LIB}:${SB_VAR_XPM_LIB}:\
+${SB_VAR_LIBPNG_LIB} ${LDFLAGS+${LDFLAGS}}" \
+INSTALL="${SB_PATH_INSTALL} -c" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:${SB_VAR_LIBZ_LIB}/pkgconfig:\
+${SB_VAR_LIBPOPPLER_LIB}/pkgconfig" \
+--with-banner-add='/TWW' \
+--disable-native-texlive-build \
+--disable-multiplatform --disable-cxx-runtime-hack \
+--enable-ipc --without-texinfo \
+--disable-dialog --disable-t1utils --disable-psutils \
+--disable-multiplatform --without-cxx-runtime-hack \
+--datadir=${SB_VAR_TEXLIVEP} --with-system-ncurses \
+--with-system-freetype2 --with-system-poppler \
+--with-system-libpng --with-system-zlib \
+--with-system-t1lib --with-system-gd --enable-shared --enable-static \
+--with-system-libgs --with-gs=${SB_VAR_GS}/bin/gs \
+--with-libgs-includes=${SB_VAR_GS_INC} \
+--with-libgs-libdir=${SB_VAR_GS_LIB} \
+--with-zlib-libdir=${SB_VAR_LIBZ_LIB} \
+--with-zlib-includes=${SB_VAR_LIBZ_INC} \
+--with-t1lib-libdir=${SB_VAR_T1LIB_LIB} \
+--with-t1lib-includes=${SB_VAR_T1LIB_INC} \
+--with-gd-libdir=${SB_VAR_LIBGD_LIB} \
+--with-gd-includes=${SB_VAR_LIBGD_INC} \
+--with-xdvi-x-toolkit=xaw3d --with-mktexfmt-default \
+--without-texi2html --without-texinfo \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--cache-file=/dev/null \
+--disable-a4 \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--disable-dependency-tracking --prefix=${SB_INSTALL_PREFIX}
+
+# Need to build a kpathsea that can find texmf.cnf
+${SB_PATH_SED} -i -e "\
+s|TEXMFROOT =.*|TEXMFROOT = ${SB_VAR_TEXLIVEP}|;\
+s|TEXMFLOCAL =.*|TEXMFLOCAL = ${SB_VAR_TEXLIVEP}/texmf-local|;\
+s|TEXMFCNF = {|TEXMFCNF = {${SB_VAR_TEXLIVEP},|;" \
+texk/kpathsea/texmf.cnf
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  ${SB_PATH_SED} -i -e "\
+s|^luatex_LDFLAGS =.*|luatex_LDFLAGS = -bexpfull|" \
+texk/web2c/Makefile.in ;;
+esac
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake all
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+gmake check
+
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -d -m755 ${SB_VAR_TEXLIVEP}
+
+# Unpack texmf tarball
+# We're using installed tar and xz here on purpose.
+(cd ${SB_VAR_TEXLIVEP}
+ gtar -x --strip-components=1 -J -f ${SB_SRC_MACROS}
+
+ # Remove problematic files with license clauses that do not allow for
+ # paid distribution
+ rm -rf texmf-dist/doc/fonts/fontinst/examples/eurofont \
+ texmf-dist/doc/latex/nonfloat \
+ texmf-dist/tex/latex/nonfloat \
+ texmf-dist/source/latex/nonfloat \
+ texmf-dist/doc/mex \
+ texmf-dist/tex/mex \
+ texmf-dist/source/mex \
+ texmf-dist/doc/fonts/pl \
+ texmf-dist/dvips/pl \
+ texmf-dist/fonts/enc/dvips/pl \
+ texmf-dist/fonts/type1/public/pl \
+ texmf-dist/fonts/map/dvips/pl \
+ texmf-dist/fonts/source/public/pl \
+ texmf-dist/fonts/tfm/public/pl \
+ texmf-dist/fonts/afm/public/pl \
+ texmf-dist/tex4ht/ht-fonts/unicode/pl \
+ texmf-dist/tex4ht/ht-fonts/alias/pl)
+
+# Install will overwrite some of the -texmf that just got installed
+# from the MACROS tarball.
+gmake install
+
+# All the symlinks from bin/ are wrong, fix them
+gmake -C texk/tetex run-texlinks
+
+gmake -C texk/texlive/linked_scripts install-links \
+REL=../../$(basename ${SB_VAR_TEXLIVEP})
+
+# add utils/psutils here if not disabled
+for _dir in texk/tetex texk/tex4htk utils/ps2eps \
+utils/chktex; do
+  gmake -C ${_dir} make-links TYPE=shell EXT=sh \
+    REL=../../$(basename ${SB_VAR_TEXLIVEP}) 
+  gmake -C ${_dir} make-links TYPE=perl EXT=pl \
+    REL=../../$(basename ${SB_VAR_TEXLIVEP}) 
+  gmake -C ${_dir} make-links TYPE=lua EXT=lua \
+    REL=../../$(basename ${SB_VAR_TEXLIVEP})
+done
+
+# Use our perl
+(cd ${SB_INSTALL_PREFIX}/bin
+ for _plscript in purifyeps deweb fixscribeps pdfannotextractor \
+ pdfatfi latexmk latexdiff pfm2kpx extractres vpl2vpl \
+ fixpsditps tlmgr fixtpps texdef fixfmps vpl2ovp mkt1font \
+ fixpspps rpdfcrop texdirflatten mathspic ot2kpx psmerge \
+ texloganalyser fixdlsrps fixwpps afm2afm bundledoc texdiff \
+ sty2dtx latex2man findhyph mkgrkindex perltex showglyphs \
+ ulqda updmap pkfix-helper texdoctk makeglossaries e2pall \
+ mkjobtexmf fixwfwps latexdiff-vc a2ping includeres \
+ svn-multi fixwwps pdfcrop cmap2enc latexrevise autoinst \
+ texcount mk4ht font2afm authorindex arlatex splitindex \
+ fragmaster fig4latex ps2eps; do
+   test -f ${_plscript} && \
+   ${SB_PATH_SED} -i 1c"#!${SB_VAR_PERL}/bin/perl" ${_plscript}
+ done)
+
+# install texinfo source files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo/web2c \
+${_docdir}/texinfo/dvipng ${_docdir}/texinfo/kpathsea \
+${_docdir}/texinfo/dvips ${_docdir}/texinfo/dvips/contrib \
+${_docdir}/texinfo/latex
+(cd texk
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 dvipng/doc/dvipng.help \
+ dvipng/doc/dvipng.texi dvipng/doc/install.texi dvipng/doc/macros.texi \
+ dvipng/doc/readme.texi ${_docdir}/texinfo/dvipng
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 dvipsk/dvips.texi \
+ ${_docdir}/texinfo/dvips
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 dvipsk/contrib/config.proto \
+ ${_docdir}/texinfo/dvips/contrib
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 kpathsea/doc/bugs.texi \
+ kpathsea/doc/hier.texi kpathsea/doc/install.texi \
+ kpathsea/doc/kpathsea.texi kpathsea/doc/unixtex.texi \
+ ${_docdir}/texinfo/kpathsea
+ ${SB_PATH_INSTALL} -m 644 -o root -g 0 web2c/doc/install.texi \
+ web2c/tests/just.texi web2c/doc/ref.txi web2c/doc/web2c.texi \
+ ${_docdir}/texinfo/web2c)
+
+rm -rf /var/tmp/texfonts
+${SB_INSTALL_PREFIX}/bin/texhash
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${SB_VAR_TEXLIVEP}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license module="freetype">
+        <para>The FreeType Project LICENSE</para>
+        <para>2000-Feb-08</para>
+        <para>Copyright 1996-2002 by</para>
+        <para>David Turner, Robert Wilhelm, and Werner Lemberg</para>
+        <para>Minor editings 2001-Mar-01</para>
+        <para>Introduction</para>
+        <para>The FreeType  Project is distributed in  several archive
+packages; some of them may contain, in addition to the FreeType font
+engine, various tools and  contributions which rely on, or  relate to,
+the FreeType Project.</para>
+        <para>This  license applies  to all  files found  in such
+packages, and which do not  fall under their own explicit  license.
+The license affects  thus  the  FreeType   font  engine,  the  test
+programs, documentation and makefiles, at the very least.</para>
+        <para>This license was inspired by the BSD, Artistic, and IJG
+(Independent JPEG Group) licenses, which all encourage inclusion and
+use of free software in commercial and freeware products alike. As a
+consequence, its main points are that:</para>
+        <unorderedlist>
+          <item><para>We don't promise that this software works.
+However, we will be interested in any kind of bug reports. (`as is'
+distribution)</para></item>
+          <item><para>You can use this software for whatever you want,
+in parts or full form, without having to pay us. (`royalty-free'
+usage)</para></item>
+          <item><para>You may not pretend that you wrote this
+software. If you use it, or only parts of it, in a program, you must
+acknowledge somewhere in your documentation that you have used the
+FreeType code. (`credits')</para></item>
+        </unorderedlist>
+
+        <para>We specifically permit and encourage the inclusion
+of this software, with or without modifications, in commercial
+products. We disclaim all warranties covering The FreeType Project and
+assume no liability related to The FreeType Project.</para>
+        <para>Legal Terms</para>
+        <orderedlist start-num="0">
+          <item><para>Definitions</para>
+          <para>Throughout this license, the terms `package',
+`FreeType Project', and `FreeType archive' refer to the set of files
+originally distributed by the authors (David Turner, Robert Wilhelm,
+and Werner Lemberg) as the `FreeType Project', be they named as alpha,
+beta or final release.</para>
+          <para>`You' refers to the licensee, or person using the
+project, where `using' is a generic term including compiling the
+project's source code as well as linking it to form a `program' or
+`executable'. This program is referred to as `a program using the
+FreeType engine'.</para>
+          <para>This license applies to all files distributed in the
+original FreeType Project, including all source code, binaries and
+documentation, unless otherwise stated in the file in its original,
+unmodified form as distributed in the original archive. If you are
+unsure whether or not a particular file is covered by this license,
+you must contact us to verify this.</para>
+          <para>The FreeType Project is copyright (C) 1996-2002 by
+David Turner, Robert Wilhelm, and Werner Lemberg. All rights reserved
+except as specified below.</para></item>
+          <item><para>No Warranty</para>
+          <para>THE FREETYPE PROJECT IS PROVIDED `AS IS' WITHOUT
+WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT
+LIMITED TO, WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE. IN NO EVENT WILL ANY OF THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY DAMAGES CAUSED BY THE USE OR THE INABILITY TO USE, OF
+THE FREETYPE PROJECT.</para></item>
+          <item><para>Redistribution</para>
+          <para>This license grants a worldwide, royalty-free,
+perpetual and irrevocable right and license to use, execute, perform,
+compile, display, copy, create derivative works of, distribute and
+sublicense the FreeType Project (in both source and object code forms)
+and derivative works thereof for any purpose; and to authorize others
+to exercise some or all of the rights granted herein, subject to the
+following conditions:</para>
+          <unorderedlist>
+            <item><para>Redistribution of source code must retain this
+license file unaltered; any additions, deletions or changes to the
+original files must be clearly indicated in accompanying
+documentation. The copyright notices of the unaltered, original files
+must be preserved in all copies of source files.</para></item>
+            <item><para>Redistribution in binary form must provide a
+disclaimer that states that the software is based in part of the work
+of the FreeType Team, in the distribution documentation. We also
+encourage you to put an URL to the FreeType web page in your
+documentation, though this isn't mandatory.</para></item>
+          </unorderedlist>
+          <para>These conditions apply to any software derived from
+or based on the FreeType Project, not just the unmodified files. If
+you use our work, you must acknowledge us. However, no fee need be
+paid to us.</para></item>
+          <item><para>Advertising</para>
+          <para>Neither the FreeType authors and contributors nor
+you shall use the name of the other for commercial, advertising, or
+promotional purposes without specific prior written permission.</para>
+          <para>We suggest, but do not require, that you use one or
+more of the following phrases to refer to this software in your
+documentation or advertising materials: `FreeType Project', `FreeType
+Engine', `FreeType library', or `FreeType Distribution'.</para>
+          <para>As you have not signed this license, you are not
+required to accept it. However, as the FreeType Project is copyrighted
+material, only this license, or another one contracted with the
+authors, grants you the right to use, distribute, and modify it.
+Therefore, by using, distributing, or modifying the FreeType Project,
+you indicate that you understand and accept all the terms of this
+license.</para></item>
+          <item><para>Contacts</para>
+          <para>There are two mailing lists related to
+FreeType:</para>
+          <unorderedlist>
+            <item><para>freetype@freetype.org - Discusses general use
+and applications of FreeType, as well as future and wanted additions
+to the library and distribution. If you are looking for support, start
+in this list if you haven't found anything to help you in the
+documentation.</para></item>
+            <item><para>devel@freetype.org - Discusses bugs, as well as
+engine internals, design issues, specific licenses, porting,
+etc.</para></item>
+            <item><para>http://www.freetype.org - Holds the current
+FreeType web page, which will allow you to download our latest
+development version and read online documentation.</para></item>
+          </unorderedlist>
+          <para>You can also contact us individually at:</para>
+          <para>David Turner david.turner@freetype.org</para>
+          <para>Robert Wilhelm robert.wilhelm@freetype.org</para>
+          <para>Werner Lemberg werner.lemberg@freetype.org</para></item>
+        </orderedlist>
+      </license>
+
+      <license module="freetype" path="gpl-2.license"/>
+
+      <license module="graphite">
+        <para>Graphite 2.1 Licensing</para>
+        <para>Copyright 1999-2006, SIL International</para>
+        <para>All rights reserved.</para>
+        <para>This library is free software; you can redistribute it
+and/or modify it under the terms of either:</para>
+        <orderedlist type="lower-alpha">
+          <item><para>the Common Public License as published by the
+"Agreement Steward" for that license (currently IBM); either version
+0.5 of the License, or (at your option) any later
+version, or</para></item>
+          <item><para>the GNU Lesser General Public License as published
+by the Free Software Foundation; either version 2.1 of License, or (at
+your option) any later version.</para></item>
+        </orderedlist>
+
+        <para>This program is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See either
+the Common Public License or the GNU Lesser General Public License for
+more details.</para>
+      </license>
+
+      <license module="graphite" path="lgpl-2.1.license"/>
+
+      <license module="graphite">
+        <para>Common Public License Version 0.5</para>
+        <para>THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF
+THIS COMMON PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR
+DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS
+AGREEMENT.</para>
+        <orderedlist>
+          <item><para>DEFINITIONS</para>
+          <para>"Contribution" means:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>in the case of the initial Contributor, the
+initial code and documentation distributed under this Agreement,
+and</para></item>
+            <item><para>in the case of each subsequent
+Contributor:</para>
+            <orderedlist type="lower-roman">
+              <item><para>changes to the Program, and</para></item>
+              <item><para>additions to the Program;</para></item>
+            </orderedlist>
+            <para>where such changes and/or additions to the Program
+originate from and are distributed by that particular Contributor. A
+Contribution 'originates' from a Contributor if it was added to the
+Program by such Contributor itself or anyone acting on such
+Contributor's behalf. Contributions do not include additions to the
+Program which: (i) are separate modules of software distributed in
+conjunction with the Program under their own license agreement, and
+(ii) are not derivative works of the Program.</para></item>
+          </orderedlist>
+          <para>"Contributor" means any person or entity that
+distributes the Program. </para>
+          <para>"Licensed Patents " mean patent claims licensable by a
+Contributor which are necessarily infringed by the use or sale of its
+Contribution alone or when combined with the Program.</para>
+          <para>"Program" means the Contributions distributed in
+accordance with this Agreement.</para>
+          <para>"Recipient" means anyone who receives the Program under
+this Agreement, including all Contributors.</para></item>
+          <item><para>GRANT OF RIGHTS</para>
+          <orderedlist type="lower-alpha">
+            <item><para>Subject to the terms of this Agreement, each
+Contributor hereby grants Recipient a non-exclusive, worldwide,
+royalty-free copyright license to reproduce, prepare derivative works
+of, publicly display, publicly perform, distribute and sublicense the
+Contribution of such Contributor, if any, and such derivative works,
+in source code and object code form.</para></item>
+            <item><para>Subject to the terms of this Agreement, each
+Contributor hereby grants Recipient a non-exclusive, worldwide,
+royalty-free patent license under Licensed Patents to make, use, sell,
+offer to sell, import and otherwise transfer the Contribution of such
+Contributor, if any, in source code and object code form. This patent
+license shall apply to the combination of the Contribution and the
+Program if, at the time the Contribution is added by the Contributor,
+such addition of the Contribution causes such combination to be
+covered by the Licensed Patents. The patent license shall not apply to
+any other combinations which include the Contribution. No hardware per
+se is licensed hereunder.</para></item>
+            <item><para>Recipient understands that although each
+Contributor grants the licenses to its Contributions set forth herein,
+no assurances are provided by any Contributor that the Program does
+not infringe the patent or other intellectual property rights of any
+other entity. Each Contributor disclaims any liability to Recipient
+for claims brought by any other entity based on infringement of
+intellectual property rights or otherwise. As a condition to
+exercising the rights and licenses granted hereunder, each Recipient
+hereby assumes sole responsibility to secure any other intellectual
+property rights needed, if any. For example, if a third party patent
+license is required to allow Recipient to distribute the Program, it
+is Recipient's responsibility to acquire that license before
+distributing the Program.</para></item>
+            <item><para>Each Contributor represents that to its
+knowledge it has sufficient copyright rights in its Contribution, if
+any, to grant the copyright license set forth in this
+Agreement.</para></item>
+          </orderedlist></item>
+          <item><para>REQUIREMENTS</para>
+          <para>A Contributor may choose to distribute the Program
+in object code form under its own license agreement, provided
+that</para>
+          <orderedlist type="lower-alpha">
+            <item><para>it complies with the terms and conditions of
+this Agreement; and</para></item>
+            <item><para>its license agreement:</para>
+            <orderedlist type="lower-roman">
+              <item><para>effectively disclaims on behalf of all
+Contributors all warranties and conditions, express and implied,
+including warranties or conditions of title and non-infringement, and
+implied warranties or conditions of merchantability and fitness for a
+particular purpose;</para></item>
+              <item><para>effectively excludes on behalf of all
+Contributors all liability for damages, including direct, indirect,
+special, incidental and consequential damages, such as lost
+profits;</para></item>
+              <item><para>states that any provisions which differ from
+this Agreement are offered by that Contributor alone and not by any
+other party; and</para></item>
+              <item><para>states that source code for the Program is
+available from such Contributor, and informs licensees how to obtain
+it in a reasonable manner on or through a medium customarily used for
+software exchange.</para></item>
+            </orderedlist></item>
+          </orderedlist>
+          <para>When the Program is made available in source code
+form:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>it must be made available under this
+Agreement; and</para></item>
+            <item><para>a copy of this Agreement must be included with
+each copy of the Program. </para></item>
+          </orderedlist>
+          <para>Contributors may not remove or alter any copyright
+notices contained within the Program.</para>
+          <para>Each Contributor must identify itself as the
+originator of its Contribution, if any, in a manner that reasonably
+allows subsequent Recipients to identify the originator of the
+Contribution.</para></item>
+          <item><para>COMMERCIAL DISTRIBUTION</para>
+          <para>Commercial distributors of software may accept
+certain responsibilities with respect to end users, business partners
+and the like. While this license is intended to facilitate the
+commercial use of the Program, the Contributor who includes the
+Program in a commercial product offering should do so in a manner
+which does not create potential liability for other Contributors.
+Therefore, if a Contributor includes the Program in a commercial
+product offering, such Contributor ("Commercial Contributor") hereby
+agrees to defend and indemnify every other Contributor ("Indemnified
+Contributor") against any losses, damages and costs (collectively
+"Losses") arising from claims, lawsuits and other legal actions
+brought by a third party against the Indemnified Contributor to the
+extent caused by the acts or omissions of such Commercial Contributor
+in connection with its distribution of the Program in a commercial
+product offering. The obligations in this section do not apply to any
+claims or Losses relating to any actual or alleged intellectual
+property infringement. In order to qualify, an Indemnified Contributor
+must: a) promptly notify the Commercial Contributor in writing of such
+claim, and b) allow the Commercial Contributor to control, and
+cooperate with the Commercial Contributor in, the defense and any
+related settlement negotiations. The Indemnified Contributor may
+participate in any such claim at its own expense.</para>
+          <para>For example, a Contributor might include the
+Program in a commercial product offering, Product X. That Contributor
+is then a Commercial Contributor. If that Commercial Contributor then
+makes performance claims, or offers warranties related to Product X,
+those performance claims and warranties are such Commercial
+Contributor's responsibility alone. Under this section, the Commercial
+Contributor would have to defend claims against the other Contributors
+related to those performance claims and warranties, and if a court
+requires any other Contributor to pay any damages as a result, the
+Commercial Contributor must pay those damages.</para></item>
+          <item><para>NO WARRANTY</para>
+          <para>EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT,
+THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
+LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
+solely responsible for determining the appropriateness of using and
+distributing the Program and assumes all risks associated with its
+exercise of rights under this Agreement, including but not limited to
+the risks and costs of program errors, compliance with applicable
+laws, damage to or loss of data, programs or equipment, and
+unavailability or interruption of operations.</para></item>
+          <item><para>DISCLAIMER OF LIABILITY</para>
+          <para>EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT,
+NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS
+GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</para></item>
+          <item><para>GENERAL</para>
+          <para>If any provision of this Agreement is invalid or
+unenforceable under applicable law, it shall not affect the validity
+or enforceability of the remainder of the terms of this Agreement, and
+without further action by the parties hereto, such provision shall be
+reformed to the minimum extent necessary to make such provision valid
+and enforceable.</para>
+          <para>If Recipient institutes patent litigation against
+a Contributor with respect to a patent applicable to software
+(including a cross-claim or counterclaim in a lawsuit), then any
+patent licenses granted by that Contributor to such Recipient under
+this Agreement shall terminate as of the date such litigation is
+filed. In addition, If Recipient institutes patent litigation against
+any entity (including a cross-claim or counterclaim in a lawsuit)
+alleging that the Program itself (excluding combinations of the
+Program with other software or hardware) infringes such Recipient's
+patent(s), then such Recipient's rights granted under Section 2(b)
+shall terminate as of the date such litigation is filed.</para>
+          <para>All Recipient's rights under this Agreement shall
+terminate if it fails to comply with any of the material terms or
+conditions of this Agreement and does not cure such failure in a
+reasonable period of time after becoming aware of such noncompliance.
+If all Recipient's rights under this Agreement terminate, Recipient
+agrees to cease use and distribution of the Program as soon as
+reasonably practicable. However, Recipient's obligations under this
+Agreement and any licenses granted by Recipient relating to the
+Program shall continue and survive.</para>
+          <para>Everyone is permitted to copy and distribute
+copies of this Agreement, but in order to avoid inconsistency the
+Agreement is copyrighted and may only be modified in the following
+manner. The Agreement Steward reserves the right to publish new
+versions (including revisions) of this Agreement from time to time. No
+one other than the Agreement Steward has the right to modify this
+Agreement. IBM is the initial Agreement Steward. IBM may assign the
+responsibility to serve as the Agreement Steward to a suitable
+separate entity. Each new version of the Agreement will be given a
+distinguishing version number. The Program (including Contributions)
+may always be distributed subject to the version of the Agreement
+under which it was received. In addition, after a new version of the
+Agreement is published, Contributor may elect to distribute the
+Program (including its Contributions) under the new version. Except as
+expressly stated in Sections 2(a) and 2(b) above, Recipient receives
+no rights or licenses to the intellectual property of any Contributor
+under this Agreement, whether expressly, by implication, estoppel or
+otherwise. All rights in the Program not expressly granted under this
+Agreement are reserved.</para>
+          <para>This Agreement is governed by the laws of the
+State of New York and the intellectual property laws of the United
+States of America. No party to this Agreement will bring a legal
+action under this Agreement more than one year after the cause of
+action arose. Each party waives its rights to a jury trial in any
+resulting litigation.</para></item>
+        </orderedlist>
+      </license>
+
+      <license module="teckit" path="lgpl-2.1.license"/>
+
+      <license module="teckit">
+        <para>Common Public License Version 0.5</para>
+        <para>THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF
+THIS COMMON PUBLIC LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR
+DISTRIBUTION OF THE PROGRAM CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS
+AGREEMENT.</para>
+        <orderedlist>
+          <item><para>DEFINITIONS</para>
+          <para>"Contribution" means:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>in the case of the initial Contributor, the
+initial code and documentation distributed under this Agreement,
+and</para></item>
+            <item><para>in the case of each subsequent
+Contributor:</para>
+            <orderedlist type="lower-roman">
+              <item><para>changes to the Program, and</para></item>
+              <item><para>additions to the Program;</para></item>
+            </orderedlist>
+            <para>where such changes and/or additions to the Program
+originate from and are distributed by that particular Contributor. A
+Contribution 'originates' from a Contributor if it was added to the
+Program by such Contributor itself or anyone acting on such
+Contributor's behalf. Contributions do not include additions to the
+Program which: (i) are separate modules of software distributed in
+conjunction with the Program under their own license agreement, and
+(ii) are not derivative works of the Program.</para></item>
+          </orderedlist>
+          <para>"Contributor" means any person or entity that
+distributes the Program. </para>
+          <para>"Licensed Patents " mean patent claims licensable by a
+Contributor which are necessarily infringed by the use or sale of its
+Contribution alone or when combined with the Program.</para>
+          <para>"Program" means the Contributions distributed in
+accordance with this Agreement.</para>
+          <para>"Recipient" means anyone who receives the Program under
+this Agreement, including all Contributors.</para></item>
+          <item><para>GRANT OF RIGHTS</para>
+          <orderedlist type="lower-alpha">
+            <item><para>Subject to the terms of this Agreement, each
+Contributor hereby grants Recipient a non-exclusive, worldwide,
+royalty-free copyright license to reproduce, prepare derivative works
+of, publicly display, publicly perform, distribute and sublicense the
+Contribution of such Contributor, if any, and such derivative works,
+in source code and object code form.</para></item>
+            <item><para>Subject to the terms of this Agreement, each
+Contributor hereby grants Recipient a non-exclusive, worldwide,
+royalty-free patent license under Licensed Patents to make, use, sell,
+offer to sell, import and otherwise transfer the Contribution of such
+Contributor, if any, in source code and object code form. This patent
+license shall apply to the combination of the Contribution and the
+Program if, at the time the Contribution is added by the Contributor,
+such addition of the Contribution causes such combination to be
+covered by the Licensed Patents. The patent license shall not apply to
+any other combinations which include the Contribution. No hardware per
+se is licensed hereunder.</para></item>
+            <item><para>Recipient understands that although each
+Contributor grants the licenses to its Contributions set forth herein,
+no assurances are provided by any Contributor that the Program does
+not infringe the patent or other intellectual property rights of any
+other entity. Each Contributor disclaims any liability to Recipient
+for claims brought by any other entity based on infringement of
+intellectual property rights or otherwise. As a condition to
+exercising the rights and licenses granted hereunder, each Recipient
+hereby assumes sole responsibility to secure any other intellectual
+property rights needed, if any. For example, if a third party patent
+license is required to allow Recipient to distribute the Program, it
+is Recipient's responsibility to acquire that license before
+distributing the Program.</para></item>
+            <item><para>Each Contributor represents that to its
+knowledge it has sufficient copyright rights in its Contribution, if
+any, to grant the copyright license set forth in this
+Agreement.</para></item>
+          </orderedlist></item>
+          <item><para>REQUIREMENTS</para>
+          <para>A Contributor may choose to distribute the Program
+in object code form under its own license agreement, provided
+that</para>
+          <orderedlist type="lower-alpha">
+            <item><para>it complies with the terms and conditions of
+this Agreement; and</para></item>
+            <item><para>its license agreement:</para>
+            <orderedlist type="lower-roman">
+              <item><para>effectively disclaims on behalf of all
+Contributors all warranties and conditions, express and implied,
+including warranties or conditions of title and non-infringement, and
+implied warranties or conditions of merchantability and fitness for a
+particular purpose;</para></item>
+              <item><para>effectively excludes on behalf of all
+Contributors all liability for damages, including direct, indirect,
+special, incidental and consequential damages, such as lost
+profits;</para></item>
+              <item><para>states that any provisions which differ from
+this Agreement are offered by that Contributor alone and not by any
+other party; and</para></item>
+              <item><para>states that source code for the Program is
+available from such Contributor, and informs licensees how to obtain
+it in a reasonable manner on or through a medium customarily used for
+software exchange.</para></item>
+            </orderedlist></item>
+          </orderedlist>
+          <para>When the Program is made available in source code
+form:</para>
+          <orderedlist type="lower-alpha">
+            <item><para>it must be made available under this
+Agreement; and</para></item>
+            <item><para>a copy of this Agreement must be included with
+each copy of the Program. </para></item>
+          </orderedlist>
+          <para>Contributors may not remove or alter any copyright
+notices contained within the Program.</para>
+          <para>Each Contributor must identify itself as the
+originator of its Contribution, if any, in a manner that reasonably
+allows subsequent Recipients to identify the originator of the
+Contribution.</para></item>
+          <item><para>COMMERCIAL DISTRIBUTION</para>
+          <para>Commercial distributors of software may accept
+certain responsibilities with respect to end users, business partners
+and the like. While this license is intended to facilitate the
+commercial use of the Program, the Contributor who includes the
+Program in a commercial product offering should do so in a manner
+which does not create potential liability for other Contributors.
+Therefore, if a Contributor includes the Program in a commercial
+product offering, such Contributor ("Commercial Contributor") hereby
+agrees to defend and indemnify every other Contributor ("Indemnified
+Contributor") against any losses, damages and costs (collectively
+"Losses") arising from claims, lawsuits and other legal actions
+brought by a third party against the Indemnified Contributor to the
+extent caused by the acts or omissions of such Commercial Contributor
+in connection with its distribution of the Program in a commercial
+product offering. The obligations in this section do not apply to any
+claims or Losses relating to any actual or alleged intellectual
+property infringement. In order to qualify, an Indemnified Contributor
+must: a) promptly notify the Commercial Contributor in writing of such
+claim, and b) allow the Commercial Contributor to control, and
+cooperate with the Commercial Contributor in, the defense and any
+related settlement negotiations. The Indemnified Contributor may
+participate in any such claim at its own expense.</para>
+          <para>For example, a Contributor might include the
+Program in a commercial product offering, Product X. That Contributor
+is then a Commercial Contributor. If that Commercial Contributor then
+makes performance claims, or offers warranties related to Product X,
+those performance claims and warranties are such Commercial
+Contributor's responsibility alone. Under this section, the Commercial
+Contributor would have to defend claims against the other Contributors
+related to those performance claims and warranties, and if a court
+requires any other Contributor to pay any damages as a result, the
+Commercial Contributor must pay those damages.</para></item>
+          <item><para>NO WARRANTY</para>
+          <para>EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT,
+THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
+LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
+MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
+solely responsible for determining the appropriateness of using and
+distributing the Program and assumes all risks associated with its
+exercise of rights under this Agreement, including but not limited to
+the risks and costs of program errors, compliance with applicable
+laws, damage to or loss of data, programs or equipment, and
+unavailability or interruption of operations.</para></item>
+          <item><para>DISCLAIMER OF LIABILITY</para>
+          <para>EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT,
+NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED
+AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+THE USE OR DISTRIBUTION OF THE PROGRAM OR THE EXERCISE OF ANY RIGHTS
+GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.</para></item>
+          <item><para>GENERAL</para>
+          <para>If any provision of this Agreement is invalid or
+unenforceable under applicable law, it shall not affect the validity
+or enforceability of the remainder of the terms of this Agreement, and
+without further action by the parties hereto, such provision shall be
+reformed to the minimum extent necessary to make such provision valid
+and enforceable.</para>
+          <para>If Recipient institutes patent litigation against
+a Contributor with respect to a patent applicable to software
+(including a cross-claim or counterclaim in a lawsuit), then any
+patent licenses granted by that Contributor to such Recipient under
+this Agreement shall terminate as of the date such litigation is
+filed. In addition, If Recipient institutes patent litigation against
+any entity (including a cross-claim or counterclaim in a lawsuit)
+alleging that the Program itself (excluding combinations of the
+Program with other software or hardware) infringes such Recipient's
+patent(s), then such Recipient's rights granted under Section 2(b)
+shall terminate as of the date such litigation is filed.</para>
+          <para>All Recipient's rights under this Agreement shall
+terminate if it fails to comply with any of the material terms or
+conditions of this Agreement and does not cure such failure in a
+reasonable period of time after becoming aware of such noncompliance.
+If all Recipient's rights under this Agreement terminate, Recipient
+agrees to cease use and distribution of the Program as soon as
+reasonably practicable. However, Recipient's obligations under this
+Agreement and any licenses granted by Recipient relating to the
+Program shall continue and survive.</para>
+          <para>Everyone is permitted to copy and distribute
+copies of this Agreement, but in order to avoid inconsistency the
+Agreement is copyrighted and may only be modified in the following
+manner. The Agreement Steward reserves the right to publish new
+versions (including revisions) of this Agreement from time to time. No
+one other than the Agreement Steward has the right to modify this
+Agreement. IBM is the initial Agreement Steward. IBM may assign the
+responsibility to serve as the Agreement Steward to a suitable
+separate entity. Each new version of the Agreement will be given a
+distinguishing version number. The Program (including Contributions)
+may always be distributed subject to the version of the Agreement
+under which it was received. In addition, after a new version of the
+Agreement is published, Contributor may elect to distribute the
+Program (including its Contributions) under the new version. Except as
+expressly stated in Sections 2(a) and 2(b) above, Recipient receives
+no rights or licenses to the intellectual property of any Contributor
+under this Agreement, whether expressly, by implication, estoppel or
+otherwise. All rights in the Program not expressly granted under this
+Agreement are reserved.</para>
+          <para>This Agreement is governed by the laws of the
+State of New York and the intellectual property laws of the United
+States of America. No party to this Agreement will bring a legal
+action under this Agreement more than one year after the cause of
+action arose. Each party waives its rights to a jury trial in any
+resulting litigation.</para></item>
+        </orderedlist>
+      </license>
+
+      <license module="obsdcompat">
+        <para>Copyright (c) 1997 Todd C. Miller
+Todd.Miller@courtesan.com</para>
+        <para>Permission to use, copy, modify, and distribute this software for
+any purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE
+USE OR PERFORMANCE OF THIS SOFTWARE.</para>
+      </license>
+
+      <license module="zziplib" path="lgpl-2.1.license"/>
+
+      <license module="poppler" path="gpl-2.license"/>
+
+      <license module="icu">
+        <para align="center">ICU License - ICU 1.8.1 and later</para>
+        <para align="center">COPYRIGHT AND PERMISSION NOTICE</para>
+        <para>Copyright (c) 1995-2011 International Business
+Machines Corporation and others</para>
+        <para>All rights reserved.</para>
+        <para>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, provided that the
+above copyright notice(s) and this permission notice appear in all
+copies of the Software and that both the above copyright notice(s) and
+this permission notice appear in supporting documentation.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT OF THIRD PARTY RIGHTS. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR
+ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+SOFTWARE.</para>
+        <para>Except as contained in this notice, the name of a
+copyright holder shall not be used in advertising or otherwise to
+promote the sale, use or other dealings in this Software without prior
+written authorization of the copyright holder.</para>
+        <para>All trademarks and registered trademarks mentioned
+herein are the property of their respective owners.</para>
+      </license>
+
+      <license module="web2c" path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+  </program>
+</programs>
