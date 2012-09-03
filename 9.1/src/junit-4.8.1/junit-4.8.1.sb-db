@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="junit" version="4.8.1" revision="1"
+  systype="*-aix*|*-hpux11.[123]*|*-linux*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}48</install-name>
+
+    <sources>
+      <source checksum="4d1ca0a3a2c1a41da4d90d963eba24f5"
+        checksum-type="md5" size="2153910"
+        path="src/junit-4.8.1-src.tar.bz2"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ant" install-name="ant17" add-path="prepend"
+        type="build">v&gt;=1.7.1</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export JAVA_HOME=/usr/java5 ;;
+*-hpux*)
+  export JAVA_HOME=/opt/java1.5 ;;
+*-linux*)
+  export JAVA_HOME=/opt/java1.5 ;;
+*-solaris*)
+  export JAVA_HOME=/opt/java1.5 ;;
+esac
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+ant
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/lib \
+${_docdir}
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 \
+${SB_PROG_NAME}${SB_PROG_VER}/junit-${SB_PROG_VER}.jar \
+${SB_INSTALL_PREFIX}/lib/junit.jar
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 \
+${SB_PROG_NAME}${SB_PROG_VER}/README.html ${_docdir}
+(cd doc
+ ${SB_PATH_FIND} . -print | cpio -pdmu ${_docdir})
+${SB_PATH_FIND} ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+${SB_PATH_FIND} ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+]]>
+    </install>
+
+    <notes>
+      <note type="usage">
+        <para>The junit.jar file is located at
+<command>${SB_INSTALL_PREFIX}/lib/junit.jar</command>.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
