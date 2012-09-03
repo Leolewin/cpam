@@ -1,0 +1,183 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="libssh" version="0.5.2" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}05</install-name>
+
+    <sources>
+      <source checksum="38b67c48af7a9204660a3e08f97ceba6"
+        checksum-type="md5" size="317336"
+        path="src/libssh-0.5.2.tar.gz"/>
+      <patch checksum="f6c4dcfc1dfb4ffd53f8cc790094cdf3"
+        checksum-type="md5" size="23283"
+        path="src/libssh-0.5.2.tww.patch"/>
+      <patch checksum="2ee8b630ee066ad9ea8ba6f6a5b87c97"
+        checksum-type="md5" size="1019907"
+        path="src/libssh-0.5.2.gnulib.patch"/>
+      <patch checksum="41d79de9fbc77bce8b694f7e216cc9e9"
+        checksum-type="md5" size="2994"
+        path="src/libssh-0.5.2.tww-gnulib.patch"/>
+      <patch checksum="5f588546beb5edc58d3f018ef05509ab"
+        checksum-type="md5" size="723918"
+        path="src/libssh-0.5.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="cmake" install-name="cmake28"
+        add-path="prepend" type="build">v&gt;=2.8.5</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="libgcrypt" var="LIBGCRYPT"
+        install-name="libgcrypt14">v&gt;=1.4.6</depend>
+      <depend program="libgpg-error" var="LIBGPGERROR"
+        install-name="libgpgerror110">v&gt;=1.10</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+mkdir -p build
+cd build
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:"
+  ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.00*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  # Do not export GnuLib symbols
+  LDFLAGS="-Wl,-h,gl_sockets_cleanup,-h,gl_sockets_startup,\
+-h,asnprintf,-h,gai_strerror,-h,freeaddrinfo,-h,getaddrinfo,\
+-h,getnameinfo,-h,inet_ntop,-h,inet_pton,-h,printf_fetchargs,\
+-h,printf_parse,-h,rpl_snprintf,-h,vasnprintf" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=c99 CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0 -diag_error 1035"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2  -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB} ${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBGPGERROR_LIB}/pkgconfig:\
+${SB_VAR_LIBGCRYPT_LIB}/pkgconfig" \
+cmake .. -DWITH_GCRYPT:BOOL=ON \
+-DWITH_CLIENT_TESTING:BOOL=ON \
+-DCMAKE_VERBOSE_MAKEFILE=ON \
+-DCMAKE_INSTALL_PREFIX="${SB_INSTALL_PREFIX}" \
+-DDATA_INSTALL_DIR:PATH=${_datadir} \
+-DHTML_INSTALL_DIR:PATH=${_docdir} \
+-DINFO_INSTALL_DIR:PATH=${SB_INSTALL_PREFIX}/info \
+-DLOCALE_INSTALL_DIR:PATH=${_datadir}/locale \
+-DMAN_INSTALL_DIR:PATH=${SB_INSTALL_PREFIX}/man \
+-DSHARE_INSTALL_PREFIX:PATH=${_datadir} \
+-DSYSCONF_INSTALL_DIR:PATH=${_sysconfdir} \
+-DCMAKE_LIBRARY_PATH="\
+${SB_VAR_LIBGCRYPT+;${SB_VAR_LIBGCRYPT_LIB}}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_LIB}}" \
+-DCMAKE_INSTALL_RPATH="\
+${SB_VAR_GCC_RT+;${SB_VAR_GCC_RT_LIB}}\
+${SB_VAR_LIBGCRYPT+;${SB_VAR_LIBGCRYPT_LIB}}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_LIB}}" \
+-DCMAKE_INCLUDE_PATH="${SB_INSTALL_PREFIX}/include\
+${SB_VAR_LIBGCRYPT+;${SB_VAR_LIBGCRYPT_INC}}\
+${SB_VAR_LIBZ+;${SB_VAR_LIBZ_INC}}"
+
+cd ..
+chmod +x gnulib/configure gnulib/config.guess gnulib/config.sub \
+gnulib/install-sh gnulib/depcomp gnulib/missing
+
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00)
+   (cd gnulib
+    ./configure CC=cc CFLAGS="${CFLAGS} +Z") ;;
+ esac)
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+(case "${SB_SYSTYPE}" in
+ *-hpux11.00)
+   gmake -C ../gnulib ;;
+ esac)
+
+gmake
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+EGD_SOCKET_PATH=/var/opt/fsw/prngd/pool ./examples/senddata thor
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  ${SB_PATH_FIND} ${SB_BUILD_PREFIX} -path "*/CMakeRelink.dir/*" \
+    -type f -exec rm '{}' \;
+  gmake install VERBOSE=1 ;;
+esac
+]]>
+    </install>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+  </program>
+</programs>
