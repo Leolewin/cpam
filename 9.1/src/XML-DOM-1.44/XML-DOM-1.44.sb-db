@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="XML-DOM" version="1.44" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+
+: ignore failures
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/XML-DOM/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/XML-DOM/.packlist
+rmdir ${_installsitearch}/auto/XML-DOM 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<XML-DOM|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <sources>
+        <source checksum="1ec2032a06e5762984f7a332c199c205"
+          checksum-type="md5" size="117024"
+          path="src/XML-DOM-1.44.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="XML-RegExp" module="5.8.8">v&gt;=0.03</depend>
+        <depend program="libwww-perl"
+          module="5.8.8">v&gt;=5.69</depend>
+        <depend program="libxml-perl"
+          module="5.8.8">v&gt;=0.08</depend>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <sources>
+        <source checksum="1ec2032a06e5762984f7a332c199c205"
+          checksum-type="md5" size="117024"
+          path="src/XML-DOM-1.44.tar.gz"/>
+      </sources>
+
+      <dependencies>
+        <depend program="XML-RegExp"
+          module="5.12.2">v&gt;=0.03</depend>
+        <depend program="libwww-perl"
+          module="5.12.2">v&gt;=5.69</depend>
+        <depend program="libxml-perl"
+          module="5.12.2">v&gt;=0.08</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2009 May 19" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 5.8.8 module</para></item>
+        <item><para>Update libxml-perl dependency from 0.07 to
+0.08</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
