@@ -1,0 +1,1797 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gtkmm" version="2.22.0" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}222</install-name>
+
+    <sources>
+      <source checksum="4356dfde44b13f7fb1bfbd97623f37dd"
+        checksum-type="md5" size="11496369"
+        path="src/gtkmm-2.22.0.tar.bz2"/>
+      <patch checksum="0facd646f61a05e22a8b51bb490d1032"
+        checksum-type="md5" size="6251"
+        path="src/gtkmm-2.22.0.tww.patch"/>
+      <patch checksum="9a8f87d1ae29dea6293101c0c47a64d6"
+        checksum-type="md5" size="1785654"
+        path="src/gtkmm-2.22.0.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="m4" install-name="m414" add-path="prepend"
+        type="build">v&gt;=1.4.15</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="make" add-path="prepend"
+        type="build">v==3.82</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="atk" var="LIBATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="atkmm" var="LIBATKMM"
+          install-name="libatkmm222">v&gt;=2.22.5</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          systype="*-aix*|hppa*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=1.10.0</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="gcc44"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+          install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44"
+          systype="hppa*-hpux*|*-solaris*">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224">v&gt;=2.24.2</depend>
+        <depend program="gtk+" var="LIBGTK"
+          install-name="libgtk+222">v&gt;=2.22.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          systype="*-aix*|hppa*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.2.10</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="gcc44"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=2.2.10</depend>
+        <depend program="mm-common" var="MMCOMMON"
+          install-name="mmcommon09">v&gt;=0.9.5</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128">v&gt;=1.28.4</depend>
+        <depend program="pangomm" var="LIBPANGOMM"
+          install-name="libpangomm228">v&gt;=2.28.2</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" add-path="prepend"
+          systype="hppa*-hpux*|*-solaris*">v==4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="hppa*-hpux*|*-solaris*"/>
+      </dependencies>
+
+      <validate>
+        <depend program="gtkmm" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==2.22.0</depend>
+        <depend program="gtkmm" module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v==2.22.0</depend>
+        <depend program="gtkmm" module="gcc44-64bit"
+          systype="*-aix*|ia64*-hpux*|*-irix*">v==2.22.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-version V7.1-006 -readonly_strings -timplicit_local \
+-D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBATKMM_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIROMM_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGLIBMM_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGOMM_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig:\
+${SB_VAR_MMCOMMON_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${_libdir:-${SB_INSTALL_PREFIX_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+gdk/gdkmm-2.4.pc gtk/gtkmm-2.4.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="atk" var="LIBATK" install-name="libatk132"
+          module="64bit">v&gt;=1.32.0</depend>
+        <depend program="atkmm" var="LIBATKMM"
+          install-name="libatkmm222"
+          module="64bit">v&gt;=2.22.5</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="64bit">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="64bit"
+          systype="*-aix*|*-hpux11.00|ia64*-hpux*|*-irix*">v&gt;=1.10.0</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="gcc44-64bit"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+          install-name="libgdkpixbuf222"
+          module="64bit">v&gt;=2.22.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          module="64bit">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit"
+          systype="*-aix*|ia64*-hpux*|*-irix*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44-64bit"
+          systype="hppa*-hpux*|*-solaris*">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="64bit">v&gt;=2.24.2</depend>
+        <depend program="gtk+" var="LIBGTK" install-name="libgtk+222"
+          module="64bit">v&gt;=2.22.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="64bit"
+          systype="*-aix*|*-hpux11.00|ia64*-hpux*|*-irix*">v&gt;=2.2.10</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="gcc44-64bit"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=2.2.10</depend>
+        <depend program="mm-common" var="MMCOMMON"
+          install-name="mmcommon09">v&gt;=0.9.5</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128"
+          module="64bit">v&gt;=1.28.4</depend>
+        <depend program="pangomm" var="LIBPANGOMM"
+          install-name="libpangomm228"
+          module="64bit">v&gt;=2.28.2</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="gcc64" install-name="gcc64-44"
+          add-path="prepend" systype="hppa*-hpux*">v&gt;=4.4.6</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="*-solaris*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc64-44r"
+          systype="hppa*-hpux*"/>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="*-solaris*"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64"
+  _gcclibdir="lib/${_gccsubdir}/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64"
+  _gcclibdir="lib/${_gccsubdir}/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9"
+  _gcclibdir="lib/${_gccsubdir}/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1"
+  CXX=xlC CXXFLAGS="-O2 -q64 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-bbigtoc -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac
+
+  _gcc_rt_lib=${SB_VAR_GCC_RT_LIB} ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -64 -mips4 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -m64"
+  CXXFLAGS="-O2 -m64"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=v9 -m64"
+  CXXFLAGS="-O2 -mcpu=v9 -m64"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}} \
+${CC_LD_RT}${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBATK}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBATKMM}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIROMM}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBGLIBMM}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBGTK}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPANGO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPANGOMM}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBSIGC}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig:\
+${SB_VAR_MMCOMMON_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_gcclibdir:-${_libdir}}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+gdk/gdkmm-2.4.pc gtk/gtkmm-2.4.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ "${_gcclibdir+set}" = set ]; then
+  if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+    ln -s ./$(basename ${_gcclibdir}) \
+    ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64
+  fi
+else
+  if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+    case "${SB_SYSTYPE}" in
+    *-aix*|*-hpux*|*-solaris*)
+      ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+    *-irix*)
+      ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+    esac
+  fi
+fi
+
+gmake install-pkgconfigDATA \
+install-nodist_gtkmm_libincludeHEADERS \
+install-nodist_gdkmm_libincludeHEADERS
+gmake -C gdk/gdkmm install-libLTLIBRARIES
+gmake -C gtk/gtkmm install-libLTLIBRARIES
+]]>
+      </install>
+    </module>
+
+    <module name="gcc44"
+    systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">
+      <dependencies replace="0">
+        <depend program="atk" var="LIBATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="atkmm" var="LIBATKMM"
+          install-name="libatkmm222"
+          module="gcc44">v&gt;=2.22.5</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          module="gcc44">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+          install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="gcc44">v&gt;=2.24.2</depend>
+        <depend program="gtk+" var="LIBGTK"
+          install-name="libgtk+222">v&gt;=2.22.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44">v&gt;=2.2.10</depend>
+        <depend program="mm-common" var="MMCOMMON"
+          install-name="mmcommon09">v&gt;=0.9.5</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128">v&gt;=1.28.4</depend>
+        <depend program="pangomm" var="LIBPANGOMM"
+          install-name="libpangomm228"
+          module="gcc44">v&gt;=2.28.2</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBATKMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIROMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGLIBMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGOMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig:\
+${SB_VAR_MMCOMMON_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+gdk/gdkmm-2.4.pc gtk/gtkmm-2.4.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-pkgconfigDATA \
+install-nodist_gtkmm_libincludeHEADERS \
+install-nodist_gdkmm_libincludeHEADERS
+gmake -C gdk/gdkmm install-libLTLIBRARIES
+gmake -C gtk/gtkmm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44-64bit"
+    systype="*-aix*|ia64*-hpux*|*-irix*">
+      <dependencies replace="0">
+        <depend program="atk" var="LIBATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="atkmm" var="LIBATKMM"
+          install-name="libatkmm222"
+          module="gcc44-64bit">v&gt;=2.22.5</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          module="gcc44-64bit">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+          install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44-64bit">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="gcc44-64bit">v&gt;=2.24.2</depend>
+        <depend program="gtk+" var="LIBGTK"
+          install-name="libgtk+222">v&gt;=2.22.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44-64bit">v&gt;=2.2.10</depend>
+        <depend program="mm-common" var="MMCOMMON"
+          install-name="mmcommon09">v&gt;=0.9.5</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128">v&gt;=1.28.4</depend>
+        <depend program="pangomm" var="LIBPANGOMM"
+          install-name="libpangomm228"
+          module="gcc44-64bit">v&gt;=2.28.2</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64"
+  _gcclibdir="lib/${_gccsubdir}/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64"
+  _gcclibdir="lib/${_gccsubdir}/hpux64" ;;
+*-irix*)
+  _libdir=lib64
+  _gcclibdir="lib/${_gccsubdir}/mips4" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -maix64"
+  CXXFLAGS="-O2 -maix64"
+  LDFLAGS="-Wl,-brtl -Wl,-bbigtoc -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CFLAGS="-O2 -mlp64"
+  CXXFLAGS="-O2 -mlp64"
+  CC_LD_RT="-Wl,+b," ;;
+*-irix*)
+  CFLAGS="-O2 -mabi=64"
+  CXXFLAGS="-O2 -mabi=64"
+  CC_LD_RT="-Wl,-rpath," ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT}/${_libdir} \
+${CC_LD_RT}${SB_VAR_GCC_RT}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBATK}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBATKMM}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIROMM}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBGLIBMM}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBGTK}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPANGO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPANGOMM}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBSIGC}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig:\
+${SB_VAR_MMCOMMON_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_gcclibdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+gdk/gdkmm-2.4.pc gtk/gtkmm-2.4.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+  ln -s ./$(basename ${_gcclibdir}) \
+  ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64
+fi
+
+gmake install-pkgconfigDATA \
+install-nodist_gtkmm_libincludeHEADERS \
+install-nodist_gdkmm_libincludeHEADERS
+gmake -C gdk/gdkmm install-libLTLIBRARIES
+gmake -C gtk/gtkmm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 \
+${SB_INSTALL_PREFIX}/${_gcclibdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.21.9" to="2.22.0">
+        <items name="Build changes in gtkmm 2.22">
+          <item><para>Remove support for these glibmm build options
+via ifdefs: <command>--enable-api-exceptions</command>
+<command>--enable-api-properties</command>
+<command>--enable-api-default-signal-handlers</command> (All this
+gtkmm API is now always present.)</para></item>
+          <item><para>atkmm is now a separate tarball
+module.</para></item>
+        </items>
+
+        <items name="New API in gtkmm 2.22">
+          <item><para>Gtk</para>
+          <unorderedlist>
+            <item><para>AlignmentEnum: Add ALIGN_START and ALIGN_END
+to match gtkmm 3, to help future porting.</para></item>
+            <item><para>Assistant: Added commit().</para></item>
+            <item><para>Button: Added
+get_event_window().</para></item>
+            <item><para>Entry: Added im_context_filter_keypress() and
+reset_im_context().</para></item>
+            <item><para>Expander: Added get/set_label_fill() and
+property.</para></item>
+            <item><para>IconView:</para>
+            <unorderedlist>
+              <item><para>Added tooltip-column and reorderable and
+item-padding properties.</para></item>
+              <item><para>Added
+get/set_item_orientation().</para></item>
+            </unorderedlist></item>
+            <item><para>MenuItem: Added unset_submenu().</para></item>
+            <item><para>MessageDialog: Added get_message_area() and
+message-area property.</para></item>
+            <item><para>TextBuffer: Added get_copy_target_list() and
+get_paste_target_list().</para></item>
+            <item><para>MenuBar: Added set/get_pack_direction() and
+set/get_child_pack_direction.</para></item>
+            <item><para>Notebook:</para>
+            <unorderedlist>
+              <item><para>Deprecated pages().</para></item>
+              <item><para>Added get_tab_hborder() and
+get_tab_vborder().</para></item>
+            </unorderedlist></item>
+            <item><para>PaperSize: Added
+get_paper_sizes().</para></item>
+            <item><para>PrintOperation: Added run_page_setup_dialog()
+overloads.</para></item>
+            <item><para>PrintUnixDialog: Added
+get_manual_capabilities().</para></item>
+            <item><para>SeparatorToolItem: Added
+get/set_draw().</para></item>
+            <item><para>StatusBar: Added
+remove_all_messages().</para></item>
+            <item><para>Style: Added copy().</para></item>
+            <item><para>Table:</para>
+            <unorderedlist>
+              <item><para>Deprecated children().</para></item>
+              <item><para>Added get_size().</para></item>
+            </unorderedlist></item>
+            <item><para>TextView: Added get_hadjustment(),
+get_vadjustment(), im_context_filter_keypress(),
+reset_im_context().</para></item>
+            <item><para>Viewport: Added
+get_view_window().</para></item>
+            <item><para>Widget:</para>
+            <unorderedlist>
+              <item><para>Added send_focus_change().</para></item>
+              <item><para>Added const version of
+get_accessible().</para></item>
+            </unorderedlist></item>
+            <item><para>Added many properties.</para></item>
+          </unorderedlist></item>
+          <item><para>Gdk:</para>
+          <unorderedlist>
+            <item><para>Color: Deprecate
+rgb_find_color().</para></item>
+            <item><para>Cursor: Added get_cursor_type().</para></item>
+            <item><para>Device: Added get_key(), get_axis_use(),
+get_n_axes().</para></item>
+            <item><para>RgbCMap: Deprecated.</para></item>
+            <item><para>Visual: Added get_visual_type(), get_depth(),
+get_byte_order(), get_colormap_size(), get_bits_per_rgb(),
+get_red_pixel_details(), get_green_pixel_details(),
+get_blue_pixel_details().</para></item>
+            <item><para>Window: Added get_composited(),
+is_input_only(), is_shaped(), has_native(), get_modal_hint(),
+get_background_pattern(), coords_to_parent(), coords_from_parent(),
+get_effective_parent(), get_effective_toplevel(),
+create_similar_surface(), get_accept_focus(),
+get_focus_on_map().</para></item>
+            <item><para>Added many properties.</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="2.21.8.1" to="2.21.9">
+        <items name="Gdk">
+          <item><para>Visual: Added get_visual_type(), get_depth(),
+get_byte_order(), get_colormap_size(), get_bits_per_rgb(),
+get_red_pixel_details(), get_green_pixel_details(),
+get_blue_pixel_details().</para></item>
+          <item><para>Added many properties.</para></item>
+        </items>
+
+        <items name="Gtk">
+          <item><para>MenuBar: Added set/get_pack_direction() and
+set/get_child_pack_direction</para></item>
+          <item><para>SeparatorToolItem: Added
+get/set_draw().</para></item>
+          <item><para>Added many properties.</para></item>
+        </items>
+      </change>
+
+      <change from="2.21.8" to="2.21.8.1">
+        <items name="Gtk">
+          <item><para>IconView: Added tooltip-column and reorderable
+and item-padding properties.</para></item>
+          <item><para>MessageDialog: Added message-area
+properties.</para></item>
+          <item><para>TextBuffer: Added get_copy_target_list() and
+get_paste_target_list().</para></item>
+          <item><para>AlignmentEnum: Add ALIGN_START and ALIGN_END to
+match gtkmm 3, to help future porting.</para></item>
+          <item><para>Improved API reference
+documentation.</para></item>
+        </items>
+      </change>
+
+      <change from="2.21.7" to="2.21.8">
+        <items name="Gtk">
+          <item><para>IconView: Added
+get/set_item_orientation().</para></item>
+          <item><para>MessageDialog: Added
+get_message_area().</para></item>
+          <item><para>MenuItem: Added unset_submenu().</para></item>
+          <item><para>PaperSize: Added
+get_paper_sizes().</para></item>
+          <item><para>PrintOperation: Added run_page_setup_dialog()
+overloads</para></item>
+          <item><para>Style: Added copy().</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Several API reference documentation
+improvements.</para></item>
+        </items>
+      </change>
+
+      <change from="2.21.5" to="2.21.7">
+        <items name="Gtk">
+          <item><para>Button: Added get_event_window().</para></item>
+          <item><para>Expander: Added get/set_label_fill() and
+property.</para></item>
+          <item><para>Notebook:</para>
+          <unorderedlist>
+            <item><para>Deprecated pages().</para></item>
+            <item><para>Added get_tab_hborder() and
+get_tab_vborder().</para></item>
+          </unorderedlist></item>
+          <item><para>PrintUnixDialog: Added
+get_manual_capabilities().</para></item>
+          <item><para>StatusBar: Added
+remove_all_messages().</para></item>
+          <item><para>Table:</para>
+          <unorderedlist>
+            <item><para>Deprecated children().</para></item>
+            <item><para>Added get_size().</para></item>
+          </unorderedlist></item>
+          <item><para>TextView: Added get_hadjustment(),
+get_vadjustment(), im_context_filter_keypress(),
+reset_im_context().</para></item>
+          <item><para>Viewport: Added get_view_window().</para></item>
+          <item><para>Widget:</para>
+          <unorderedlist>
+            <item><para>Added send_focus_change().</para></item>
+            <item><para>Added const version of
+get_accessible().</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>Color: Deprecate rgb_find_color().</para></item>
+          <item><para>Cursor: Added get_cursor_type().</para></item>
+          <item><para>Device: Added get_key(), get_axis_use(),
+get_n_axes().</para></item>
+          <item><para>RgbCMap: Deprecated.</para></item>
+          <item><para>Window: Added get_composited(), is_input_only(),
+is_shaped(), has_native(), get_modal_hint(), get_background_pattern(),
+coords_to_parent(), coords_from_parent(), get_effective_parent(),
+get_effective_toplevel(), create_similar_surface(),
+get_accept_focus(), get_focus_on_map().</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>MSVC++ and installer fixes.</para></item>
+        </items>
+      </change>
+
+      <change from="2.21.1" to="2.21.5">
+        <item><para>Adapt to recent GDK and Gtk+ deprecations. You
+may need to include gtkmm/box, gtkmm/dialog.h, gtkmm/main.h,
+gtkmm/treepath, or gtkmm.h before other gtkmm or gtk+ includes to
+build with disabled deprecations and warnings as errors. We might yet
+find a way to make that unnecessary. It is only an issue in gtkmm
+2.22, not with gtkmm-3.0.</para></item>
+        <item><para>PrintOperation: get_default_page_setup():
+refcount fix. Bug #622957.</para></item>
+      </change>
+
+      <change from="2.20.3" to="2.21.1">
+        <item><para>atkmm is now a separate tarball
+module.</para></item>
+        <item><para>Remove support for these glibmm build options
+via ifdefs: <command>--enable-api-exceptions</command>
+<command>--enable-api-properties</command>
+<command>--enable-api-default-signal-handlers</command> (All this
+gtkmm API is now always present.)</para></item>
+        <item><para>Assistant: Added commit().</para></item>
+        <item><para>Entry: Added im_context_filter_keypress() and
+reset_im_context().</para></item>
+      </change>
+
+      <change from="2.20.2" to="2.20.3">
+        <item><para>Documentation: Added main page text at
+index.html.</para></item>
+      </change>
+
+      <change from="2.20.1" to="2.20.2">
+        <item><para>Documentation: Strip out the
+gobject-introspection annotations, and use other improvements made to
+docextract_to_xml.py</para></item>
+      </change>
+
+      <change from="2.20.0" to="2.20.1">
+        <items name="Gtk">
+          <item><para>RecentAction: Fix the constructor that takes a
+RecentManager. Bug #612900</para></item>
+          <item><para>TreeRowReference::get_model(): Correct the
+reference counting. Bug #611814</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Builder: Complete the exceptions thrown
+documentation. Bug #548022</para></item>
+          <item><para>Remove gobject-introspection
+annoations.</para></item>
+          <item><para>Correct some newin/since doyxgen
+tags.</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>Updates for the Windows installer.</para></item>
+        </items>
+      </change>
+
+      <change from="2.19.7" to="2.20.0">
+        <items name="Gtk">
+          <item><para>Added CellRendererSpin, Spinner,
+OffscreenWindow, ToolPalette, ToolItemGroup.</para></item>
+          <item><para>Action: Added get/set_always_show_image() and
+property.</para></item>
+          <item><para>Dialog: Added
+get_widget_for_response().</para></item>
+          <item><para>Entry:</para>
+          <unorderedlist>
+            <item><para>Allow use of a shared EntryBuffer.</para></item>
+            <item><para>Added get_text_window() and
+get_icon_window().</para></item>
+          </unorderedlist></item>
+          <item><para>FontSelection: Added get_family() and
+get_face(), get_family_list(), get_face_list().</para></item>
+          <item><para>Paned: Added get_handle_window()</para></item>
+          <item><para>PrintContext: Added
+get_hard_margins().</para></item>
+          <item><para>Printer: get_hard_margins().</para></item>
+          <item><para>Range: Added get/set_slider_size_fixed(),
+get/set_min_slider_size(), get_slider_range(),
+get_range_rect().</para></item>
+          <item><para>StatusBar: Added
+get_message_area().</para></item>
+          <item><para>StatusIcon: Added set_name().</para></item>
+          <item><para>ToolItem: Added get_ellipsize_mode(),
+get_text_alignment(), get_text_orientation() and
+get_text_size_group().</para></item>
+          <item><para>ToolItemGroup: Added
+get_label_widget().</para></item>
+          <item><para>ToolPalette: Make get_expand() and
+get_icon_size() const.</para></item>
+          <item><para>ToolShell: Added get_text_orientation(),
+get_text_alignment(), get_ellipsize_mode(),
+get_text_size_group().</para></item>
+          <item><para>ToolTip: Added
+set_icon(Gio::Icon).</para></item>
+          <item><para>Viewport: Added get_bin_window().</para></item>
+          <item><para>Widget:</para>
+          <unorderedlist>
+            <item><para>Added set/get_realized(), set/get_mapped() and
+style_attach().</para></item>
+            <item><para>Added has_rc_style(), deprecating
+rc_style().</para></item>
+          </unorderedlist></item>
+          <item><para>Window:</para>
+          <unorderedlist>
+            <item><para>Added get_window_type(), deprecating
+get_is_toplevel() and get_is_popup(). Removed get_is_dialog() because
+it never had any implmentation anyway.</para></item>
+            <item><para>Added unset_transient_for().</para></item>
+            <item><para>Added get_icon_name() and icon_name
+property.</para></item>
+            <item><para>Added get/set_mnemonics_visible() and
+property.</para></item>
+            <item><para>Added accept-focus, and focus-on-map
+properties.</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>Screen: Added
+get_primary_monitor().</para></item>
+          <item><para>Window: PixbufAnimationIter: Make the methods
+public.</para></item>
+          <item><para>Window: Added flush(),
+get/set_offscreen_embedder() and get_offscreen_pixmap().</para></item>
+        </items>
+
+        <items name="Since 2.19.7 (unstable)">
+          <item><para>ToolPalette</para>
+          <unorderedlist>
+            <item><para>Derive from ToolShell.</para></item>
+            <item><para>Added a const version of
+get_drop_item().</para></item>
+            <item><para>Added properties.</para></item>
+          </unorderedlist></item>
+          <item><para>ToolItemGroup: Added properties.</para></item>
+          <item><para>OffscreenWindow:</para>
+          <unorderedlist>
+            <item><para>Added const versions of get_pixbuf() and
+get_pixmap()</para></item>
+            <item><para>Added properties.</para></item>
+          </unorderedlist></item>
+          <item><para>Range: Make get_slider_range()
+const.</para></item>
+          <item><para>Demos: Don't use deprecated API.</para></item>
+        </items>
+      </change>
+
+      <change from="2.19.6" to="2.19.7">
+        <items name="Gdk">
+          <item><para>Screen: Added
+get_primary_monitor().</para></item>
+          <item><para>Window: Added flush().</para></item>
+        </items>
+
+        <items name="Gtk">
+          <item><para>StatusBar: Added
+get_message_area().</para></item>
+          <item><para>Printer: get_hard_margins().</para></item>
+          <item><para>ToolItem: Added get_ellipsize_mode(),
+get_text_alignment(), get_text_orientation() and
+get_text_size_group().</para></item>
+          <item><para>ToolItemGroup: Added
+get_label_widget().</para></item>
+          <item><para>ToolPalette: Make get_expand() and
+get_icon_size() const.</para></item>
+          <item><para>ToolShell: Added get_text_orientation(),
+get_text_alignment(), get_ellipsize_mode(),
+get_text_size_group().</para></item>
+          <item><para>Viewport: Added get_bin_window().</para></item>
+          <item><para>Window:</para>
+          <unorderedlist>
+            <item><para>Added get_window_type(), deprecating
+get_is_toplevel() and get_is_popup(). Removed get_is_dialog() because
+it never had any implmentation anyway.</para></item>
+            <item><para>Added unset_transient_for().</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="2.19.4" to="2.19.6">
+        <items name="Gtk">
+          <item><para>Action: Do not deprecate connect_proxy(),
+disconnect_proxy(), block_activate_from() and unblock_activate_from(),
+because we cannot yet derive existing classes from Activatable until
+we can break ABI. Bug #608109</para></item>
+          <item><para>EntryBuffer: Actually use
+GtkEntryBuffer.</para></item>
+          <item><para>Paned: Added get_handle_window().</para></item>
+          <item><para>ToolTip: Added
+set_icon(Gio::Icon).</para></item>
+          <item><para>Widget:</para>
+          <unorderedlist>
+            <item><para>Added set/get_realized(), set/get_mapped() and
+style_attach().</para></item>
+            <item><para>get_requisition(): Reimplemented with the new
+gtk_widget_get_requisition() function.</para></item>
+            <item><para>Un-deprecate get_action() because we cannot yet
+derive existing classes from Activatable until we can break
+ABI.</para></item>
+          </unorderedlist></item>
+          <item><para>Use Glib::wrap() instead of -&gt;gobj() in some
+places, so we are generally more forgiving of null
+RefPtrs&lt;&gt;.</para></item>
+        </items>
+      </change>
+
+      <change from="2.19.2" to="2.19.4">
+        <items name="Gtk">
+          <item><para>Action: Added get/set_always_show_image() and
+property.</para></item>
+          <item><para>EntryBuffer: Added this class.</para></item>
+          <item><para>Entry:</para>
+          <unorderedlist>
+            <item><para>Use EntryBuffer in a constructor and
+get/set_buffer() and property.</para></item>
+            <item><para>Added get_text_window() and
+get_icon_window().</para></item>
+          </unorderedlist></item>
+          <item><para>FontSelection.hg:</para>
+          <unorderedlist>
+            <item><para>Added get_family() and get_face(),
+get_family_list(), get_face_list(), get_size_list().</para></item>
+            <item><para>Reimplemented get_size_entry() and
+get_preview_entry() using new functions.</para></item>
+          </unorderedlist></item>
+          <item><para>OffscreenWindow: Added this class.</para></item>
+          <item><para>gtk/src/offscreenwindow.[hg|ccg]: Added this,
+wrapping GtkOffscreenWindow.</para></item>
+          <item><para>gtk/gtkmm.h: Include
+offscreenwindow.h.</para></item>
+          <item><para>gtk/src/window.hg: Added
+get/set_mnemonics_visible(). Added mnemonics, accept-focus, and
+focus-on-map properties.</para></item>
+          <item><para>PrintContext: Added
+get_hard_margins().</para></item>
+          <item><para>Range: Added get/set_slider_size_fixed(),
+get/set_min_slider_size(), get_slider_range(),
+get_range_rect().</para></item>
+          <item><para>ToolItememGroup: Added insert() with no position
+parameter and made get_item_position() const.</para></item>
+          <item><para>ToolPalette: set_drag_source(), add_drag_dest():
+Add suitable default parameter values.</para></item>
+          <item><para>StatusIcon: Added set_name().</para></item>
+          <item><para>Widget: Added has_rc_style(), deprecating
+rc_style().</para></item>
+          <item><para>Window:</para>
+          <unorderedlist>
+            <item><para>Added get_icon_name() and icon_name
+property.</para></item>
+            <item><para>Added get/set_mnemonics_visible() and
+property.</para></item>
+            <item><para>Added accept-focus, and focus-on-map
+properties.</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="2.18.2" to="2.19.2">
+        <items name="Gdk">
+          <item><para>PixbufAnimationIter: Make the methods
+public.</para></item>
+          <item><para>Window: Added get/set_offscreen_embedder() and
+get_offscreen_pixmap()</para></item>
+        </items>
+
+        <items name="Gtk">
+          <item><para>Added CellRendererSpin and
+Spinner.</para></item>
+          <item><para>Added ToolPalette.</para></item>
+          <item><para>Dialog: Added get_widget_for_response(). Bug
+#600411</para></item>
+          <item><para>Move the Gtk::Border typedef into its own header
+and add a Glib::Value specialization. Bug #603926</para></item>
+          <item><para>Gdk::Window: get_default_root_window(): Correct
+the reference counting. Bug #603852</para></item>
+          <item><para>Windows build fixes.</para></item>
+          <item><para>Fix the build when exceptions, vfuncs, etc. are
+disabled.</para></item>
+        </items>
+      </change>
+
+      <change from="2.18.1" to="2.18.2">
+        <item><para>Reintroduce accidentally removed API methods
+Gtk::Widget::can_default() and Gtk::Widget::can_focus(). bug
+#597022</para></item>
+        <item><para>Include infobar.h from main gtkmm.h
+header.</para></item>
+      </change>
+
+      <change from="2.18.0" to="2.18.1">
+        <item><para>RecentManager: Undeprecate
+get_default().</para></item>
+      </change>
+
+      <change from="2.17.11" to="2.18.0">
+        <item><para>Clipboard: wait_for_targets): Fix a crash. Bug
+#586626</para></item>
+        <item><para>Window: Added set_icon_name().</para></item>
+        <items name="Build">
+          <item><para>Require a recent pangomm. Bug #593049
+.</para></item>
+          <item><para>Style: Fix a compiler error with the Intel C++
+compiler. Bug #594171 .</para></item>
+          <item><para>Fix recently-introduced problems with
+disable-deprecated options.</para></item>
+        </items>
+      </change>
+
+      <change from="2.17.9.3" to="2.17.11">
+        <items name="Gdk">
+          <item><para>Window: Added redirect_to_drawable(),
+remove_redirection(), geometry_changed(), get_root_coords(),
+restack().</para></item>
+        </items>
+
+        <items name="Gtk">
+          <item><para>Range: Added get/set_flippable().</para></item>
+          <item><para>Widget: Added get_is_toplevel(),
+get_is_drawable(), get/set_receives_default(), wrapping the new C
+functions, deprecating the hand-coded non get-prefixed
+versions.</para></item>
+        </items>
+      </change>
+
+      <change from="2.17.9.2" to="2.17.9.3">
+        <item><para>Change public documentation location to
+library.gnome.org for the pkg-config files as well.</para></item>
+      </change>
+
+      <change from="2.17.9.1" to="2.17.9.2">
+        <item><para>Change public documentation location to
+library.gnome.org.</para></item>
+      </change>
+
+      <change from="2.17.9" to="2.17.9.1">
+        <item><para>Reenable the per-class hierarchy graphs in the
+reference documentation.</para></item>
+        <item><para>Drop the custom HTML header and footer, and use
+the shared doxygen.css file from mm-common.</para></item>
+      </change>
+
+      <change from="2.17.2" to="2.17.9">
+        <items name="Gtk">
+          <item><para>Added InfoBar widget.</para></item>
+          <item><para>Builder: get_widget(): Fix a crash when the
+widget is not found. Bug #589267</para></item>
+          <item><para>CellRenderer: Added get/set_alignment(),
+get/set_padding(), get/set_visible(),
+get/set_sensitive().</para></item>
+          <item><para>CellRendererToggle: Added
+set/get_activatable().</para></item>
+          <item><para>FileChooser: Added get/set_create_folders() and
+property.</para></item>
+          <item><para>Label: Added get/set_track_visited_links() and
+property.</para></item>
+          <item><para>Menu: Added get/set_reserve_toggle_size() and
+property.</para></item>
+          <item><para>PrintOperation:</para>
+          <unorderedlist>
+            <item><para>Added update_custom_widget
+signal.</para></item>
+            <item><para>Added get/set_embed_page_setup() and
+get_n_pages_to_print() and properties.</para></item>
+          </unorderedlist></item>
+          <item><para>PrintUnixDialgo: Added
+set/get_support_selection(), set/get_support_selection(),
+set/get_has_selection(), set/get_embed_page_setup(),
+s/get_embed_page_setup(), and et_page_setup_set().</para></item>
+          <item><para>RecentInfo::get_application_info(): Change the
+app_exec parameter to a</para></item>
+          <item><para>tring&amp; instead of a container. This could
+not have been used before.</para></item>
+          <item><para>StatusIcon: Added get/set_title() and
+property.</para></item>
+          <item><para>Widget: Added some get*() methods, deprecating
+old methods without the get prefix.</para></item>
+        </items>
+
+        <item><para>Build: Reworked build system to improve the
+build and installation and interlinking of reference
+documentation.</para></item>
+      </change>
+
+      <change from="2.17.1" to="2.17.2">
+        <items name="Gtk">
+          <item><para>Containter: Avoid unnecessary warnings about an
+unimplemented remove vfunc in custom container widget
+classes.</para></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>Pixbuf: Added create_for_stream() and
+create_for_stream_at_scale() for reading pixbufs from Gio file
+streams.</para></item>
+        </items>
+      </change>
+
+      <change from="2.16.0" to="2.17.1">
+        <items name="Gtk">
+          <item><para>IconView: get_model(): Correct the
+reference-counting. Bug #583037 .</para></item>
+          <item><para>Added InfoBar</para></item>
+          <item><para>RecentManager::add_item(): Fixed a crash. Bug
+#585521.</para></item>
+          <item><para>TextBuffer: Actually implement the
+get_text(bool) const method. method. These fix undefined symbol linker
+errors.</para></item>
+          <item><para>TreeModel::Path::empty(): Correct the check for
+a NULL underlying GtkTreePath.</para></item>
+          <item><para>StatusIcon:get_geometry(): Correct the
+reference-counting. Bug #575268</para></item>
+          <item><para>StockID: Actually implement operator
+bool().</para></item>
+          <item><para>Fix the build with GTK+ 2.17 (A const change in
+the gtk_recent_info_get_application_info() API).</para></item>
+          <item><para>Fix the build when exceptions are disabled in
+glibmm.</para></item>
+          <item><para>Win32 installer fixes.</para></item>
+          <item><para>Documentation: Stock API documentation
+improvements. Bug #506885.</para></item>
+        </items>
+      </change>
+
+      <change from="2.15.5" to="2.16.0">
+        <items name="Gtk">
+          <item><para>Builder:</para>
+          <unorderedlist>
+            <item><para>get_widget_derived(): Reference-counting
+correction.</para></item>
+            <item><para>create_from_file(), add_from_file(),
+create_from_string(), add_from_string(): Add method overloads that
+take a char* for the object ID, to avoid ambiguity with the two other
+overloads that take ustring or StringArrayHandle.</para></item>
+          </unorderedlist></item>
+          <item><para>Entry:</para>
+          <unorderedlist>
+            <item><para>*_icon_* methods(): Rearrange parameters to
+make these consistent and so we can have more default parameter
+values.</para></item>
+            <item><para>Added icon_press and icon_release
+signals.</para></item>
+          </unorderedlist></item>
+          <item><para>FileChooserButton: Added the file_set signal,
+noticed by Damon Register.</para></item>
+          <item><para>Stock: Added CAPS_LOCK_WARNING.</para></item>
+          <item><para>Style: Added get_style_property_value() and
+templated get_style_property().</para></item>
+          <item><para>Added Orientable and Activatable interfaces,
+though they cannot be used yet because that would break ABI of
+existing classes.</para></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>PixbufAnimation: create_from_file(): Throw an
+exception when the GError is not null.</para></item>
+        </items>
+
+        <items name="Maemo-specific API">
+          <item><para>TextBuffer: get/set_rich_text_format(),
+set_rich_text_format_all(), get/set_can_paste_rich_text(): Remove
+these Maemo-specific methods which have been superseded by the generic
+TextBuffer serialization functions.</para></item>
+          <item><para>Enums</para>
+          <unorderedlist>
+            <item><para>Added Maemo-specific Gtk::HildonSizeType,
+wrapping HildonSizeType, which was inexplicably added to GTK+ in Maemo
+5.</para></item>
+            <item><para>Likewise added Gtk::Hildon::InputMode,
+wrapping HildonGtkInputMode.</para></item>
+          </unorderedlist></item>
+        </items>
+      </change>
+
+      <change from="2.15.3" to="2.15.5">
+        <item><para>Activatable: reset_vfunc() renamed to
+sync_action_properties_vfunc().</para></item>
+        <items name="Builder">
+          <item><para>create_from_file(), add_from_file(),
+create_from_string(): Add method overloads that take char* to avoid
+ambiguity.</para></item>
+          <item><para>get_widget_derived(): Correct
+reference-counting.</para></item>
+        </items>
+
+        <item><para>FileChooserButton: Add file_set
+signal.</para></item>
+        <item><para>Stock: Added CAPS_LOCK_WARNING.</para></item>
+        <item><para>Added interfaces, but we can't use them yet
+without breaking ABI: Activatable, Orientation.</para></item>
+      </change>
+
+      <change from="2.15.1" to="2.15.3">
+        <items name="Gtk">
+          <item><para>Action: Reimplemented set_tooltip() with the new
+C gtk_action_set_tooltip() function. Added get/set_label(),
+get/set_short_label(), get_tooltip(), get/set_stock_id(),
+get/set_gicon(), get/set_icon_name(), get/set_visible_horizontal(),
+get/set_visible_vertical(), get/set_is_important(), which are new
+accessors for the properties. Added the gicon property. Added
+block_activate() and unblock_activate().</para></item>
+          <item><para>ImageMenuItem: Added get/set_always_show_image()
+and property.</para></item>
+          <item><para>Scale: Added add_mark() and
+clear_marks().</para></item>
+          <item><para>TreeView: Added a get_path_at_pos() overload
+that takes less parameters.</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>Allow pangomm to build outside the source tree.
+Bug #570325</para></item>
+          <item><para>MSVC++: Disabled compiler warning 4250 also for
+MSVC2005. Bug #568083 .</para></item>
+          <item><para>Documentation: Reference documetnation: Unescape
+some &lt; and &gt; characters. #568485 </para></item>
+        </items>
+      </change>
+
+      <change from="2.15.0" to="2.15.1">
+        <items name="Gtk">
+          <item><para>CellView: Added get_model() and some new
+properties.</para></item>
+          <item><para>Entry: Added unset_invisible_char(),
+get_invisible_char(). Added the new progress and icon methods and the
+properties, including the new im-module property.</para></item>
+          <item><para>ImageMenuItem: Added get/set_use_stock(),
+set_accel_group().</para></item>
+          <item><para>MenuItem: Added get/set_label(),
+get/set_use_underline() and properties.</para></item>
+          <item><para>PaperSize: Constructor: Remove the default value
+for the name parameter, because there is already a default
+constructor, This caused MSVC++ warning C4520 with Visual Studio 2008.
+Bug #568074.</para></item>
+          <item><para>PrintOperation: Added draw_page_finish(),
+set_defer_drawing().</para></item>
+          <item><para>PrintSettings: Added get_resolution_x(),
+get_resolution_y(), set_resolution_xy(),
+get/set_printer_lpi().</para></item>
+          <item><para>SelectionData: Reimplement get_selection() using
+the new C getter method.</para></item>
+          <item><para>StatusIcon: Added button_press_event,
+button_release_event and scroll_event signals. Added
+get/set_has_tooltip(), get/set_tooltip_text(),
+get/set_tooltip_markup().</para></item>
+          <item><para>Stock: ORIENTATION_PORTRAIT,
+ORIENTATION_LANDSCAPE, ORIENTATION_REVERSE_LANDSCAPE, and
+ORIENTATION_REVERSE_PORTRAIT, avoiding undefined reference errors when
+trying to use these. Bug #568416 .</para></item>
+          <item><para>TextBuffer: Added the paste_done
+signal.</para></item>
+          <item><para>TextView: Added im-module
+property.</para></item>
+          <item><para>TreeModel::Path::empty(): Also check for a null
+underlying GtkTreePath. Added operator bool() to do the same, just
+calling !empty().</para></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>Drawable::draw_pixbuf(): Add an override without
+a GC parameter, becauase it can be NULL in C.</para></item>
+          <item><para>Screen: Added get_monitor_width_mm(),
+get_monitor_height_mm(), get_monitor_plug_name().</para></item>
+        </items>
+
+        <items name="Windows build">
+          <item><para>Disabled MSVC++ compiler warning 4250 Bug
+#568083 .</para></item>
+          <item><para>Installer: Added Simplified Chinese
+translation.</para></item>
+        </items>
+      </change>
+
+      <change from="2.14.2" to="2.15.0">
+        <item><para>CellRendererPixbuf: Added the icon-name and
+follow-state properties, noticed by Mathias Hasselmann.</para></item>
+        <item><para>Printer::enumerate_printers(): Fix a refcounting
+problem found by Tor Krill.</para></item>
+        <item><para>Gdk::Window: Added an invalidate() that takes no
+rect parameter because it can be NULL in C.</para></item>
+        <item><para>Cleaned up gtk includes to use only toplevel
+headers, as may be required by a future GTK+ version. Bug
+#564006</para></item>
+        <item><para>Container: Use GType instead of GtkType for the
+child_type_vfunc() return type This should allow soure code to use
+gtkmm if it declares GTK_DISABLE_DEPRECATED. Bug #562893</para></item>
+        <item><para>Documentation: TreeModel: set_value_impl()
+documentation: Mention row_changed(), not set_row_changed(). Bug
+#562505</para></item>
+        <item><para>HandleBox: Restore the child-attached property,
+which was lost at some point during 2.14.</para></item>
+        <item><para>LinkButton: Resore the visited property
+definition, which was lost at some point during 2.14.</para></item>
+        <item><para>CellView, ComboBox, EntryCompletion, IconView:
+Added unset_model(). Bug #555268</para></item>
+      </change>
+
+      <change from="1.14.1" to="2.14.2">
+        <item><para>Remove some ;s to avoid warnings. Ubuntu Bug:
+https://bugs.launchpad.net/bugs/275397</para></item>
+        <items name="Windows build">
+          <item><para>Use the new naming convention, similar to
+boost.</para></item>
+          <item><para>installer-creation script
+improvements.</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>EntryCompletion: signal_match_selected: Mention
+that custom signal handlers should connect before the default
+one.</para></item>
+          <item><para>TreeView reference documentation corrections.
+Bug #547787</para></item>
+          <item><para>Corrected the index page for DevHelp. Bug
+#559900</para></item>
+        </items>
+      </change>
+
+      <change from="2.14.0" to="2.14.1">
+        <item><para>Another Windows build fix.</para></item>
+      </change>
+
+      <change from="2.13.8" to="2.14.0">
+        <item><para>Windows build fixes.</para></item>
+      </change>
+
+      <change from="2.13.7" to="2.13.8">
+        <item><para>PrintSettings: Added get/set_number_up_layout(),
+using the new NumberUpLayout enum.</para></item>
+        <item><para>SelectionData: Changed get_data() to not return a
+length too, and added get_length(), as it was in gtkmm 2.12, to match
+latest GTK+.</para></item>
+        <item><para>Widget: Changed the get_allocation()
+implementation back to direct struct field access, to match latest
+GTK+.</para></item>
+        <item><para>Restored maemo-only (ifdefed) API that had been
+removed accidentally a while ago.</para></item>
+        <item><para>Added a COPYING.tools file because a small gmmproc
+utility is GPL. Bug #550789</para></item>
+        <item><para>Windows build fixes.</para></item>
+      </change>
+
+      <change from="2.13.6" to="2.13.7">
+        <item><para>ComboBox: Added
+get/set_button_sensitivity().</para></item>
+        <item><para>FileChooser: Added set_file(), select_file(),
+unselect_file(), taking a Gio::File. Added get_files(),
+set_current_folder_file(), get_current_folder_file(), get_file(),
+gtk_file_chooser_get_file() get_file(),
+get_preview_file().</para></item>
+        <item><para>LinkButton: Added get/set_visited() and the
+property.</para></item>
+        <item><para>StatusIcon: Added set() taking a Gio::Icon. Added
+get_icon() and gicon property. Added constructor taking a
+Gio::Icon.</para></item>
+        <item><para>Adjustment, StatusIcon: Reimplement some get_*()
+functions with new C functions instead of direct struct
+access.</para></item>
+        <item><para>Build: Updated the MS Visual Studio 2005 build and
+added a script to create an installer.</para></item>
+      </change>
+
+      <change from="2.13.5" to="2.13.6">
+        <item><para>ComboBoxEntry: Added
+get_active_text().</para></item>
+        <item><para>Widget: Added the drag_failed signal, with no
+default signal handler.\</para></item>
+        <items name="Build">
+          <item><para>Correct the C++ compiler check for autogening
+with libtool 2.2.</para></item>
+          <item><para>Calendar: Removed spurious ; characters. Bug
+#544848.</para></item>
+        </items>
+      </change>
+
+      <change from="2.13.4" to="2.13.5">
+        <items name="Gtk">
+          <item><para>Builder: Added versions of create_from_file(),
+create_from_string(), add_from_file(), and add_from_string() that take
+an ID or array of IDs, to allow building of only a part of the file,
+as was already possible with libglade.</para></item>
+          <item><para>CellRendererCombo: Wrapped the changed
+signal.</para></item>
+          <item><para>FileChooser: get_preview_widget(): Avoid an
+endless loop. Bug #543288</para></item>
+          <item><para>Printer: Added is_paused() and
+is_accepting_jobs().</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>pangomm is now in its own tarball.</para></item>
+          <item><para>MSVC_Net2003 project files: Mention new source
+files for builder, scalebutton, tooltip, and volumebutton. Bug
+#543294.</para></item>
+        </items>
+      </change>
+
+      <change from="2.13.1" to="2.13.4">
+        <items name="Gtk">
+          <item><para>Added the ToolShell interface, though it is not
+used yet, to avoid breaking ABI.</para></item>
+          <item><para>AccelGroup: Added get_is_locked() and
+get_modifier_mask().</para></item>
+          <item><para>CellRendererPixbuf: Added gicon
+property.</para></item>
+          <item><para>Clipboard: Added request_uris(),
+wait_for_uris(), wait_is_uris_available().</para></item>
+          <item><para>Entry: Added get/set_overwrite_mode(). Added
+overwrite_mode and text_length properties.</para></item>
+          <item><para>Dialog: Reimplemented get_action_area() and
+get_content_area() with the new accessor functions.</para></item>
+          <item><para>Entry: Reimplemented get_text_length() with the
+new accessor functions.</para></item>
+          <item><para>HandleBox: Reimplemented is_child_detached()
+with</para></item>
+          <item><para>IconInfo: Added IconInfo(icon_theme, pixbuf)
+constructor</para></item>
+          <item><para>Image: Added a set() overload that takes a
+Gio::Icon. Added get_gicon() and gicon property.</para></item>
+          <item><para>Layout: Reimplemented get_bin_window() with the
+new accessor function.</para></item>
+          <item><para>Menu: Added get_accel_path() and get_monitor()
+and many new properties.</para></item>
+          <item><para>MenuItem: Added get_accel_path(). Added
+right-justified and submenu properties.</para></item>
+          <item><para>MessageDialog: Added get_image().</para></item>
+          <item><para>Printer: Added
+get_default_page_size().</para></item>
+          <item><para>PageSetup: Added load_from_file() and
+load_from_key_file(). Added create_from_file() and
+create_from_key_file()</para></item>
+          <item><para>Plug: Added get_embedded() and
+get_socket_window(). Added embedded and socket_window
+properties.</para></item>
+          <item><para>PrinterSettings: Added load_from_file() and
+load_from_key_file(). Added create_from_file() and
+create_from_key_file().</para></item>
+          <item><para>ScaleButton: Added set/get_orientation(),
+get_plus_button(), get_minus_button(), get_popup(). Added orientation
+property.</para></item>
+          <item><para>SelectionData: Reimplemented get_data(),
+get_data_type(), get_format(), and get_display() with the new accessor
+functions.</para></item>
+          <item><para>ScaleButton: Added set/get_orientation(),
+get_plus_button(), get_minus_button(), get_popup(). Added orientation
+property.</para></item>
+          <item><para>Settings: Added many properties.</para></item>
+          <item><para>Socket: Added get_plug_window().</para></item>
+          <item><para>StatusIcon: Added
+get_x11_window_id().</para></item>
+          <item><para>Stock: Added PAGE_SETUP, PRINT_ERROR,
+PRINT_REPORT, PRINT_WARNING.</para></item>
+          <item><para>ToolItem: Added
+toolbar_reconfigured().</para></item>
+          <item><para>Tooltip: Added
+set_icon_from_icon_name().</para></item>
+          <item><para>TreeViewColumn: Added get_tree_view().
+Deprecated the existing cell_get_size() and added another, because the
+cell_area parameter has changed to a const in
+gtk_tree_view_column_cell_get_size().</para></item>
+          <item><para>Widget: Added damage_event signal. Added window
+property. Added get_snapshot(). Reimplemented get_allocation() and
+get_window() with the new C accessor functions instead of direct
+struct field access.</para></item>
+        </items>
+      </change>
+
+      <change from="2.13.0" to="2.13.1">
+        <items name="Gtk">
+          <item><para>Bin: add_label(): Correct the order of
+parameters to the Label constructor. Bug #534685.</para></item>
+          <item><para>Entry: Added the shadow_type property (added to
+GTK+ in 2.12). Bug #532744.</para></item>
+          <item><para>RecentInfo: Added a specialization for
+Glib::Value&lt;Glib::RefPtr&lt;Gtk::RecentInfo&gt; &gt; so that
+Glib::RefPtr&lt;Gtk::RecentInfo&gt; can be used with
+Glib::Value&lt;&gt; and Gtk::TreeModelColumn&lt;&gt;.</para></item>
+          <item><para>Widget: get_direction(): Add a const version and
+deprecated the non-const version. Bug #526742.</para></item>
+          <item><para>Window: Added unset_back_pixmap(). Bug
+#525967.</para></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>PixbufAnimationIter: Added get_pixbuf(),
+get_delay_time(), advance(), on_currently_loading_frame(). Bug
+#528037.</para></item>
+        </items>
+
+        <items name="Pango">
+          <item><para>Attributes: gobj(): Correct the const qualifier.
+We don't think this will affect ABI, but please tell us if it
+does.</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Image: Document the constructors.</para></item>
+        </items>
+      </change>
+
+      <change from="2.12.8" to="2.13.0">
+        <items name="Gtk">
+          <item><para>Action, RadioAction, ToggleAction: Added
+create_with_icon_name() functions, allowing IconTheme icon names to be
+used instead of stock IDs. Bug #437041.</para></item>
+          <item><para>Action: Added the icon_name, visible_overflown,
+and action_group properties.</para></item>
+          <item><para>Calendar: Added set_detail_func(),
+set_detail_width_chars(), set_detail_height_rows(),
+get_detail_width_chars(), and get_detail_height_rows(), and these
+properties.</para></item>
+          <item><para>EntryCompletion:</para>
+          <unorderedlist>
+            <item><para>Added set_popup_single_match(), deprecating
+the wrongly-named set_popup_single_width(). Bug #473750</para></item>
+            <item><para>Added a const version of get_text_column() and
+deprecated the non-const version.</para></item>
+          </unorderedlist></item>
+          <item><para>IconInfo, IconTheme, AttrList: Deprecated the
+non-const operator bool()s and added const versions.</para></item>
+          <item><para>PageSetup:</para>
+          <unorderedlist>
+            <item><para>Added copy(), wrapping
+gtk_page_setup_copy().</para></item>
+            <item><para>Added const version of save_to_key_file() and
+deprecated the non-const one.</para></item>
+          </unorderedlist></item>
+          <item><para>PrintSettings:</para>
+          <unorderedlist>
+            <item><para>Added copy(), wrapping
+gtk_print_settings_copy().</para></item>
+            <item><para>Added const version of save_to_key_file() and
+deprecated the non-const one.</para></item>
+          </unorderedlist></item>
+          <item><para>StockID: Added operator bool().</para></item>
+          <item><para>TreeView: set_headers_visible(): Added default
+parameter value.</para></item>
+          <item><para>Widget:</para>
+          <unorderedlist>
+            <item><para>drag_data_get(): Deprecated the current
+version and added a version that takes a const Glib::ustring&amp; for
+the target.</para></item>
+            <item><para>Added the grab_broken_event signal (with
+no_default_handler, to preserve ABI). Bug #473465</para></item>
+            <item><para>Added the popup_menu signal, now that we know
+that it is public API. (with no_default_handler, to preserve ABI). Bug
+#304103</para></item>
+          </unorderedlist></item>
+        </items>
+
+        <items name="Gdk">
+          <item><para>Color</para>
+          <unorderedlist>
+            <item><para>Added to_string().</para></item>
+            <item><para>Deprecated the non-const operator bool()s and
+added a const version.</para></item>
+          </unorderedlist></item>
+          <item><para>Drawable: dAdded a const override of get_size()
+and deprecated the non-const version. Bug #467539</para></item>
+        </items>
+
+        <items name="Build">
+          <item><para>Removed the tutorial and examples. They are now
+in the gtkmm-documentation module.</para></item>
+        </items>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 May 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64bit module</para></item>
+        <item><para>Add gcc44-64bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
