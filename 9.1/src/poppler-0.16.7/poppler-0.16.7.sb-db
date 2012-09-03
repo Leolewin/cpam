@@ -1,0 +1,410 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="poppler" version="0.16.7" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}016</install-name>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="jpeg" var="JPEG"
+        install-name="libjpeg8">v&gt;=8b</depend>
+      <depend program="lcms" var="LIBLCMS"
+        install-name="liblcms11">v&gt;=1.19</depend>
+      <depend program="libglade" var="LIBGLADE"
+        install-name="libglade26">v&gt;=2.6.4</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="openjpeg" var="LIBOPENJPEG"
+        install-name="libopenjpeg14">v&gt;=1.4</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <module name="default">
+      <sources>
+        <source checksum="3afa28e3c8c4f06b0fbca3c91e06394e"
+          checksum-type="md5" size="1952179"
+          path="src/poppler-0.16.7.tar.gz"/>
+        <patch checksum="36c67fd4023cd7d7efca3aa780758517"
+          checksum-type="md5" size="369461"
+          path="src/poppler-0.16.7.tww.patch"/>
+        <patch checksum="34efce3f9052f3a252ebf2015c44f18a"
+          checksum-type="md5" size="473006"
+          path="src/poppler-0.16.7.gnulib.patch"/>
+        <patch checksum="786a82fe0881a5e0336fa80c8dded3b9"
+          checksum-type="md5" size="664"
+          path="src/poppler-0.16.7.tww-gnulib.patch"/>
+        <patch checksum="2bab2d73c382ff58a8a0bdbbd34c380d"
+          checksum-type="md5" size="2768883"
+          path="src/poppler-0.16.7.auto.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="qt" var="LIBQT3"
+          install-name="libqt33">v&gt;=3.3.8</depend>
+        <depend program="qt" var="LIBQT4" install-name="libqt47"
+          add-path="prepend"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v&gt;=4.7.4</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="poppler" module="data">v==0.16.7</depend>
+        <depend program="poppler" module="gcc44">v==0.16.7</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath,"
+
+  export gl_cv_func_nanosleep=yes ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings -nodtk"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-readonly_strings -timplicit_local -D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-pthread" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+-I${SB_VAR_LIBOPENJPEG_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+-L${SB_VAR_LIBOPENJPEG_LIB} ${CC_LD_RT}${SB_VAR_LIBOPENJPEG_LIB} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB} ${CC_LD_RT}${SB_VAR_JPEG_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_LIBQT4+${SB_VAR_LIBQT4_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBGDKPIXBUF+:${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBLCMS+:${SB_VAR_LIBLCMS_LIB}/pkgconfig}\
+${SB_VAR_LIBGLADE+:${SB_VAR_LIBGLADE_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBXML+:${SB_VAR_LIBXML_LIB}/pkgconfig}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}/pkgconfig}\
+${SB_VAR_LIBQT3+:${_qt_lib:-${SB_VAR_LIBQT3_LIB}}/pkgconfig}\
+${SB_VAR_LIBQT4+:${SB_VAR_LIBQT4_LIB}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+$(test "${SB_VAR_LIBCAIRO+set}" = set && echo --enable-cairo-output) \
+$(test "${SB_VAR_LIBCAIRO+set}" != set && echo --disable-cairo-output) \
+$(test "${SB_VAR_LIBGLIB+set}" = set && echo --enable-poppler-glib) \
+$(test "${SB_VAR_LIBGLIB+set}" != set && echo --disable-poppler-glib) \
+${SB_VAR_LIBQT3+QTINC=${_qt_inc:-${SB_VAR_LIBQT3_INC}}} \
+${SB_VAR_LIBQT3+QTLIB=${_qt_lib:-${SB_VAR_LIBQT3_LIB}}} \
+${SB_VAR_LIBQT4+--enable-poppler-qt4} \
+${SB_VAR_LIBQT3+--enable-poppler-qt} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--enable-gtk-test --enable-xpdf-headers --enable-static \
+--enable-shared --disable-dependency-tracking ${ARGS+${ARGS}} \
+--disable-silent-rules --datarootdir=${_datadir} \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--libdir=${_libdir:-${SB_INSTALL_PREFIX_LIB}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+poppler.pc poppler-cairo.pc poppler-glib.pc poppler-splash.pc \
+${SB_VAR_LIBQT4+poppler-qt4.pc} ${SB_VAR_LIBQT3+poppler-qt.pc}
+
+# -nodtk causes build failure in glib/demo because glib was built
+# without -nodtk, so remove it there.
+${SB_PATH_SED} -i -e 's|-nodtk||' glib/demo/Makefile
+]]>
+      </configure>
+    </module>
+
+    <module name="data">
+      <build-name>poppler-data-0.4.4</build-name>
+
+      <sources>
+        <source checksum="f3a1afa9218386b50ffd262c00b35b31"
+          checksum-type="md5" size="4175352"
+          path="src/poppler-data-0.4.4.tar.gz"/>
+        <patch checksum="1c1953709608287e32a9e59eb5f64942"
+          checksum-type="md5" size="1468"
+          path="src/poppler-data-0.4.4.tww.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+      </script-header>
+
+      <install>
+<![CDATA[
+gmake install INSTALL=${SB_PATH_INSTALL} \
+prefix=${SB_INSTALL_PREFIX} pkgdatadir=${_datadir}
+]]>
+      </install>
+    </module>
+
+    <module name="gcc44">
+      <sources>
+        <source checksum="3afa28e3c8c4f06b0fbca3c91e06394e"
+          checksum-type="md5" size="1952179"
+          path="src/poppler-0.16.7.tar.gz"/>
+        <patch checksum="36c67fd4023cd7d7efca3aa780758517"
+          checksum-type="md5" size="369461"
+          path="src/poppler-0.16.7.tww.patch"/>
+        <patch checksum="34efce3f9052f3a252ebf2015c44f18a"
+          checksum-type="md5" size="473006"
+          path="src/poppler-0.16.7.gnulib.patch"/>
+        <patch checksum="786a82fe0881a5e0336fa80c8dded3b9"
+          checksum-type="md5" size="664"
+          path="src/poppler-0.16.7.tww-gnulib.patch"/>
+        <patch checksum="2bab2d73c382ff58a8a0bdbbd34c380d"
+          checksum-type="md5" size="2768883"
+          path="src/poppler-0.16.7.auto.patch"/>
+      </sources>
+
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" add-path="prepend">v&gt;=2.26.1</depend>
+        <depend program="gcc" var="GCC"
+          add-path="prepend">v==4.4.6</depend>
+        <depend program="qt" var="LIBQT3" install-name="libqt33"
+          module="gcc44">v&gt;=3.3.8</depend>
+        <depend program="qt" var="LIBQT4" install-name="libqt47"
+          module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v&gt;=4.7.4</depend>
+        <depend program="qt" install-name="libqt47" module="gcc44"
+          append="bin/gcc44" add-path="prepend"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-solaris2.[91]*">v&gt;=4.7.4</depend>
+        <depend program="qt" var="LIBQT4" install-name="libqt47"
+          add-path="prepend"
+          systype="hppa*-hpux*|*-osf*|*-solaris2.8">v&gt;=4.7.4</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--with-pthread" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_JPEG+-I${SB_VAR_JPEG_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+-I${SB_VAR_LIBOPENJPEG_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+-L${SB_VAR_LIBOPENJPEG_LIB} ${CC_LD_RT}${SB_VAR_LIBOPENJPEG_LIB} \
+${SB_VAR_JPEG+-L${SB_VAR_JPEG_LIB} ${CC_LD_RT}${SB_VAR_JPEG_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBQT4+${SB_VAR_LIBQT4_LIB}/${_gccsubdir}/pkgconfig:}\
+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:${SB_VAR_GETTEXT_LIB}/pkgconfig\
+${SB_VAR_LIBGLIB+:${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig}\
+${SB_VAR_LIBATK+:${SB_VAR_LIBATK_LIB}/pkgconfig}\
+${SB_VAR_LIBCAIRO+:${SB_VAR_LIBCAIRO_LIB}/pkgconfig}\
+${SB_VAR_LIBPANGO+:${SB_VAR_LIBPANGO_LIB}/pkgconfig}\
+${SB_VAR_LIBGDKPIXBUF+:${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig}\
+${SB_VAR_LIBGTK+:${SB_VAR_LIBGTK_LIB}/pkgconfig}\
+${SB_VAR_LIBGLADE+:${SB_VAR_LIBGLADE_LIB}/pkgconfig}\
+${SB_VAR_LIBPNG+:${SB_VAR_LIBPNG_LIB}/pkgconfig}\
+${SB_VAR_LIBXML+:${SB_VAR_LIBXML_LIB}/pkgconfig}\
+${SB_VAR_JPEG+:${SB_VAR_JPEG_LIB}/pkgconfig}\
+${SB_VAR_LIBQT3+:${_qt_lib:-${SB_VAR_LIBQT3_LIB}/${_gccsubdir}}/pkgconfig}\
+${SB_VAR_LIBQT4+:${SB_VAR_LIBQT4_LIB}/${_gccsubdir}/pkgconfig}\
+${SB_VAR_LIBZ+:${SB_VAR_LIBZ_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+$(test "${SB_VAR_LIBCAIRO+set}" = set && echo --enable-cairo-output) \
+$(test "${SB_VAR_LIBCAIRO+set}" != set && echo --disable-cairo-output) \
+$(test "${SB_VAR_LIBGLIB+set}" = set && echo --enable-poppler-glib) \
+$(test "${SB_VAR_LIBGLIB+set}" != set && echo --disable-poppler-glib) \
+${SB_VAR_LIBQT3+QTINC=${_qt_inc:-${SB_VAR_LIBQT3_INC}/${_gccsubdir}}} \
+${SB_VAR_LIBQT3+QTLIB=${_qt_lib:-${SB_VAR_LIBQT3_LIB}/${_gccsubdir}}} \
+${SB_VAR_LIBQT3+--enable-poppler-qt} \
+${SB_VAR_LIBQT4+--enable-poppler-qt4} \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--enable-gtk-test --enable-xpdf-headers --enable-static \
+--enable-shared --disable-dependency-tracking ${ARGS+${ARGS}} \
+--disable-silent-rules --datarootdir=${_datadir} \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+poppler.pc poppler-cairo.pc poppler-glib.pc poppler-splash.pc \
+${SB_VAR_LIBQT4+poppler-qt4.pc} ${SB_VAR_LIBQT3+poppler-qt.pc}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake -C poppler install-libLTLIBRARIES
+gmake -C glib install-libLTLIBRARIES
+
+if [ ! -d ${SB_INSTALL_PREFIX}/include/poppler/qt4 ]; then
+  gmake -C qt4/src install-poppler_includeHEADERS
+fi
+
+if [ ! -d ${SB_INSTALL_PREFIX}/include/poppler/cpp ]; then
+  gmake -C cpp install-poppler_includeHEADERS
+fi
+
+[ "${SB_VAR_LIBQT4+set}" = "set"  ] && \
+  gmake -C qt4/src install-libLTLIBRARIES
+[ "${SB_VAR_LIBQT3+set}" = "set" ] && \
+  gmake -C qt install-libLTLIBRARIES
+gmake install-pkgconfigDATA
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+  </program>
+</programs>
