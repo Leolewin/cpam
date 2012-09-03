@@ -1,0 +1,286 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="openjade" version="1.3.2" revision="16">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}13</install-name>
+
+    <sources>
+      <source checksum="7df692e3186109cc00db6825b777201e"
+        checksum-type="md5" size="894834"
+        path="src/openjade-1.3.2.tar.gz"/>
+      <patch checksum="ac6fa7d2318cdcf0ddcbaa9f7bfebf00"
+        checksum-type="md5" size="35998"
+        path="src/openjade-1.3.2.tww.patch"/>
+      <patch checksum="7f69e27ec51270be58a2d67a59d712d6"
+        checksum-type="md5" size="1255818"
+        path="src/openjade-1.3.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="OpenSP" var="OPENSP"
+        install-name="opensp15">v&gt;=1.5.1 r&gt;=15</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        type="build">v&gt;=2.7.8</depend>
+      <depend var="XMLCATALOG" install-name="xmlcatalog11"/>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="!*-linux*" type="build">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="!*-linux*"/>
+      <depend program="perl" var="PERL" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+
+if [ "${SB_VAR_XMLCATALOG+set}" = set ]; then
+  _dsssl_datadir="${SB_VAR_XMLCATALOG}/share"
+
+  _docbook_sgml_catalog="${_dsssl_datadir}/docbook/catalog.sgml"
+  _sgml_catalog="${SB_VAR_XMLCATALOG}/catalog.sgml"
+else
+  _sgml_catalog="/etc/sgml/catalog"
+fi
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b,"
+
+  ARGS="--enable-multi-byte" ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--enable-multi-byte" ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-multi-byte" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--enable-multi-byte" ;;
+*-linux*)
+  ARGS="--enable-multi-byte" ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--enable-multi-byte" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-multi-byte" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R"
+
+  ARGS="--enable-multi-byte" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" PERL=${SB_VAR_PERL}/bin/perl \
+--enable-http --disable-mif --enable-static -enable-shared \
+--enable-spincludedir=${SB_VAR_OPENSP_INC} \
+--enable-splibdir=${SB_VAR_OPENSP_LIB} --datadir=${_datadir} \
+--enable-default-catalog=${_sgml_catalog} \
+${SB_VAR_XMLCATALOG+--enable-default-search-path=${SB_VAR_XMLCATALOG}} \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install DSSSL catalog
+if [ "${SB_VAR_XMLCATALOG+set}" = set ]; then
+  _dsssl_datadir="${_dsssl_datadir}/docbook/dsssl-openjade"
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_dsssl_datadir}
+
+  for _file in builtins.dsl catalog dsssl.dtd fot.dtd style-sheet.dtd; do
+    ${SB_PATH_INSTALL} -m 644 -o root -g 0 dsssl/${_file} ${_dsssl_datadir}
+  done
+
+  # install SGML Docbook catalog entry
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --add ${_sgml_catalog} ${_docbook_sgml_catalog}
+
+  # install DSSSL catalog entries
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --add ${_docbook_sgml_catalog} ${_dsssl_datadir}/catalog
+fi
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+if [ "${SB_VAR_XMLCATALOG+set}" = set ]; then
+  _dsssl_datadir="${_dsssl_datadir}/docbook/dsssl-openjade"
+
+  rm -rf ${_dsssl_datadir}
+
+  # remove DSSSL catalog entries
+  ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+  --del ${_docbook_sgml_catalog} ${_dsssl_datadir}/catalog
+
+  # remove SGML Docbook catalog entry
+  ${SB_PATH_SB} -q module-names -i xmlcatalog-1.1 2>/dev/null |\
+  ${SB_PATH_EGREP} 'docbook-dsssl|docbook-sgml' >/dev/null || {
+    ${SB_VAR_LIBXML}/bin/xmlcatalog --noout --sgml --no-super-update \
+    --del ${_sgml_catalog} ${_docbook_sgml_catalog}
+  }
+fi
+
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license>
+        <para>Copyright (c) 1994, 1995, 1996, 1997, 1998 James
+Clark</para>
+        <para>Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software,
+and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:</para>
+        <para>The above copyright notice and this permission notice
+shall be included in all copies or substantial portions of the
+Software.</para>
+        <para>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF
+ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL JAMES CLARK BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</para>
+        <para>Except as contained in this notice, the name of James
+Clark shall not be used in advertising or otherwise to promote the
+sale, use or other dealings in this Software without prior written
+authorization from James Clark.</para>
+      </license>
+    </licenses>
+
+    <changelog>
+      <change date="2010 December 21" revision="16"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for AIX 7.1</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+
+      <change date="2010 October 29" revision="15"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 January 15" revision="14"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2008 August 20" revision="13"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update libxml dependency from 2.6.29 to
+2.6.32</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to
+4.2.4</para></item>
+        <item><para>Add support for HP-UX 11.31/IA</para></item>
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2007 August 21" revision="12"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update libxml dependency from 2.6.22 to
+2.6.29</para></item>
+      </change>
+
+      <change date="2007 April 30" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 May 12" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2005 November 18" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+        <item><para>Update to libtool-1.5-14</para></item>
+        <item><para>Update libxml dependency from 2.6.11 to
+2.6.22</para></item>
+      </change>
+
+      <change date="2005 September 14" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 April 30" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+      </change>
+
+      <change date="2004 December 26" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade gcc dependency from 3.3.2 to
+3.4.3</para></item>
+        <item><para>Disable multi-byte strings on AIX</para></item>
+        <item><para>Update to libtool-1.5-5</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to latest libtool-1.5</para></item>
+      </change>
+
+      <change date="2004 July 5" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update xmlcatalog dependency from 1.0 to
+1.1</para></item>
+      </change>
+
+      <change date="2004 January 3" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade OpenSP dependency to 1.5.1</para></item>
+        <item><para>Upgrade Perl dependency to 5.8.2</para></item>
+        <item><para>Update path to SGML catalog file</para></item>
+      </change>
+
+      <change date="2003 October 25" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade GCC dependency to 3.3.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
