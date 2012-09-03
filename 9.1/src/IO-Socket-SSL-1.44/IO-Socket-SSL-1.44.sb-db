@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="IO-Socket-SSL" version="1.44" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="c9d23d3398f7c0dfce0a1cf6d21e86c7"
+        checksum-type="md5" size="69342"
+        path="src/IO-Socket-SSL-1.44.tar.gz"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_prngdsocket="${SB_VAR_PRNGD+/var${SB_VAR_PRNGD}/pool}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+if [ "${SB_VAR_PRNGD+set}" = "set" ]; then
+  EGD_PATH="${SB_VAR_PRNGD+${_prngdsocket}}" SKIP_RNG_TEST=1 \
+  ${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+else
+  ${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+fi
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+
+# ignore test failures if PRNGD not running
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/IO/Socket/SSL/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/IO/Socket/SSL/.packlist
+rmdir ${_installsitearch}/auto/IO/Socket/SSL
+rmdir ${_installsitearch}/auto/IO/Socket 2>/dev/null
+rmdir ${_installsitearch}/auto/IO 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<IO::Socket::SSL|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Net-SSLeay"
+          module="5.12.2">v&gt;=1.35</depend>
+        <depend program="prngd" var="PRNGD" install-name="prngd"
+          systype="*-aix5.1*|*-hpux11.[01]*|*-irix*|*-osf*">v&gt;=0.9.25</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
