@@ -1,0 +1,565 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="tetex" version="3.0" revision="21">
+    <build-name>${SB_PROG_NAME}-src-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}30</install-name>
+
+    <sources>
+      <source checksum="944a4641e79e61043fdaf8f38ecbb4b3"
+        checksum-type="md5" size="12749314"
+        path="src/tetex-src-3.0.tar.gz"/>
+      <patch checksum="4bf96296b2aad0d9dc17d6d3ecc39423"
+        checksum-type="md5" size="3720"
+        path="src/tetex-src-3.0.CVE-2004-0888.patch"/>
+      <patch checksum="c8235f0644869a0d2fd5f190d0106d4d"
+        checksum-type="md5" size="1500"
+        path="src/tetex-src-3.0.size_t.patch"/>
+      <patch checksum="843717565fb91b1bbb46aa97a593024e"
+        checksum-type="md5" size="1356"
+        path="src/tetex-src-3.0.CVE-2005-0064.patch"/>
+      <patch checksum="f3c6a40a5419e3722eff257fef2a906d"
+        checksum-type="md5" size="9674"
+        path="src/tetex-src-3.0.CVE-2005-3193.patch"/>
+      <patch checksum="637f46f7e55b5652d864385bd990f01d"
+        checksum-type="md5" size="4838"
+        path="src/tetex-src-3.0.integer-overflow.patch"/>
+      <patch checksum="3ddf6c6fba5e057f88861b102939979c"
+        checksum-type="md5" size="2596"
+        path="src/tetex-src-3.0.CVE-2007-0104.patch"/>
+      <patch checksum="ff034e2e7839c424c9a3da68a19b2c52"
+        checksum-type="md5" size="2677"
+        path="src/tetex-src-3.0.CVE-2007-0650.patch"/>
+      <patch checksum="573b9b51acb03178c3df0f2a21546fab"
+        checksum-type="md5" size="1526"
+        path="src/tetex-src-3.0.CVE-2007-3387.patch"/>
+      <patch checksum="16d95489d6debc46abdc17ce5a593351"
+        checksum-type="md5" size="16601"
+        path="src/tetex-src-3.0.CVE-2007-4352_5392_5393.patch"/>
+      <patch checksum="4b27bb2a68328962c4553b4e08c84b0b"
+        checksum-type="md5" size="33476"
+        path="src/tetex-src-3.0.CVE-2009-0146_0147_0166.patch"/>
+      <patch checksum="6499b603d5be8c1519f6ac7ea1139cec"
+        checksum-type="md5" size="48206"
+        path="src/tetex-src-3.0.CVE-2009-0791.patch"/>
+      <patch checksum="6fe4bc4e14e8559e5f3dff00e234817b"
+        checksum-type="md5" size="645"
+        path="src/tetex-src-3.0.CVE-2010-3702.patch"/>
+      <patch checksum="aea1787319e09c09197968243e66c9ff"
+        checksum-type="md5" size="502"
+        path="src/tetex-src-3.0.CVE-2010-3704.patch"/>
+      <patch checksum="6877cd3ac5aee92e032e8e28296a5551"
+        checksum-type="md5" size="35482"
+        path="src/tetex-src-3.0.tww.patch"/>
+      <patch checksum="3e380883055c43f6941ed7935a3e1982"
+        checksum-type="md5" size="273243"
+        path="src/tetex-src-3.0.auto.patch"/>
+      <source checksum="11aa15c8d3e28ee7815e0d5fcdf43fd4"
+        checksum-type="md5" size="91762123"
+        path="src/tetex-texmf-3.0.tar.gz"
+        noop="1" var="MACROS"/>
+      <source checksum="66c32a11964a49982ba2a32d3bbfe7f5"
+        checksum-type="md5" size="57700131"
+        path="src/tetex-texmfsrc-3.0.tar.gz"
+        noop="1"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="*-hpux10*">v&gt;=4.4.5</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="*-hpux10*">v==4.4.5</depend>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend var="TETEXP" install-name="tetex30p"
+        set-var-only="1"/>
+      <depend program="Xaw3d" var="LIBXAW3D"
+        install-name="libxaw3d15">v&gt;=1.5e</depend>
+      <depend program="flex" install-name="flex25"
+        add-path="prepend">v&gt;=2.5.35</depend>
+      <depend program="gd" var="LIBGD"
+        install-name="libgd20">v&gt;=2.0.35</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib51">v&gt;=5.1.2</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v&gt;=3.4k</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="ncurses" var="NCURSES">v==5.7</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <validate>
+      <depend program="jadetex" systype="!*-aix4*">v==3.13</depend>
+      <depend program="prosper" module="3.0">v==1.00.4</depend>
+    </validate>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix4*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 +ESlit +Ofltacc +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Ofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux10*)
+  CFLAGS="-O2 -march=1.1" CXXFLAGS="-O2 -march=1.1"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="+O2 -AA -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CPPFLAGS="-I/usr/contrib/X11R6/include"
+  LDFLAGS="-L/usr/contrib/X11R6/lib"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--x-libraries=/usr/X11R6/lib" ;;
+x86_64*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="--x-libraries=/usr/X11R6/lib64" ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+*-solaris2.[68])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+*-solaris2.7)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO1 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO1 -xtarget=ultra2 -xarch=v8plusa"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  LDFLAGS="-L/usr/openwin/lib"
+  CC_LD_RT="-R" ;;
+esac
+
+# Unpack macros
+if [ ! -d "${SB_VAR_TETEXP}" ]; then
+  sudo -h >/dev/null 2>&1 || {
+    sb_msg_err "'sudo' program not found. Before teTeX can \
+be configured, the ${SB_SRC_MACROS} file must be unpacked to \
+${SB_VAR_TETEXP}/texmf. 'sudo' is used to run the necessary \
+commands as root because the configuration step is usually \
+run as a non-root user. Please configure 'sudo' per the sb(1) \
+manual and rerun."
+    exit 1
+  }
+
+  sudo ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_VAR_TETEXP}/texmf
+  (cd ${SB_VAR_TETEXP}/texmf
+  sudo ${SB_PATH_TAR} zxf ${SB_SRC_MACROS}
+  sudo ${SB_PATH_CHOWN} -hR 0:0 ${SB_VAR_TETEXP}/texmf)
+fi
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBXAW3D+-I${SB_VAR_LIBXAW3D_INC}} \
+${SB_VAR_XPM+-I${SB_VAR_XPM_INC}} \
+${SB_VAR_LIBTRIO+-I${SB_VAR_LIBTRIO_INC}} \
+${CPPFLAGS+${CPPFLAGS}}" CXX="${CXX:-g++}" \
+CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_LIBXAW3D+-L${SB_VAR_LIBXAW3D_LIB}} \
+${SB_VAR_ZLIB+-L${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_XPM+-L${SB_VAR_XPM_LIB}} \
+${SB_VAR_LIBTRIO+-L${SB_VAR_LIBTRIO_LIB}} \
+${SB_VAR_LIBXAW3D+${CC_LD_RT}${SB_VAR_LIBXAW3D_LIB}} \
+${SB_VAR_T1LIB+${CC_LD_RT}${SB_VAR_T1LIB_LIB}} \
+${SB_VAR_LIBGD+${CC_LD_RT}${SB_VAR_LIBGD_LIB}} \
+${SB_VAR_ZLIB+${CC_LD_RT}${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_XPM+${CC_LD_RT}${SB_VAR_XPM_LIB}} \
+${SB_VAR_LIBPNG+${CC_LD_RT}${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT}/lib} \
+${SB_VAR_LIBTRIO+${CC_LD_RT}${SB_VAR_LIBTRIO_LIB}} \
+${LDFLAGS+${LDFLAGS}}" INSTALL="${SB_PATH_INSTALL} -c" \
+${SHELL} ./configure --enable-ipc --without-texinfo \
+--without-dialog --without-t1utils --without-psutils \
+--disable-multiplatform --without-cxx-runtime-hack \
+--datadir=${SB_VAR_TETEXP} --with-system-ncurses \
+--with-system-pnglib --with-system-zlib \
+--with-system-t1lib --with-system-gd --enable-shared --enable-static \
+${SB_VAR_NCURSES+--with-ncurses-libdir=${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_NCURSES+--with-ncurses-include=${SB_VAR_NCURSES_INC}} \
+${SB_VAR_LIBPNG+--with-pnglib-libdir=${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBPNG+--with-pnglib-include=${LIBPNG_INC}} \
+${SB_VAR_ZLIB+--with-zlib-libdir=${SB_VAR_ZLIB_LIB}} \
+${SB_VAR_ZLIB+--with-zlib-include=${SB_VAR_ZLIB_INC}} \
+${SB_VAR_T1LIB+--with-t1lib-libdir=${SB_VAR_T1LIB_LIB}} \
+${SB_VAR_T1LIB+--with-t1lib-include=${SB_VAR_T1LIB_INC}} \
+${SB_VAR_LIBGD+--with-gd-libdir=${SB_VAR_LIBGD_LIB}} \
+${SB_VAR_LIBGD+--with-gd-include=${SB_VAR_LIBGD_INC}} \
+--with-xdvi-x-toolkit=xaw3d --with-mktexfmt-default \
+--without-texi2html --without-psutils --without-texinfo \
+--cache-file=/dev/null \
+--disable-a4 \
+${ARGS+${ARGS}} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake all
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_CHMOD} 644 ${SB_VAR_TETEXP}/texmf/ls-R
+
+# make parameters usable for passiveTeX
+${SB_PATH_SED} -i -e "\
+s/main_memory = 1000000/main_memory = 2500000/; \
+s/save_size = 5000/save_size = 10000/" \
+${SB_VAR_TETEXP}/texmf/web2c/texmf.cnf
+
+# replace perl path
+for i in e2pall epstopdf texdoctk; do
+  ${SB_PATH_SED} -i -e "\
+1 s|#!.*|#!${SB_VAR_PERL}/bin/perl|" ${SB_INSTALL_PREFIX}/bin/$i
+done
+
+# install texinfo source files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo/web2c \
+${_docdir}/texinfo/dvipng ${_docdir}/texinfo/kpathsea \
+${_docdir}/texinfo/dvips ${_docdir}/texinfo/dvips/contrib \
+${_docdir}/texinfo/latex
+(cd texk
+${SB_PATH_INSTALL} -m 644 -o root -g 0 dvipng/dvipng.help \
+dvipng/dvipng.texi dvipng/install.texi dvipng/macros.texi \
+dvipng/readme.texi ${_docdir}/texinfo/dvipng
+${SB_PATH_INSTALL} -m 644 -o root -g 0 dvipsk/dvips.texi \
+${_docdir}/texinfo/dvips
+${SB_PATH_INSTALL} -m 644 -o root -g 0 dvipsk/contrib/config.proto \
+${_docdir}/texinfo/dvips/contrib
+${SB_PATH_INSTALL} -m 644 -o root -g 0 kpathsea/bugs.texi \
+kpathsea/hier.texi kpathsea/install.texi kpathsea/kpathsea.texi \
+kpathsea/unixtex.texi ${_docdir}/texinfo/kpathsea
+${SB_PATH_INSTALL} -m 644 -o root -g 0 web2c/doc/install.texi \
+web2c/tests/just.texi web2c/doc/ref.txi web2c/doc/web2c.texi \
+${_docdir}/texinfo/web2c
+${SB_PATH_INSTALL} -m 644 -o root -g 0 tetex/latex2e.texi \
+${_docdir}/texinfo/latex/latex.texi)
+
+rm -rf /var/tmp/texfonts
+${SB_INSTALL_PREFIX}/bin/texhash
+]]>
+    </install>
+
+    <uninstall>
+      <remove-db-entry program="jadetex" systype="!*-aix4*">v==3.13</remove-db-entry>
+      <remove-db-entry program="prosper" module="3.0">v==1.00.4</remove-db-entry>
+    </uninstall>
+
+    <notes>
+      <note type="usage">
+        <para>The <command>${SB_INSTALL_BASE}/tetex30p</command> contains all TeX
+packages. In addition to the standard set of TeX packages, the
+following additional packages are available:</para>
+        <unorderedlist>
+          <item><para><command>prosper</command> LaTeX package for
+writing transparencies (documentation available at
+<command>${SB_INSTALL_BASE}/tetex30p/texmf/doc/prosper</command>)</para></item>
+          <item><para><command>jadetex</command> LaTeX package for
+processing the output from OpenJade in TeX (<command>-t</command>)
+mode</para></item>
+        </unorderedlist>
+      </note>
+
+      <platform name="HP-UX 11.00">
+        <para>Patch <command>PHSS_22543</command> providing the
+<command>libstd_v2</command> Standard C++ library is required as the
+HP C++ compiler was used.</para>
+      </platform>
+
+      <platform name="Tru64 UNIX">
+        <para>The latest C++ runtime library is required due to the
+usage of the latest Compaq C++ compiler. It is available from the
+following locations:</para>
+        <unorderedlist>
+          <item><para>package CXXREDIST651V37.tar in the support
+directory of the CD</para></item>
+          <item><para>online support directory <ulink url="ftp://support.thewrittenword.com/dists">ftp://support.thewrittenword.com/dists</ulink></para></item>
+          <item><para>directly from Compaq at <ulink url="ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm">ftp://ftp.compaq.com/pub/products/C-CXX/Tru64/cxx/cxxredist.htm</ulink></para></item>
+        </unorderedlist>
+      </platform>
+    </notes>
+
+    <changelog>
+      <change date="2010 December 20" revision="21"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Update bison dependency from 2.3 to
+2.4</para></item>
+        <item><para>Update flex dependency from 2.5.4a to
+2.5.35</para></item>
+        <item><para>Update libpng dependnecy from 1.2.29 to
+1.4.4</para></item>
+      </change>
+
+      <change date="2010 October 22" revision="20"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2010-3702 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3702">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3702</ulink>).
+An uninitialized pointer use flaw was discovered in poppler. An
+attacker could create a malicious PDF file that, when opened, would
+cause applications that use poppler (such as Evince) to crash or,
+potentially, execute arbitrary code.</para></item>
+        <item><para>Apply patch for CVE-2010-3704 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3704">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2010-3704</ulink>).
+An array index error was found in the way poppler parsed PostScript
+Type 1 fonts embedded in PDF documents. An attacker could create a
+malicious PDF file that, when opened, would cause applications that
+use poppler (such as Evince) to crash or, potentially, execute
+arbitrary code.</para></item>
+      </change>
+
+      <change date="2010 August 8" revision="19"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 October 30" revision="18"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2009-0146 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0146">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0146</ulink>).
+Multiple buffer overflows in the JBIG2 decoder allow remote attackers
+to cause a denial of service (crash) via a crafted PDF file, related
+to (1) <command>JBIG2SymbolDict::setBitmap</command> and (2)
+<command>JBIG2Stream::readSymbolDictSeg</command>.</para></item>
+        <item><para>Apply patch for CVE-2009-0147 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0147">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0147</ulink>).
+Multiple integer overflows in the JBIG2 decoder allow remote attackers
+to cause a denial of service (crash) via a crafted PDF file, related
+to (1) <command>JBIG2Stream::readSymbolDictSeg</command>, (2)
+<command>JBIG2Stream::readSymbolDictSeg</command>, and (3)
+<command>JBIG2Stream::readGenericBitmap</command>.</para></item>
+        <item><para>Apply patch for CVE-2009-0166 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0166">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0166</ulink>).
+The JBIG2 decoder allows remote attackers to cause a denial of service
+(crash) via a crafted PDF file that triggers a free of uninitialized
+memory.</para></item>
+        <item><para>Apply patch for CVE-2009-0791 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0791">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0791</ulink>).
+Multiple integer overflows allow remote attackers to cause a denial of
+service (application crash) or possibly execute arbitrary code via a
+crafted PDF file that triggers a heap-based buffer overflow, possibly
+related to (1) <command>Decrypt.cxx</command>, (2)
+<command>FoFiTrueType.cxx</command>, (3) <command>gmem.c</command>,
+(4) <command>JBIG2Stream.cxx</command>, and (5)
+<command>PSOutputDev.cxx</command> in <command>xpdf/</command>. NOTE:
+the <command>JBIG2Stream.cxx</command> vector may overlap
+CVE-2009-1179.</para></item>
+      </change>
+
+      <change date="2009 May 12" revision="17"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.31/PA</para></item>
+      </change>
+
+      <change date="2009 January 14" revision="16"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2008 October 8" revision="15"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 6.1</para></item>
+      </change>
+
+      <change date="2008 August 29" revision="14"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update gcc dependency from 3.4.3 to
+4.2.4</para></item>
+        <item><para>Update libpng dependency from 1.2.18 to
+1.2.29</para></item>
+        <item><para>Update perl dependency from 5.8.6 to
+5.8.8</para></item>
+      </change>
+
+      <change date="2008 February 26" revision="13"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2007-4352 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-4352">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-4352</ulink>).
+Array index error in the
+<command>DCTStream::readProgressiveDataUnit()</command> method in
+<command>xpdf/Stream.cc</command> allows remote attackers to trigger
+memory corruption and execute arbitrary code via a crafted PDF
+file.</para></item>
+        <item><para>Apply patch for CVE-2007-5392 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-5392">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-5392</ulink>).
+Integer overflow in the <command>DCTStream::reset()</command> method
+in <command>xpdf/Stream.cc</command> allows remote attackers to
+execute arbitrary code via a crafted PDF file, resulting in a
+heap-based buffer overflow.</para></item>
+        <item><para>Apply patch for CVE-2007-5393 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-5393">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-5393</ulink>).
+Heap-based buffer overflow in the
+<command>CCITTFaxStream::lookChar()</command> method in
+<command>xpdf/Stream.cc</command> allows remote attackers to execute
+arbitrary code via a PDF file that contains a crafted CCITTFaxDecode
+filter.</para></item>
+      </change>
+
+      <change date="2007 October 5" revision="12"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update gd dependency from 2.0.33 to
+2.0.35</para></item>
+        <item><para>Update libpng dependency from 1.2.4 to
+1.2.18</para></item>
+        <item><para>Update zlib dependency from 1.1.4 to
+1.2.3</para></item>
+      </change>
+
+      <change date="2006 October 3" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2007-0650 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-0650">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-0650</ulink>).
+Buffer overflow in the <command>open_sty()</command> function in
+<command>mkind.c</command> for makeindex in teTeX might allow
+user-assisted remote attackers to overwrite files and possibly execute
+arbitrary code via a long filename.</para></item>
+        <item><para>Apply patch for CVE-2007-3387 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-3387">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-3387</ulink>).
+Integer overflow in the
+<command>StreamPredictor::StreamPredictor()</command> function might
+allow remote attackers to execute arbitrary code via a crafted PDF
+file that triggers a stack-based buffer overflow in the
+<command>StreamPredictor::getNextLine()</command>
+function.</para></item>
+      </change>
+
+      <change date="2007 January 22" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2007-0104 (<ulink url="http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-0104">http://www.cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-0104</ulink>).
+The Adobe PDF specification 1.3 allows remote attackers to have an
+unknown impact, possibly including denial of service (infinite loop),
+arbitrary code execution, or memory corruption, via a PDF file with a
+(1) crafted catalog dictionary or (2) a crafted Pages attribute that
+references an invalid page tree node.</para></item>
+      </change>
+
+      <change date="2006 September 25" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update bison dependency from 2.1 to
+2.3</para></item>
+      </change>
+
+      <change date="2006 May 14" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 March 7" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix another wrong patch to
+<command>libs/xpdf/xpdf/Stream.cc</command> as part of
+CVE-2005-3193.patch using an incorrect number of parameters to
+<command>error()</command> call</para></item>
+        <item><para>Missed patch to
+<command>libs/xpdf/xpdf/Decrypt.cc</command> for
+CVE-2005-0064.patch</para></item>
+        <item><para>Backport some upstream integer overflow
+fixes from xpdf</para></item>
+        <item><para>Fix off-by-one error leading to possible overwrite
+of a variable and subsequent SEGV</para></item>
+      </change>
+
+      <change date="2006 March 2" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Include jadetex</para></item>
+      </change>
+
+      <change date="2006 February 28" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Apply patch for CVE-2005-3193 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2005-3193">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2005-3193</ulink>).
+A heap-based buffer overflow vulnerability allows an attacker to
+construct a carefully crafted PDF file that could cause Xpdf to crash
+(denial-of-service) or possibly execute arbitrary code when
+opened.</para></item>
+        <item><para>Apply patch for CVE-2006-0301 (<ulink url="http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-0301">http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2006-0301</ulink>).
+A heap-based buffer overflow in Splash.cc allows attackers to cause a
+denial-of-service and possibly execute arbitrary code via
+specially-crafted splash images that produce certain values that
+exceed the width or height of the associated bitmap.</para></item>
+        <item><para>Import further fixes to CVE-2004-0888 from Fedora
+(bug #135393)</para></item>
+        <item><para>Further fixes for CAN-2004-0888 to fix integer
+overflows</para></item>
+      </change>
+
+      <change date="2005 December 30" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Fix bug in kpathsea library
+<command>remove_dots()</command> function resolving
+"<command>..</command>" in pathnames</para></item>
+      </change>
+
+      <change date="2005 November 22" revision="3"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA64</para></item>
+      </change>
+
+      <change date="2005 September 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
