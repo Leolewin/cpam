@@ -1,0 +1,481 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="binutils" version="2.21.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="a22801a9cad45c85e9ff6afc10537d72"
+        checksum-type="md5" size="18890094"
+        path="src/binutils-2.21.1.tar.bz2"/>
+      <patch checksum="91e8e2ea0e983a141c8668e337a02334"
+        checksum-type="md5" size="19468"
+        path="src/binutils-2.21.1.tww.patch"/>
+      <patch checksum="68e9e45b5183fa6f3a3dfbe27a32a61b"
+        checksum-type="md5" size="292673"
+        path="src/binutils-2.21.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*) 
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    GCC_SYSTYPE="hppa2.0-hp-hpux11.31" ;;
+  *-hpux11.23)
+    GCC_SYSTYPE="hppa2.0-hp-hpux11.23" ;;
+  *-hpux11.11)
+    GCC_SYSTYPE="hppa1.1-hp-hpux11.11" ;;
+  *-hpux11.00)
+    GCC_SYSTYPE="hppa1.1-hp-hpux11.00" ;;
+  esac ;;
+x86_64*-linux*)
+  GCC_SYSTYPE="x86_64-unknown-linux-gnu" ;;
+*-linux*)
+  GCC_SYSTYPE="i686-pc-linux-gnu" ;;
+*)
+  GCC_SYSTYPE=${SB_SYSTYPE} ;;
+esac
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=cc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -Wp,-H32768 +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64*-linux*)
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib64:/lib64:/usr/lib64:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}" \
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB} \
+-L${SB_VAR_LIBZ_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+${GCC_SYSTYPE+--target=${GCC_SYSTYPE}} \
+${GCC_SYSTYPE+--build=${GCC_SYSTYPE}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--disable-shared --program-prefix=g \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+${_enable_gold+${_enable_gold}} \
+--disable-dependency-tracking --disable-werror \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake AM_MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <module name="gcc64-4.4.6" auto-include="0">
+      <install-name>gcc64-44</install-name>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+*-hpux11.31)
+  GCC_SYSTYPE="hppa64-hp-hpux11.31" ;;
+*-hpux11.23)
+  GCC_SYSTYPE="hppa64-hp-hpux11.23" ;;
+*-hpux11.11)
+  GCC_SYSTYPE="hppa64-hp-hpux11.11" ;;
+*-hpux11.00)
+  GCC_SYSTYPE="hppa64-hp-hpux11.00" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+rm -f config.cache
+CC="cc +DD64" ${SHELL} ./configure --disable-shared --disable-nls \
+--datadir="${_datadir}" --program-prefix=g --host=${GCC_SYSTYPE} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake AM_MAKEINFOFLAGS="--no-split"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix7*|*-hpux*|i?86*-solaris*|*-irix*)
+  gmake -C gas install
+
+  rm -f ${SB_INSTALL_PREFIX}/bin/gas ${SB_INSTALL_PREFIX}/bin/ggasp
+  ;;
+*-linux*)
+  gmake -C gas install
+  gmake -C ld install
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 bfd/doc/bfdver.texi \
+  gprof/gprof.texi ${_docdir}/texinfo ;;
+esac
+
+# install cxxfilt as c++filt
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_INSTALL} -m 755 -o root -g 0 binutils/cxxfilt \
+${SB_INSTALL_PREFIX}/bin/c++filt
+${SB_PATH_INSTALL} -m 644 -o root -g 0 binutils/doc/cxxfilt.man \
+${SB_INSTALL_PREFIX}/man/man1/c++filt.1
+]]>
+      </install>
+    </module>
+
+    <module name="gcc-4.4.6" auto-include="0">
+      <install-name>gcc44</install-name>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*) 
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    GCC_SYSTYPE="hppa2.0-hp-hpux11.31" ;;
+  *-hpux11.23)
+    GCC_SYSTYPE="hppa2.0-hp-hpux11.23" ;;
+  *-hpux11.11)
+    GCC_SYSTYPE="hppa1.1-hp-hpux11.11" ;;
+  *-hpux11.00)
+    GCC_SYSTYPE="hppa1.1-hp-hpux11.00" ;;
+  esac ;;
+x86_64*-linux*)
+  GCC_SYSTYPE="x86_64-unknown-linux-gnu" ;;
+*-linux*)
+  GCC_SYSTYPE="i686-pc-linux-gnu" ;;
+*)
+  GCC_SYSTYPE=${SB_SYSTYPE} ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=cc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -Wp,-H32768 +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64*-linux*)
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib64:/lib64:/usr/lib64:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}" \
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB} \
+-L${SB_VAR_LIBZ_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+${GCC_SYSTYPE+--target=${GCC_SYSTYPE}} \
+${GCC_SYSTYPE+--build=${GCC_SYSTYPE}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--disable-shared --program-prefix=g \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+${_enable_gold+${_enable_gold}} \
+--disable-dependency-tracking --disable-werror \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake AM_MAKEINFOFLAGS="--no-split"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix7*|*-hpux*|i?86*-solaris*|*-irix*)
+  gmake -C gas install
+
+  rm -f ${SB_INSTALL_PREFIX}/bin/gas ${SB_INSTALL_PREFIX}/bin/ggasp
+  ;;
+*-linux*)
+  gmake -C gas install
+  gmake -C ld install
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 bfd/doc/bfdver.texi \
+  gprof/gprof.texi ${_docdir}/texinfo ;;
+esac
+
+# install cxxfilt as c++filt
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_INSTALL} -m 755 -o root -g 0 binutils/cxxfilt \
+${SB_INSTALL_PREFIX}/bin/c++filt
+${SB_PATH_INSTALL} -m 644 -o root -g 0 binutils/doc/cxxfilt.man \
+${SB_INSTALL_PREFIX}/man/man1/c++filt.1
+]]>
+      </install>
+    </module>
+
+    <module name="gcc-4.6.0" auto-include="0">
+      <install-name>gcc46</install-name>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*) 
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    GCC_SYSTYPE="hppa2.0-hp-hpux11.31" ;;
+  *-hpux11.23)
+    GCC_SYSTYPE="hppa2.0-hp-hpux11.23" ;;
+  *-hpux11.11)
+    GCC_SYSTYPE="hppa1.1-hp-hpux11.11" ;;
+  *-hpux11.00)
+    GCC_SYSTYPE="hppa1.1-hp-hpux11.00" ;;
+  esac ;;
+x86_64*-linux*)
+  GCC_SYSTYPE="x86_64-unknown-linux-gnu" ;;
+*-linux*)
+  GCC_SYSTYPE="i686-pc-linux-gnu" ;;
+*)
+  GCC_SYSTYPE=${SB_SYSTYPE} ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=cc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -Wp,-H32768 +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+x86_64*-linux*)
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib64:/lib64:/usr/lib64:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  ARGS="--with-lib-path=${SB_INSTALL_PREFIX}/lib:\
+/usr/local/lib:/lib:/usr/lib"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}}" \
+LDFLAGS="${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB} \
+-L${SB_VAR_LIBZ_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+${GCC_SYSTYPE+--target=${GCC_SYSTYPE}} \
+${GCC_SYSTYPE+--build=${GCC_SYSTYPE}} \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--disable-shared --program-prefix=g \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+${_enable_gold+${_enable_gold}} \
+--disable-dependency-tracking --disable-werror \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake AM_MAKEINFOFLAGS="--no-split"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-hpux*|i?86*-solaris*|*-irix*)
+  gmake -C gas install
+
+  rm -f ${SB_INSTALL_PREFIX}/bin/gas ${SB_INSTALL_PREFIX}/bin/ggasp
+  ;;
+*-linux*)
+  gmake -C gas install
+  gmake -C ld install
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 bfd/doc/bfdver.texi \
+  gprof/gprof.texi ${_docdir}/texinfo ;;
+esac
+
+# install cxxfilt as c++filt
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/bin \
+${SB_INSTALL_PREFIX}/man/man1
+${SB_PATH_INSTALL} -m 755 -o root -g 0 binutils/cxxfilt \
+${SB_INSTALL_PREFIX}/bin/c++filt
+${SB_PATH_INSTALL} -m 644 -o root -g 0 binutils/doc/cxxfilt.man \
+${SB_INSTALL_PREFIX}/man/man1/c++filt.1
+]]>
+      </install>
+    </module>
+  </program>
+</programs>
