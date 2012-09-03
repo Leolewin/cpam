@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="sharutils" version="4.11.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}411</install-name>
+
+    <sources>
+      <source checksum="52dd02b6f5e0a148ba871234ae29bba2"
+        checksum-type="md5" size="1000885"
+        path="src/sharutils-4.11.1.tar.bz2"/>
+      <patch checksum="c8cfd93ec251b87425c538d05d238c09"
+        checksum-type="md5" size="1039"
+        path="src/sharutils-4.11.1.tww.patch"/>
+      <patch checksum="6e4aba95eed2a3644f22fd5241354777"
+        checksum-type="md5" size="407470"
+        path="src/sharutils-4.11.1.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="diffutils" var="DIFFUTILS"
+        install-name="diffutils32" type="build">v&gt;=3.2</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}"  \
+LDFLAGS="${LDFLAGS+$LDFLAGS}" DIFF=${SB_VAR_DIFFUTILS}/bin/gnudiff \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=$SB_VAR_LIBICONV} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=$SB_VAR_GETTEXT} \
+--disable-uucode --program-prefix=g --disable-dependency-tracking \
+--datarootdir=${_datadir} --datadir=${_datadir} \
+--infodir="${SB_INSTALL_PREFIX}/info" \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+      <dependencies>
+        <depend program="coreutils" var="COREUTILS"
+          install-name="coreutils811"
+          add-path="prepend">v&gt;=8.11</depend>
+      </dependencies>
+<![CDATA[
+MD5SUM="${SB_VAR_COREUTILS}/bin/gmd5sum" gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+rmdir ${SB_INSTALL_PREFIX}/man/man5
+
+# install texinfo source files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/fdl.texi \
+doc/sharutils.texi doc/version.texi ${_docdir}/texinfo
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+
+      <license path="gfdl-1.3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="4.10" to="4.11.1">
+        <item><para>mail-files was completely broken and cannot be in
+use.  Removed. mailshar (its wrapper script) also remvoed.</para></item>
+      </change>
+
+      <change from="4.9" to="4.10">
+        <item><para>test and handle clobber option correctly in
+generated scripts.</para></item>
+      </change>
+
+      <change from="4.7.1" to="4.9">
+        <item><para>Fix up quoting some more in the shar script
+messages. Translators will not have to worry over shell quoting any
+more.</para></item>
+      </change>
+
+      <change from="4.7" to="4.7.1">
+        <item><para>uudecode will not create output file names with
+trailing white space</para></item>
+      </change>
+
+      <change from="4.6.3" to="4.7">
+        <item><para>fix a grammatical typo in
+doc/uuencode.1</para></item>
+        <item><para>relicense the product under GPL version
+3</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>
