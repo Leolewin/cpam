@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="tkcvs" version="8.2.3" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}82</install-name>
+
+    <sources>
+      <source checksum="d6bde44169d5943bd7f63e58c0748509"
+        checksum-type="md5" size="570910"
+        path="src/tkcvs-8.2.3.tar.gz"/>
+      <patch checksum="ebcff0ff5702607ec04092f779e9148e"
+        checksum-type="md5" size="3429"
+        path="src/tkcvs-8.2.3.tww.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="tcl" install-name="tcl85"
+        add-path="prepend">v&gt;=8.5.10</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+${SB_PATH_SED} -i -e "\
+s!@prefix@!${SB_INSTALL_PREFIX}!" tkcvs/tkcvs.tcl
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+:
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+./doinstall.tcl -nox ${SB_INSTALL_PREFIX}
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${INSTALL_PREFIX}/lib/site_def
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="8.2.2" to="8.2.3">
+        <item><para>Works with Subversion 1.7 (no .svn directory at
+lower levels)</para></item>
+        <item><para>Make the CVS module-level file browser
+searchable</para></item>
+        <item><para>Choice of sorting files in the working directory
+by filename or by status is now a persistent preference</para></item>
+        <item><para>Unwork-around some work-arounds for wish8.5, which
+are fixed now</para></item>
+        <item><para>Fix Bug #2797830 "Bookmark with space can't be
+deleted"</para></item>
+        <item><para>TkDiff 4.2 (works with Subversion
+1.7)</para></item>
+      </change>
+
+      <change from="8.2.1" to="8.2.2">
+        <item><para>Make the propget svn:mergeinfo branch diagram
+behave more like our merge tags, i.e. show only the first merge point
+instead of all revisions containing the merge.</para></item>
+        <item><para>Improve performance in large Subversion
+directories</para></item>
+        <item><para>Fix CDE font problem</para></item>
+        <item><para>Show date of directories, too. Fix
+sort-by-revision in SVN directory.</para></item>
+        <item><para>Roll back svn update --accept postpone because it
+doesn't work with older clients</para></item>
+        <item><para>Clean up finished namespaces for some exec
+viewers</para></item>
+      </change>
+
+      <change from="8.2" to="8.2.1">
+        <item><para>History of commit log messages is kept, so you can
+copy-and-paste previous messages that you've used during the current
+session</para></item>
+        <item><para>When a directory is refreshed in the Working
+Directory Browser, the scroll position is restored</para></item>
+        <item><para>Locking and unlocking for SVN, and some additional
+SVN-specific right-click popups</para></item>
+        <item><para>Icons for symbolic links in a SVN
+directory</para></item>
+        <item><para>SVN output parsing change
+(xml-regexp-based)</para></item>
+        <item><para>Subversion Branch diagram can find branchpoint for
+a file that wasn't revised at that point</para></item>
+        <item><para>CVS branch browser no longer fooled by a log
+comment containing a dashed line of exactly the same length as the
+log's normal delimiter, although you may not see the rest of the
+comment</para></item>
+        <item><para>tksvn2bcompare.pl added to contrib directory. It
+enables the use of "bcompare" in place of tkdiff.</para></item>
+        <item><para>Add a note to the FAQ about running the X11
+version of TkCVS on the Mac.</para></item>
+        <item><para>Fix mixed-up tooltips in the File Browser opened
+from the Module Browser.</para></item>
+        <item><para>Fix Reports-&gt;Status recursive/local switch on
+cvscfg(recurse)</para></item>
+        <item><para>Button in the CVS "Update with Options" dialog to
+make it easier to update a sticky-tagged file to the current directory
+tag</para></item>
+        <item><para>Change tkcvs.tcl so it can be made into a starkit
+more easily</para></item>
+      </change>
+
+      <note type="usage">
+        <para>The global configuration file for TkCVS resides in
+<command>${SB_INSTALL_PREFIX}/lib/tkcvs_def.tcl</command>. The
+site-specific configuration file resides in
+<command>${SB_INSTALL_PREFIX}/lib/site_def</command>. User-specific
+customizations are stored in <command>~/.tkcvs</command>.
+Configuration directives are read in the following order:</para>
+        <screen>
+~/.tkcvs
+${SB_INSTALL_PREFIX}/lib/site_def
+${SB_INSTALL_PREFIX}/lib/tkcvs_def.tcl
+        </screen>
+      </note>
+    </notes>
+  </program>
+</programs>
