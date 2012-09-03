@@ -1,0 +1,140 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Net-SSH-Perl" version="1.34" revision="1"
+  systype="*-aix*|*-hpux*|*-linux*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="5b6d60e459707058e856c45c30e96e53"
+        checksum-type="md5" size="114507"
+        path="src/Net-SSH-Perl-1.34.tar.gz"/>
+      <patch checksum="c72b76c1dbd04652eead988bce08fa56"
+        checksum-type="md5" size="1720"
+        path="src/Net-SSH-Perl-1.34.Net-SSH-Perl-1.28.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Net/SSH/Perl/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Net/SSH/Perl/.packlist
+rmdir ${_installsitearch}/auto/Net/SSH/Perl
+rmdir ${_installsitearch}/auto/Net/SSH
+rmdir ${_installsitearch}/auto/Net 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Net::SSH::Perl|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Crypt-DH" module="5.12.2">v&gt;=0.06</depend>
+        <depend program="Crypt-DSA" module="5.12.2">v&gt;=0.12</depend>
+        <depend program="Crypt-RSA" module="5.12.2">v&gt;=1.98</depend>
+        <depend program="DBIx-ContextualFetch"
+          module="5.12.2">v&gt;=1.03</depend>
+        <depend program="Digest-BubbleBabble"
+          module="5.12.2">v&gt;=0.01</depend>
+        <depend program="String-CRC32"
+          module="5.12.2">v&gt;=1.3</depend>
+        <depend program="gmp" var="LIBGMP" install-name="libgmp43"
+          module="Math-GMP-5.12.2">v&gt;=4.3.2</depend>
+        <depend program="pari" var="LIBPARI" install-name="libpari23"
+          module="Math-Pari-5.12.2">v&gt;=2.3.5</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="Compress-Raw-Zlib-5.12.2">v&gt;=1.2.5</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+export PERL5LIB="${SB_VAR_LIBGMP_LIB}/perl5122:\
+${SB_VAR_LIBPARI_LIB}/perl5122:\
+${SB_VAR_LIBZ_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Net/SSH/Perl/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Net/SSH/Perl/.packlist
+rmdir ${_installsitearch}/auto/Net/SSH/Perl
+rmdir ${_installsitearch}/auto/Net/SSH
+rmdir ${_installsitearch}/auto/Net 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Net::SSH::Perl|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+      </uninstall>
+    </module>
+  </program>
+</programs>
