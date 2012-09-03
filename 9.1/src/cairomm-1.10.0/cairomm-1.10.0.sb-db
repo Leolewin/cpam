@@ -1,0 +1,894 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="cairomm" version="1.10.0" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}110</install-name>
+
+    <sources>
+      <source checksum="9c63fb1c04c8ecd3c5e6473075b8c39f"
+        checksum-type="md5" size="1089577"
+        path="src/cairomm-1.10.0.tar.gz"/>
+      <patch checksum="d22d91ac2dcb973c387b42a106428d68"
+        checksum-type="md5" size="33067"
+        path="src/cairomm-1.10.0.tww.patch"/>
+      <patch checksum="eeb3b32e12aa8a658bf91b7e8bf92f69"
+        checksum-type="md5" size="1725468"
+        path="src/cairomm-1.10.0.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="doxygen" install-name="doxygen17"
+        add-path="prepend" type="build">v&gt;=1.7.4</depend>
+      <depend program="graphviz" install-name="graphviz228"
+        add-path="prepend" type="build">v&gt;=2.28.0</depend>
+      <depend program="m4" install-name="m414" add-path="prepend"
+        type="build">v&gt;=1.4.15</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="make" add-path="prepend"
+        type="build">v==3.82</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake docdir=${_docdir}
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          systype="*-aix*|*-hpux11.[123]*|*-irix*|*-linux*|*-osf*|*-solaris*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" systype="*-hpux11.00">v&gt;=2.26.1</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22">v&gt;=2.2.10</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="*-hpux11.00">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="*-hpux11.00"/>
+      </dependencies>
+
+      <validate>
+        <depend program="cairomm" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==1.10.0</depend>
+        <depend program="cairomm" module="gcc44"
+          systype="!*-hpux11.00">v==1.10.0</depend>
+        <depend program="cairomm" module="gcc44-64bit"
+          systype="*-aix*|*-hpux11.[123]*|*-irix*|*-solaris*">v==1.10.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.00)
+  CC_LD_RT="-Wl,+s,+b,"
+
+  _libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-version V7.1-006 -readonly_strings -timplicit_local \
+-D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_FCPACKAGE_LIB} \
+${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_FCPACKAGE_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir=${_libdir:-${SB_INSTALL_PREFIX_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" data/cairomm-1.0.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake docdir=${_docdir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp/books"
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="64bit">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          module="64bit">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit" systype="!*-hpux11.00">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44-64bit"
+          systype="*-hpux11.00">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="64bit">v&gt;=2.2.10</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="gcc64" install-name="gcc64-44"
+          add-path="prepend" systype="*-hpux11.00">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc64-44r"
+          systype="*-hpux11.00"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux11.00)
+  _libdir="lib/pa20_64"
+  _gcclibdir="lib/${_gccsubdir}/pa20_64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -q64 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.00)
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--build=hppa64-hp-hpux11.00"
+
+  _gcc_rt_lib=${SB_VAR_GCC_RT_LIB} ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit +hpxstd98"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -64 -mips4 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v9"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-m64 -xarch=sparc"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m64 -xarch=sparc"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}} \
+${CC_LD_RT}${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}}} \
+-L${SB_VAR_FCPACKAGE}/${_libdir} \
+${CC_LD_RT}${SB_VAR_FCPACKAGE}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBSIGC}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_gcclibdir:-${_libdir}}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" data/cairomm-1.0.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake docdir=${_docdir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ "${_gcclibdir+set}" = set ]; then
+  if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+    ln -s ./$(basename ${_gcclibdir}) \
+    ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64
+  fi
+else
+  if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+    case "${SB_SYSTYPE}" in
+    *-aix*|*-hpux*|*-solaris*)
+      ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+    *-irix*)
+      ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+    esac
+  fi
+fi
+
+gmake install-nodist_pkgconfigDATA 
+gmake -C cairomm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 \
+${_gcclibdir+${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64} \
+${SB_INSTALL_PREFIX}/${_gcclibdir:-${_libdir}} \
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44"
+    systype="!*-hpux11.00">
+      <dependencies replace="0">
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44">v&gt;=2.2.10</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5" CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} ${CC_LD_RT}${SB_VAR_GCC_RT_LIB} \
+-L${SB_VAR_FCPACKAGE_LIB} ${CC_LD_RT}${SB_VAR_FCPACKAGE_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" data/cairomm-1.0.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake docdir=${_docdir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-nodist_pkgconfigDATA 
+gmake -C cairomm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44-64bit"
+    systype="*-aix*|*-hpux11.[123]*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="gcc64" install-name="gcc64-44"
+          add-path="prepend" systype="hppa*-hpux*">v&gt;=4.4.6</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="!hppa*-hpux*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc64-44r"
+          systype="hppa*-hpux*"/>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="!hppa*-hpux*"/>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="64bit">v&gt;=1.10.2</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          module="64bit">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44-64bit">v&gt;=2.26.1</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44-64bit">v&gt;=2.2.10</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64"
+  _gcclibdir="lib/${_gccsubdir}/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64"
+  _gcclibdir="lib/${_gccsubdir}/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64"
+  _gcclibdir="lib/${_gccsubdir}/pa20_64" ;;
+*-irix*)
+  _libdir=lib64
+  _gcclibdir="lib/${_gccsubdir}/mips4" ;;
+i?86*-solaris*)
+  _libdir="lib/amd64"
+  _gcclibdir="lib/${_gccsubdir}/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9"
+  _gcclibdir="lib/${_gccsubdir}/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -maix64"
+  CXXFLAGS="-O2 -maix64"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CFLAGS="-O2 -mlp64"
+  CXXFLAGS="-O2 -mlp64"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CFLAGS="-O2"
+  CXXFLAGS="-O2"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  esac
+
+  _gcc_rt_lib=${SB_VAR_GCC_RT_LIB} ;;
+*-irix*)
+  CFLAGS="-O2 -mabi=64"
+  CXXFLAGS="-O2 -mabi=64"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -m64"
+  CXXFLAGS="-O2 -m64"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=v9 -m64"
+  CXXFLAGS="-O2 -mcpu=v9 -m64"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2 -m64}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2 -m64}" \
+CPPFLAGS="-I${SB_VAR_FCPACKAGE_INC} ${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="-L${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}} \
+${CC_LD_RT}${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}} \
+-L${SB_VAR_FCPACKAGE}/${_libdir} \
+${CC_LD_RT}${SB_VAR_FCPACKAGE}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBSIGC}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_gcclibdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" data/cairomm-1.0.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake docdir=${_docdir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+  ln -s ./$(basename ${_gcclibdir}) \
+  ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64
+fi
+
+gmake install-nodist_pkgconfigDATA 
+gmake -C cairomm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 \
+${SB_INSTALL_PREFIX}/${_gcclibdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="1.9.8" to="1.10.0">
+        <item><para>Documentation: Context::arc(): Correct the
+documentation, as in the C documentation. Bug #31345</para></item>
+      </change>
+
+      <change from="1.9.6" to="1.9.8">
+        <items name="Surface">
+          <item><para>added create() for creating a sub-surface
+representing a rectangle on a target surface</para></item>
+          <item><para>PDF versioning API: get_versions(),
+restrict_to_version(), version_to_string()</para></item>
+          <item><para>add get_device()</para></item>
+          <item><para>add new surface type enum values</para></item>
+        </items>
+
+        <items name="Device">
+          <item><para>add acquire() and release()
+functions</para></item>
+          <item><para>Add Device::Lock convenience class</para></item>
+        </items>
+
+        <items name="Region">
+          <item><para>UNSTABLE API CHANGE: Fix do_union(), subtract(),
+intersect() to throw exceptions instead of returning error statuses to
+be consistent with the rest of the cairomm API</para></item>
+          <item><para>add xor() functions</para></item>
+          <item><para>add API for creating a region from a list of
+rectangles</para></item>
+          <item><para>implement copy()</para></item>
+        </items>
+
+        <items name="Documentation">
+          <item><para>Context::arc(): Fix bug #31345 about bad math in
+arc() documentation.</para></item>
+          <item><para>Add documentation for Device class</para></item>
+          <item><para>Add documentation for Region class</para></item>
+        </items>
+      </change>
+
+      <change from="1.9.4" to="1.9.6">
+        <item><para>Context: Added in_clip().</para></item>
+        <item><para>Surface: Added get_mime_data(), set_mime_data(),
+unset_mime_data().</para></item>
+        <item><para>Build: Added support for Windows 64-bit and
+Visual Studio 2010.</para></item>
+      </change>
+
+      <change from="1.9.2" to="1.9.4">
+        <item><para>Added Device.</para></item>
+      </change>
+
+      <change from="1.9.1" to="1.9.2">
+        <items name="Context">
+          <item><para>set_dash(): Make the dashes parameter
+const.</para></item>
+          <item><para>device_to_user(), device_to_user_distance(),
+user_to_device(), user_to_device_distance(): Deprecate the non-const
+versions, adding const versions.</para></item>
+        </items>
+
+        <item><para>Cleanup of most -Weffc++ warnings. Bug
+#28246.</para></item>
+      </change>
+
+      <change from="1.8.4" to="1.9.1">
+        <item><para>Added Region</para></item>
+        <item><para>Context: Don't allow this to be
+copied.</para></item>
+        <items name="Build">
+          <item><para>Fix the MSVC build.</para></item>
+          <item><para>Fix the 64-bit build.</para></item>
+          <item><para>Actually install
+cairomm-xlib-xrender-1.0.pc.</para></item>
+        </items>
+      </change>
+
+      <change from="1.8.2" to="1.8.4">
+        <item><para>move to new mm-common build
+infrastructure</para></item>
+      </change>
+
+      <change from="1.8.0" to="1.8.2">
+        <item><para>Fix accidental ABI breakage from 1.8.0.  All
+users are urged to please upgrade from 1.8.0 to 1.8.2 as soon as
+possible</para></item>
+      </change>
+
+      <change from="1.7.2" to="1.8.0">
+        <item><para>No notable changes since 1.7.2</para></item>
+      </change>
+
+      <change from="1.7.0" to="1.7.2">
+        <items name="API Changes (all API changes are in unstable API introduced in 1.7.x)">
+          <item><para>UserFontFace is not implemented with virtual
+functions rather than by registering callbacks</para></item>
+          <item><para>Cairo::scaled_matrix() -&gt;
+Cairo::scaling_matrix() to match other matrix convenience
+functions</para></item>
+        </items>
+
+        <items name="Bugfixes">
+          <item><para>Incorrect refcounting on
+ScaledFont</para></item>
+          <item><para>build fixes for Mac OSX</para></item>
+        </items>
+      </change>
+
+      <change from="1.6.x" to="1.7.0">
+        <items name=" API Changes">
+          <item><para>ScaledFont: Change fontface constructor
+parameter to be a RefPtr * This is an API break, but the old interface
+was essentially unusably broken</para></item>
+          <item><para>Cairo::Matrix now inherits from
+cairo_matrix_t</para>
+          <para>Previously, we had used Cairo::Matrix throughout our
+API, but Cairo::Matrix was just a typedef for cairo_matrix_t</para>
+          <para>This could be considered an API change, but the
+new Cairo::Matrix still is-a cairo_matrix_t even if it's not exactly a
+cairo_matrix_t.  This change does not break ABI either, as there are
+no data members or virtual functions.  So I believe this is a safe
+change, but feedback is appreciated.</para></item>
+          <item><para>Provides a much more C++-friendly API for
+handling matrices</para></item>
+          <item><para>Also added a set of standalone 'generator'
+functions for generating starting matrices:</para>
+          <para>Cairo::identity_matrix(), rotation_matrix(),
+translation_matrix(), scaled_matrix().  This allows for convenient use
+such as:
+<command>cr-&gt;set_matrix(Cairo::identity_matrix());</command> rather
+than something like what was required before:</para>
+          <screen>
+Cairo::Matrix identity_matrix;
+           cairo_matrix_init_identity(&amp;identity_matrix);
+           cr-&gt;set_matrix(identity_matrix);
+          </screen></item>
+          <item><para>Pattern: get/set_matrix() functions were using a
+cairo_matrix_t parameter in the API.  This is the only place where we
+used this type and so it was inconsistent with every other
+matrix-related API in cairomm.  Previously this wasn't really an issue
+since cairo_matrix_t and Cairo::Matrix were typedefed to the same
+type.  However, with the the change to Cairo::Matrix mentioned above,
+this because a much bigger issue. * This is an ABI-compatible change,
+but it is a minor API change that could result in some warnings or
+compile problems in some situations`</para></item>
+          <item><para>New API (some of these are new in cairo 1.8,
+some are older API that were not wrapped in cairomm
+previously)</para>
+          <unorderedlist>
+            <item><para>Add
+Context::get/set_scaled_font()</para></item>
+            <item><para>add Context::show_text_glyphs()</para></item>
+            <item><para>add Context::get_font_options()</para></item>
+            <item><para>Add
+Surface::has_show_text_glyphs()</para></item>
+            <item><para>Add Surface::get_content() +
+test</para></item>
+            <item><para>Added
+Surface::get_fallback_resolution()</para></item>
+            <item><para>Add ScaledFont::text_to_glyphs()</para></item>
+            <item><para>Add PsSurface::get_eps()</para></item>
+            <item><para>Add missing Win32Surface API:
+create_with_ddb(), create_with_dib(), and get_image()</para></item>
+            <item><para>Add Win32PrintingSurface</para></item>
+          </unorderedlist></item>
+          <item><para>Vastly improved font support</para>
+          <unorderedlist>
+            <item><para>ToyFontFace</para></item>
+            <item><para>UserFontFace</para></item>
+            <item><para>Add Freetype font support (FtFontFace,
+etc)</para></item>
+            <item><para>Add win32 font support (Win32FontFace,
+etc)</para></item>
+            <item><para>Add quartz font support (QuartzFontFace,
+etc)</para></item>
+            <item><para>Add
+ScaledFont::get_scale_matrix()</para></item>
+          </unorderedlist></item>
+          <item><para>Fix API inconsistencies by adding overloads
+and deprecating old versions</para>
+          <unorderedlist>
+            <item><para>Deprecated FontFace::extents() in favor of
+FontFace::get_extents()</para></item>
+            <item><para>Deprecated FontFace::text_extents() in favor
+of FontFace::get_text_extents()</para></item>
+            <item><para>Deprecated FontFace::glyph_extents() in favor
+of FontFace::get_glyph_extents()</para></item>
+            <item><para>Add sigc::slot versions of all of the
+functions that take a cairo_write_func_t or
+cairo_read_func_t</para>
+            <unorderedlist>
+              <item><para>This adds a new dependency on libsigc++, but
+offers a much more flexible and C++-like solution</para></item>
+              <item><para>Old API using cairo_write_func_t /
+cairo_read_func_t still exist, but are deprecated in favor of the new
+API</para></item>
+            </unorderedlist></item>
+          </unorderedlist></item>
+        </items>
+
+        <item><para>Add a default value for the font_options parameter
+of the ScaledFont constructor</para></item>
+        <item><para>Added new macros for determining library version:
+CAIROMM_MAJOR_VERSION, CAIROMM_MINOR_VERSION, and
+CAIROMM_MICRO_VERSION</para></item>
+        <item><para>Add a bunch of extra .pc files for additional
+functionality: like cairo, create convenience .pc files for using some
+of the optional features.  For example, cairomm-ft-1.0,
+cairomm-pdf-1.0, cairomm-xlib-1.0, etc.</para></item>
+        <item><para>Numerous windows build improvements</para></item>
+        <item><para>Added a *lot* of automated tests</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2012 May 11" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-36 to correctly handle
+deplib linking</para></item>
+      </change>
+
+      <change date="2012 May 9" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add gcc44-64bit module</para></item>
+        <item><para>Add 64bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
