@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="libiodbc" version="3.52.7" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}352</install-name>
+
+    <sources>
+      <source checksum="ddbd274cb31d65be6a78da58fc09079a"
+        checksum-type="md5" size="1038710"
+        path="src/libiodbc-3.52.7.tar.gz"/>
+      <patch checksum="6569ffbd6af97c864e474e529da8ca8b"
+        checksum-type="md5" size="3085"
+        path="src/libiodbc-3.52.7.tww.patch"/>
+      <patch checksum="78dbe808cd744bb0d5d12748ceadbec3"
+        checksum-type="md5" size="1540566"
+        path="src/libiodbc-3.52.7.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-mt +O2 +Olit=all +Ofltacc +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-mt -z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-mt -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-pthread -O2 -arch ev5 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" --enable-shared \
+--disable-dependency-tracking --enable-static --disable-gui \
+--with-iodbc-inidir=${_sysconfdir} --libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(${SB_INSTALL_PREFIX_LIB}\)!-L\1 ${CC_LD_RT}\1!;" \
+bin/iodbc-config
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" admin/libiodbc.pc
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+# Install sysconfdir and empty conf files.
+${SB_PATH_INSTALL} -o root -g 0 -m 755 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -o root -g 0 -m 644 /dev/null \
+${_sysconfdir}/odbc.ini
+${SB_PATH_INSTALL} -o root -g 0 -m 644 /dev/null \
+${_sysconfdir}/odbcinst.ini
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para>iODBC Driver Manager</para>
+        <para>Copyright (C) 1995 by Ke Jin
+&lt;kejin@empress.com&gt;</para>
+        <para>Copyright (C) 1996-2009 by OpenLink Software
+&lt;iodbc@openlinksw.com&gt;</para>
+        <para>All Rights Reserved.</para>
+        <para>This software is released under either the GNU Library
+General Public License (see LICENSE.LGPL) or the BSD License (see
+LICENSE.BSD).</para>
+        <para>Note that the only valid version of the LGPL license
+as far as this project is concerned is the original GNU Library
+General Public License Version 2, dated June 1991.</para>
+        <para>While not mandated by the BSD license, any patches you
+make to the iODBC may be contributed back into the iODBC project at
+your discretion. Contributions will benefit the Open Source and Data
+Access community as a whole. Submissions may be made at
+http://www.iodbc.org.</para>
+      </license>
+
+      <license path="lgpl-2.license"/>
+
+      <license>
+        <para>Copyright (C) 1995-2009, OpenLink Software Inc and Ke
+Jin.</para>
+        <para>All rights reserved.</para>
+        <para>Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the following
+conditions are met:</para>
+        <orderedlist>
+          <item><para>Redistributions of source code must retain the
+above copyright notice, this list of conditions and the following
+disclaimer.</para></item>
+          <item><para>Redistributions in binary form must reproduce
+the above copyright notice, this list of conditions and the following
+disclaimer in the documentation and/or other materials provided with
+the distribution.</para></item>
+          <item><para>Neither the name of OpenLink Software Inc. nor
+the names of its contributors may be used to endorse or promote
+products derived from this software without specific prior written
+permission.</para></item>
+        </orderedlist>
+
+        <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+OPENLINK OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGE.</para>
+      </license>
+    </licenses>
+  </program>
+</programs>
