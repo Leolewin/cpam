@@ -1,0 +1,665 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="atkmm" version="2.22.5" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}222</install-name>
+
+    <sources>
+      <source checksum="d56fe2b29d4c88fa270918e5572fc8cf"
+        checksum-type="md5" size="715419"
+        path="src/atkmm-2.22.5.tar.bz2"/>
+      <patch checksum="db77bf8ecb8884ea8c9efa9a4222462b"
+        checksum-type="md5" size="34388"
+        path="src/atkmm-2.22.5.tww.patch"/>
+      <patch checksum="72697f7d3ebd8d2d2fa8665d4ce5e28d"
+        checksum-type="md5" size="1679450"
+        path="src/atkmm-2.22.5.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="m4" install-name="m414" add-path="prepend"
+        type="build">v&gt;=1.4.15</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="make" add-path="prepend"
+        type="build">v==3.82</depend>
+      <depend program="perl" add-path="prepend"
+        type="build">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+    </build>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="hppa*-hpux*|*-solaris*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="hppa*-hpux*|*-solaris*"/>
+        <depend program="atk" var="LIBATK"
+          install-name="libatk132">v&gt;=1.32.0</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          systype="*-aix*|hppa*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=1.10.0</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="gcc44"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF"
+          install-name="libttf24">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44"
+          systype="hppa*-hpux*|*-solaris*">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224">v&gt;=2.24.2</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG"
+          install-name="libpng14">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          systype="*-aix*|hppa*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.2.10</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="gcc44"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=2.2.10</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128">v&gt;=1.28.4</depend>
+        <depend program="zlib" var="LIBZ"
+          install-name="libz12">v&gt;=1.2.5</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="atkmm" module="64bit"
+          systype="*-aix*|*-hpux*|*-irix*|*-solaris*">v==2.22.5</depend>
+        <depend program="atkmm" module="gcc44"
+          systype="*-aix*|ia64*-hpux*|*-irix*|*-osf*|*-linux*">v==2.22.5</depend>
+        <depend program="atkmm" module="gcc44-64bit"
+          systype="*-aix*|ia64*-hpux*|*-irix*">v==2.22.5</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -msym \
+-version V7.1-006 -readonly_strings -timplicit_local \
+-D__USE_STD_IOSTREAM"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIROMM_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGLIBMM_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig}" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${_libdir:-${SB_INSTALL_PREFIX_LIB}${SB_VAR_GCC_RT+/${_gccsubdir}}}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+atk/atkmm-1.6.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </install>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-irix*|*-solaris*">
+      <dependencies replace="0">
+        <depend program="atk" var="LIBATK" install-name="libatk132"
+          module="64bit">v&gt;=1.32.0</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="64bit">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="64bit"
+          systype="*-aix*|hppa*-hpux11.00|ia64*-hpux*|*-irix*">v&gt;=1.10.0</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110" module="gcc44-64bit"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          module="64bit">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="64bit"
+          systype="*-aix*|ia64*-hpux*|*-irix*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44-64bit"
+          systype="hppa*-hpux*|*-solaris*">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="64bit">v&gt;=2.24.2</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="64bit"
+          systype="*-aix*|hppa*-hpux11.00|ia64*-hpux*|*-irix*|*-linux*|*-osf*">v&gt;=2.2.10</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22" module="gcc44-64bit"
+          systype="hppa*-hpux11.[123]*|*-solaris*">v&gt;=2.2.10</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128"
+          module="64bit">v&gt;=1.28.4</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="gcc64" install-name="gcc64-44"
+          add-path="prepend" systype="hppa*-hpux*">v&gt;=4.4.6</depend>
+        <depend program="gcc" install-name="gcc44" add-path="prepend"
+          systype="*-solaris*">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc64-44r"
+          systype="hppa*-hpux*"/>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="*-solaris*"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64" ;;
+*-hpux*)
+  _libdir="lib/pa20_64"
+  _gcclibdir="lib/${_gccsubdir}/pa20_64" ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir="lib/amd64"
+  _gcclibdir="lib/${_gccsubdir}/amd64" ;;
+*-solaris*)
+  _libdir="lib/sparcv9"
+  _gcclibdir="lib/${_gccsubdir}/sparcv9" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -q64 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -q64 -qro -qroconst -qnotempinc \
+-qnotemplateregistry -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARGS="--build=hppa64-hp-hpux11.00" ;;
+  esac
+
+  _gcc_rt_lib=${SB_VAR_GCC_RT_LIB} ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -64 -mips4 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -m64"
+  CXXFLAGS="-O2 -m64"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -m64"
+  CXXFLAGS="-O2 -m64"
+  CC_LD_RT="-R" ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}} \
+${CC_LD_RT}${_gcc_rt_lib:-${SB_VAR_GCC_RT}/${_libdir}}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBATK}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIROMM}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBGLIBMM}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPANGO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBSIGC}/${_gcclibdir:-${_libdir}}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig}" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} ${ARGS+${ARGS}} \
+--libdir="${SB_INSTALL_PREFIX}/${_gcclibdir:-${_libdir}}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+atk/atkmm-1.6.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ "${_gcclibdir+set}" = set ]; then
+  if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+    case "${SB_SYSTYPE}" in
+    *-aix*|*-hpux*|*-solaris*)
+      ln -s ./$(basename ${_libdir}) \
+      ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ;;
+    *-irix*)
+      ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ;;
+    esac
+  fi
+else
+  if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+    case "${SB_SYSTYPE}" in
+    *-aix*|*-hpux*|*-solaris*)
+      ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+    *-irix*)
+      ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+    esac
+  fi
+fi
+
+gmake install-pkgconfigDATA \
+install-nodist_atkmm_libincludeHEADERS
+gmake -C atk/atkmm install-libLTLIBRARIES
+]]>
+      </install>
+    </module>
+
+    <module name="gcc44"
+    systype="*-aix*|ia64*-hpux*|*-irix*|*-osf*|*-linux*">
+      <dependencies replace="0">
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          module="gcc44">v&gt;=1.10.0</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="gcc44">v&gt;=2.24.2</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44">v&gt;=2.2.10</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-irix*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5"
+  CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath," ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT_LIB} \
+${CC_LD_RT}${SB_VAR_GCC_RT_LIB} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIROMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBGLIBMM_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBICONV_LIB}/pkgconfig:\
+${SB_VAR_LIBPNG_LIB}/pkgconfig:\
+${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBSIGC_LIB}/${_gccsubdir}/pkgconfig:\
+${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_LIBZ_LIB}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} \
+--libdir="${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}" \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+atk/atkmm-1.6.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-pkgconfigDATA \
+install-nodist_atkmm_libincludeHEADERS
+gmake -C atk/atkmm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="gcc44-64bit"
+    systype="*-aix*|ia64*-hpux*|*-irix*">
+      <dependencies replace="0">
+        <depend program="atk" var="LIBATK" install-name="libatk132"
+          module="64bit">v&gt;=1.32.0</depend>
+        <depend program="cairo" var="LIBCAIRO"
+          install-name="libcairo110"
+          module="64bit">v&gt;=1.10.2</depend>
+        <depend program="cairomm" var="LIBCAIROMM"
+          install-name="libcairomm110"
+          module="gcc44-64bit">v&gt;=1.10.0</depend>
+        <depend program="fcpackage" var="FCPACKAGE"
+          install-name="fcpackage28" module="64bit">v&gt;=2.8</depend>
+        <depend program="freetype" var="LIBTTF" install-name="libttf24"
+          module="64bit">v&gt;=2.4.6</depend>
+        <depend program="gettext" var="GETTEXT"
+          install-name="gettext018"
+          module="64bit">v&gt;=0.18.1.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44-64bit">v&gt;=2.26.1</depend>
+        <depend program="glibmm" var="LIBGLIBMM"
+          install-name="libglibmm224"
+          module="gcc44-64bit">v&gt;=2.24.2</depend>
+        <depend program="libiconv" var="LIBICONV"
+          install-name="libiconv113"
+          module="64bit">v&gt;=1.13.1</depend>
+        <depend program="libpng" var="LIBPNG" install-name="libpng14"
+          module="64bit">v&gt;=1.4.4</depend>
+        <depend program="libsigc++" var="LIBSIGC"
+          install-name="libsigc++22"
+          module="gcc44-64bit">v&gt;=2.2.10</depend>
+        <depend program="pango" var="LIBPANGO"
+          install-name="libpango128"
+          module="64bit">v&gt;=1.28.4</depend>
+        <depend program="zlib" var="LIBZ" install-name="libz12"
+          module="64bit">v&gt;=1.2.5</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir="lib/ppc64"
+  _gcclibdir="lib/${_gccsubdir}/ppc64" ;;
+ia64*-hpux*)
+  _libdir="lib/hpux64"
+  _gcclibdir="lib/${_gccsubdir}/hpux64" ;;
+*-irix*)
+  _libdir=lib64
+  _gcclibdir="lib/${_gccsubdir}/mips4" ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -maix64"
+  CXXFLAGS="-O2 -maix64"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CFLAGS="-O2 -mlp64"
+  CXXFLAGS="-O2 -mlp64"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CFLAGS="-O2"
+  CXXFLAGS="-O2"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARGS="--build=hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARGS="--build=hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARGS="--build=hppa64-hp-hpux11.11" ;;
+  esac
+
+  _gcc_rt_lib=${SB_VAR_GCC_RT_LIB} ;;
+*-irix*)
+  CFLAGS="-O2 -mabi=64"
+  CXXFLAGS="-O2 -mabi=64"
+  CC_LD_RT="-Wl,-rpath," ;;
+esac
+
+MAKE=gmake \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+LDFLAGS="-L${SB_VAR_GCC_RT}/${_libdir} \
+${CC_LD_RT}${SB_VAR_GCC_RT}/${_libdir} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE}/${_libdir}/pkgconfig:\
+${SB_VAR_GETTEXT}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBATK}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIRO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBCAIROMM}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBGLIB}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBGLIBMM}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBICONV}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPANGO}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBPNG}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBSIGC}/${_gcclibdir}/pkgconfig:\
+${SB_VAR_LIBTTF}/${_libdir}/pkgconfig:\
+${SB_VAR_LIBZ}/${_libdir}/pkgconfig" \
+--disable-dependency-tracking --datarootdir=${_datadir} \
+--datadir=${_datadir} --docdir=${_docdir} \
+--libdir=${SB_INSTALL_PREFIX}/${_gcclibdir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" \
+atk/atkmm-1.6.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake libdocdir=${_docdir} devhelpdir="${_docdir}/devhelp"
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 ]; then
+  ln -s ./$(basename ${_gcclibdir}) \
+  ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64
+fi
+
+gmake install-pkgconfigDATA \
+install-nodist_atkmm_libincludeHEADERS
+gmake -C atk/atkmm install-libLTLIBRARIES
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/${_gccsubdir}/64 \
+${SB_INSTALL_PREFIX}/${_gcclibdir}
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="lgpl-2.1.license"/>
+    </licenses>
+
+    <changelog>
+      <change date="2012 May 11" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.5-36 to correctly handle
+deplib linking</para></item>
+      </change>
+
+      <change date="2012 May 9" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add 64bit module</para></item>
+        <item><para>Add gcc44-64bit module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
