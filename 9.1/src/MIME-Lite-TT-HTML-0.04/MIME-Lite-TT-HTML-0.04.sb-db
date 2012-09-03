@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="MIME-Lite-TT-HTML" version="0.04" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="8e1d648d36d875e1f60b29f0b73aeafe"
+        checksum-type="md5" size="11036"
+        path="src/MIME-Lite-TT-HTML-0.04.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Build.PL
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+./Build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+./Build test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+./Build install
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/MIME/Lite/TT/HTML/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/MIME/Lite/TT/HTML/.packlist
+rmdir ${_installsitearch}/auto/MIME/Lite/TT/HTML 2>/dev/null
+rmdir ${_installsitearch}/auto/MIME/Lite/TT 2>/dev/null
+rmdir ${_installsitearch}/auto/MIME/Lite 2>/dev/null
+rmdir ${_installsitearch}/auto/MIME 2>/dev/null
+
+:
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="HTML-FormatText-WithLinks"
+          module="5.8.8">v&gt;=0.11</depend>
+        <depend program="Module-Build"
+          module="5.8.8">v&gt;=0.33</depend>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="HTML-FormatText-WithLinks"
+          module="5.12.2">v&gt;=0.11</depend>
+        <depend program="Module-Build"
+          module="5.12.2">v&gt;=0.33</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
