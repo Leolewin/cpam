@@ -1,0 +1,337 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="joe" version="3.7" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}37</install-name>
+
+    <sources>
+      <source checksum="66de1b073e869ba12abbfcde3885c577"
+        checksum-type="md5" size="696036"
+        path="src/joe-3.7.tar.gz"/>
+      <patch checksum="725980926f7941959b86f4b1260675af"
+        checksum-type="md5" size="2870"
+        path="src/joe-3.7.tww.patch"/>
+      <patch checksum="ec3d380da81114563420ed07b7003ae0"
+        checksum-type="md5" size="649581"
+        path="src/joe-3.7.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="aspell" install-name="aspell06"
+        add-path="prepend">v&gt;=0.60.6.1</depend>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses57">v&gt;=5.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --disable-dependency-tracking \
+--datadir=${_datadir} --docdir=${_docdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--sysconfdir=${_sysconfdir} ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="3.6" to="3.7">
+        <item><para>backspace/DEL means 'n' in replace prompt for
+better emacs compatibility</para></item>
+        <item><para>Menus are now made up of macros instead of
+options.</para>
+        <para>New commands:</para>
+        <screen>
+menu	Prompt for a menu to display with tab completion.
+mode	Prompt for an option to change with tab completion.
+        </screen>
+        <para>Menus are defined in joerc file with :defmenu
+command.</para>
+        <para>Menu entries are the pair: macro string. String is a
+format string displayed in the menu. Macro is executed when then menu
+entry is selected.</para>
+        <para>Use this to add your own macros to ^T.</para></item>
+        <item><para>^T is now a user definable menu
+system</para></item>
+        <item><para>Treat \ as a quote character for file I/O. Now
+you can edit files like !test with \!test</para></item>
+        <item><para>Print NULs in default search string. Handle many
+\s properly.</para></item>
+        <item><para>Allow backslashes in file names</para></item>
+        <item><para>Fix %A to print unicode</para></item>
+        <item><para>Charles Tabony's (vectorshifts's) highlighter
+stack patch</para></item>
+        <item><para>! is relace all in replace prompt</para></item>
+        <item><para>Turn off UTF-8 when we enter hex
+mode</para></item>
+        <item><para>Call ttsig on vfile I/O errors.</para></item>
+        <item><para>Abort cleanly when malloc returns
+NULL</para></item>
+        <item><para>Add reload command to reload file from
+disk</para></item>
+        <item><para>Modify configure scrips to use docdir for extra
+documents and datadir/joe for syntax and i18n files.</para></item>
+        <item><para>Don't use bold yellow, it's bad for white
+screens</para></item>
+        <item><para>Fix TeX highlighter: don't highlight
+"</para></item>
+        <item><para>Make mail.jsf more forgiving for those of us who
+still use old UNIX mail</para></item>
+        <item><para>Fix file rename bugs</para></item>
+        <item><para>Improve ubop: can reformat a block of paragraphs
+again. Reformat of adjacent indented paragraphs working
+again.</para></item>
+        <item><para>Improve XML highlighter: allow \r in
+whitespace</para></item>
+      </change>
+
+      <change from="3.5" to="3.6">
+        <item><para>Preserve setuid bit</para></item>
+        <item><para>Fix bug where backup file did not get modtime of
+original</para></item>
+        <item><para>New diff highlighter</para></item>
+        <item><para>Fix paragraph format when overtype is
+on</para></item>
+        <item><para>Fix non-french spacing</para></item>
+        <item><para>Fix bug with joe +2 on single line
+files</para></item>
+        <item><para>Add syntax file for .jsf files</para></item>
+        <item><para>Add ASCII table to joerc help</para></item>
+        <item><para>^KD renames file</para></item>
+        <item><para>Improve HTML highlighter... if you see &lt;? it's
+probably a script...</para></item>
+        <item><para>Check for EINTR from ioctl</para></item>
+        <item><para>&gt; allowed in xml content</para></item>
+        <item><para>Add -flowed option: adds a space after paragraph
+lines.</para></item>
+        <item><para>Fix German and French .po files: they were cause
+search&amp;replace to break.</para></item>
+        <item><para>Look at LC_MESSAGES to get the language to use for
+editor messages.</para></item>
+        <item><para>Added -no_double_quoted and -tex_comment for
+TeX</para></item>
+        <item><para>Added -break_symlinks option and changed
+-break_links option to not break symbolic links.</para></item>
+        <item><para>Paragraph format of single line paragraph is
+indented only if autoindent is enabled</para></item>
+        <item><para>Guessindent no longer overrides istep if
+indendation is space.</para></item>
+        <item><para>Fix low limit of lmargin</para></item>
+        <item><para>Allow inserting file in rectangle mode even if
+selected rectangle is zero-width.</para></item>
+        <item><para>.js is Javascript</para></item>
+        <item><para>Fix ^G in perl mode when you hit it on second
+brace in:</para>
+        <screen>
+{\'
+\'}
+        </screen></item>
+        <item><para>Fix LUA highlighter</para></item>
+        <item><para>Improved conf.jsf</para></item>
+        <item><para>Added local option (-nobackup) to suppress backup
+files</para></item>
+        <item><para>Add Matlab syntax file</para></item>
+        <item><para>Improve mail syntax highlighter</para></item>
+        <item><para>Fix crash when calling syntax file as
+subroutine</para></item>
+        <item><para>Get "ctags" tag search to work again</para></item>
+        <item><para>Fix crash when JOE tries to write to unwritable
+file</para></item>
+        <item><para>Fix crash when entering blank macro ESC x
+&lt;return&gt;</para></item>
+        <item><para>Improve Verilog highlighter</para></item>
+        <item><para>Fix crash when typing ESC x !ls</para></item>
+        <item><para>Add C++ keywords to highlighter</para></item>
+        <item><para>Added RPM spec file syntax spec.jsf</para></item>
+        <item><para>Improve 'istring' (.jsf command)</para></item>
+        <item><para>Update French .po file</para></item>
+        <item><para>Fix infinite search/replace loop bug</para></item>
+        <item><para>New feature: insert status line format string
+using 'txt' (tykef)</para></item>
+        <item><para>Update Russion .po file</para></item>
+        <item><para>Update Russian manpage</para></item>
+        <item><para>Update jicerc Russian rc file</para></item>
+        <item><para>Fix lock prompt message</para></item>
+        <item><para>Add Ukrainian .po file</para></item>
+      </change>
+
+      <change from="3.4" to="3.5">
+        <item><para>Query windows now expand to multiple lines if
+necessary</para></item>
+        <item><para>Single key queries are now internationalized (set
+local versions in the .po file)</para></item>
+        <item><para>Spell check language can be set in the
+editor</para></item>
+        <item><para>New syntax files: m4, joerc</para></item>
+        <item><para>New debug window for highlight file syntax
+errors.</para></item>
+        <item><para>Macros can be typed at the ESC X prompt (before it
+used to accept only commands).</para></item>
+        <item><para>Built-in joerc file allows joe to run even if
+/etc/joe directory is missing.</para></item>
+        <item><para>Support for 'long long' allows editing parts of
+files larger than 4GB. For example, you can say: joe
+/dev/hda,0x100000000,0x1000 to edit the 4KB block at offset 4GB of a
+hard drive.</para></item>
+        <item><para>Option which allows you set how many undo records
+to keep.</para></item>
+        <item><para>You can give a path to the tags file in the TAGS
+environment variable.</para></item>
+      </change>
+
+      <change from="3.3" to="3.4">
+        <item><para>Paragraph reformatter and word wrap now handle '*'
+and '-' bullet lists.</para></item>
+        <item><para>Better internationalization (i18n):</para>
+        <unorderedlist>
+          <item><para>JOE now uses gettext(), so that internal
+messages can be translated to the local language. The /etc/joe
+directory now has a lang subdirectory for the .po files.</para></item>
+          <item><para>Internationalized joerc files are now possible.
+If LANG is en_GB, JOE tries successively to load joerc.en_GB, joerc.en
+and joerc.</para></item>
+        </unorderedlist></item>
+        <item><para>Multi-file search and replace. There are two new
+search and replace options:</para>
+        <unorderedlist>
+          <item><para>'a': the search covers all loaded buffers. So
+you can say:</para>
+          <screen>
+joe *.c
+and then ^KF foo &lt;return&gt;
+         ra &lt;return&gt;
+         bar &lt;return&gt;
+          </screen>
+          <para>to replace all instances of foo in all .c
+files.</para></item>
+          <item><para>'e': the search covers all files in the error
+list.</para>
+          <para>You can use grep-find to create a list of
+files:</para>
+          <screen>
+ESC g
+ grep -n foo f*.c
+^KF foo &lt;return&gt;
+re
+bar &lt;return&gt;
+          </screen>
+          <para>You can also use 'ls' and 'find' instead of grep to
+create the file list.</para></item>
+        </unorderedlist></item>
+        <item><para>JOE now restores cursor position in previously
+visited files.</para></item>
+        <item><para>Build and grep window work more like Turbo-C: the
+messages window is forced onto the screen when you hit ^[ = and ^[
+-.</para></item>
+        <item><para>Syntax highlighter definition files (.jsf files)
+can now have subroutines. This eases highlighter reuse: for example,
+Mason and PHP can share the HTML highlighter.</para></item>
+        <item><para>I've changed the way JOE handles '-' and
+redirected input:</para>
+        <screen>
+joe &lt; file           A shell process is started which 'cat's the
+                        file into the first buffer.
+tail -f log | joe       A shell process is started which 'cat's the
+                        output from 'tail -f' (watch a log file) into
+                        the first buffer.
+joe -			JOE does not try to read from stdin, but when
+                        the file is saved, it writes to stdout.
+echo "hi" | joe - | mail fred
+			"hi" ends up in first buffer. When you save,
+                        mail is sent.
+        </screen></item>
+        <item><para>Many bugs have been fixed. I've tried to address
+every issue in the bug tracker. Hopefully I didn't create too many new
+ones.</para></item>
+        <item><para>You can now define which characters can indent
+paragraphs. Also the default list has been reduced so that formatting
+of TeX/LaTeX files works better.</para></item>
+        <item><para>Highlighting now uses less CPU time and always
+parses from the beginning of the file (the number of sync lines option
+is deprecated). Here is a CPU usage comparison for scrolling forwards
+and backwards through a 35K line C file:</para>
+        <screen>
+JOE	.58
+JED	.57
+NEDIT	3.26
+VIM	7.33
+EMACS	11.98
+        </screen></item>
+        <item><para>JOE now matches Thomas Dickey's implementation of
+my xterm patch (but configure xterm with --paste64).</para></item>
+        <item><para>File selection menu/completion-list is now above
+the prompt (which is more like bash). Also it is transposed, so that
+it is sorted by columns instead of rows.</para></item>
+        <item><para>"Bufed" (prompt for a buffer to edit), works like
+other file prompt commands: it's a real prompt with history and
+completion.</para></item>
+        <item><para>Automatic horizontal left scroll jumps by 5-10
+columns.</para></item>
+        <item><para>New syntax files: troff, Haskell, Cadance SKILL,
+REXX, LUA, RUBY. Many of the existing syntax files have been
+improved.</para></item>
+      </change>
+    </notes>
+  </program>
+</programs>
