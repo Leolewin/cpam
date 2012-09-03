@@ -1,0 +1,341 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gtkmathview" version="0.8.0" revision="3"
+  systype="*-aix*|*-hpux11*|*-irix*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}08</install-name>
+
+    <sources>
+      <source checksum="b53564e553728d4b69f7d366dfeb5299"
+        checksum-type="md5" size="987328"
+        path="src/gtkmathview-0.8.0.tar.gz"/>
+      <patch checksum="c0ff4da9668ce232aa296b97fbb0cd96"
+        checksum-type="md5" size="21987"
+        path="src/gtkmathview-0.8.0.tww.patch"/>
+      <patch checksum="62378ff8a872fe5ff1f9d13500d95c6d"
+        checksum-type="md5" size="371496"
+        path="src/gtkmathview-0.8.0.gnulib.patch"/>
+      <patch checksum="ea7289d17d5fcbf15419071d3b5e7ebc"
+        checksum-type="md5" size="353"
+        path="src/gtkmathview-0.8.0.gcc44.patch"/>
+      <patch checksum="4124e0220061c0c20de5a7a47df9ddef"
+        checksum-type="md5" size="1628"
+        path="src/gtkmathview-0.8.0.debian-missingLib.patch"/>
+      <patch checksum="bd03c15e93fd1e50c3ba8b7472583fe8"
+        checksum-type="md5" size="422"
+        path="src/gtkmathview-0.8.0.tww-gnulib.patch"/>
+      <patch checksum="4adbf45f1545356a58b9b83a488c918a"
+        checksum-type="md5" size="3342391"
+        path="src/gtkmathview-0.8.0.auto.patch"/>
+      <patch checksum="95387d1c963638b80f41efe64b0d7f7c"
+        checksum-type="md5" size="2406"
+        path="src/gtkmathview-0.8.0.tww-auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v==2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v==2.22.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML" install-name="libxml27"
+        add-path="prepend">v&gt;=2.7.8</depend>
+      <depend program="libxslt" var="LIBXSLT"
+        install-name="libxslt11"
+        add-path="prepend">v==1.1.26</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="popt" var="LIBPOPT"
+        install-name="libpopt116">v&gt;=1.16</depend>
+      <depend program="t1lib" var="T1LIB"
+        install-name="t1lib51">v&gt;=5.1.2</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_gccsubdir="gcc44"
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          systype="*-linux*">v&gt;=2.26.1</depend>
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44" systype="!*-linux*">v&gt;=2.26.1</depend>
+        <depend var="GCC_RT" install-name="gcc44r"
+          systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*"/>
+        <depend program="gcc" add-path="prepend"
+          systype="*-aix*|*-hpux*|*-irix*|*-osf*|*-solaris*">v==4.4.6</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="gtkmathview" module="gcc44"
+          systype="*-linux*">v==0.8.0</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CFLAGS="-O2 -mcpu=powerpc"
+  CXXFLAGS="-O2 -mcpu=powerpc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libdir=${SB_INSTALL_PREFIX_LIB}
+  _libglib_lib=${SB_VAR_LIBGLIB_LIB} ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  _libdir=${SB_INSTALL_PREFIX_LIB}
+  _libglib_lib=${SB_VAR_LIBGLIB_LIB} ;;
+*-osf*)
+  CFLAGS="-O2 -mcpu=ev5" CXXFLAGS="-O2 -mcpu=ev5"
+  CC_LD_RT="-Wl,-rpath,"
+
+  ARGS="ac_cv_func_setenv=no" ;;
+i?86*-solaris*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CXXFLAGS="-O2 -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CXXFLAGS="-O2 -mcpu=ultrasparc -mvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_T1LIB_LIB}:${SB_VAR_LIBZ_LIB}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${_libglib_lib:-${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig:${SB_VAR_LIBZ_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--with-popt --with-popt-prefix=${SB_VAR_LIBPOPT} \
+--with-t1lib --with-t1lib-prefix=${SB_VAR_T1LIB} \
+--enable-libxml2 --enable-libxml2-reader \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--libdir=${_libdir:-"${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}"} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" *.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install pkgdatadir=${_datadir}
+]]>
+      </install>
+    </module>
+
+    <module name="gcc44"
+    systype="*-linux*">
+      <dependencies replace="0">
+        <depend program="glib" var="LIBGLIB" install-name="libglib226"
+          module="gcc44">v&gt;=2.26.1</depend>
+        <depend var="GCC_RT" install-name="gcc44r"/>
+        <depend program="gcc" add-path="prepend">v==4.4.6</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+_gccsubdir="gcc44"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CXXFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+esac
+
+CC_LD_RT="-Wl,-rpath,"
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+LDFLAGS="${SB_VAR_GCC_RT+-L${SB_VAR_GCC_RT_LIB}} \
+${CC_LD_RT}${SB_VAR_T1LIB_LIB}:${SB_VAR_LIBZ_LIB}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}}\
+${SB_VAR_GCC_RT+:${SB_VAR_GCC_RT_LIB}} ${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE_LIB}/pkgconfig:\
+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:\
+${_libglib_lib:-${SB_VAR_LIBGLIB_LIB}/${_gccsubdir}}/pkgconfig:\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK_LIB}/pkgconfig:${SB_VAR_LIBPANGO_LIB}/pkgconfig:\
+${SB_VAR_LIBATK_LIB}/pkgconfig:${SB_VAR_LIBTTF_LIB}/pkgconfig:\
+${SB_VAR_GETTEXT_LIB}/pkgconfig:${SB_VAR_LIBXML_LIB}/pkgconfig:\
+${SB_VAR_LIBXSLT_LIB}/pkgconfig:${SB_VAR_LIBZ_LIB}/pkgconfig:\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--with-popt --with-popt-prefix=${SB_VAR_LIBPOPT} \
+--with-t1lib --with-t1lib-prefix=${SB_VAR_T1LIB} \
+--enable-libxml2 --enable-libxml2-reader \
+--datadir=${_datadir} --sysconfdir=${_sysconfdir} \
+--mandir="${SB_INSTALL_PREFIX}/man" \
+--libdir=${_libdir:-"${SB_INSTALL_PREFIX_LIB}/${_gccsubdir}"} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" *.pc
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake pkgdatadir=${_datadir}
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+gmake install-pkgconfigDATA
+gmake -C src/backend/gtk install-libLTLIBRARIES
+gmake -C src/backend/svg install-libLTLIBRARIES
+gmake -C src/backend/ps install-libLTLIBRARIES
+gmake -C src install-libLTLIBRARIES
+gmake -C src/view install-libLTLIBRARIES
+gmake -C src/widget install-libLTLIBRARIES
+]]>
+      </install>
+    </module>
+
+    <changelog>
+      <change date="2011 December 10" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update atk dependency from 1.22.0 to
+1.32.0</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update freetype dependencyfrom 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.2</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.4</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update popt dependency from 1.14 to
+1.16</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+        <item><para>Add libpng 1.4.4 dependency</para></item>
+        <item><para>Add gdk-pixbuf 2.22 dependency</para></item>
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2009 November 26" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update pkgconfig dependency from 0.21 to
+0.23</para></item>
+        <item><para>Update atk dependency from 1.18.0 to
+1.22.0</para></item>
+        <item><para>Update cairo dependency from 1.4.10 to
+1.6.4</para></item>
+        <item><para>Update fcpackage dependency from 2.4 to
+2.6</para></item>
+        <item><para>Update freetype dependency from 2.3.5 to
+2.3.7</para></item>
+        <item><para>Update gtk dependency from 2.10.14 to
+2.12.11</para></item>
+        <item><para>Update libiconv dependency from 1.9.2 to
+1.12</para></item>
+        <item><para>Update pango dependency from 1.16.4 to
+1.20.5</para></item>
+        <item><para>Update glib dependency from 2.12.13 to
+2.16.5</para></item>
+        <item><para>Update gettext dependency from 0.14.1 to
+0.17</para></item>
+        <item><para>Update libxml dependency from 2.6.29 to
+2.6.32</para></item>
+        <item><para>Update libxslt dependency from 1.1.21 to
+1.1.24</para></item>
+        <item><para>Update popt dependency from 1.7 to
+1.14</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
