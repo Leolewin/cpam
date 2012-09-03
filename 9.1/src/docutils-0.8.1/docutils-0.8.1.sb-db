@@ -1,0 +1,320 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="docutils" version="0.8.1" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}08</install-name>
+
+    <sources>
+      <source checksum="2ecf8ba3ece1be1ed666150a80c838c8"
+        checksum-type="md5" size="1499832"
+        path="src/docutils-0.8.1.tar.gz"/>
+      <patch checksum="6f3053c91304ed7f4130f04ffe15af28"
+        checksum-type="md5" size="10368"
+        path="src/docutils-0.8.1.tww.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+
+${SB_PATH_SED} -i -e "\
+s!@datadir@!${_datadir}!; \
+s!@sysconfdir@!${_sysconfdir}!;" \
+build/lib/docutils/frontend.py \
+build/lib/docutils/writers/pep_html/__init__.py \
+build/lib/docutils/writers/html4css1/__init__.py \
+build/lib/docutils/writers/odf_odt/__init__.py \
+build/lib/docutils/parsers/rst/directives/misc.py
+]]>
+    </build>
+
+    <test auto-include="0">
+<![CDATA[
+(cd test
+ PYTHONPATH=${_install_prefix} ${SB_VAR_PYTHON}/bin/python alltests.py)
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --install-data=${_datadir} \
+${_bindir+--install-scripts=${_bindir}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+if [ "${_bindir+set}" != "set" ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 *.txt ${_docdir}
+  tar cf - docs | (cd ${_docdir}; tar xf -)
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+  find ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  find ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+  ${_sysconfdir}/docutils.conf
+
+  for _bin in ${SB_INSTALL_PREFIX}/bin/*; do
+    ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!;" ${_bin}
+    mv ${_bin} ${_bin%%.py}
+  done
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+    </install>
+
+    <module name="default">
+      <validate>
+        <depend program="docutils" module="2.6.7">v==0.8.1</depend>
+        <depend program="docutils" module="2.7.2">v==0.8.1</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+
+${SB_PATH_SED} -i -e "\
+s!@datadir@!${_datadir}!; \
+s!@sysconfdir@!${_sysconfdir}!;" \
+build/lib/docutils/frontend.py \
+build/lib/docutils/writers/pep_html/__init__.py \
+build/lib/docutils/writers/html4css1/__init__.py \
+build/lib/docutils/writers/odf_odt/__init__.py \
+build/lib/docutils/parsers/rst/directives/misc.py
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+(cd test
+ PYTHONPATH=${_install_prefix} ${SB_VAR_PYTHON}/bin/python alltests.py)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --install-data=${_datadir} \
+${_bindir+--install-scripts=${_bindir}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+if [ "${_bindir+set}" != "set" ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 *.txt ${_docdir}
+  tar cf - docs | (cd ${_docdir}; tar xf -)
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+  find ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  find ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+  ${_sysconfdir}/docutils.conf
+
+  for _bin in ${SB_INSTALL_PREFIX}/bin/*; do
+    ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!;" ${_bin}
+    mv ${_bin} ${_bin%%.py}
+  done
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}
+]]>
+      </uninstall>
+    </module>
+
+    <module name="2.7.2">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python27"
+          add-path="prepend">v&gt;=2.7.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python27"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+_bindir="${SB_BUILD_PREFIX}/bin"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+
+${SB_PATH_SED} -i -e "\
+s!@datadir@!${_datadir}!; \
+s!@sysconfdir@!${_sysconfdir}!;" \
+build/lib/docutils/frontend.py \
+build/lib/docutils/writers/pep_html/__init__.py \
+build/lib/docutils/writers/html4css1/__init__.py \
+build/lib/docutils/writers/odf_odt/__init__.py \
+build/lib/docutils/parsers/rst/directives/misc.py
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+(cd test
+ PYTHONPATH=${_install_prefix} ${SB_VAR_PYTHON}/bin/python alltests.py)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --install-data=${_datadir} \
+${_bindir+--install-scripts=${_bindir}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+if [ "${_bindir+set}" != "set" ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 *.txt ${_docdir}
+  tar cf - docs | (cd ${_docdir}; tar xf -)
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+  find ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  find ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+  ${_sysconfdir}/docutils.conf
+
+  for _bin in ${SB_INSTALL_PREFIX}/bin/*; do
+    ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!;" ${_bin}
+    mv ${_bin} ${_bin%%.py}
+  done
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <module name="2.6.7">
+      <dependencies>
+        <depend program="python" var="PYTHON" install-name="python26"
+          add-path="prepend">v&gt;=2.6.7</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_pysubdir="python26"
+
+_install_prefix="${SB_INSTALL_PREFIX_LIB}/${_pysubdir}"
+]]>
+      </script-header>
+
+      <build>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py build
+
+${SB_PATH_SED} -i -e "\
+s!@datadir@!${_datadir}!; \
+s!@sysconfdir@!${_sysconfdir}!;" \
+build/lib/docutils/frontend.py \
+build/lib/docutils/writers/pep_html/__init__.py \
+build/lib/docutils/writers/html4css1/__init__.py \
+build/lib/docutils/writers/odf_odt/__init__.py \
+build/lib/docutils/parsers/rst/directives/misc.py
+]]>
+      </build>
+
+      <test auto-include="0">
+<![CDATA[
+(cd test
+ PYTHONPATH=${_install_prefix} ${SB_VAR_PYTHON}/bin/python alltests.py)
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+${SB_VAR_PYTHON}/bin/python setup.py install --skip-build \
+--install-lib=${_install_prefix} --install-data=${_datadir} \
+${_bindir+--install-scripts=${_bindir}} \
+--prefix=${SB_INSTALL_PREFIX}
+
+if [ "${_bindir+set}" != "set" ]; then
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 *.txt ${_docdir}
+  tar cf - docs | (cd ${_docdir}; tar xf -)
+  ${SB_PATH_CHOWN} -hR 0:0 ${_docdir}
+  find ${_docdir} -type f -exec ${SB_PATH_CHMOD} 644 {} \;
+  find ${_docdir} -type d -exec ${SB_PATH_CHMOD} 755 {} \;
+
+  ${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+  ${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+  ${_sysconfdir}/docutils.conf
+
+  for _bin in ${SB_INSTALL_PREFIX}/bin/*; do
+    ${SB_PATH_SED} -i -e "\
+s!@libdir@!${_install_prefix}!;" ${_bin}
+    mv ${_bin} ${_bin%%.py}
+  done
+fi
+
+# install path for Python's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_install_prefix}/include.paths.d
+cat >${_install_prefix}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_install_prefix}
+_EOT_
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The docutils Python binding is available in the
+following directories:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/python26    # Python 2.6.7
+${SB_INSTALL_PREFIX}/lib/python27    # Python 2.7.2
+        </screen>
+
+        <para>The directory is automatically added to the correct
+Python include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
