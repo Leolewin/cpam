@@ -1,0 +1,150 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Crypt-Primes" version="0.50" revision="4">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="041947b9645142615d687b89cf2e1a7b"
+        checksum-type="md5" size="136299"
+        path="src/Crypt-Primes-0.50.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+
+# ignore test failures
+:
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Crypt/Primes/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Crypt/Primes/.packlist
+rmdir ${_installsitearch}/auto/Crypt/Primes
+rmdir ${_installsitearch}/auto/Crypt 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Crypt::Primes|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Crypt-Random"
+          module="5.12.2">v&gt;=1.25</depend>
+        <depend program="pari" var="LIBPARI" install-name="libpari23"
+          module="Math-Pari-5.12.2">v&gt;=2.3.5</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+export PERL5LIB="${SB_VAR_LIBPARI}/lib/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+# ignore test failures
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Crypt/Primes/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Crypt/Primes/.packlist
+rmdir ${_installsitearch}/auto/Crypt/Primes
+rmdir ${_installsitearch}/auto/Crypt 2>/dev/null
+
+${SB_PATH_SED} -i -e "\
+/head2.*L<Crypt::Primes|/,/back/ {
+  g
+  N
+  d
+}" ${_installsitearch}/perllocal.pod
+]]>
+      </uninstall>
+    </module>
+
+    <changelog>
+      <change date="2011 December 22" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update pari dependency from 2.3.4 to
+2.3.5</para></item>
+      </change>
+
+      <change date="2009 May 19" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update pari dependency from 2.1.6 to
+2.3.4</para></item>
+      </change>
+
+      <change date="2008 June 19" revision="2"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add 5.8.8 module</para></item>
+        <item><para>Update gcc dependency from 3.4.3 to
+4.4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
