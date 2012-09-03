@@ -1,0 +1,495 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="pari" version="2.3.5" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}23</install-name>
+
+    <sources>
+      <source checksum="6077c6db56fdd32e39a06a9bf320e1f7"
+        checksum-type="md5" size="2018097"
+        path="src/pari-2.3.5.tar.gz"/>
+      <patch checksum="be8c18198fedbf3d7166a2c589430ca2"
+        checksum-type="md5" size="56594"
+        path="src/pari-2.3.5.tww.patch"/>
+      <source checksum="f9f61b2930757a785b568e5d307a7d75"
+        checksum-type="md5" size="53229"
+        path="src/galdata.tgz"
+        noop="1" var="GALDATA"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-redhat-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  ARGS="--host=none-solaris" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  ARGS="--host=sparcv8-solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  ARGS="--host=sparcv8-solaris" ;;
+esac
+]]>
+    </script-header>
+
+    <module name="default">
+      <dependencies>
+        <depend program="tetex" install-name="tetex30"
+          add-path="prepend" type="build">v&gt;=3.0</depend>
+        <depend program="gmp" var="LIBGMP"
+          install-name="libgmp43">v&gt;=4.3.2</depend>
+        <depend program="perl" add-path="prepend">v==5.12.2</depend>
+      </dependencies>
+
+      <validate>
+        <depend program="pari" module="shared">v==2.3.5</depend>
+        <depend program="pari"
+          module="Math-Pari-5.12.2">v==2.3.5</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-redhat-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  ARGS="--host=none-solaris" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  ARGS="--host=sparcv8-solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  ARGS="--host=sparcv8-solaris" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ${SHELL} ./Configure \
+--builddir=obj --datadir=${_datadir} --emacsdir="${_datadir}/emacs" \
+--static --with-gmp-include=${SB_VAR_LIBGMP_INC} \
+--with-gmp-lib=${SB_VAR_LIBGMP_LIB} ${ARGS+${ARGS}} \
+--mandir=${SB_INSTALL_PREFIX}/man --docdir=${_docdir} \
+--sysconfdir=${_sysconfdir} --prefix=${SB_INSTALL_PREFIX}
+
+# fix X header/library paths
+case "${SB_SYSTYPE}" in
+*-aix*|*-hpux*|*-irix*)
+  ${SB_PATH_SED} -i -e "\
+s!^PLOTCFLAGS.*!PLOTCFLAGS =!; \
+s!^PLOTLIBS.*!PLOTLIBS = -lX11!;" obj/Makefile
+  ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C obj lib-sta && {
+  # make documentation
+  gmake doc
+}
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake -C obj bench
+
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake -C obj install-lib-sta install-include install-man \
+install-misc install-data install-doc install-examples
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_datadir}/galdata
+(cd ${_datadir}/galdata
+ ${SB_PATH_TAR} zxf ${SB_SRC_GALDATA})
+${SB_PATH_CHOWN} -hR 0:0 ${_datadir}/galdata
+]]>
+      </install>
+    </module>
+
+    <module name="shared">
+      <dependencies>
+        <depend program="gmp" var="LIBGMP"
+          install-name="libgmp43">v&gt;=4.3.2</depend>
+        <depend program="perl" add-path="prepend"
+          type="build">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O1 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+s" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+i?86*-redhat-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  ARGS="--host=none-solaris" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  ARGS="--host=sparcv8-solaris" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  ARGS="--host=sparcv8-solaris" ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ${SHELL} ./Configure \
+--builddir=obj --datadir=${_datadir} --emacsdir="${_datadir}/emacs" \
+--with-gmp-include=${SB_VAR_LIBGMP_INC} \
+--with-gmp-lib=${SB_VAR_LIBGMP_LIB} ${ARGS+${ARGS}} \
+--mandir=${SB_INSTALL_PREFIX}/man --docdir=${_docdir} \
+--sysconfdir=${_sysconfdir} --prefix=${SB_INSTALL_PREFIX}
+
+# fix X header/library paths
+case "${SB_SYSTYPE}" in
+*-aix*|*-hpux*|*-irix*)
+  ${SB_PATH_SED} -i -e "\
+s!^PLOTCFLAGS.*!PLOTCFLAGS =!; \
+s!^PLOTLIBS.*!PLOTLIBS = -lX11!;" obj/Makefile
+  ;;
+esac
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake -C obj lib-dyn gp-dyn
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake -C obj dobench
+
+:
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake -C obj install-lib-dyn install-bin-dyn
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_sysconfdir}
+${SB_PATH_INSTALL} -m 755 -o root -g 0 /dev/null ${_sysconfdir}/gprc
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  rm obj/gp-dyn
+  gmake -C obj TOPLDDYN="-L${SB_INSTALL_PREFIX}/lib" gp-dyn
+  gmake -C obj install-bin-dyn ;;
+esac
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm ${SB_INSTALL_PREFIX}/bin/gp
+rm ${SB_INSTALL_PREFIX}/lib/lib*.s[lo]*
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Math-Pari-5.12.2">
+      <build-name>Math-Pari-2.01080605</build-name>
+
+      <sources>
+        <source checksum="ccb3da2bdce184a5df3f52cfa8b43a85"
+          checksum-type="md5" size="122627"
+          path="src/Math-Pari-2.01080605.tar.gz"/>
+        <patch checksum="24ae13f0f6a09be6409577f672b1ac60"
+          checksum-type="md5" size="3049"
+          path="src/Math-Pari-2.01080605.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="pari" var="LIBPARI" module="shared"
+          add-path="prepend">v==2.3.5</depend>
+        <depend program="pari" module="shared"
+          state="configure">v==2.3.5</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_pari_version=$(echo ${SB_PROG_VER} | \
+${SB_VAR_PERL}/bin/perl -pi -e \
+'s/(\d+)\.(\d+)\.(\d+)/sprintf("%d%03d%03d",$1,$2,$3)/e')
+
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-solaris*)
+  _machine=none ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s!@PARI_VERSION@!${_pari_version}!;" Makefile.PL
+
+LIBPARI_INC="${SB_VAR_LIBPARI_INC}/pari" \
+LIBPARI_LIB=${SB_VAR_LIBPARI_LIB} \
+${SB_VAR_PERL}/bin/perl Makefile.PL ${_machine+machine=${_machine}} \
+paridir="${SB_BUILD_BASE}/${SB_PROG_NAME}-${SB_PROG_VER}" \
+parilib="-lpari" \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+: ignore test failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_perl_libdir}/include.paths.d
+cat >${_perl_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_perl_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_perl_libdir} ${SB_INSTALL_PREFIX}/man/man3
+]]>
+      </uninstall>
+    </module>
+
+    <notes>
+      <change from="2.1.x" to="2.3.x">
+        <item><para>GP2C compiles GP scripts to the C language, easing
+the task of writing PARI programs. It can transparently compile them
+to object code and load the resulting functions in gp. Low-level
+gp2c-compiled scripts typically run 3 or 4 times faster. Minor hand
+editing (specifying types) typically gains a further factor
+2.</para></item>
+        <item><para>Cremona's database of elliptic curves is available
+through the 'elldata' package [ to be downloaded separately
+]</para>
+        <screen>
+? E = ellinit([1,1,0,10,10]);
+     ? id = ellidentify(E)[1]   \\ [1] = discard change of variables
+     %2 = ["69950b1", [1, 1, 0, 10, 10], [[-1, 1], [-1/4, 23/8]]]
+     \\ gives name and generators
+
+     ? E = ellinit("11a1"); E.disc
+     %3 = -161051
+
+     ? ellsearch(11); \\ all curves of conductor 11
+
+     ? forell(E, 10,20, print(E))   \\ iterate over curves of conductor 10-20
+     ["11a1", [0, -1, 1, -10, -20], []]
+     ...
+        </screen></item>
+        <items name="Kernel:">
+          <item><para>Use 'Configure --with-gmp' to replace the native
+multiprecision kernel by the GNU MP library (featuring asymptotically
+fast arithmetic).</para></item>
+          <item><para>Cleanup of all architecture specific kernels
+(all macroized); added support for x86_64, ppc64, hppa and hppa64,
+ia64, sparc64, m68k.</para></item>
+          <item><para>Faster algorithms for "transcendental" functions
+(divide/conquer square root, AGM for log and Pi, Newton for exp and
+most trigonometric functions, AGM for inverse trigonometric functions,
+rewrite for gamma and zeta =&gt; faster Bernoulli, Mestre's AGM for
+ellheight)</para></item>
+          <item><para>Faster and cleaner kernel for modular
+arithmetic. Try e.g. factormod/factorff or
+polcompositum.</para></item>
+          <item><para>Major internal cleanups: separate lgef for
+t_POLs is gone, zero t_SER and t_POL now handled in a uniform way,
+heuristic soft copies in t_INTMOD, t_POLMOD, t_PADIC are gone [ led to
+fatal errors in complex scripts, no performance penalty
+]</para></item>
+          <item><para>The "syntax" of GP routines and operators are no
+longer hard-coded in the sources, but maintained in a separate
+database (pari.desc). This way, external tools like GP2C need not be
+modified when the GP language is changed.</para></item>
+        </items>
+
+        <items name="Algebraic number Theory:">
+          <item><para>Faster integral LLL (still not super fast, but
+getting better), and polynomial factorization routines (over finite
+fields [ new modular kernel ], Q or general number fields [ van
+Hoeij's algorithm ]) </para></item>
+          <item><para>Faster maximal order (round4 rewrite) and
+polredabs (esp. with flag 16: don't factor the discriminant; yields a
+canonical equation for a field), faster ideal arithmetic (prime
+decomposition, approximation, multiplication).</para></item>
+          <item><para>Faster and more reliable class-field theoretic
+functions quadclassunit, bnfinit, bnfisprincipal, bnrinit (and related
+functions, e.g. bnrconductor or bnrdisc), rnfkummer, thue (fast
+enumeration of small solutions, don't assume the full unit group is
+known).</para></item>
+          <item><para>A set of fast routines for Galois theory
+(galoisininit, nfgaloisconj, galoisisabelian, galoisfixedfield,
+galoissubfields, galoissubcyclo for abelian fields, galoisidentify to
+identify large Galois fields up to degree 127).</para></item>
+          <item><para>'galdata' package [ to be downloaded separately
+]: polgalois is safer and orders of magnitudes faster in tough cases,
+output is now human readable</para>
+          <screen>
+? polgalois(x^11-2)
+time = 1,759 ms.   \\ used to be ~ 1 hour
+%1 = [110, -1, 4, "F_110(11)=11:10"]
+          </screen></item>
+        </items>
+
+        <items name="Miscellaneous:">
+          <item><para>For convenience, the manual was split in two
+parts: the GP user's manual and the libpari user's manual, the latter
+being substantially expanded. Many formerly private functions have
+been renamed, specified, cleaned up and documented.</para></item>
+          <item><para>Initial implementation of the APR-CL primality
+prover, faster compositeness tests (BPSW)</para></item>
+          <item><para>A new set of fast numerical summation and
+integration routine, variations on the Ooura-Mori "double exponential"
+method. See ??intnum Library interface to all these functions and
+standard iterators (e.g. forvec)</para></item>
+          <item><para>Error messages now mention the GP function where
+the error occured.</para></item>
+          <item><para>Input/output and convenience functions:
+Str(a,1,c) --&gt; "a1c", Strexpand("~") --&gt; "/home/a2x/belabas", substvec
+(parallel substitutions), substpol(expr, x^2, y), writebin (write
+objets in binary format for fast retrieval), readvec (load a file's
+content into a vector)</para></item>
+          <item><para>Support for new graphic libraries (Qt, FLTK) [
+==&gt; hi-res plots now also available under Mac OS X and Windows
+]</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The Math::Pari Perl module is available in the following
+directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2010 November 1" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
