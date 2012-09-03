@@ -1,0 +1,170 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="mutt" version="1.4.2.3" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="dcb94661827dd090fa813e73e122ea0c"
+        checksum-type="md5" size="2646433"
+        path="src/mutt-1.4.2.3.tar.gz"/>
+      <patch checksum="847ee6c6dfe90a078051058a902f5ea6"
+        checksum-type="md5" size="2598"
+        path="src/mutt-1.4.2.3.gcc41.patch"/>
+      <patch checksum="611ad2e7ed6af2cfb25dfe28e1feaa36"
+        checksum-type="md5" size="1216"
+        path="src/mutt-1.4.2.3.tww.patch"/>
+      <patch checksum="dd127e3b36a69454256636ccdc656aa9"
+        checksum-type="md5" size="658021"
+        path="src/mutt-1.4.2.3.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="bison" install-name="bison24"
+        add-path="prepend" type="build">v&gt;=2.4.3</depend>
+      <depend program="ispell" var="ISPELL"
+        install-name="ispell33">v&gt;=3.3.02</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="ncurses" var="NCURSES"
+        install-name="ncurses57">v&gt;=5.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}/ncurses}" \
+${SB_VAR_ISPELL+ISPELL=${SB_VAR_ISPELL}/bin/ispell} \
+LDFLAGS="${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_LIBICONV+${CC_LD_RT}${SB_VAR_LIBICONV_LIB}} \
+${LDFLAGS+${LDFLAGS}}" --enable-pop --enable-imap \
+${SB_VAR_NCURSES+--with-curses=${SB_VAR_NCURSES}} --enable-nls \
+--with-docdir=${_docdir} --datadir=${_datadir} \
+--sysconfdir=${_sysconfdir} --with-included-gettext \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+--disable-dependency-tracking ${ARGS+${ARGS}} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+gmake configure
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+rmdir ${SB_INSTALL_PREFIX}/lib || true
+]]>
+    </install>
+
+    <licenses>
+      <license>
+        <para>The following copyright notices apply to most of the
+program. Some modules are under different licenses, or in the public
+domain.</para>
+        <para>Please note that this is by no means an exhaustive list
+of all the persons who have been contributing to this program. Please
+see the manual for a (probably still non complete) list of the persons
+who have been helpful with the development of this program.</para>
+        <para skip="0">Copyright (C) 1996-2001 Michael R. Elkins
+&lt;me@cs.hmc.edu&gt;</para>
+        <para skip="0">Copyright (C) 1996-2001 Brandon Long
+&lt;blong@fiction.net&gt;</para>
+        <para skip="0">Copyright (C) 1997-2001 Thomas Roessler
+&lt;roessler@guug.de&gt;</para>
+        <para skip="0">Copyright (C) 1998-2001 Werner Koch
+&lt;wk@isil.d.shuttle.de&gt;</para>
+        <para skip="0">Copyright (C) 1999-2001 Brendan Cully
+&lt;brendan@kublai.com&gt;</para>
+        <para skip="0">Copyright (C) 1999-2001 Tommi Komulainen
+&lt;Tommi.Komulainen@iki.fi&gt;</para>
+        <para skip="0">Copyright (C) 2000-2001 Edmund Grimley Evans
+&lt;edmundo@rano.org&gt;</para>
+        <para>This program is free software; you can redistribute it
+and/or modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of the
+License, or (at your option) any later version.</para>
+        <para>This program is distributed in the hope that it will be
+useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.</para>
+        <para>You should have received a copy of the GNU General
+Public License along with this program; if not, write to the Free
+Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+02111, USA.</para>
+      </license>
+
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <changelog>
+      <change date="2012 January 25" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update bison dependency from 2.3 to
+2.4.3</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update ncurses dependency from 5.6 to
+5.7</para></item>
+      </change>
+
+      <change date="2010 November 10" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
