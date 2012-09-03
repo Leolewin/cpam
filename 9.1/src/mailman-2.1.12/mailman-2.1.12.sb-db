@@ -1,0 +1,192 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="mailman" version="2.1.12" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}21</install-name>
+
+    <sources>
+      <source checksum="d565a6d2d0ec6d2dd6936a81e1c1ca86"
+        checksum-type="md5" size="8010027"
+        path="src/mailman-2.1.12.tgz"/>
+      <patch checksum="52fb0812eeebd93678b9df230096b9e4"
+        checksum-type="md5" size="27681"
+        path="src/mailman-2.1.12.tww.patch"/>
+      <patch checksum="98feb067d397789abb71ecad7224658c"
+        checksum-type="md5" size="160079"
+        path="src/mailman-2.1.12.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend user="mailman"/>
+
+      <depend group="mailman"/>
+
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+      <depend program="python" var="PYTHON"
+        install-name="python26">v&gt;=2.6.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_bindir="${SB_INSTALL_PREFIX}/lib/bin"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc" ;;
+*-hpux10*|*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -Ae -z +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 -z +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0" ;;
+*-freebsd*)
+  CFLAGS="-O2 -mtune=pentium4 -march=pentium4" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -msym -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic \
+-m32 -xarch=sparcvis" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+--with-python=${SB_VAR_PYTHON}/bin/python \
+--with-var-prefix=${_localstatedir} \
+--with-config-dir=${_sysconfdir} \
+--with-log-dir="${_localstatedir}/log" \
+--with-pid-dir="${_localstatedir}/run" \
+--with-username="mailman" --with-groupname="mailman" \
+--with-mail-gid="mail postfix mailman nobody daemon" \
+--with-mailhost="localhost" --with-urlhost="localhost" \
+--with-cgi-gid="www" --without-permcheck --bindir=${_bindir} \
+--prefix=${SB_INSTALL_PREFIX}
+
+(cd misc
+ ${SB_PATH_TAR} xzf JapaneseCodecs-1.4.11.tar.gz
+ ${SB_PATH_SED} -i -e "\
+/data_files =/ d" JapaneseCodecs-1.4.11/setup.py)
+(cd misc
+ ${SB_PATH_TAR} xzf KoreanCodecs-2.0.5.tar.gz
+ (cd KoreanCodecs-2.0.5
+ gpatch -p0 -i ../KoreanCodecs-2.0.5.patch))
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+(cd misc/JapaneseCodecs-1.4.11 &&
+ ${SB_VAR_PYTHON}/bin/python setup.py build)
+
+(cd misc/KoreanCodecs-2.0.5 &&
+ ${SB_VAR_PYTHON}/bin/python setup.py build)
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}
+
+gmake install
+
+${SB_PATH_INSTALL} -o mailman -g mailman -d ${_docdir}
+${SB_PATH_INSTALL} -o mailman -g mailman doc/*.{txt,ps,pdf} \
+README* ${_docdir}
+
+${SB_PATH_CHGRP} mailman ${_sysconfdir} ${_localstatedir}
+
+${SB_PATH_INSTALL} -m 660 -o root -g mailman /dev/null \
+${_sysconfdir}/aliases
+${SB_PATH_INSTALL} -m 640 -o root -g mailman /dev/null \
+${_sysconfdir}/adm.pw
+${SB_PATH_INSTALL} -m 640 -o root -g mailman /dev/null \
+${_sysconfdir}/creator.pw
+
+mv ${SB_INSTALL_PREFIX}/Mailman/mm_cfg.py ${_sysconfdir}/mm_cfg.py
+ln -s ${_sysconfdir}/mm_cfg.py ${SB_INSTALL_PREFIX}/Mailman/mm_cfg.py
+${SB_PATH_CHGRP} mailman ${_sysconfdir}/mm_cfg.py \
+${SB_INSTALL_PREFIX}/Mailman/mm_cfg.py
+(cd ${_bindir} && ./check_perms -f 2>&1 >/dev/null)
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX} ${_sysconfdir} ${_localstatedir}
+]]>
+    </uninstall>
+
+    <notes>
+      <note type="usage">
+        <para>The Mailman package is not configured "out of the box".
+It needs to be integrated with the web server, the mail server, and
+cron. The configuration file
+"<command>/etc${SB_INSTALL_PREFIX}/mm_cfg.py</command>" also needs to be
+modified.</para>
+        <para>The default values for variables in the
+<command>mm_cfg.py</command> configuration file is available in
+<command>${SB_INSTALL_PREFIX}/Mailman/Defaults.py</command>.</para>
+        <para>The file
+<command>${SB_INSTALL_PREFIX}/doc/mailman-install.txt</command>
+contains additional information on setting up mailman for your web
+server, mail server, and cron.</para>
+        <para>Changes similar to the following should be made to the
+Apache <command>httpd.conf</command> configuration file. Rather than
+copying the Mailman icons to the Apache icons directory, an alternate
+URL can be specified for them via the
+<command>/etc${SB_INSTALL_PREFIX}/mm_cfg.py</command> configuration file
+(<command>IMAGE_LOGOS = '/mailmanicons/'</command>) and the
+"<command>Alias /mailmanicons/ ...</command>" entry made below to
+access them.</para>
+        <screen>
+ScriptAlias /mailman/ ${SB_INSTALL_PREFIX}/cgi-bin/
+&lt;Directory ${SB_INSTALL_PREFIX}/cgi-bin/&gt;
+  AllowOverride None
+  Options ExecCGI
+  Order allow,deny
+  Allow from all
+&lt;/Directory&gt;
+
+Alias /pipermail/ &amp;LOCALSTATEDIR;/archives/public/
+&lt;Directory &amp;LOCALSTATEDIR;/archives/public/&gt;
+  Options Indexes MultiViews FollowSymLinks
+  AllowOverride None
+  Order allow,deny
+  Allow from all
+&lt;/Directory&gt;
+
+Alias /mailmanicons/ "${SB_INSTALL_PREFIX}/icons/"
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 31" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
