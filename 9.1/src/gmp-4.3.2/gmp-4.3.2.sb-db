@@ -1,0 +1,559 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gmp" version="4.3.2" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>lib${SB_PROG_NAME}43</install-name>
+
+    <sources>
+      <source checksum="dd60683d7057917e34630b4a787932e8"
+        checksum-type="md5" size="1897483"
+        path="src/gmp-4.3.2.tar.bz2"/>
+      <patch checksum="25f765c0e1877dccf26afdea17c6010b"
+        checksum-type="md5" size="2587"
+        path="src/gmp-4.3.2.sunstudio.patch"/>
+      <patch checksum="627bf2ae409a74850903bbf803bed8e4"
+        checksum-type="md5" size="8208"
+        path="src/gmp-4.3.2.tww.patch"/>
+      <patch checksum="cbc33401a506dd93841c7bd1cac0052c"
+        checksum-type="md5" size="2725169"
+        path="src/gmp-4.3.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="m4" var="M4" install-name="m414"
+        type="build">v&gt;=1.4.15</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <module name="default">
+      <validate>
+        <depend program="gmp" module="64bit"
+          systype="*-aix*|*-hpux*|*-solaris*">v==4.3.2</depend>
+        <depend program="gmp"
+          module="Math-GMP-5.12.2">v==4.3.2</depend>
+        <depend program="gmp"
+          module="Math-BigInt-GMP-5.12.2">v==4.3.2</depend>
+      </validate>
+
+      <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl"
+  ABI=32
+  ARGS="--enable-cxx" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  ARCH=$(systype)
+  ARGS="--enable-cxx" ;;
+*-hpux11.11)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  ABI=2.0n #ARCH=hppa2.0n-hp-hpux11.11
+
+  ARGS="ac_cv_c_restrict=no" ;;
+*-hpux11.00)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  ABI=2.0n #ARCH=hppa2.0n-hp-hpux11.00
+
+  ARGS="ac_cv_c_restrict=no" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  ABI=2.0n #ARCH=hppa2.0n-hp-hpux11.23/31
+
+  ARGS="ac_cv_c_restrict=no" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -O2 -OPT:Olimit=0"
+  ABI=n32
+  ARGS="--enable-cxx" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  ABI=32
+  ARGS="--enable-cxx" ;;
+*-linux*)
+  ARGS="--enable-cxx" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CXX=cxx CXXFLAGS="-O2 -arch ev5 -model ansi -ieee -msym \
+-readonly_strings -timplicit_local -D__USE_STD_IOSTREAM"
+  ARCH=alpha-dec-osf5.1 ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=pentium4"
+  ABI=32 ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -xarch=v8plusa"
+  ABI=32 ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=ultra2 -m32 -xarch=sparcvis"
+  ABI=32 ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} ${ABI+ABI=${ABI}} \
+M4="${SB_VAR_M4}/bin/${_m4-gm4}" HOST_CC="${HOST_CC+${HOST_CC}}" \
+--enable-shared --enable-static ${ARCH+--build=${ARCH}} \
+${ARGS+${ARGS}} --infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+
+# rebuild info files
+[ -f doc/gmp.info-1 ] && {
+  rm doc/gmp.info*
+} || rm -f doc/gmp.info
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+      </build>
+
+      <test>
+<![CDATA[
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 doc/fdl-1.3.texi doc/gmp.texi \
+doc/version.texi ${_docdir}/texinfo
+]]>
+      </install>
+    </module>
+
+    <module name="Math-GMP-5.12.2">
+      <build-name>Math-GMP-2.06</build-name>
+
+      <sources>
+        <source checksum="0ead0cd7d7ec1076c6d5a5fbe81b91a3"
+          checksum-type="md5" size="24563"
+          path="src/Math-GMP-2.06.tar.gz"/>
+        <patch checksum="c5cc1af63afbebd3c306c5060901d0e1"
+          checksum-type="md5" size="1304"
+          path="src/Math-GMP-2.06.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gmp" var="LIBGMP">v==4.3.2</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+LIBGMP_INCLUDE=${SB_VAR_LIBGMP_INC} LIBGMP_LIB=${SB_VAR_LIBGMP_LIB} \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_perl_libdir}/perllocal.pod
+
+# install path for Perl's include.paths.d
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d \
+${_perl_libdir}/include.paths.d
+cat >${_perl_libdir}/include.paths.d/99-${SB_PROG_NAME} <<_EOT_
+${_perl_libdir}
+_EOT_
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_perl_libdir}/auto/Math/GMP \
+${_perl_libdir}/Math/GMP.pm \
+${SB_INSTALL_PREFIX}/man/man3/Math::GMP.3
+
+rmdir ${_perl_libdir}/Math || :
+rmdir ${_perl_libdir} || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="64bit"
+    systype="*-aix*|*-hpux*|*-solaris*">
+      <script-header>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  _libdir=lib/ppc64 ;;
+ia64*-hpux*)
+  _libdir=lib/hpux64 ;;
+*-hpux*)
+  _libdir=lib/pa20_64 ;;
+*-irix*)
+  _libdir=lib64 ;;
+i?86*-solaris*)
+  _libdir=lib/amd64 ;;
+*-solaris*)
+  _libdir=lib/sparcv9 ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  export OBJECT_MODE=64 ;;
+esac
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  CXX=xlC CXXFLAGS="-O2 -qro -qroconst -q64 -qmaxmem=-1"
+  LDFLAGS="-Wl,-brtl"
+
+  ARCH=${SB_SYSTYPE//powerpc/powerpc64}
+  ABI=aix64
+
+  ARGS="--enable-cxx" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  CXX=aCC CXXFLAGS="-AA -z +O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+  ARCH=$(systype) ABI=64
+
+  ARGS="--enable-cxx" ;;
+*-hpux11*)
+  CC=cc CFLAGS="+O2 +Ofltacc +Olit=all +Oentrysched +DD64 \
++Odataprefetch +Onolimit"
+
+  case "${SB_SYSTYPE}" in
+  *-hpux11.31)
+    ARCH="hppa64-hp-hpux11.31" ;;
+  *-hpux11.23)
+    ARCH="hppa64-hp-hpux11.23" ;;
+  *-hpux11.11)
+    ARCH="hppa64-hp-hpux11.11" ;;
+  *-hpux11.00)
+    ARCH="hppa64-hp-hpux11.00" ;;
+  esac ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-64 -mips4 -O1 -OPT:Olimit=0"
+  CXX=CC CXXFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-ptused -FE:template_in_elf_section -64 -mips4 -O2 -OPT:Olimit=0"
+  ABI=64
+
+  ARGS="--enable-cxx" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=opteron -m64 \
+-xarch=sse2"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=opteron -m64 -xarch=sse2"
+
+  ARCH=${SB_SYSTYPE//i386/x86_64}
+  ABI=64 ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v9"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -xarch=v9"
+
+  ARCH=${SB_SYSTYPE//sparc/sparc64}
+  ABI=64 ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -m64 \
+-xarch=sparc"
+  CXX=CC CXXFLAGS="-xO2 -xtarget=generic -m64 -xarch=sparc"
+  CC_LD_RT="-R"
+
+  ARCH=${SB_SYSTYPE//sparc/sparc64}
+  ABI=64 ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CXX="${CXX:-g++}" CXXFLAGS="${CXXFLAGS:--O2}" \
+${LDFLAGS+LDFLAGS="${LDFLAGS}"} ${ABI+ABI=${ABI}} \
+M4="${SB_VAR_M4}/bin/gm4" --enable-shared --enable-static \
+${ARGS+${ARGS}} --infodir="${SB_INSTALL_PREFIX}/info" \
+--libdir="${SB_INSTALL_PREFIX}/${_libdir}" ${ARCH+--build=${ARCH}} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+i?86*-solaris*)
+# Compiler crashes on this test source file, so "fix" it
+  echo "t-modlinv.\$(OBJEXT): t-modlinv.c" >>tests/Makefile.in
+  echo -e "\t\$(CC) \$(DEFS) \$(DEFAULT_INCLUDES) \$(INCLUDES) \
+\$(AM_CPPFLAGS) \$(CPPFLAGS) \$(AM_CFLAGS) -mr -Qn -xstrconst \
+-m64 -xO1 -c t-modlinv.c" >>tests/Makefile.in
+  ${SHELL} ./config.status ;;
+esac
+
+gmake check
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+if [ ! -d ${SB_INSTALL_PREFIX}/lib/64 ]; then
+  case "${SB_SYSTYPE}" in
+  *-aix*|*-hpux*|*-solaris*)
+    ln -s ./$(basename ${_libdir}) ${SB_INSTALL_PREFIX}/lib/64 ;;
+  *-irix*)
+    ln -s ../lib64 ${SB_INSTALL_PREFIX}/lib/64 ;;
+  esac
+fi
+
+gmake install-libLTLIBRARIES
+
+# Install gmp.h too, it differs from the 32bit build
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/include/64
+${SB_PATH_INSTALL} -m 644 -o root -g 0 gmp.h ${SB_INSTALL_PREFIX}/include/64
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/lib/64 ${SB_INSTALL_PREFIX}/${_libdir} \
+${SB_INSTALL_PREFIX}/include/64
+]]>
+      </uninstall>
+    </module>
+
+    <module name="Math-BigInt-GMP-5.12.2">
+      <build-name>Math-BigInt-GMP-1.32</build-name>
+
+      <sources>
+        <source checksum="50422b339e4c0987314bf08fd65d3855"
+          checksum-type="md5" size="49460"
+          path="src/Math-BigInt-GMP-1.32.tar.gz"/>
+        <patch checksum="ebad015093bf25e47a8a684d819bd6ab"
+          checksum-type="md5" size="1022"
+          path="src/Math-BigInt-GMP-1.32.tww.patch"/>
+      </sources>
+
+      <dependencies>
+        <depend program="Math-BigInt"
+          module="5.12.2">v&gt;=1.89</depend>
+        <depend program="gcc" install-name="gcc44"
+          add-path="prepend">v&gt;=4.4.6</depend>
+        <depend program="gmp" var="LIBGMP">v==4.3.2</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <script-header>
+<![CDATA[
+_perl_libdir="${SB_INSTALL_PREFIX_LIB}/perl5122"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+LIBGMP_INCLUDE=${SB_VAR_LIBGMP_INC} \
+LIBGMP_LIB=${SB_VAR_LIBGMP_LIB} \
+${SB_VAR_PERL}/bin/perl Makefile.PL \
+INSTALLARCHLIB=${_perl_libdir} \
+INSTALLSITEARCH=${_perl_libdir} \
+INSTALLSITELIB=${_perl_libdir} \
+PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+
+: ignore testsuite failures
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+
+rm ${_perl_libdir}/perllocal.pod
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${_perl_libdir}/auto/Math/BigInt \
+${_perl_libdir}/Math/BigInt \
+${SB_INSTALL_PREFIX}/man/man3/Math::BigInt::GMP.3
+
+rmdir ${_perl_libdir}/Math || :
+rmdir ${_perl_libdir} || :
+]]>
+      </uninstall>
+    </module>
+
+    <licenses>
+      <license path="gpl-3.license"/>
+
+      <license path="lgpl-3.license"/>
+    </licenses>
+
+    <notes>
+      <change from="4.3.1" to="4.3.2">
+        <items name="Bugs">
+          <item><para>Fixed bug in mpf_eq.</para></item>
+          <item><para>Fixed overflow issues in mpz_set_str,
+mpz_inp_str, mpf_set_str, and mpf_get_str.</para></item>
+          <item><para>Avoid unbounded stack allocation for unbalanced
+multiplication.</para></item>
+          <item><para>Fixed bug in FFT multiplication.</para></item>
+        </items>
+
+        <items name="Speedups">
+          <item><para>None, except that proper processor recognition
+helps affected processors.</para></item>
+        </items>
+
+        <items name="Features">
+          <item><para>Recognise more "Core 2" processor
+variants.</para></item>
+          <item><para>The cofactors of mpz_gcdext and mpn_gcdext are
+now more strictly normalised, returning to how GMP 4.2
+worked.</para></item>
+        </items>
+      </change>
+
+      <change from="4.3.0" to="4.3.1">
+        <items name="Bugs">
+          <item><para>Fixed bug in mpn_gcdext, affecting also
+mpz_gcdext and mpz_invert. The bug could cause a cofactor to have a
+leading zero limb, which could lead to crashes or miscomputation later
+on.</para></item>
+          <item><para>Fixed some minor documentation
+issues.</para></item>
+        </items>
+
+        <items name="Features">
+          <item><para>Workarounds for various issues with Mac OS X's
+build tools.</para></item>
+          <item><para>Recognise more IBM "POWER" processor
+variants.</para></item>
+        </items>
+      </change>
+
+      <change from="4.2.x" to="4.3.x">
+        <items name="Bugs">
+          <item><para>Fixed bug in mpz_perfect_power_p with
+recognition of negative perfect powers that can be written both as an
+even and odd power.</para></item>
+          <item><para>We might accidentally have added bugs since
+there is a large amount of new code in this release.</para></item>
+        </items>
+
+        <items name="Speedups">
+          <item><para>Vastly improved assembly code for x86-64
+processors from AMD and Intel.</para></item>
+          <item><para>Major improvements also for many other processor
+families, such as Alpha, PowerPC, and Itanium.</para></item>
+          <item><para>New sub-quadratic mpn_gcd and mpn_gcdext, as
+well as improved basecase gcd code.</para></item>
+          <item><para>The multiply FFT code has been slightly
+improved.</para></item>
+          <item><para>Balanced multiplication now uses 4-way Toom in
+addition to schoolbook, Karatsuba, 3-way Toom, and FFT.</para></item>
+          <item><para>Unbalanced multiplication has been vastly
+improved.</para></item>
+          <item><para>Improved schoolbook division by means of faster
+quotient approximation.</para></item>
+          <item><para>Several new algorithms for division and mod by
+single limbs, giving many-fold speedups.</para></item>
+          <item><para>Improved nth root computations.</para></item>
+          <item><para>The mpz_nextprime function uses sieving and is
+much faster.</para></item>
+          <item><para>Countless minor tweaks.</para></item>
+        </items>
+
+        <items name="Features">
+          <item><para>Updated support for fat binaries for x86_32
+include current processors</para></item>
+          <item><para>Lots of new mpn internal interfaces.  Some of
+them will become public in a future GMP release.</para></item>
+          <item><para>Support for the 32-bit ABI under
+x86-apple-darwin.</para></item>
+          <item><para>x86 CPU recognition code should now default
+better for future processors.</para></item>
+          <item><para>The experimental nails feature does not work in
+this release, but it might be re-enabled in the future.</para></item>
+        </items>
+
+        <items name="Misc">
+          <item><para>The gmp_version variable now always contains
+three parts.  For this release, it is "4.3.0".</para></item>
+        </items>
+      </change>
+
+      <note type="usage">
+        <para>The Math::GMP and Math::BigInt::GMP Perl modules is
+available in the following directory:</para>
+        <screen>
+${SB_INSTALL_PREFIX}/lib/perl5122    # Perl 5.12.2
+        </screen>
+
+        <para>This directory is automatically added to the Perl
+include.paths.d directory by the postinstall script.</para>
+      </note>
+    </notes>
+  </program>
+</programs>
