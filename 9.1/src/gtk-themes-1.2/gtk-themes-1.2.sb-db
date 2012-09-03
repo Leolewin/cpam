@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gtk-themes" version="1.2" revision="11">
+    <install-name>gtkthemes12</install-name>
+
+    <dependencies>
+      <depend program="gtk+" var="GTK"
+        install-name="gtk+12">v&gt;=1.2.10</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <module name="gtk-thinice">
+      <build-name>${SB_MODULE_NAME}-theme-1.0.4</build-name>
+
+      <sources>
+        <source checksum="f2b6e8f4c3ea3710e27a59195f2abc9a"
+          checksum-type="md5" size="136407"
+          path="src/gtk-thinice-theme-1.0.4.tar.gz"/>
+        <patch checksum="7c830074237451dc19cc20d1d60800e9"
+          checksum-type="md5" size="1692"
+          path="src/gtk-thinice-theme-1.0.4.tww.patch"/>
+        <patch checksum="a126803e3e89ae1342faa4ef8372ab47"
+          checksum-type="md5" size="1563172"
+          path="src/gtk-thinice-theme-1.0.4.auto.patch"/>
+      </sources>
+
+      <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+*-hpux11.[01]*|*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit" ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 -O2 -OPT:Olimit=0" ;;
+i?86*-linuxe[56]|i?86-suse-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic -xarch=v8" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic" ;;
+esac
+
+rm -f config.cache
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ${SHELL} ./configure \
+--with-gtk-prefix=${SB_VAR_GTK} --datadir=${_datadir} \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <install>
+<![CDATA[
+gmake install
+
+# move *.sl shared library to *.so and remove libtool .la file
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  mv ${SB_INSTALL_PREFIX}/lib/engines/libthinice.sl \
+  ${SB_INSTALL_PREFIX}/lib/engines/libthinice.so ;;
+esac
+
+rm -f ${SB_INSTALL_PREFIX}/lib/gtk/themes/engines/libthinice.la
+]]>
+      </install>
+    </module>
+
+    <notes>
+      <note type="usage">
+        <para>The following GTK 1.2.x themes are available:</para>
+        <unorderedlist>
+          <item><para>ThinIce 1.0.4</para></item>
+        </unorderedlist>
+
+        <para>To use the ThinIce 1.0.4 theme, add the following to
+<command>~/.gtkrc</command>:</para>
+        <unorderedlist>
+          <item><para><command>include
+"${SB_INSTALL_PREFIX}/share/ThinIce/gtk/gtkrc"</command></para></item>
+        </unorderedlist>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2010 November 9" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 October 9" revision="10"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2007 May 4" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 July 5" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+      </change>
+
+      <change date="2006 April 5" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+      </change>
+
+      <change date="2005 December 3" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 June 19" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+      </change>
+
+      <change date="2004 September 24" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Support --validate</para></item>
+      </change>
+
+      <change date="2004 September 7" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update to libtool-1.4.2-5</para></item>
+      </change>
+
+      <change date="2004 April 18" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add /usr/lib to runtime search path for
+AIX</para></item>
+      </change>
+
+      <change date="2003 June 9" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
