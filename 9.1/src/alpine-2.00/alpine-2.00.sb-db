@@ -1,0 +1,205 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="alpine" version="2.00" revision="3">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}20</install-name>
+
+    <sources>
+      <source checksum="84e44cbf71ed674800a5d57eed9c1c52"
+        checksum-type="md5" size="5222673"
+        path="src/alpine-2.00.tar.bz2"/>
+      <patch checksum="7ffb82fc4ec851ccef3da0f8c5d8a71b"
+        checksum-type="md5" size="179157"
+        path="src/alpine-2.00.tww.patch"/>
+      <patch checksum="18c42d8eb86e89989c4284f81adb114c"
+        checksum-type="md5" size="2363119"
+        path="src/alpine-2.00.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="aspell" install-name="aspell06"
+        add-path="prepend" systype="!*-aix4*">v&gt;=0.60.6.1</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="openldap" var="OPENLDAP"
+        install-name="openldap24">v&gt;=2.4.26</depend>
+      <depend program="cyrus-sasl" var="LIBSASL"
+        install-name="libsasl21" systype="*-irix*"
+        type="build">v&gt;=2.1.25</depend>
+      <depend program="openssl" var="LIBOPENSSL"
+        install-name="libopenssl10">v&gt;=1.0.0e</depend>
+      <depend program="ncurses" var="NCURSES">v==5.7</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_sysconfdir="${SB_INSTALL_PREFIX}/etc"
+
+if [ "${SB_VAR_LIBOPENSSL+set}" = set ]; then
+  _openssl_datadir="${SB_VAR_LIBOPENSSL}/share"
+fi
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  OSDEP=a41 ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b,"
+
+  OSDEP=hpx ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  OSDEP=hpx ;;
+*-hpux11*)
+  CC=cc CFLAGS="-z +O2 +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  OSDEP=hpx ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  LDFLAGS="-L${LIBSASL_LIB}"
+  CC_LD_RT="-Wl,-rpath,"
+
+  OSDEP=sg6 ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath,"
+
+  OSDEP=lnp ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath,"
+
+  OSDEP=lnp ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  OSDEP=osf ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+
+  OSDEP=sol
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R"
+
+  OSDEP=sol ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+
+  OSDEP=sol
+  CC_LD_RT="-R" ;;
+esac
+
+
+if [ "${SB_VAR_LIBOPENSSL+set}" = set ]; then
+  _sslcerts="${_openssl_datadir}/certs"
+  _ssldir=${SB_VAR_LIBOPENSSL}
+else
+  _sslcerts=/usr/share/ssl/certs
+  _sslcflags="-I/usr/kerberos/include"
+  _ssldir=/usr
+fi
+
+${SHELL} ./configure CC=${CC:-gcc} \
+CFLAGS="${CFLAGS--O2}" \
+CPPFLAGS="${_sslcflags+${_sslcflags}} \
+${SB_VAR_OPENLDAP+-I${SB_VAR_OPENLDAP_INC}} \
+${SB_VAR_NCURSES+-I${SB_VAR_NCURSES_INC}}" \
+LDFLAGS="${SB_VAR_NCURSES+-L${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_NCURSES+${CC_LD_RT}${SB_VAR_NCURSES_LIB}} \
+${SB_VAR_LIBOPENSSL+${CC_LD_RT}${SB_VAR_LIBOPENSSL_LIB}} \
+${SB_VAR_OPENLDAP+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--with-c-client-target=${OSDEP} \
+${SB_VAR_OPENLDAP+--with-ldap-dir=${SB_VAR_OPENLDAP}} \
+alpine_c_client_cflags="${CPPFLAGS+${CPPFLAGS} }${CFLAGS--O2}" \
+alpine_c_client_ldflags="\${LDFLAGS}" \
+--with-ssl-dir=${_ssldir} --with-ssl-certs-dir=${_sslcerts} \
+--with-system-pinerc="${_sysconfdir}/pine.conf" \
+--with-system-fixed-pinerc="${_sysconfdir}/pine.conf.fixed" \
+--disable-debug --without-tcl --datadir=${_datadir} \
+--mandir="${SB_INSTALL_PREFIX}/man" --disable-dependency-tracking \
+${ARGS+${ARGS}} --prefix=${SB_INSTALL_PREFIX}
+
+# Fix manpage paths
+${SB_PATH_SED} -i -e "\
+s!/usr/local/lib!${_sysconfdir}!" doc/alpine.1
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake MAKE=gmake
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX} \
+${SB_INSTALL_PREFIX}/bin ${SB_INSTALL_PREFIX}/man \
+${SB_INSTALL_PREFIX}/man/man1 ${_sysconfdir}
+
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/pine.conf
+${SB_PATH_INSTALL} -m 644 -o root -g 0 /dev/null \
+${_sysconfdir}/pine.conf.fixed
+
+gmake install MAKE=gmake
+
+rmdir ${_datadir} || :
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 13" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update aspell dependency from 0.60.1 to
+0.60.1.1</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update openldap dependency from 2.4.12 to
+2.4.26</para></item>
+        <item><para>Update cyrus-sasl dependency from 2.1.22 to
+2.1.25</para></item>
+        <item><para>Update openssl dependency from 0.9.8h to
+1.0.0e</para></item>
+        <item><para>Remove support for HP-UX 10, AIX 4, SLES, RHEL
+3</para></item>
+      </change>
+
+      <change date="2010 October 31" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
