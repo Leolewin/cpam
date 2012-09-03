@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="lablgtk" version="2.12.0" revision="3"
+  systype="*-aix*|*-hpux11*|*-linux*|*-osf*|*-solaris*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>ocaml31p</install-name>
+
+    <sources>
+      <source checksum="0e253128afee3cdc6e9b43c34b35984d"
+        checksum-type="md5" size="789731"
+        path="src/lablgtk-2.12.0.tar.gz"/>
+      <patch checksum="6224caf27a1c95276d5e2d5f37f75aec"
+        checksum-type="md5" size="4522"
+        path="src/lablgtk-2.12.0.tww.patch"/>
+      <patch checksum="4d38bbbabd2d2e5f3d19582498587e48"
+        checksum-type="md5" size="3230"
+        path="src/lablgtk-2.12.0.rename_g_value_variant.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="ocaml" install-name="ocaml31"
+        add-path="prepend" type="build">v&gt;=3.11.0</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="atk" var="LIBATK"
+        install-name="libatk132">v&gt;=1.32.0</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v==2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB"
+        install-name="libglib226">v&gt;=2.26.1</depend>
+      <depend program="gdk-pixbuf" var="LIBGDKPIXBUF"
+        install-name="libgdkpixbuf222">v&gt;=2.22.1</depend>
+      <depend program="gtk+" var="LIBGTK"
+        install-name="libgtk+222">v&gt;=2.22.1</depend>
+      <depend program="libglade" var="LIBGLADE"
+        install-name="libglade26">v&gt;=2.6.4</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="xpm" var="XPM"
+        install-name="xpm">v==3.4k</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="gcc" install-name="gcc44" add-path="prepend"
+        systype="*-hpux11*">v&gt;=4.4.6</depend>
+      <depend var="GCC_RT" install-name="gcc44r"
+        systype="*-hpux*"/>
+      <depend program="gcc" install-name="gcc44"
+        append="hppa1.1-hp-hpux11.00/bin" add-path="prepend"
+        systype="hppa*-hpux11.00">v&gt;=4.4.6</depend>
+      <depend program="gcc" install-name="gcc44"
+        append="hppa1.1-hp-hpux11.11/bin" add-path="prepend"
+        systype="hppa*-hpux11.11">v&gt;=4.4.6</depend>
+      <depend program="gcc" install-name="gcc44"
+        append="hppa2.0-hp-hpux11.23/bin" add-path="prepend"
+        systype="hppa*-hpux11.23">v&gt;=4.4.6</depend>
+      <depend program="gcc" install-name="gcc44"
+        append="ia64-hp-hpux11.23/bin" add-path="prepend"
+        systype="ia64*-hpux11.23">v&gt;=4.4.6</depend>
+      <depend program="gcc" install-name="gcc44"
+        append="hppa2.0-hp-hpux11.31/bin" add-path="prepend"
+        systype="hppa*-hpux11.31">v&gt;=4.4.6</depend>
+      <depend program="gcc" install-name="gcc44"
+        append="ia64-hp-hpux11.31/bin" add-path="prepend"
+        systype="ia64*-hpux11.31">v&gt;=4.4.6</depend>
+      <depend program="gcc" append="x86_64-unknown-linux-gnu/bin"
+        add-path="prepend"
+        systype="x86_64-redhat-linuxe3">v==4.4.6</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-D_ALL_SOURCE -O2 -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib" ;;
+ia64*-hpux*)
+  CFLAGS="-O2 -fPIC"
+  CC_LD_RT="-Wl,+b,"
+  LDFLAGS="-Wl,+nodefaultrpath" ;;
+*-hpux*)
+  CFLAGS="-Os -fPIC"
+  CC_LD_RT="-Wl,+s,+b," ;;
+i?86*-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro -fPIC" ;;
+i?86*-linuxe[456]|i?86-suse-linuxe1?)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro -fPIC" ;;
+*-linux*)
+  CFLAGS="-O2 -fPIC" ;;
+*-osf*)
+  CC=cc CFLAGS="-msym -arch ev5 -O2 -readonly_strings" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis" ;;
+esac
+
+# set library extension for HP-UX
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  ${SB_PATH_SED} -i -e "\
+s!XS=.so!XS=.sl!" config.make.in ;;
+esac
+
+case "${SB_SYSTYPE}" in
+*-hpux*) _libglib_lib="${SB_VAR_LIBGLIB_LIB}/gcc44" ;;
+esac
+
+
+# Library paths in LDFLAGS as well as pkgconfig to ensure that package
+# paths come before -L/usr/X11R6/lib or -L/usr/openwin/lib system
+# paths.
+set -x
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="\
+${SB_VAR_FCPACKAGE+-L${SB_VAR_FCPACKAGE_LIB}} \
+${SB_VAR_GCC_RT+${CC_LD_RT}${SB_VAR_GCC_RT_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="\
+${SB_VAR_LIBGLIB+${_libglib_lib-${SB_VAR_LIBGLIB_LIB}}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_LIBATK+${SB_VAR_LIBATK_LIB}/pkgconfig:}\
+${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLADE+${SB_VAR_LIBGLADE_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_VAR_LIBGDKPIXBUF+${SB_VAR_LIBGDKPIXBUF_LIB}/pkgconfig:}\
+${SB_VAR_LIBGTK+${SB_VAR_LIBGTK_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig}\
+${SB_VAR_LIBICONV+:${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+--with-libdir=${SB_INSTALL_PREFIX_LIB} --without-gl \
+--without-rsvg --without-gnomecanvas --without-gnomeui \
+--without-gtksourceview --without-panel --without-gtkspell \
+--prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake
+
+# optimizing compiler not available on AIX or HPUX/IA64
+case "${SB_SYSTYPE}" in
+*-aix*|ia64*-hpux*) ;;
+*)
+  (gmake -C src lablgtkopt) ;;
+esac
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_CHOWN} -hR 0:0 ${SB_INSTALL_PREFIX_LIB}/lablgtk2
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/bin/gdk-pixbuf-mlsource \
+${SB_INSTALL_PREFIX}/bin/lablgladecc2 \
+${SB_INSTALL_PREFIX}/bin/lablgtk2 \
+${SB_INSTALL_PREFIX_LIB}/lablgtk2 \
+${SB_INSTALL_PREFIX_LIB}/stublibs/dlllab*
+
+rmdir ${SB_INSTALL_PREFIX_LIB}/stublibs 2>/dev/null || :
+]]>
+    </uninstall>
+
+    <changelog>
+      <change date="2012 January 20" revision="3"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update atk dependency from 1.22.0 to
+1.32.0</para></item>
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update gtk+ dependency from 2.12.11 to
+2.22.1</para></item>
+        <item><para>Update libglade dependency from 2.6.3 to
+2.6.4</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.4</para></item>
+      </change>
+
+      <change date="2010 November 1" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
