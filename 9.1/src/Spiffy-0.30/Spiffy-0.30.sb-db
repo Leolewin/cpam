@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Spiffy" version="0.30" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="49860ccf2127c6d2af3d98560ffae644"
+        checksum-type="md5" size="27631"
+        path="src/Spiffy-0.30.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install UNINST=1
+]]>
+    </install>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Filter" module="5.12.2">v==1.37</depend>
+        <depend program="Scalar-List-Utils"
+          module="5.12.2">v==1.23</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+
+      <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Makefile.PL PREFIX=${SB_INSTALL_PREFIX}
+]]>
+      </configure>
+
+      <test>
+<![CDATA[
+gmake test
+]]>
+      </test>
+
+      <install>
+<![CDATA[
+gmake install
+]]>
+      </install>
+    </module>
+  </program>
+</programs>
