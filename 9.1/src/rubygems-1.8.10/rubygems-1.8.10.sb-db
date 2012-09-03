@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="rubygems" version="1.8.10" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="5b08ee31740c9b0bd36f6c04d537e7d4"
+        checksum-type="md5" size="249683"
+        path="src/rubygems-1.8.10.tgz"/>
+      <patch checksum="04a0757058cf4942bb9fa27bc6cc7ce8"
+        checksum-type="md5" size="1206"
+        path="src/rubygems-1.8.10.fc-show-rdoc-process-verbosely.patch"/>
+      <patch checksum="1a0a38dfbf40dcc2164cb46a348d1a17"
+        checksum-type="md5" size="545"
+        path="src/rubygems-1.8.10.tww.patch"/>
+      <patch checksum="84427e99203467e6271551145c30319f"
+        checksum-type="md5" size="743"
+        path="src/rubygems-1.8.10.incpaths.patch"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+# add vendor gem path after default gem path
+${SB_PATH_SED} -i -e "\
+/\[user_dir, default_dir\]/ {
+s!\[.*!['${SB_INSTALL_PREFIX}/vendor/lib/${_rbsubdir}', user_dir, default_dir]!;
+}" lib/rubygems/defaults.rb
+
+${SB_PATH_SED} -i -e "\
+s!@RUBYP@!${INSTALL_PREFIX}!" lib/rubygems/path_support.rb
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+:
+]]>
+    </build>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/bin/gem \
+${SB_INSTALL_PREFIX}/lib/gauntlet_rubygems.rb \
+${SB_INSTALL_PREFIX}/lib/rbconfig \
+${SB_INSTALL_PREFIX}/lib/rubygems \
+${SB_INSTALL_PREFIX}/lib/rubygems.rb \
+${SB_INSTALL_PREFIX}/lib/ubygems.rb
+
+rmdir ${SB_INSTALL_PREFIX}/bin 2>/dev/null || :
+]]>
+    </uninstall>
+
+    <module name="1.9.2">
+      <install-name>ruby19p</install-name>
+
+      <dependencies replace="0">
+        <depend program="ruby" var="RUBY" install-name="ruby19"
+          add-path="prepend">v&gt;=1.9.2</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_rbsubdir=1.9.1
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+# add vendor gem path after default gem path
+${SB_PATH_SED} -i -e "\
+/\[user_dir, default_dir\]/ {
+s!\[.*!['${SB_INSTALL_PREFIX}/vendor/lib/${_rbsubdir}', user_dir, default_dir]!;
+}" lib/rubygems/defaults.rb
+
+${SB_PATH_SED} -i -e "\
+s!@RUBYP@!${INSTALL_PREFIX}!" lib/rubygems/path_support.rb
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+:
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+ruby setup.rb --no-rdoc --no-ri
+
+${SB_PATH_INSTALL} -m 755 -d ${SB_INSTALL_PREFIX}/bin
+${SB_PATH_INSTALL} -m 755 -o root -g 0 ${SB_VAR_RUBY}/bin/gem \
+${SB_INSTALL_PREFIX}/bin
+
+# undo changes to original gem binary
+${SB_PATH_SED} -i -e "\
+s!1.8.7!1.8.6!;" ${SB_VAR_RUBY}/bin/gem
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/bin/gem \
+${SB_INSTALL_PREFIX}/lib/gauntlet_rubygems.rb \
+${SB_INSTALL_PREFIX}/lib/rbconfig \
+${SB_INSTALL_PREFIX}/lib/rubygems \
+${SB_INSTALL_PREFIX}/lib/rubygems.rb \
+${SB_INSTALL_PREFIX}/lib/ubygems.rb
+
+rmdir ${SB_INSTALL_PREFIX}/bin 2>/dev/null || :
+]]>
+      </uninstall>
+    </module>
+
+    <module name="1.8.7">
+      <install-name>ruby18p</install-name>
+
+      <dependencies replace="0">
+        <depend program="ruby" var="RUBY" install-name="ruby18"
+          add-path="prepend">v&gt;=1.8.7</depend>
+      </dependencies>
+
+      <script-header replace="0">
+<![CDATA[
+_rbsubdir=1.8
+]]>
+      </script-header>
+
+      <configure>
+<![CDATA[
+# add vendor gem path after default gem path
+${SB_PATH_SED} -i -e "\
+/\[user_dir, default_dir\]/ {
+s!\[.*!['${SB_INSTALL_PREFIX}/vendor/lib/${_rbsubdir}', user_dir, default_dir]!;
+}" lib/rubygems/defaults.rb
+
+${SB_PATH_SED} -i -e "\
+s!@RUBYP@!${INSTALL_PREFIX}!" lib/rubygems/path_support.rb
+]]>
+      </configure>
+
+      <build>
+<![CDATA[
+:
+]]>
+      </build>
+
+      <install>
+<![CDATA[
+ruby setup.rb --no-rdoc --no-ri
+
+${SB_PATH_INSTALL} -m 755 -d ${SB_INSTALL_PREFIX}/bin
+mv ${SB_VAR_RUBY}/bin/gem ${SB_INSTALL_PREFIX}/bin
+]]>
+      </install>
+
+      <uninstall>
+<![CDATA[
+rm -rf ${SB_INSTALL_PREFIX}/bin/gem \
+${SB_INSTALL_PREFIX}/lib/gauntlet_rubygems.rb \
+${SB_INSTALL_PREFIX}/lib/rbconfig \
+${SB_INSTALL_PREFIX}/lib/rubygems \
+${SB_INSTALL_PREFIX}/lib/rubygems.rb \
+${SB_INSTALL_PREFIX}/lib/ubygems.rb
+
+rmdir ${SB_INSTALL_PREFIX}/bin 2>/dev/null || :
+]]>
+      </uninstall>
+    </module>
+
+    <changelog>
+      <change date="2012 April 26" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add include.paths.d to GEM_PATH</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
