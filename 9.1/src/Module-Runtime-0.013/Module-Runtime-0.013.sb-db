@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Module-Runtime" version="0.013" revision="1">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="62b88b1f5f0e975a5d7c80cd46167b97"
+        checksum-type="md5" size="15849"
+        path="src/Module-Runtime-0.013.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Build.PL
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+./Build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+./Build test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+./Build install
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Module/Runtime/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Module/Runtime/.packlist
+rmdir ${_installsitearch}/auto/Module/Runtime 2>/dev/null
+rmdir ${_installsitearch}/auto/Module 2>/dev/null
+
+:
+]]>
+    </uninstall>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Module-Build"
+          module="5.12.2">v&gt;=0.33</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+  </program>
+</programs>
