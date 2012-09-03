@@ -1,0 +1,564 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="rrdtool" version="1.4.4" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}14</install-name>
+
+    <sources>
+      <source checksum="93ad2fc2e9ddcd7d99c611fe30284a54"
+        checksum-type="md5" size="1345477"
+        path="src/rrdtool-1.4.4.tar.gz"/>
+      <patch checksum="8a40a25b64c01b191dfac55934b354cd"
+        checksum-type="md5" size="85136"
+        path="src/rrdtool-1.4.4.tww.patch"/>
+      <patch checksum="c0142baec775e287845e9bd8cf9d01ce"
+        checksum-type="md5" size="893566"
+        path="src/rrdtool-1.4.4.gnulib.patch"/>
+      <patch checksum="227fbfd1235d1adf031fa249f76d69a1"
+        checksum-type="md5" size="2859568"
+        path="src/rrdtool-1.4.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="lua" var="LUA" install-name="lua51"
+        add-path="prepend">v&gt;=5.1.4</depend>
+      <depend program="pkgconfig" install-name="pkgconfig02"
+        add-path="prepend" type="build">v&gt;=0.25</depend>
+      <depend program="python" var="PYTHON" install-name="python26"
+        add-path="prepend">v&gt;=2.6.7</depend>
+      <depend program="tcl" var="TCL"
+        install-name="tcl85">v&gt;=8.5.10</depend>
+      <depend program="gcc" install-name="gcc44"
+        add-path="prepend">v&gt;=4.4.6</depend>
+      <depend program="groff" install-name="groff121"
+        add-path="prepend">v&gt;=1.21</depend>
+      <depend program="cairo" var="LIBCAIRO"
+        install-name="libcairo110">v&gt;=1.10.2</depend>
+      <depend program="fcpackage" var="FCPACKAGE"
+        install-name="fcpackage28">v&gt;=2.8</depend>
+      <depend program="freetype" var="LIBTTF"
+        install-name="libttf24">v&gt;=2.4.6</depend>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="glib" var="LIBGLIB" install-name="libglib226"
+        add-path="prepend">v&gt;=2.26.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+      <depend program="libpng" var="LIBPNG"
+        install-name="libpng14">v&gt;=1.4.4</depend>
+      <depend program="libxml" var="LIBXML"
+        install-name="libxml27">v&gt;=2.7.8</depend>
+      <depend program="pango" var="LIBPANGO"
+        install-name="libpango128">v&gt;=1.28.4</depend>
+      <depend program="zlib" var="LIBZ"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_luadir="${SB_INSTALL_PREFIX}/lib/lua51"
+_pythondir="${SB_INSTALL_PREFIX_LIB}/python26"
+_tcllibdir="${SB_INSTALL_PREFIX_LIB}/tcl85"
+
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  CC_LD_RT="-Wl,-blibpath:"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+
+  # Let's pretend AIX does not have mmap to avoid problems with msync()
+  # failing at runtime because the file was mmap()ed with MAP_PRIVATE.
+  # See the msync() man page on AIX for details.
+  ARGS="--disable-mmap" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Oentrysched +Odataprefetch \
++Onolimit"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +ESlit +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +ESlit +DAportable +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b,"
+
+  ARGS="--disable-pthread" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Olit=all +Oentrysched +Odataprefetch \
++Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  # -diag_error 1035 to turn warnings about #error directives
+  # into errors
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0 -diag_error 1035"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linuxe3)
+  CFLAGS="-O2 -mcpu=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*|i?86-suse-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  # Need -pthread or we get undefined __pthread_mutex_{un,}lock
+  # errors linking rrd_update
+  CC=cc CFLAGS="-pthread -O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.[678])
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CPPFLAGS="\
+${SB_VAR_LUA+-I${SB_VAR_LUA_INC}} \
+${SB_VAR_LIBPNG+-I${SB_VAR_LIBPNG_INC}} \
+${SB_VAR_LIBZ+-I${SB_VAR_LIBZ_INC}} \
+${SB_VAR_LIBXML+-I${SB_VAR_LIBXML_INC}} \
+${SB_VAR_LIBTTF+-I${SB_VAR_LIBTTF_INC} \
+-I${SB_VAR_LIBTTF_INC}/freetype2} ${CPPFLAGS+${CPPFLAGS}}" \
+CFLAGS="${CFLAGS:--O2}" LDFLAGS="\
+${SB_VAR_LUA+-L${SB_VAR_LUA_LIB}} \
+${SB_VAR_LIBPNG+-L${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBZ+-L${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_LIBXML+-L${SB_VAR_LIBXML_LIB}} \
+${SB_VAR_LIBTTF+-L${SB_VAR_LIBTTF_LIB}} \
+${SB_VAR_LUA+${CC_LD_RT}${SB_VAR_LUA_LIB}} \
+${SB_VAR_LIBPNG+${CC_LD_RT}${SB_VAR_LIBPNG_LIB}} \
+${SB_VAR_LIBZ+${CC_LD_RT}${SB_VAR_LIBZ_LIB}} \
+${SB_VAR_LIBTTF+${CC_LD_RT}${SB_VAR_LIBTTF_LIB}} \
+${LDFLAGS+${LDFLAGS}}" \
+PKG_CONFIG_PATH="${SB_VAR_FCPACKAGE+${SB_VAR_FCPACKAGE_LIB}/pkgconfig:}\
+${SB_VAR_LIBGLIB+${SB_VAR_LIBGLIB_LIB}/pkgconfig:}\
+${SB_VAR_LIBPANGO+${SB_VAR_LIBPANGO_LIB}/pkgconfig:}\
+${SB_VAR_LIBTTF+${SB_VAR_LIBTTF_LIB}/pkgconfig:}\
+${SB_VAR_LIBCAIRO+${SB_VAR_LIBCAIRO_LIB}/pkgconfig:}\
+${SB_VAR_GETTEXT+${SB_VAR_GETTEXT_LIB}/pkgconfig:}\
+${SB_VAR_LIBPNG+${SB_VAR_LIBPNG_LIB}/pkgconfig:}\
+${SB_VAR_LIBZ+${SB_VAR_LIBZ_LIB}/pkgconfig:}\
+${SB_VAR_LIBXML+${SB_VAR_LIBXML_LIB}/pkgconfig:}\
+${SB_VAR_LIBICONV+${SB_VAR_LIBICONV_LIB}/pkgconfig}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix=${SB_VAR_LIBICONV}} \
+${SB_VAR_GETTEXT+--with-libintl-prefix=${SB_VAR_GETTEXT}} \
+--enable-shared --datadir=${_datadir} \
+--with-tcllib=${SB_VAR_TCL_LIB} \
+--with-perl-options="\
+INSTALLARCHLIB=\"${SB_INSTALL_PREFIX}/lib/perl5122\" \
+INSTALLSITEARCH=\"${SB_INSTALL_PREFIX}/lib/perl5122\" \
+INSTALLSITELIB=\"${SB_INSTALL_PREFIX}/lib/perl5122\"" \
+--disable-ruby ${ARGS+${ARGS}} --disable-dependency-tracking \
+--libdir=${SB_INSTALL_PREFIX_LIB} \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+
+# Fix Perl library paths
+${SB_PATH_SED} -i -e "\
+s!@LIBTTF_LIB@!${SB_VAR_LIBTTF_LIB}!
+s!@LIBPNG_LIB@!${SB_VAR_LIBPNG_LIB}!
+s!@LIBZ_LIB@!${SB_VAR_LIBZ_LIB}!;" bindings/perl-shared/Makefile.PL
+
+${SB_PATH_SED} -i -e "\
+s!-L\(\${libdir}\)!-L\1 ${CC_LD_RT}\1!;" src/librrd.pc
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake idocdir=${_docdir} ihtmldir="${_docdir}/html" \
+examplesdir="${_datadir}/examples" \
+pythondir=${_pythondir} tcllibdir=${_tcllibdir} \
+LUA_INSTALL_CMOD=${_luadir} LUA_INSTALL_CMOD=${_luadir}
+
+# Fix Tcl library path
+${SB_PATH_SED} -i -e "\
+s!@tcllibdir@!${_tcllibdir}!;" bindings/tcl/ifOctets.tcl
+
+# Fix Perl library path
+${SB_PATH_SED} -i -e "\
+s!${SB_INSTALL_PREFIX}/lib/perl!${SB_INSTALL_PREFIX}/lib/perl5122!;" \
+examples/4charts.pl examples/bigtops.pl examples/cgi-demo.cgi \
+examples/minmax.pl examples/piped-demo.pl examples/shared-demo.pl \
+examples/stripes.pl
+]]>
+    </build>
+
+    <install>
+<![CDATA[
+gmake install idocdir=${_docdir} ihtmldir="${_docdir}/html" \
+examplesdir="${_datadir}/examples" \
+pythondir=${_pythondir} tcllibdir=${_tcllibdir} \
+LUA_INSTALL_CMOD=${_luadir} LUA_INSTALL_CMOD=${_luadir}
+
+# relink shared libraries to set correct runtime library path
+gmake -C bindings/perl-shared clean
+
+${SB_PATH_SED} -i -e "\
+s!../../src/.libs!${SB_INSTALL_PREFIX}/lib!;" \
+bindings/perl-shared/Makefile.PL
+
+gmake -C bindings perl_shared
+gmake -C bindings/perl-shared install
+
+case "${SB_SYSTYPE}" in
+hppa*-hpux*)
+  (cd bindings/python
+   rm -rf build
+   BUILDLIBDIR=${SB_INSTALL_PREFIX_LIB} python setup.py build
+   python setup.py install --skip-build --install-lib=${_pythondir} \
+   --prefix=${SB_INSTALL_PREFIX})
+
+  gmake -C bindings/tcl clean
+  gmake -C bindings/tcl
+  gmake -C bindings/tcl install tcllibdir=${_tcllibdir} ;;
+esac
+]]>
+    </install>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+
+      <license>
+        <para>FLOSS License Exception</para>
+        <para>(Adapted from
+http://www.mysql.com/company/legal/licensing/foss-exception.html)</para>
+        <para>I want specified Free/Libre and Open Source Software
+("FLOSS") applications to be able to use specified GPL-licensed
+RRDtool libraries (the "Program") despite the fact that not all FLOSS
+licenses are compatible with version 2 of the GNU General Public
+License (the "GPL").</para>
+        <para>As a special exception to the terms and conditions of
+version 2.0 of the GPL:</para>
+        <para>You are free to distribute a Derivative Work that is
+formed entirely from the Program and one or more works (each, a "FLOSS
+Work") licensed under one or more of the licenses listed below, as
+long as:</para>
+        <orderedlist>
+          <item><para>You obey the GPL in all respects for the Program
+and the Derivative Work, except for identifiable sections of the
+Derivative Work which are not derived from the Program, and which can
+reasonably be considered independent and separate works in
+themselves,</para></item>
+          <item><para>all identifiable sections of the Derivative Work
+which are not derived from the Program, and which can reasonably be
+considered independent and separate works in themselves,</para>
+          <unorderedlist>
+            <item><para>are distributed subject to one of the FLOSS
+licenses listed below, and</para></item>
+            <item><para>the object code or executable form of those
+sections are accompanied by the complete corresponding
+machine-readable source code for those sections on the same medium and
+under the same FLOSS license as the corresponding object code or
+executable forms of those sections, and</para></item>
+            <item><para>any works which are aggregated with the
+Program or with a Derivative Work on a volume of a storage or
+distribution medium in accordance with the GPL, can reasonably be
+considered independent and separate works in themselves which are not
+derivatives of either the Program, a Derivative Work or a FLOSS
+Work.</para></item>
+          </unorderedlist></item>
+        </orderedlist>
+
+        <para>If the above conditions are not met, then the Program
+may only be copied, modified, distributed or used under the terms and
+conditions of the GPL.</para>
+        <para>FLOSS License List</para>
+        <screen>
+License name                                     Version(s)/Copyright Date
+Academic Free License                                     2.0
+Apache Software License                                1.0/1.1/2.0
+Apple Public Source License                               2.0
+Artistic license                                      From Perl 5.8.0
+BSD license                                            "July 22 1999"
+Common Public License                                     1.0
+GNU Library or "Lesser" General Public License (LGPL)   2.0/2.1
+IBM Public License, Version                               1.0
+Jabber Open Source License                                1.0
+MIT License (As listed in file MIT-License.txt)            -
+Mozilla Public License (MPL)                            1.0/1.1
+Open Software License                                     2.0
+OpenSSL license (with original SSLeay license)       "2003" ("1998")
+PHP License                                               3.0
+Python license (CNRI Python License)                       -
+Python Software Foundation License                       2.1.1
+Sleepycat License                                        "1999"
+W3C License                                              "2001"
+X11 License                                              "2001"
+Zlib/libpng License                                        -
+Zope Public License                                     2.0/2.1
+        </screen>
+      </license>
+    </licenses>
+
+    <notes>
+      <change from="1.4.3" to="1.4.4">
+        <items name="Bugfixes">
+          <item><para>compile: multiple fixes isnan and isinf defines
+to make rrdtool compile with gcc on solaris (with
+--disable-nls)</para></item>
+          <item><para>handle gettext/libintl like any other feature,
+do not try to supply our own ... rrdtool can work fine without
+it</para></item>
+          <item><para>rrd_client: fix potential
+segfaults</para></item>
+          <item><para>rrd_client: resolve synmlinks
+properly</para></item>
+          <item><para>compile: fix libtool and libtoolize names for
+OSX compiles</para></item>
+          <item><para>compile: fix for HAVE_BROKEN_MS_ASYNC (old linux
+kernels)</para></item>
+          <item><para>rrd_xport: fix --daemon handling</para></item>
+          <item><para>rrd_client: explicitly close connection on
+error</para></item>
+          <item><para>rrd_update: fix memory leak for COMPUTE
+datasources</para></item>
+          <item><para>rrd_daemon: fix segfault when specifying a
+relative path (-j option)</para></item>
+          <item><para>compile: make rrdtool compile with gcc
+4.5</para></item>
+          <item><para>portability: use %lld (long long int) for time_t
+*printf</para></item>
+          <item><para>compile: link pangocairo and not pango since we
+do use pangocairo actually</para></item>
+          <item><para>compile: re-integrate intl into compile
+dependency so that hosts with old (or no) gettext can get access to
+the included copy</para></item>
+          <item><para>rrd_cached: exit with status !=0 on invalid
+cli</para></item>
+        </items>
+
+        <items name="Enhancements">
+          <item><para>updated build files and instructions for
+win32</para></item>
+          <item><para>legal: Relicense the RRDCacheD client interface
+under the MIT license</para></item>
+          <item><para>legal: Updted FLOSS Exception for latest PHP
+license</para></item>
+          <item><para>rrd_cached: better help output</para></item>
+        </items>
+      </change>
+
+      <change from="1.4.2" to="1.4.3">
+        <items name="New Features">
+          <item><para>rrdcached: Log to stderr (in addition to syslog)
+when running in foreground</para></item>
+          <item><para>rrdcached: Added -m command line option. This
+option may be used to specify the file permissions of a UNIX socket.
+The option affects the following sockets only, i.e., it's possible to
+specify different modes for different sockets.</para></item>
+          <item><para>rrdcached: Added -s option so set group
+permissions of the UNIX domain socket. Obviously this will only work
+if rrdcached is running as root which in my case it has to be (as
+upstart can't currently monitor non-root daemons). As you may have RRD
+data sources (data loggers) and RRD consumers (e.g. CGI scripts) that
+both need to talk to the cache daemon one solution is to set the group
+permissions of the socket.</para>
+          <para>This offer some flexibility over trying to get every
+RRD user/daemon running under the same user context.</para></item>
+          <item><para>rrdcached: Let -s affect the following sockets
+only. This way, it's possible to specify different groups for
+different sockets.</para></item>
+          <item><para>* rrd_create: added --no-overwrite option. It
+prevents rrdtool from clobbering existing rrd files.</para></item>
+          <item><para>ruby bindings: rb_rrd_xport
+function</para></item>
+          <item><para>use locale settings and _NL_TIME_WEEK_1STDAY to
+determine the first day of the week. Works on Linux at
+least</para></item>
+          <item><para>rrd_graph: \u to backup one line for special
+legend placement tricks </para></item>
+          <item><para>rrd_update: new (better) checker for incoming
+COUNTER or DERIVED data</para></item>
+        </items>
+
+        <items name="Bug Fixes">
+          <item><para>rrdcached: Do not put any code in
+assert()</para></item>
+          <item><para>add 'm' as a shortcut for 'zoom' in rrd_graph as
+it was in 1.3 </para></item>
+          <item><para>rrd_update: fix for max calculation ... the MAX
+value of the current consolidation interval was pre-initialized with
+the MAX value from the previous interval (an over
+optimization)</para></item>
+          <item><para>build: additional dependencies on Makefile to
+make sure bindings makefiles get rebuild after reconfig</para></item>
+          <item><para>ruby bindings: reset rrd_state for grapv in ruby
+bindings</para></item>
+          <item><para>rrd_cgi: make sure that (argv-1)[0] points to
+something sensible ... hack to undo the damage caused by a senseless
+optimization. see bug #251.</para></item>
+          <item><para>rrd_graph: fix right aligned text</para></item>
+          <item><para>python bindings: pass DESTDIR to setup.py as
+--root=&lt;DESTDIR&gt; iff a DESTDIR was given</para></item>
+          <item><para>rrd_graph: backward compatibility fix - only
+draw the new type of marker in the graph legend when called with
+--dynamic-labels</para></item>
+          <item><para>rrd_restore: portability fix - sizeof(time_t) is
+4 byte not 32 bit</para></item>
+          <item><para>rrd_xport: The end of the export range should
+not be adjusted DOWN but UP to hit the next matching step interval or
+the response will be one row short</para></item>
+          <item><para>rrd_graph: the end time itself is not part of a
+time range ... this fixes the segfault reported in #248</para></item>
+          <item><para>rrd_restore: teach rrd_restore to be able to
+read the #text value of &lt;a&gt;&lt;/a&gt; ... this fixes problems
+with blank last_ds entries ... as reported in #247</para></item>
+          <item><para>rrd_update: be more diligent in checking the
+input arguments for rrdtool  update and complain if they are wrong.
+fix for #243 (and more).</para></item>
+        </items>
+      </change>
+
+      <change from="1.3.x" to="1.4.x">
+        <items name="RRD Caching Daemon (rrdcached)">
+          <item><para>The RRD Caching Daemon can dramatically improve
+the 'update' performance of your system.  Due to file handling
+overheads, the time it takes todo one update is virtually the same as
+to doing two updates in a row.</para></item>
+          <item><para>The Cache Daemon intercepts rrdtool update calls,
+assembling multiple updates before writing them to the actual rrd
+file. When calling rrdtool graph in such a setup, the command will
+tell the daemon to flush out all pending updates for the rrd files,
+required to draw the graph.</para></item>
+          <item><para>See rrdcached documentation.</para></item>
+        </items>
+
+        <items name="RRD Dumping and Restoring (rrdtool dump/restore)">
+          <item><para>The output of rrdtool dump has been adjusted to
+be simpler to parse by existing xml parsers.</para></item>
+          <item><para>The restore core has been completely re-written
+yet again and is now relying on an incremental xml parser. This has
+the advantage that the memory consumption while restoring xml files is
+only slightly larger than the resulting rrd file. Which is much less
+than the requirements of the 1.3 and even 1.2</para></item>
+        </items>
+
+        <items name="RRD Graphing functions (rrdtool graph)">
+          <item><para>VDEF PERCENTNAN (a PRECENT that ignores
+NAN)</para></item>
+          <item><para>CDEF PREDICT and PREDICTSIGMA functions for
+on-the-fly data prediction without the need to modify existing rrd
+files as it is required for HoltWinters.</para></item>
+          <item><para>LibDBI integration provides a path to read data
+directly of a supported SQL database into rrdtool graph. See
+rrdgraph_libdbi documentation.</para></item>
+        </items>
+
+        <items name="Miscellaneous Changes">
+          <item><para>graph legends can now be placed left, right or
+above the graph with the new --legend-direction and --legend-positon
+placement options. </para></item>
+          <item><para>switched to using automake 1.11 which provides a
+'silent' build process, causing errors and warnings to stand out much
+more than before.</para></item>
+          <item><para>switched from intltoolize to autopoint for the
+i18n configuration.</para></item>
+          <item><para>new graph option --grid-dash on:off to configure
+the dash length in the grid painted over the graph</para></item>
+          <item><para>lua bindings for rrdtool</para></item>
+          <item><para>various improvements to rrd_open functions and
+mmap handling</para></item>
+          <item><para>allow the HW smoothing window size to be set to
+0 with rrdtool tune</para></item>
+          <item><para>new graph option --border to set the 3d border
+width </para></item>
+          <item><para>draw different color markers (enable with
+--dynamic-labels) depending on the type of element in the
+graph</para></item>
+          <item><para>for more detail see the CHANGES
+file.</para></item>
+        </items>
+      </change>
+
+      <note type="installation">
+        <para>To use the RRD module from Lua:</para>
+        <screen>
+package.cpath = '${SB_INSTALL_PREFIX}/lib/lua51/?.so;' ..
+                package.cpath
+require 'rrd'
+        </screen>
+
+        <para>To use the RRD module from Perl:</para>
+        <screen>
+use lib '${SB_INSTALL_PREFIX}/lib/perl5122';
+
+use RRDs;
+        </screen>
+
+        <para>To use the RRD module from Python:</para>
+        <screen>
+import sys
+sys.path.append ('${SB_INSTALL_PREFIX}/lib/python26')
+sys.path.append ('${SB_INSTALL_PREFIX}/lib/python27')
+
+import rrdtool
+        </screen>
+
+        <para>To use the RRD module from Tcl:</para>
+        <screen>
+lappend auto_path ${SB_INSTALL_PREFIX}/lib/tcl85
+
+package require Rrd
+        </screen>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 27" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update cairo dependency from 1.6.4 to
+1.10.2</para></item>
+        <item><para>Update fcpackage dependency from 2.6 to
+2.8</para></item>
+        <item><para>Update freetype dependency from 2.3.7 to
+2.4.6</para></item>
+        <item><para>Update gcc dependency from 4.2.4 to
+4.4.6</para></item>
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update glib dependency from 2.16.5 to
+2.26.1</para></item>
+        <item><para>Update libiconv dependency from 1.12 to
+1.13.1</para></item>
+        <item><para>Update libpng dependency from 1.2.29 to
+1.4.4</para></item>
+        <item><para>Update libxml dependency from 2.6.32 to
+2.7.8</para></item>
+        <item><para>Update pango dependency from 1.20.5 to
+1.28.4</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+        <item><para>Update pkgconfig dependency from 0.23 to
+0.25</para></item>
+        <item><para>Update python dependency from 2.5.2 to
+2.6.7</para></item>
+        <item><para>Update tcl dependency from 8.5.6 to
+8.5.10</para></item>
+        <item><para>Update zlib dependency from 1.2.3 to
+1.2.5</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
