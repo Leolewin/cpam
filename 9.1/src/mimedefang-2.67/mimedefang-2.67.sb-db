@@ -1,0 +1,485 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="mimedefang" version="2.67" revision="2"
+  systype="!*-irix*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}26</install-name>
+
+    <sources>
+      <source checksum="d1f67bc03b41484cb9ae52fb0dd4d24b"
+        checksum-type="md5" size="338779"
+        path="src/mimedefang-2.67.tar.gz"/>
+      <patch checksum="c868941532e3779af83721f21fd2758f"
+        checksum-type="md5" size="17337"
+        path="src/mimedefang-2.67.tww.patch"/>
+      <patch checksum="8bf0af0d1b1b292b965c9d76dcdf0673"
+        checksum-type="md5" size="239544"
+        path="src/mimedefang-2.67.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend user="defang"/>
+
+      <depend program="MIME-tools"
+        module="5.12.2">v&gt;=5.502</depend>
+      <depend program="openldap" var="OPENLDAP"
+        install-name="openldap24">v&gt;=2.4.26</depend>
+      <depend program="perl" var="PERL"
+        add-path="prepend">v==5.12.2</depend>
+      <depend program="sendmail" var="SENDMAIL">v==8.14.3</depend>
+      <depend program="spamassassin"
+        var="SPAMASSASSIN">v==3.2.5</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_localstatedir="/var${SB_INSTALL_PREFIX}"
+_sysconfdir="/etc${SB_INSTALL_PREFIX}"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc_r CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  LDFLAGS="-Wl,+nodefaultrpath"
+  CC_LD_RT="-Wl,+b," ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=generic"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+PERL5LIB=${SB_VAR_SPAMASSASSIN_LIB} \
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+CPPFLAGS="-I${SB_VAR_SENDMAIL_INC}" \
+LDFLAGS="-L${SB_VAR_SENDMAIL_LIB} -L${SB_VAR_OPENLDAP_LIB} \
+${CC_LD_RT}${SB_VAR_OPENLDAP_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--mandir=${SB_INSTALL_PREFIX}/man --sysconfdir=${_sysconfdir} \
+--localstatedir=${_localstatedir} \
+--with-sendmail="${SB_VAR_SENDMAIL}/bin/sendmail" \
+--with-spooldir="${_localstatedir}/spool" \
+--with-quarantinedir="${_localstatedir}/quarantine" \
+--mandir="${SB_INSTALL_PREFIX}/man" --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <install>
+<![CDATA[
+gmake install
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${SB_INSTALL_PREFIX}/doc
+${SB_PATH_INSTALL} -m 644 -o root -g 0 Changelog README \
+README.ANOMY README.NONROOT README.SECURITY README.SPAMASSASSIN \
+${SB_INSTALL_PREFIX}/doc
+
+# install examples
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_datadir}/examples
+${SB_PATH_INSTALL} -m 644 -o root -g 0 examples/* ${_datadir}/examples
+
+# directory for PID files
+${SB_PATH_INSTALL} -m 755 -o defang -g 0 -d \
+${_localstatedir}/run
+
+# spool and quarantine directories
+${SB_PATH_INSTALL} -m 700 -o defang -g 0 -d \
+${_localstatedir}/spool ${_localstatedir}/quarantine
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+rm -rf ${_localstatedir} ${_sysconfdir} ${SB_INSTALL_PREFIX}
+]]>
+    </uninstall>
+
+    <licenses>
+      <license>
+        <para>MIMEDefang is licensed under the GNU General Public
+License, version 2, which follows.</para>
+        <para>NOTE FOR ASPs and ISPs:</para>
+        <para>If you use MIMEDefang as a service provider to provide
+mail filtering services for paying clients, Roaring Penguin Software
+Inc. considers this to be "distribution" of MIMEDefang.  Therefore, if
+you use MIMEDefang in this manner, you *must* provide the source code
+to MIMEDefang *and* to any modifications you have made to anyone who
+asks for it, and you must license your modifications under the GNU
+General Public License.  By using MIMEDefang, you are agreeing with
+our interpretation that providing services using MIMEDefang is
+equivalent to distributing MIMEDefang.  You do not have to agree with
+our interpretation, but if you do not agree, then you may not use
+MIMEDefang, because only this license gives you the right to use
+MIMEDefang.</para>
+        <para>Note that the above paragraph is not a change in
+MIMEDefang's license; it is merely a clarification, and therefore
+applies to all previous versions of MIMEDefang as well as the current
+version.</para>
+      </license>
+
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <notes>
+      <change from="2.66" to="2.67">
+        <item><para>Added support for FPROTD version 6 daemonized
+scanner.</para></item>
+      </change>
+
+      <change from="2.64" to="2.65">
+        <item><para>Added the option to use poll(2) instead of
+select(2) in mimedefang-multiplexor.  Use the --enable-poll
+./configure option. This will eliminate problems with file descriptors
+&gt; 1023 on many systems. </para></item>
+        <item><para>Fix a few minor compiler warnings</para></item>
+        <item><para>embperl.c, configure.in: Fix problems with
+embedded Perl on Debian HPPA architecture.
+http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=486069</para></item>
+      </change>
+
+      <change from="2.63" to="2.64">
+        <item><para>Fix typo in the generic init-script.in file.
+Also, on FreeBSD/NetBSD, generic init-script.in fits into the *BSD
+init structure natively.</para></item>
+        <item><para>watch-multiple-mimedefangs.tcl: Works better with
+Tcl/Tk 8.5. Displays message volumes/day in more human-readable form.
+New -archive option logs statistics to files.</para></item>
+        <item><para>Add support for NOD32 command-line
+scanner</para></item>
+        <item><para>Add support for Sophos "savscan"
+scanner</para></item>
+        <item><para>embperl.c: Fix Perl's $$ variable so it reflects
+the actual PID of the slave process.  If you are using Embedded Perl,
+this should remove a major source of irritation (log messages
+previously used the PID of the master multiplexor
+process.)</para></item>
+        <item><para> mimedefang.pl.in: Make
+md_check_against_smtp_server include the Sendmail Queue-ID in the
+syslog message.</para></item>
+        <item><para>mimedefang.c: If mail is submitted via a
+UNIX-domain socket (yes, this is possible, apparently!) consider the
+sending relay to be 127.0.0.1.  Fixes Debian bug #439432</para></item>
+        <item><para>mimedefang-filter.5.in: Minor
+clarifications</para></item>
+        <item><para>redhat/mimedefang-init.in: Minor
+fixes</para></item>
+        <item><para>examples/init-script.in: Minor fixes</para></item>
+      </change>
+
+      <change from="2.62" to="2.63">
+        <item><para>mimedefang-multiplexor.c: Relax the umask when
+creating the unprivileged socket ("-a" command-line
+option.)</para></item>
+        <item><para> mimedefang.c(eom): If we do not have a queue ID
+yet, try to obtain one in eom.  This is designed to improve operation
+with Postfix, which does not assign a queue ID until after the first
+successful RCPT.</para></item>
+        <item><para> examples/init-script.in: Added MD_SKIP_BAD_RCPTS
+init script option</para></item>
+        <item><para>Remove support for OpenAntivirus.  It's a dead
+product.</para></item>
+        <item><para>mimedefang.pl.in(spam_assassin_status): Call
+$mail-&gt;finish() to prevent temporary files from
+accumulating.</para></item>
+        <item><para>redhat/mimedefang-init.in: Add configtest routine
+to check filter syntax.</para></item>
+      </change>
+
+      <change from="2.61" to="2.62">
+        <item><para>milter_cap.c: Minor code cleanups.</para></item>
+        <item><para>You can invoke mimedefang like this:   mimedefang
+prcap and it prints details about the version of libmilter it's linked
+with and exit.</para></item>
+        <item><para>mimedefang.pl.in: A new "change_sender" action
+lets you change the envelope sender.  Only works with Sendmail/Milter
+8.14.0 and newer!</para></item>
+        <item><para>mimedefang.c: A new "-N" flag causes Sendmail not
+to make filter_recipient callbacks for invalid recipients.  Only works
+with Sendmail/Milter 8.14.0!  Note that without the -N flag,
+MIMEDefang now works the same with 8.14.0 and 8.13.x -- you always see
+all recipients by default, even invalid ones.</para></item>
+        <item><para>mimedefang.pl.in: Clam interface code has been
+fixed to work properly with ClamAV 0.90 and later.</para></item>
+        <item><para>redhat/mimedefang-init.in: Understand
+MX_TICK_REQUEST and MX_TICK_PARALLEL variables which get translated
+into -X and -P mimedefang-multiplexor options,
+respectively.</para></item>
+      </change>
+
+      <change from="2.60" to="2.61">
+        <item><para>SECURITY FIX: Versions 2.59 and 2.60 contained a
+programming error that could lead to a buffer overflow.  This is
+definitely exploitable as a denial-of-service attack, and potentially
+may allow arbitrary code execution.  The bug is fixed in
+2.61.</para></item>
+        <item><para>mimedefang.c: If a message is going to end up
+being rejected, discarded or tempfailed, we don't bother carrying out
+requests to add/delete/modify headers or recipients, change the
+message body, etc.</para></item>
+      </change>
+
+      <change from="2.59" to="2.60">
+        <item><para>mimedefang.c: Fix filter registration so
+MIMEDefang works correctly against libmilter from Sendmail
+8.14</para></item>
+        <item><para>Fix a number of "pointer differs in signedness"
+warnings.</para></item>
+      </change>
+
+      <change from="2.58" to="2.59">
+        <item><para>watch-multiple-mimedefangs: Add grid-lines; tweak
+GUI a bit.</para></item>
+        <item><para>configure.in and Makefile.in: Instead of
+explicitly linking against limilter.a, just supply the -lmilter link
+option.  This means it should work properly on 64-bit systems that
+keep their libraries in /usr/lib64.  It also means that if you have a
+libmilter.so lying around, we'll link against it instead of linking
+statically.</para></item>
+        <item><para>configure.in: Require only 0.15 of Sys::Syslog to
+check for setlogsock('native').</para></item>
+        <item><para>mimedefang.c: Major changes: We build up the
+contents of COMMANDS in memory and write it out in one big chunk per
+milter callback.  Not only does this reduce the number of system
+calls, but we also now _check the return code_ of those
+calls!</para></item>
+        <item><para>mimedefang.pl.in(item_contains_virus_fprotd): More
+careful inspection of F-PROT output to determine virus
+name.</para></item>
+        <item><para>Added a new tool (watch-multiple-mimedefangs.tcl)
+for monitoring a cluster of MIMEDefang scanners</para></item>
+        <item><para>mimedefang.pl.in: (dmo) Change "use POSIX;" to
+"use POSIX ();" to save several hundred kilobytes of memory per
+slave.</para></item>
+        <item><para>mimedefang.pl.in: (dmo) Remove useless "use
+Getopt::Std;"</para></item>
+        <item><para>mimedefang.pl.in: (dmo) Some code
+refactoring.</para></item>
+        <item><para>Modify multiplexor and mimedefang.pl.in so slave
+status updates work correctly (the -Z multiplexor flag.)  Previously,
+the slave status wasn't being reset correctly.</para></item>
+        <item><para>Modify multiplexor so slave status changes are
+broadcast using the notification facility (-O multiplexor flag).  A
+new "S" message is used for slave status changes.</para></item>
+        <item><para>mimedefang.pl.in(read_commands_file): If the
+COMMANDS file did not end with an F, the slave would give up and
+become idle, but not inform the multiplexor.  As a result, the
+multiplexor would think the slave was busy, and the slave would be
+unavailable until the busy timeout elapsed and it was killed by the
+multiplexor.  This bug has been fixed.</para></item>
+        <item><para>redhat/mimedefang-spec.in: Changes as suggested by
+Philip Prindeville for cleaning up RPM builds and detecting proper
+libraries on x86-64 systems.</para></item>
+      </change>
+
+      <change from="2.57" to="2.58">
+        <item><para>Memory leak in mimedefang found and fixed.  If a
+client issues more than one MAIL command in a single SMTP session,
+then the milter used to leak approximately 16 bytes for each
+subsequent MAIL command.</para></item>
+        <item><para>Running ./configure --enable-debugging includes
+much more debugging output, especially to diagnose memory allocation
+and deallocation. DO NOT USE ON A PRODUCTION SERVER.</para></item>
+        <item><para>If we have Sys::Syslog 0.16 or higher, do not call
+setlogsock (which is deprecated).</para></item>
+        <item><para>Sample init script sets
+HOME=/var/spool/MIMEDefang.</para></item>
+        <item><para>Sample filter for Windows clients tweaked
+slightly: We don't complain about non-multipart .eml attachments (was
+causing false positives.)</para></item>
+        <item><para>Fixed typo in Red Hat sample init
+script.</para></item>
+        <item><para>mimedefang.pl.in: If SpamAssassin version &gt;=
+3.1.5, do not supply LOCAL_RULES_DIR or LOCAL_STATE_DIR in
+constructor.  Use defaults from Perl modules.</para></item>
+        <item><para>examples/init-script.in: Add
+ALLOW_NEW_CONNECTIONS_TO_QUEUE config variable.</para></item>
+        <item><para>mimedefang-multiplexor.c: Fix useless call to
+sigprocmask. (Used SIG_BLOCK; should have been
+SIG_SETMASK)</para></item>
+        <item><para>mimedefang.c: Make sure that we're given the -p
+option.</para></item>
+        <item><para>embperl.c: Remove warning about "Something in your
+filter has opened a file descriptor..." because there are way too many
+systems that trigger this warning, and they don't seem to have
+problems.</para></item>
+        <item><para>Remove all support for the File::Scan
+module.</para></item>
+      </change>
+
+      <change from="2.56" to="2.57">
+        <item><para>suggested-minimum-filter-for-windows-clients:
+Explicitly set $entity variable in filter_begin.</para></item>
+        <item><para>mimedefang.pl.in: If clamdscan fails with zip
+module failure, attempt to use scanner in $Features{'Virus:CLAMAV'}
+rather than a hard-coded call to "clamscan"</para></item>
+        <item><para>Minor fixes to man pages.</para></item>
+        <item><para>mimedefang-multiplexor.c: New "md-mx-ctrl hload"
+command keeps track of load for past 1, 4, 12 and 24 hours.  Gives
+long-term data to complement the short-term "md-mx-ctrl load"
+data.</para></item>
+        <item><para>mimedefang-multiplexor: New scheduling algorithm
+tries to keep commands "sticky".  For example, when looking for a
+slave to run "recipok", we prefer to use a slave that recently ran
+"recipok". NOTE!!! If your filter incorrectly retains state from
+earlier callbacks into filter_begin, this scheduling change WILL
+expose the bugs in your filter.</para></item>
+        <item><para>mimedefang.c: Bug fix for NULL pointer dereference
+when running "sendmail -bs".</para></item>
+        <item><para>mimedefang.pl.in: Fix for FPROTD
+integration</para></item>
+        <item><para>mimedefang.pl.in: Fix for H+BEDV
+integration</para></item>
+        <item><para>mimedefang.pl.in: Pass LOCAL_STATE_DIR =&gt;
+'/var/lib' to Mail::SpamAssassin constructor.  If your LOCAL_STATE_DIR
+is elsewhere, you'll have to hack the Perl code, I'm
+afraid.</para></item>
+      </change>
+
+      <change from="2.55" to="2.56">
+        <item><para>Remove spam_assassin_init()-&gt;compile_now(1) call
+from sample filter.</para></item>
+        <item><para>mimedefang-multiplexor.c: Fix off-by-one error
+that could result in a slave thinking that the global generation
+counter had changed, causing the slave to restart
+unnecessarily.</para></item>
+        <item><para>redhat/mimedefang-init.in: Add support for
+MX_HELO_CHECK configuration variable.</para></item>
+        <item><para>mimedefang.c: Fix compilation problem on some
+systems.</para></item>
+        <item><para>mimedefang.pl.in: entity_contains_virus_nai,
+message_contains_virus_nai: Add the --mime option when invoking
+uvscan.</para></item>
+        <item><para>mimedefang.pl.in: message_contains_virus_clamd:
+Use more reasonable timeouts when talking to clamd.</para></item>
+      </change>
+
+      <change from="2.54" to="2.55">
+        <item><para>mimedefang.c: The new '-R' option lets you reserve
+a specified number of slaves for connections from localhost.  The idea
+is to try to allow clientmqueue runs to succeed even on heavily-loaded
+systems.</para></item>
+        <item><para>Patched to look for more modern "vascan"
+virus-scanner rather than older "vexira" scanner.  Support for the
+older Vexira scanner has been dropped; please see
+README.VEXIRA.</para></item>
+        <item><para>Added support for "filter_helo"
+function</para></item>
+        <item><para>examples/init-script.in: Fixed typo.</para></item>
+        <item><para>mimedefang.c: Use symbolic constants (MD_TEMPFAIL,
+MD_CONTINUE, etc.) instead of hard-coded integers</para></item>
+        <item><para> mimedefang.pl.in: The filter_begin function is
+now passed a single argument ($entity) representing the parsed
+message.</para></item>
+        <item><para>*** NOTE INCOMPATIBILITY *** filter_begin NOW TAKES
+ONE ARGUMENT, NOT ZERO.  IF YOUR FILTER HAS A PROTOTYPE FOR
+filter_begin, YOU SHOULD FIX OR REMOVE THE PROTOTYPE</para></item>
+        <item><para>mimedefang.c, mimedefang.pl.in: Added new
+action_insert_header to prepend headers (rather than appending them).
+Only works properly with Sendmail 8.13; on older versions of Sendmail,
+falls back to action_add_header.</para></item>
+        <item><para>mimedefang.pl.in: Added new function
+md_get_bogus_mx_hosts. Allows to test for sender domains with bogus MX
+hosts (such as hosts that resolve to the loopback or private IP
+addresses.)</para></item>
+        <item><para>mimedefang.pl.in: Invoke the "fsav" virus scanner
+with the --mime option.</para></item>
+        <item><para>mimedefang.pl.in: Correctly interpret kavscanner
+return code 9 (password-protected ZIP.)</para></item>
+        <item><para>examples/init-script.in: Fix typo that resulted in
+the shell complaining of a syntax error</para></item>
+        <item><para>Clean up man pages by removing some obsolete
+material.</para></item>
+        <item><para>mimedefang.c: Do NOT strip "bare CR" characters
+from e-mails by default.  The new "-c" command-line option enables the
+older behavior.</para></item>
+        <item><para>*** NOTE INCOMPATIBILITY ***  WE NO LONGER STRIP
+BARE CR's FROM MESSAGES BY DEFAULT.  TEST YOUR FILTERS CAREFULLY TO
+MAKE SURE THEY CAN COPE WITH THIS, OR USE THE -c FLAG.</para></item>
+        <item><para>mimedefang.c(rcptto): If you returned
+ACCEPT_AND_NO_MORE_FILTERING from filter_recipient, the spool files
+wouldn't get cleaned up, eventually clogging the spool directory.
+This has been fixed.</para></item>
+        <item><para>mimedefang.pl.in(interpret_hbedv_code): Fix
+interpretation of H+BEDV return codes</para></item>
+      </change>
+
+      <note type="installation">
+        <para>A special user is required for installation of MIME
+Defang, "<command>defang</command>". The directories in
+"<command>/var${SB_INSTALL_PREFIX}</command>" are owned by this user and the
+"<command>mimedefang</command>" and
+"<command>mimedefang-multiplexor</command>" commands run as this user.
+It is not advisable to run MIME Defang as root.</para>
+      </note>
+
+      <note type="configuration">
+        <para>MIME Defang uses a custom configuration file for
+SpamAssassin, "<command>${SYSCONFDIR}/sa-mimedefang.cf</command>". The
+init script creates PID files in
+"<command>/var${SB_INSTALL_PREFIX}/run</command>", and the socket files in
+"<command>/var${SB_INSTALL_PREFIX}/spool</command>". The path to the PID files
+and socket files can be modified in the startup script but the path to
+the spool directory and quarantine directory,
+"<command>/var${SB_INSTALL_PREFIX}/spool</command>" and
+"<command>/var${SB_INSTALL_PREFIX}/quarantine</command>", cannot be modified as
+they are hardcoded into the executables.</para>
+        <para>The configuration file for
+"<command>mimedefang-filter</command>" is
+"<command>/etc${SB_INSTALL_PREFIX}/mimedefang-filter</command>".</para>
+        <para>The init script also contains variables to set the
+minimum and maximum number of slaves to run and the longest time a
+process is allowed to spend scanning an email before it is declared
+hung and killed ("<command>BUSY_TIME</command>").</para>
+      </note>
+    </notes>
+
+    <changelog>
+      <change date="2012 January 31" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Update MIME-tools dependency from 5.418 to
+5.502</para></item>
+        <item><para>Update openldap dependency from 2.4.12 to
+2.4.26</para></item>
+        <item><para>Update perl dependency from 5.8.8 to
+5.12.2</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
