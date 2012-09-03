@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="Tree-Simple" version="1.18" revision="2">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <sources>
+      <source checksum="70462938108a8b8658b1b1d2f12dbeab"
+        checksum-type="md5" size="32851"
+        path="src/Tree-Simple-1.18.tar.gz"/>
+    </sources>
+
+    <configure>
+<![CDATA[
+${SB_VAR_PERL}/bin/perl Build.PL
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+./Build
+]]>
+    </build>
+
+    <test>
+<![CDATA[
+./Build test
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+./Build install
+]]>
+    </install>
+
+    <uninstall>
+<![CDATA[
+_installsitearch=$(${SB_VAR_PERL}/bin/perl -e \
+'use Config;
+print $Config{"installsitearch"} . "\n";')
+
+cat ${_installsitearch}/auto/Tree/Simple/.packlist |\
+while read _file; do
+  rm ${_file}
+
+  _dir=$(dirname ${_file})
+  test -d ${_dir} && rmdir ${_dir} 2>/dev/null
+done
+
+rm ${_installsitearch}/auto/Tree/Simple/.packlist
+rmdir ${_installsitearch}/auto/Tree/Simple 2>/dev/null
+rmdir ${_installsitearch}/auto/Tree 2>/dev/null
+
+:
+]]>
+    </uninstall>
+
+    <module name="5.8.8">
+      <install-name>perl588p</install-name>
+
+      <dependencies>
+        <depend program="Module-Build"
+          module="5.8.8">v&gt;=0.33</depend>
+        <depend program="perl" var="PERL">v==5.8.8</depend>
+      </dependencies>
+    </module>
+
+    <module name="5.12.2">
+      <install-name>perl5122p</install-name>
+
+      <dependencies>
+        <depend program="Module-Build"
+          module="5.12.2">v&gt;=0.33</depend>
+        <depend program="perl" var="PERL">v==5.12.2</depend>
+      </dependencies>
+    </module>
+
+    <changelog>
+      <change date="2012 February 15" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add 5.12.2 module</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
