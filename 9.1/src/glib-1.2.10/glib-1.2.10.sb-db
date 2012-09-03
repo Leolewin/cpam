@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="glib" version="1.2.10" revision="12">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}12</install-name>
+
+    <sources>
+      <source checksum="6fe30dad87c77b91b632def29dd69ef9"
+        checksum-type="md5" size="421480"
+        path="src/glib-1.2.10.tar.gz"/>
+      <patch checksum="93591123873b5ac1fef69139aaf6d4dd"
+        checksum-type="md5" size="18391"
+        path="src/glib-1.2.10.tww.patch"/>
+      <patch checksum="fed8dcd1c418eb44d2f9bc030df36b11"
+        checksum-type="md5" size="704350"
+        path="src/glib-1.2.10.auto.patch"/>
+    </sources>
+
+    <script-header>
+<![CDATA[
+_datadir="${SB_INSTALL_PREFIX}/share"
+_docdir="${SB_INSTALL_PREFIX}/doc"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qmaxmem=-1 -qarch=com"
+  LDFLAGS="-Wl,-brtl"
+
+  ARGS="--enable-threads" ;;
+*-hpux11.23|*-hpux11.31)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-hpux10*)
+  CC=cc CFLAGS="-Ae -z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  ARGS="--with-threads=none" ;;
+*-hpux*)
+  CC=cc CFLAGS="-z +O2 +Onofltacc +ESlit +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+
+  ARGS="--enable-threads" ;;
+*-irix*)
+  CC=cc CFLAGS="-O2 -OPT:Olimit=0"
+
+  ARGS="--enable-threads" ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+
+  ARGS="--enable-threads" ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -std1"
+
+  ARGS="--enable-threads" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+
+  ARGS="--enable-threads" ;;
+*-solaris2.[89]|*-solaris2.1?)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic -xarch=v8"
+
+  ARGS="--enable-threads" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xO2 -xtarget=generic"
+
+  ARGS="--enable-threads";;
+esac
+
+CC="${CC:-gcc}" CFLAGS="${CFLAGS:=-O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" ${SHELL} ./configure \
+--datadir="${_datadir}" ${ARGS+${ARGS}} \
+--libdir=${SB_INSTALL_PREFIX_LIB} --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <test>
+<![CDATA[
+gmake check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install
+
+# install texinfo source files
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}
+${SB_PATH_INSTALL} -m 644 -o root -g 0 docs/glib.texi ${_docdir}
+
+
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC_LD_RT="-Wl,-blibpath:" LDFLAGS=":/usr/lib" ;;
+*-osf*|*-irix6*|*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-hpux*)
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-solaris2*)   
+  CC_LD_RT="-R" ;;
+esac
+
+${SB_PATH_SED} -i -e "\
+s!-bexpall!-Wl,-bexpall!; \
+s!\${exec_prefix}/lib/!${SB_INSTALL_PREFIX_LIB}!; \
+s!-L\(${SB_INSTALL_PREFIX_LIB}\) !-L\1 ${CC_LD_RT}\1 !;" \
+${SB_INSTALL_PREFIX}/bin/glib-config
+]]>
+    </install>
+
+    <changelog>
+      <change date="2012 January 18" revision="12"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for AIX 7.1</para></item>
+      </change>
+
+      <change date="2010 November 1" revision="11"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+
+      <change date="2008 October 7" revision="10"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 6.1</para></item>
+        <item><para>Add support for HP-UX 11.31/IA</para></item>
+      </change>
+
+      <change date="2007 May 1" revision="9"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 5</para></item>
+      </change>
+
+      <change date="2006 May 30" revision="8"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/x86</para></item>
+        <item><para>Quote macros in glib.m4 to avoid warnings in newer
+automake releases</para></item>
+      </change>
+
+      <change date="2005 November 24" revision="7"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/IA-64</para></item>
+        <item><para>When testing
+<command>pthread_cond_timedwait()</command>, lock mutex with
+<command>pthread_mutex_lock()</command> prior to call else undefined
+behavior results.</para></item>
+      </change>
+
+      <change date="2005 September 18" revision="6"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for HP-UX 11.23/PA-RISC</para></item>
+      </change>
+
+      <change date="2005 May 13" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for Solaris 10/SPARC</para></item>
+        <item><para>Add support for RHEL 4</para></item>
+        <item><para>Remove perl dependency</para></item>
+      </change>
+
+      <change date="2004 August 26" revision="4"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Upgrade to latest libtool-1.4.2
+release</para></item>
+      </change>
+
+      <change date="2004 February 24" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Update config.guess and config.sub to properly
+detect AIX 5</para></item>
+        <item><para>Build SysV-style shared libraries on
+AIX 5</para></item>
+      </change>
+
+      <change date="2003 December 16" revision="2"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Force use of shl_load on HP-UX 11.x</para></item>
+      </change>
+
+      <change date="2003 April 2" revision="1"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for AIX 5.1 (same as AIX
+4)</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
