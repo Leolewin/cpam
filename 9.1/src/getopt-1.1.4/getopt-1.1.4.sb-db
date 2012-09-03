@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="getopt" version="1.1.4" revision="6">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}11</install-name>
+
+    <sources>
+      <source checksum="02188ca68da27c4175d6e9f3da732101"
+        checksum-type="md5" size="37163"
+        path="src/getopt-1.1.4.tar.gz"/>
+      <patch checksum="997aea39759cb0545ce9fc65a2a240f4"
+        checksum-type="md5" size="83838"
+        path="src/getopt-1.1.4.tww.patch"/>
+      <patch checksum="8ec0915b77a1338fd99fec68136a6395"
+        checksum-type="md5" size="1421971"
+        path="src/getopt-1.1.4.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="gettext" var="GETTEXT"
+        install-name="gettext018"
+        add-path="prepend">v&gt;=0.18.1.1</depend>
+      <depend program="libiconv" var="LIBICONV"
+        install-name="libiconv113"
+        add-path="prepend">v&gt;=1.13.1</depend>
+    </dependencies>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=xlc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+ia64*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+b" ;;
+*-hpux11.[01]*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +DAportable \
++Oentrysched +Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b," ;;
+*-hpux*)
+  CC=cc CFLAGS="+O2 -z +Ofltacc +Olit=all +Oentrysched \
++Odataprefetch +Onolimit"
+  CC_LD_RT="-Wl,+s,+b" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-freebsd*)
+  CFLAGS="-O3 -fno-strength-reduce -mtune=pentium4 -march=pentium4"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O3 -fno-strength-reduce -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CFLAGS="-O3 -fno-strength-reduce"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-solaris*)
+  CPPFLAGS="-D__i386__"
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" CFLAGS="${CFLAGS:--O2}" \
+LDFLAGS="${LDFLAGS+${LDFLAGS}}" CPPFLAGS="${CPPFLAGS+${CPPFLAGS}}" \
+${SB_VAR_LIBICONV+--with-libiconv-prefix="${SB_VAR_LIBICONV}"} \
+${SB_VAR_GETTEXT+--with-libintl-prefix="${SB_VAR_GETTEXT}"} \
+--disable-shared --disable-dependency-tracking ${ARGS+${ARGS}} \
+--mandir=${SB_INSTALL_PREFIX}/man --prefix=${SB_INSTALL_PREFIX}
+]]>
+    </configure>
+
+    <licenses>
+      <license path="gpl-2.license"/>
+    </licenses>
+
+    <changelog>
+      <change date="2011 October 10" revision="6"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Update gettext dependency from 0.17 to
+0.18.1.1</para></item>
+        <item><para>Update libiconv dependency from 0.12 to
+0.13.1</para></item>
+        <item><para>Remove support for AIX 4</para></item>
+        <item><para>Remove support for HP/UX 10.20</para></item>
+        <item><para>Remove support for RHEL 6</para></item>
+        <item><para>Remove support for Solaris 6 and Solaris
+7</para></item>
+      </change>
+
+      <change date="2010 November 9" revision="5"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+
+      <change date="2009 May 27" revision="4"
+      author="Gary V. Vaughan" email="gary@thewrittenword.com">
+        <item><para>Add support for HPUX-11.31/PA-RISC</para></item>
+      </change>
+
+      <change date="2008 December 25" revision="3"
+      author="Albert Chin-A-Young" email="china@thewrittenword.com">
+        <item><para>Add support for SLES 10</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
