@@ -1,0 +1,459 @@
+<?xml version="1.0"?>
+<!DOCTYPE programs SYSTEM "sb-db.dtd">
+<programs>
+  <program name="gdb" version="7.2" revision="2"
+  systype="!*-hpux*">
+    <build-name>${SB_PROG_NAME}-${SB_PROG_VER}</build-name>
+
+    <install-name>${SB_PROG_NAME}72</install-name>
+
+    <sources>
+      <source checksum="64260e6c56979ee750a01055f16091a5"
+        checksum-type="md5" size="18530613"
+        path="src/gdb-7.2.tar.bz2"/>
+      <patch checksum="66708ab76f6e72ee7178801b9fc4c106"
+        checksum-type="md5" size="14708"
+        path="src/gdb-7.2.tww.patch"/>
+      <patch checksum="3dad30ac6a8ed8afd72398bc11bcab96"
+        checksum-type="md5" size="545170"
+        path="src/gdb-7.2.auto.patch"/>
+    </sources>
+
+    <dependencies>
+      <depend program="flex" install-name="flex25" add-path="prepend"
+        type="build">v&gt;=2.5.35</depend>
+      <depend program="gawk" install-name="gawk31" add-path="prepend"
+        type="build">v&gt;=3.1.8</depend>
+      <depend program="expat" var="LIBEXPAT"
+        install-name="libexpat20">v&gt;=2.0.1</depend>
+      <depend program="zlib" var="ZLIB"
+        install-name="libz12">v&gt;=1.2.5</depend>
+      <depend program="python" var="PYTHON"
+        add-path="prepend">v==2.6.7</depend>
+      <depend program="readline" var="READLINE">v==6.2</depend>
+    </dependencies>
+
+    <script-header>
+<![CDATA[
+_docdir="${SB_INSTALL_PREFIX}/doc"
+_datadir="${SB_INSTALL_PREFIX}/share"
+]]>
+    </script-header>
+
+    <configure>
+<![CDATA[
+case "${SB_SYSTYPE}" in
+*-aix*)
+  CC=cc CFLAGS="-O2 -qro -qroconst -qmaxmem=-1 -qarch=ppc"
+  LDFLAGS="-Wl,-brtl -Wl,-blibpath:/usr/lib"
+  CC_LD_RT="-Wl,-blibpath:" ;;
+*-irix*)
+  CC=cc CFLAGS="-Wl,-woff,84 -Wl,-woff,85 -woff 1009,1429 \
+-use_readonly_const -G0 -rdata_shared -DEBUG:optimize_space=ON \
+-O2 -OPT:Olimit=0"
+  CC_LD_RT="-Wl,-rpath," ;;
+i?86*-linux*)
+  CFLAGS="-O2 -mtune=pentiumpro -march=pentiumpro"
+  CC_LD_RT="-Wl,-rpath," ;;
+*-linux*)
+  CC_LD_RT="-Wl,-rpath," ;;
+*-osf*)
+  CC=cc CFLAGS="-O2 -ieee -arch ev5 -msym -readonly_strings"
+  CC_LD_RT="-Wl,-rpath,"
+
+  _without_python="--without-python" ;;
+i?86*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=pentium4"
+  CC_LD_RT="-R" ;;
+*-solaris2.8)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-xarch=v8plusa"
+  CC_LD_RT="-R" ;;
+*-solaris*)
+  CC=cc CFLAGS="-mr -Qn -xstrconst -xO2 -xtarget=ultra2 \
+-m32 -xarch=sparcvis"
+  CC_LD_RT="-R" ;;
+esac
+
+${SHELL} ./configure CC="${CC:-gcc}" \
+CFLAGS="${CFLAGS:--O2} -I${SB_VAR_PYTHON_INC} \
+-I${SB_VAR_READLINE_INC} -I${SB_VAR_ZLIB_INC}" \
+LDFLAGS="${SB_VAR_LIBEXPAT+${CC_LD_RT}${SB_VAR_LIBEXPAT_LIB}} \
+-L${SB_VAR_PYTHON_LIB}/python2.6/config \
+${CC_LD_RT}${SB_VAR_PYTHON_LIB}/python2.6/config \
+-L${SB_VAR_READLINE_LIB} ${CC_LD_RT}${SB_VAR_READLINE_LIB} \
+-L${SB_VAR_ZLIB_LIB} ${CC_LD_RT}${SB_VAR_ZLIB_LIB} \
+${LDFLAGS+${LDFLAGS}}" \
+--disable-shared --disable-nls --enable-gdbtk=no --enable-tui=no \
+--disable-sim --disable-werror --with-system-readline \
+--disable-install-libbfd --disable-install-libiberty \
+--mandir=${SB_INSTALL_PREFIX}/man --infodir=${SB_INSTALL_PREFIX}/info \
+--datadir=${_datadir} --datarootdir=${_datadir} \
+--with-gdb-datadir=${_datadir} ${_without_python---with-python} \
+${SB_VAR_LIBEXPAT+--with-libexpat-prefix=${SB_VAR_LIBEXPAT}} \
+${CC+--enable-build-warnings=""} --disable-dependency-tracking \
+--prefix=${SB_INSTALL_PREFIX}
+
+# rebuild info files
+(rm gdb/doc/*.info*) 2>/dev/null || :
+]]>
+    </configure>
+
+    <build>
+<![CDATA[
+gmake MAKEINFOFLAGS="--no-split"
+]]>
+    </build>
+
+    <test auto-include="0">
+      <dependencies>
+        <depend program="dejagnu" var="DEJAGNU"
+          install-name="dejagnu14"
+          add-path="prepend">v&gt;=1.4.4</depend>
+        <depend program="expect" install-name="expect54"
+          add-path="prepend">v&gt;=5.45</depend>
+      </dependencies>
+<![CDATA[
+_dejagnu_datadir="${SB_VAR_DEJAGNU}/share"
+
+DEJAGNULIBS=${_dejagnu_datadir} gmake -k check
+]]>
+    </test>
+
+    <install>
+<![CDATA[
+gmake install install-info
+
+${SB_PATH_INSTALL} -m 755 -o root -g 0 -d ${_docdir}/texinfo
+${SB_PATH_INSTALL} -m 644 -o root -g 0 gdb/doc/*.texi* \
+readline/doc/rluser.texi readline/doc/inc-hist.texinfo \
+${_docdir}/texinfo
+
+rm -rf ${SB_INSTALL_PREFIX}/lib ${SB_INSTALL_PREFIX}/include
+]]>
+    </install>
+
+    <licenses>
+      <license module="bfd" path="gpl-3.license"/>
+
+      <license module="bfd/doc" path="gfdl-1.2.license"/>
+
+      <license module="gdb" path="gpl-3.license"/>
+
+      <license module="gdb/doc" path="gfdl-1.2.license"/>
+
+      <license module="include" path="gpl-2.license"/>
+
+      <license module="include" path="gpl-3.license"/>
+
+      <license module="libiberty" path="lgpl-2.1.license"/>
+    </licenses>
+
+    <notes>
+      <change from="7.1" to="7.2">
+        <items name="Shared library support for remote targets by default">
+          <item><para>When GDB is configured for a generic, non-OS
+specific target, like for example, --target=arm-eabi or one of the
+many *-*-elf targets, GDB now queries remote stubs for loaded shared
+libraries using the "qXfer:libraries:read" packet. Previously, shared
+library support was always disabled for such
+configurations.</para></item>
+        </items>
+
+        <items name="C++ Improvements">
+          <item><para>Argument Dependent Lookup (ADL)</para>
+          <para>In C++ ADL lookup directs function search to the
+namespaces of its arguments even if the namespace has not been
+imported. For example:</para>
+          <screen>
+namespace A
+  { 
+    class B { }; 
+    void foo (B) { }
+  }
+...
+A::B b
+foo(b)
+          </screen>
+          <para>Here the compiler will search for "foo" in the
+namespace of 'b' and find A::foo. GDB now supports this. This
+construct is commonly used in the Standard Template Library for
+operators.</para></item>
+          <item><para>Improved User Defined Operator
+Support</para>
+          <para>In addition to member operators, GDB now supports
+lookup of operators defined in a namespace and imported with a "using"
+directive, operators defined in the global scope, operators imported
+implicitly from an anonymous namespace, and the ADL operators
+mentioned in the previous entry.</para>
+          <para>GDB now also supports proper overload resolution
+for all the previously mentioned flavors of operators.</para></item>
+          <item><para>static const class members</para>
+          <para>Printing of static const class members that are
+initialized in the class definition has been fixed.</para></item>
+        </items>
+
+        <items name="Windows Thread Information Block access.">
+          <item><para>On Windows targets, GDB now supports displaying
+the Windows Thread Information Block (TIB) structure. This structure
+is visible either by using the new command "info w32
+thread-information-block" or, by dereferencing the new convenience
+variable named "$_tlb", a thread-specific pointer to the TIB. This
+feature is also supported when remote debugging using
+GDBserver.</para></item>
+        </items>
+
+        <items name="Static tracepoints">
+          <item><para>Static tracepoints are calls in the user program
+into a tracing library. One such library is a port of the LTTng
+kernel tracer to userspace --- UST (LTTng Userspace Tracer,
+http://lttng.org/ust). When debugging with GDBserver, GDB now supports
+combining the GDB tracepoint machinery with such libraries. For
+example: the user can use GDB to probe a static tracepoint marker (a
+call from the user program into the tracing library) with the new
+"strace" command (see "New commands" below). This creates a "static
+tracepoint" in the breakpoint list, that can be manipulated with the
+same feature set as fast and regular tracepoints. E.g., collect
+registers, local and global variables, collect trace state variables,
+and define tracepoint conditions. In addition, the user can collect
+extra static tracepoint marker specific data, by collecting the new
+$_sdata internal variable. When analyzing the trace buffer, you can
+inspect $_sdata like any other variable available to GDB. For more
+information, see the "Tracepoints" chapter in GDB user manual. New
+remote packets have been defined to support static tracepoints, see
+the "New remote packets" section below.</para></item>
+        </items>
+
+        <items name="Better reconstruction of tracepoints after disconnected tracing">
+          <item><para>GDB will attempt to download the original source
+form of tracepoint definitions when starting a trace run, and then
+will upload these upon reconnection to the target, resulting in a more
+accurate reconstruction of the tracepoints that are in use on the
+target.</para></item>
+        </items>
+
+        <items name="Observer mode">
+          <item><para>You can now exercise direct control over the
+ways that GDB can affect your program. For instance, you can disallow
+the setting of breakpoints, so that the program can run continuously
+(assuming non-stop mode). In addition, the "observer" variable is
+available to switch all of the different controls; in observer mode,
+GDB cannot affect the target's behavior at all, which is useful for
+tasks like diagnosing live systems in the field.</para></item>
+        </items>
+
+        <items name="New remote packets">
+          <item><para>qGetTIBAddr</para>
+          <para>Return the address of the Windows Thread
+Information Block of a given thread.</para></item>
+          <item><para>qRelocInsn</para>
+          <para>In response to several of the tracepoint
+packets, the target may now also respond with a number of intermediate
+"qRelocInsn" request packets before the final result packet, to have
+GDB handle relocating an instruction to execute at a different
+address. This is particularly useful for stubs that support fast
+tracepoints. GDB reports support for this feature in the qSupported
+packet.</para></item>
+          <item><para>qTfSTM, qTsSTM</para>
+          <para>List static tracepoint markers in the target
+program.</para></item>
+          <item><para>qTSTMat</para>
+          <para>List static tracepoint markers at a given
+address in the target program.</para></item>
+          <item><para>qXfer:statictrace:read</para>
+          <para>Read the static trace data collected (by a
+"collect $_sdata" tracepoint action). The remote stub reports support
+for this packet to gdb's qSupported query.</para></item>
+          <item><para>QAllow</para>
+          <para>Send the current settings of GDB's permission
+flags.</para></item>
+          <item><para>QTDPsrc</para>
+          <para>Send part of the source (textual) form of a
+tracepoint definition, which includes location, conditional, and
+action list.</para></item>
+        </items>
+
+        <items name="New features in the GDB remote stub, GDBserver">
+          <item><para>GDBserver now support tracepoints (including
+fast tracepoints, and static tracepoints). The feature is currently
+supported by the i386-linux and amd64-linux builds. See the
+"Tracepoints support in gdbserver" section in the manual for more
+information.</para></item>
+          <item><para>GDBserver JIT compiles the tracepoint's
+conditional agent expression bytecode into native code whenever
+possible for low overhead dynamic tracepoints conditionals. For such
+tracepoints, an expression that examines program state is evaluated
+when the tracepoint is reached, in order to determine whether to
+capture trace data. If the condition is simple and false, processing
+the tracepoint finishes very quickly and no data is
+gathered.</para></item>
+          <item><para>GDBserver interfaces with the UST (LTTng
+Userspace Tracer) library for static tracepoints
+support.</para></item>
+          <item><para>GDBserver now supports x86_64 Windows 64-bit
+debugging.</para></item>
+        </items>
+
+        <items name="X86 general purpose registers">
+          <item><para>GDB now supports reading/writing byte, word and
+double-word x86 general purpose registers directly. This means you
+can use, say, $ah or $ax to refer, respectively, to the byte register
+AH and 16-bit word register AX that are actually portions of the
+32-bit register EAX or 64-bit register RAX.</para></item>
+        </items>
+
+        <items name="New commands">
+          <item><para><command>eval template,
+expressions...</command></para>
+          <para>Convert the values of one or more expressions
+under the control of the string template to a command line, and call
+it.</para></item>
+          <item><para><command>set target-file-system-kind
+unix|dos-based|auto show
+target-file-system-kind</command></para>
+          <para>Set or show the assumed file system kind for
+target reported file names.</para></item>
+          <item><para><command>save breakpoints
+&lt;filename&gt;</command></para>
+          <para>Save all current breakpoint definitions to a
+file suitable for use in a later debugging session. To read the saved
+breakpoint definitions, use the "source" command.</para></item>
+          <item><para>"<command>save tracepoints</command>" is a new
+alias for "<command>save-tracepoints</command>". The latter is now
+deprecated.</para></item>
+          <item><para><command>info
+static-tracepoint-markers</command></para>
+          <para>Display information about static tracepoint
+markers in the target.</para></item>
+          <item><para><command>strace FN | FILE:LINE | *ADDR | -m
+MARKER_ID</command></para>
+          <para>Define a static tracepoint by probing a marker
+at the given function, line, address, or marker ID.</para></item>
+          <item><para><command>set observer on|off</command></para>
+          <para><command>show observer</command></para>
+          <para>Enable and disable observer mode.</para></item>
+          <item><para><command>set may-write-registers
+on|off</command></para>
+          <para><command>set may-write-memory on|off</command></para>
+          <para><command>set may-insert-breakpoints
+on|off</command></para>
+          <para><command>set may-insert-tracepoints
+on|off</command></para>
+          <para><command>set may-insert-fast-tracepoints
+on|off</command></para>
+          <para><command>set may-interrupt on|off</command></para>
+          <para>Set individual permissions for GDB effects on
+the target. Note that some of these settings can have undesirable or
+surprising consequences, particularly when changed in the middle of a
+session. For instance, disabling the writing of memory can prevent
+breakpoints from being inserted, cause single-stepping to fail, or
+even crash your program, if you disable after breakpoints have been
+inserted. However, GDB should not crash.</para></item>
+          <item><para><command>set record memory-query
+on|off</command></para>
+          <para><command>show record memory-query</command></para>
+          <para>Control whether to stop the inferior if memory
+changes caused by an instruction cannot be recorded.</para></item>
+        </items>
+
+        <items name="Changed commands">
+          <item><para><command>disassemble</command></para>
+          <para>The disassemble command now supports
+"start,+length" form of two arguments.</para></item>
+        </items>
+
+        <items name="Python scripting">
+          <item><para>GDB now provides a new directory location,
+called the python directory, where Python scripts written for GDB can
+be installed. The location of that directory is
+&lt;data-directory&gt;/python, where &lt;data-directory&gt; is the GDB
+data directory. For more details, see section "Scripting GDB using
+Python" in the manual.</para></item>
+          <item><para>The GDB Python API now has access to
+breakpoints, symbols, symbol tables, program spaces, inferiors,
+threads and frame's code blocks. Additionally, GDB Parameters can now
+be created from the API, and manipulated via set/show in the
+CLI.</para></item>
+          <item><para>New functions gdb.target_charset,
+gdb.target_wide_charset, gdb.progspaces, gdb.current_progspace, and
+gdb.string_to_argv.</para></item>
+          <item><para>New exception gdb.GdbError.</para></item>
+          <item><para>Pretty-printers are now also looked up in the
+current program space.</para></item>
+          <item><para>Pretty-printers can now be individually enabled
+and disabled.</para></item>
+          <item><para>GDB now looks for names of Python scripts to
+auto-load in a special section named ".debug_gdb_scripts", in addition
+to looking for a OBJFILE-gdb.py script when OBJFILE is read by the
+debugger.</para></item>
+        </items>
+
+        <items name="New targets">
+          <item><para>ARM Symbian
+arm*-*-symbianelf*</para></item>
+        </items>
+
+        <items name="D language support.">
+          <item><para>GDB now supports debugging programs written in
+the D programming language.</para></item>
+        </items>
+
+        <item><para>The new convenience variable $_thread holds the
+number of the current thread.</para></item>
+        <item><para>Tracepoint actions were unified with breakpoint
+commands. In particular, there are no longer differences in "info
+break" output for breakpoints and tracepoints and the "commands"
+command can be used for both tracepoints and regular
+breakpoints.</para></item>
+        <item><para>The source command now accepts a -s option to
+force searching for the script in the source search path even if the
+script name specifies a directory.</para></item>
+        <item><para>The "commands" command now accepts a range of
+breakpoints to modify. A plain "commands" following a command that
+creates multiple breakpoints affects all the breakpoints set by that
+command. This applies to breakpoints set by "rbreak", and also
+applies when a single "break" command creates multiple breakpoints
+(e.g., breakpoints on overloaded c++ functions).</para></item>
+        <item><para>The "rbreak" command now accepts a filename
+specification as part of its argument, limiting the functions selected
+by the regex to those in the specified file.</para></item>
+        <item><para>Support for remote debugging Windows and
+SymbianOS shared libraries from Unix hosts has been improved. Non
+Windows GDB builds now can understand target reported file names that
+follow MS-DOS based file system semantics, such as file names that
+include drive letters and use the backslash character as directory
+separator. This makes it possible to transparently use the "set
+sysroot" and "set solib-search-path" on Unix hosts to point as host
+copies of the target's shared libraries. See the new command "set
+target-file-system-kind" described below, and the "Commands to specify
+files" section in the user manual for more information.</para></item>
+        <item><para>GDB now sends xmlRegisters= in qSupported packet
+to indicate that it understands register description.</para></item>
+        <item><para>The --batch flag now disables pagination and
+queries.</para></item>
+        <item><para>GDB now supports the extended ptrace interface
+for PowerPC which is available since Linux kernel version 2.6.34.
+This automatically enables any hardware breakpoints and additional
+hardware watchpoints available in the processor. The old ptrace
+interface exposes just one hardware watchpoint and no hardware
+breakpoints.</para></item>
+        <item><para>GDB is now able to use the Data Value Compare
+(DVC) register available on embedded PowerPC processors to implement
+in hardware simple watchpoint conditions of the form:</para>
+        <screen>
+watch ADDRESS|VARIABLE if ADDRESS|VARIABLE == CONSTANT EXPRESSION
+        </screen>
+        <para>This works in native GDB running on Linux
+kernels with the extended ptrace interface mentioned
+above.</para></item>
+      </change>
+    </notes>
+
+    <changelog>
+      <change date="2010 November 5" revision="2"
+      author="Peter O'Gorman" email="pogma@thewrittenword.com">
+        <item><para>Add support for RHEL 6</para></item>
+      </change>
+    </changelog>
+  </program>
+</programs>
