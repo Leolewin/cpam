@@ -13492,3 +13492,33 @@ pbutils-1.2.0-lpms-upload:  pbutils-1.2.0-lpms-gen
 	cd ${DIST_PREFIX}/${CPU};${RSYNC}   MOTOpbutils-1.2.0.${CPU}.rpm.tar ${PACKAGE_UPLOAD_PATH}/${ARCHI}/
 	cd ${DIST_PREFIX}/${CPU};rm -f ${DIST_PREFIX}/${CPU}/MOTOpbutils-1.2.0.${CPU}.rpm.tar
 
+#############################################################################
+# 270 / 529 sb-pb package
+ifeq ($(upload),1) 
+gdb-7.5.0: \
+ ${SB_DB}/gdb-7.5.0 ${DIST_PREFIX}/${CPU}/MOTOgdb63-7.5.0-1.${CPU}.rpm gdb-7.5.0-gen-pkg-inst gdb-7.5.0-upload 
+else  
+gdb-7.5.0: \
+ ${SB_DB}/gdb-7.5.0 
+endif 
+#############################################################################
+${SB_DB}/gdb-7.5.0: 
+	${SB} ${OIADDON_SRC}/gdb-7.5.0/sb-db.xml
+	${SB} -ip ${OIADDON_SRC}/gdb-7.5.0/sb-db.xml
+${DIST_PREFIX}/${CPU}/MOTOgdb63-7.5.0-1.${CPU}.rpm:
+	${PACKAGE_BUILD} -1 ${OIADDON_SRC}/gdb-7.5.0/pb-db.xml
+gdb-7.5.0-gen-pkg-inst: 
+	${GPD}  ${OIADDON_SRC}/gdb-7.5.0/pb-db.xml >> ${DIST_PREFIX}/${CPU}/pkg-db.xml
+	(cd ${DIST_PREFIX}/${CPU};zip  data.zip  MOTOgdb63* ;${M5S}  data.zip |awk '{print $$1}' > data.zip.md5)
+	(cd ${DIST_PREFIX}/${CPU};zip -r  gdb-7.5.0.${CPU}.rpm.pkg-inst pkg-db.xml data.zip data.zip.md5;${M5S}  gdb-7.5.0.${CPU}.rpm.pkg-inst  |awk '{print $$1}' > gdb-7.5.0.${CPU}.rpm.pkg-inst.md5)
+	cd ${DIST_PREFIX}/${CPU};rm -f pkg-db.xml data.zip data.zip.md5
+
+
+gdb-7.5.0-upload: 
+	cd ${DIST_PREFIX}/${CPU};${RSYNC}   gdb-7.5.0.${CPU}.rpm.pkg-inst gdb-7.5.0.${CPU}.rpm.pkg-inst.md5 ${PACKAGE_UPLOAD_PATH}/${ARCHI}/
+	cd ${DIST_PREFIX}/${CPU};rm -f ${DIST_PREFIX}/${CPU}/pkg-db.xml gdb-7.5.0.${CPU}.rpm.pkg-inst gdb-7.5.0.${CPU}.rpm.pkg-inst.md5
+
+gdb-7.5.0-clean: 
+	 rm -rf ${BUILD_DIR}/gdb-7.5.0 ${SB_DB}/gdb-7.5.0 ${SB_DB}/gdb-7.5.0
+
+ 
