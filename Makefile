@@ -50,6 +50,7 @@ MKFILES=os
 # 
 PERL=/usr/bin/perl
 SUDO=/usr/bin/sudo
+GIT=/usr/bin/git
 MKDIR=/bin/mkdir
 CHOWN=/bin/chown
 # what : a simple way to give option "gmake" to specify either to 
@@ -277,3 +278,5 @@ clean:
 
 pull:
 	${GIT} pull
+push:
+	${GIT} commit -a -m "updated by makefile"
